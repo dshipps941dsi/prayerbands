@@ -1,18 +1,28 @@
 'use client'
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { createBrowserClient } from '@supabase/ssr'
 
 export default function AuthCallback() {
-  const router = useRouter()
-
   useEffect(() => {
-    const hashParams = new URLSearchParams(window.location.hash.slice(1))
-    const accessToken = hashParams.get('access_token')
-    if (accessToken) {
-      router.push('/dashboard')
-    } else {
-      router.push('/')
-    }
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        window.location.href = '/dashboard'
+      } else {
+        // Handle hash fragment tokens
+        supabase.auth.onAuthStateChange((event, session) => {
+          if (session) {
+            window.location.href = '/dashboard'
+          } else {
+            window.location.href = '/signin'
+          }
+        })
+      }
+    })
   }, [])
 
   return (
