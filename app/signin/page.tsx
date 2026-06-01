@@ -1,21 +1,21 @@
 'use client'
 import { useState } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
 
 export default function SignIn() {
   const [loading, setLoading] = useState(false)
 
   async function signInWithGoogle() {
     setLoading(true)
-    const { createClient } = await import('@supabase/supabase-js')
-    const supabase = createClient(
+    const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-  redirectTo: 'https://prayerbands.com/auth/callback'
-}
+        redirectTo: 'https://prayerbands.com/auth/callback'
+      }
     })
   }
 
