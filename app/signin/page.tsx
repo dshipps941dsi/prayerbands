@@ -13,7 +13,7 @@ export default function SignIn() {
     )
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'https://prayerbands.com/auth/callback' }
+      options: { redirectTo: 'https://prayerbands.com/' }
     })
   }
 
