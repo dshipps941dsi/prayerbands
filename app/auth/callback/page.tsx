@@ -4,9 +4,17 @@ import { useRouter } from 'next/navigation'
 
 export default function AuthCallback() {
   const router = useRouter()
+
   useEffect(() => {
-    setTimeout(() => { router.push('/') }, 2000)
+    const hashParams = new URLSearchParams(window.location.hash.slice(1))
+    const accessToken = hashParams.get('access_token')
+    if (accessToken) {
+      router.push('/dashboard')
+    } else {
+      router.push('/')
+    }
   }, [])
+
   return (
     <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#f0f6ff',fontFamily:'sans-serif',textAlign:'center'}}>
       <div>
