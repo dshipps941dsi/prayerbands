@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
 const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 )
 
@@ -35,6 +35,14 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
+    // Get previous registrations for journey alerts
+    const { data: prevRegs } = await supabase
+      .from('registrations')
+      .select('email, user_name')
+      .eq('band_id', bandId)
+      .not('email', 'is', null)
+
+    // Save new registration
     const { data, error } = await supabase
       .from('registrations')
       .insert({
@@ -58,13 +66,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // Update band status
     await supabase
       .from('bands')
       .update({ status: 'registered' })
       .eq('band_id', bandId)
 
+    // Send journey alert emails to previous registrants
+    const alertEmails = (prevRegs || []).map((r: any) => r.email).filter(Boolean)
+    if (alertEmails.length > 0) {
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/send-journey-alert`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bandId,
+            newHolder: name,
+            city: geoCity,
+            state: geoState,
+            country: geoCountry,
+            prayer: prayer || null,
+            emails: alertEmails,
+          })
+        })
+      } catch (e) {
+        console.error('Journey alert failed:', e)
+      }
+    }
+
     return NextResponse.json({ success: true, registrationId: data.id })
   } catch (err: any) {
+    console.error('API error:', err)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
