@@ -8,17 +8,17 @@ const supabase = createClient(
 
 export async function POST(req: NextRequest) {
   try {
-    const { bandId, name, city, country, prayer, verse, email } = await req.json()
+    const { bandId, name, city, state, country, prayer, verse, email } = await req.json()
 
     if (!bandId || !name) {
       return NextResponse.json({ error: 'Band ID and name are required' }, { status: 400 })
     }
 
-    // Get IP for geolocation
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || ''
     let latitude = null
     let longitude = null
     let geoCity = city || null
+    let geoState = state || null
     let geoCountry = country || null
 
     if (ip && ip !== '127.0.0.1') {
@@ -29,18 +29,19 @@ export async function POST(req: NextRequest) {
           latitude = geoData.latitude
           longitude = geoData.longitude
           if (!city) geoCity = geoData.city
+          if (!state) geoState = geoData.region
           if (!country) geoCountry = geoData.country_name
         }
       } catch {}
     }
 
-    // Save registration
     const { data, error } = await supabase
       .from('registrations')
       .insert({
         band_id: bandId,
         user_name: name,
         city: geoCity,
+        state: geoState,
         country: geoCountry,
         latitude,
         longitude,
@@ -57,7 +58,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Update band status
     await supabase
       .from('bands')
       .update({ status: 'registered' })
@@ -65,7 +65,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, registrationId: data.id })
   } catch (err: any) {
-    console.error('API error:', err)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

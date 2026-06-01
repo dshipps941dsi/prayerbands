@@ -8,8 +8,8 @@ export default function Register() {
   const [bandInfo, setBandInfo] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [form, setForm] = useState({
-    name: '', city: '', country: '', prayer: '', verse: '', email: ''
+const [form, setForm] = useState({
+    name: '', city: '', state: '', country: '', prayer: '', verse: '', email: ''
   })
 
   function formatBandId(val: string) {
@@ -169,16 +169,20 @@ export default function Register() {
                 <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="First name or Anonymous" style={{width:'100%',background:'#f7f3ee',border:'2px solid #e2eaf4',color:'#1e2a38',padding:'12px 14px',borderRadius:'10px',fontFamily:'sans-serif',fontSize:'16px',outline:'none'}}/>
               </div>
 
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',marginBottom:'16px'}}>
-                <div>
-                  <label style={{display:'block',fontSize:'11px',fontWeight:'700',letterSpacing:'0.15em',textTransform:'uppercase',color:'#8896a8',marginBottom:'7px'}}>City</label>
-                  <input value={form.city} onChange={e=>setForm({...form,city:e.target.value})} placeholder="Nashville" style={{width:'100%',background:'#f7f3ee',border:'2px solid #e2eaf4',color:'#1e2a38',padding:'12px 14px',borderRadius:'10px',fontFamily:'sans-serif',fontSize:'16px',outline:'none'}}/>
-                </div>
-                <div>
-                  <label style={{display:'block',fontSize:'11px',fontWeight:'700',letterSpacing:'0.15em',textTransform:'uppercase',color:'#8896a8',marginBottom:'7px'}}>Country</label>
-                  <input value={form.country} onChange={e=>setForm({...form,country:e.target.value})} placeholder="USA" style={{width:'100%',background:'#f7f3ee',border:'2px solid #e2eaf4',color:'#1e2a38',padding:'12px 14px',borderRadius:'10px',fontFamily:'sans-serif',fontSize:'16px',outline:'none'}}/>
-                </div>
-              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'12px',marginBottom:'16px'}}>
+  <div>
+    <label style={{display:'block',fontSize:'11px',fontWeight:'700',letterSpacing:'0.15em',textTransform:'uppercase',color:'#8896a8',marginBottom:'7px'}}>City</label>
+    <input value={form.city} onChange={e=>setForm({...form,city:e.target.value})} placeholder="Nashville" style={{width:'100%',background:'#f7f3ee',border:'2px solid #e2eaf4',color:'#1e2a38',padding:'12px 14px',borderRadius:'10px',fontFamily:'sans-serif',fontSize:'16px',outline:'none'}}/>
+  </div>
+  <div>
+    <label style={{display:'block',fontSize:'11px',fontWeight:'700',letterSpacing:'0.15em',textTransform:'uppercase',color:'#8896a8',marginBottom:'7px'}}>State / Province</label>
+    <input value={form.state} onChange={e=>setForm({...form,state:e.target.value})} placeholder="TN" style={{width:'100%',background:'#f7f3ee',border:'2px solid #e2eaf4',color:'#1e2a38',padding:'12px 14px',borderRadius:'10px',fontFamily:'sans-serif',fontSize:'16px',outline:'none'}}/>
+  </div>
+  <div>
+    <label style={{display:'block',fontSize:'11px',fontWeight:'700',letterSpacing:'0.15em',textTransform:'uppercase',color:'#8896a8',marginBottom:'7px'}}>Country</label>
+    <input value={form.country} onChange={e=>setForm({...form,country:e.target.value})} placeholder="USA" style={{width:'100%',background:'#f7f3ee',border:'2px solid #e2eaf4',color:'#1e2a38',padding:'12px 14px',borderRadius:'10px',fontFamily:'sans-serif',fontSize:'16px',outline:'none'}}/>
+  </div>
+</div>
 
               <div style={{marginBottom:'16px'}}>
                 <label style={{display:'block',fontSize:'11px',fontWeight:'700',letterSpacing:'0.15em',textTransform:'uppercase',color:'#8896a8',marginBottom:'7px'}}>Want to pass a prayer forward? <span style={{color:'#b0bec5',fontWeight:'400'}}>(optional)</span></label>
