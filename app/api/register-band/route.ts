@@ -93,4 +93,55 @@ export async function POST(req: NextRequest) {
                   </p>
                   ${prayer ? `<div style="background:#fff;border-left:3px solid #f5a623;padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0"><p style="font-family:Georgia,serif;font-size:17px;font-style:italic;color:#4a5568;line-height:1.75;margin:0">"${prayer}"</p></div>` : ''}
                   <div style="text-align:center;margin:28px 0">
-                    <a href="ht
+                    <a href="https://prayerbands.com/band/${bandId}" style="display:inline-block;background:#2b7bc4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700">View Full Journey ✝</a>
+                  </div>
+                  <p style="font-size:13px;color:#8896a8;text-align:center;font-style:italic;margin:0">"Go into all the world and preach the gospel." — Mark 16:15</p>
+                </div>
+              </div>
+            `
+          })
+        }
+      } catch (e) {
+        console.error('Journey alert failed:', e)
+      }
+    }
+
+    try {
+      const { data: bandData } = await supabase
+        .from('bands')
+        .select('owner_id')
+        .eq('band_id', bandId)
+        .single()
+
+      if (bandData?.owner_id) {
+        const { data: ownerProfile } = await supabase
+          .from('profiles')
+          .select('email, display_name')
+          .eq('id', bandData.owner_id)
+          .single()
+
+        if (ownerProfile?.email) {
+          await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/send-band-passed-on`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ownerEmail: ownerProfile.email,
+              ownerName: ownerProfile.display_name,
+              bandId,
+              newHolderName: name,
+              city: geoCity,
+              country: geoCountry,
+            })
+          })
+        }
+      }
+    } catch (e) {
+      console.error('Band passed-on notification failed:', e)
+    }
+
+    return NextResponse.json({ success: true, registrationId: data.id })
+  } catch (err: any) {
+    console.error('API error:', err)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
