@@ -76,7 +76,7 @@ const [form, setForm] = useState({
         <a href="/" style={{fontFamily:'Georgia,serif',fontSize:'20px',fontWeight:'700',color:'#1a5fa0',textDecoration:'none'}}>✝ PrayerBands</a>
       </nav>
 
-      <div style={{maxWidth:'560px',margin:'0 auto',padding:'48px 24px 80px'}}>
+      <div style={{maxWidth:'560px',margin:'0 auto',padding:'48px 24px 120px'}}>
 
         {/* Progress */}
         <div style={{display:'flex',alignItems:'center',marginBottom:'40px'}}>
@@ -199,7 +199,7 @@ const [form, setForm] = useState({
                 <input value={form.email} onChange={e=>setForm({...form,email:e.target.value})} type="email" placeholder="you@email.com" style={{width:'100%',background:'#f7f3ee',border:'2px solid #e2eaf4',color:'#1e2a38',padding:'12px 14px',borderRadius:'10px',fontFamily:'sans-serif',fontSize:'16px',outline:'none'}}/>
               </div>
 
-              <button onClick={submitRegistration} disabled={loading} style={{width:'100%',background:'linear-gradient(135deg,#2b7bc4,#1aabaa)',color:'#fff',border:'none',padding:'17px',borderRadius:'12px',fontSize:'17px',fontWeight:'700',cursor:'pointer',boxShadow:'0 4px 20px rgba(43,123,196,0.35)'}}>
+              <button onClick={submitRegistration} disabled={loading} style={{width:'100%',background:'linear-gradient(135deg,#2b7bc4,#1aabaa)',color:'#fff',border:'none',padding:'17px',borderRadius:'12px',fontSize:'17px',fontWeight:'700',cursor:'pointer',boxShadow:'0 4px 20px rgba(43,123,196,0.35)',marginBottom:'32px',display:'block'}}>
                 {loading?'Registering…':'I Received This Band ✝'}
               </button>
               <div style={{textAlign:'center',fontSize:'12px',color:'#b0bec5',marginTop:'12px'}}>Your approximate location is recorded from your IP to map this band's journey.</div>
