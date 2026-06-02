@@ -60,10 +60,10 @@ export default function PrayerWallPage() {
   const loadPrayers = useCallback(async (pageNum = 0) => {
     const from = pageNum * PAGE_SIZE
     const { data, error, count } = await supabase
-      .from('chain_prayers')
+      .from('registrations')
       .select('id, band_id, message, location, created_at, profiles(full_name)', { count: 'exact' })
-      .not('message', 'is', null)
-      .neq('message', '')
+      .not('prayer', 'is', null)
+      .neq('prayer', '')
       .order('created_at', { ascending: false })
       .range(from, from + PAGE_SIZE - 1)
 
@@ -82,9 +82,9 @@ export default function PrayerWallPage() {
     // Realtime subscription
     const channel = supabase
       .channel('prayer-wall')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chain_prayers' }, payload => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'registrations' }, payload => {
         const newPrayer = payload.new as Prayer
-        if (newPrayer.message) {
+        if (newprayer.prayer) {
           setPrayers(prev => [newPrayer, ...prev])
           setFiltered(prev => [newPrayer, ...prev])
           setTotalCount(c => c + 1)
@@ -297,7 +297,7 @@ export default function PrayerWallPage() {
 
                     {/* Prayer text */}
                     <p className="playfair" style={{ fontSize: 15, lineHeight: 1.85, color: '#4A2E1A', fontStyle: 'italic' }}>
-                      "{prayer.message}"
+                      "{prayer.prayer}"
                     </p>
 
                     {/* Footer */}
