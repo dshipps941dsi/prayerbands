@@ -1,11 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function POST(req) {
+export async function POST(req: Request) {
   try {
     const { name, prefix, subdomain, location, website, pastor, email, password } = await req.json();
 
@@ -13,7 +13,6 @@ export async function POST(req) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 1. Check prefix and subdomain aren't already taken
     const { data: existing } = await supabase
       .from('organizations')
       .select('id')
@@ -27,7 +26,6 @@ export async function POST(req) {
       );
     }
 
-    // 2. Create the auth user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -38,7 +36,6 @@ export async function POST(req) {
     if (authError) throw authError;
     const userId = authData.user.id;
 
-    // 3. Create profile
     const masterId = 'M-' + Math.random().toString(36).slice(2, 8).toUpperCase();
     await supabase.from('profiles').insert({
       id: userId,
@@ -47,7 +44,6 @@ export async function POST(req) {
       email,
     });
 
-    // 4. Create the organization
     const { data: org, error: orgError } = await supabase
       .from('organizations')
       .insert({
@@ -64,7 +60,6 @@ export async function POST(req) {
 
     if (orgError) throw orgError;
 
-    // 5. Link profile to org
     await supabase
       .from('profiles')
       .update({ org_id: org.id })
@@ -72,7 +67,7 @@ export async function POST(req) {
 
     return Response.json({ success: true, org_id: org.id, subdomain });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error('Onboard error:', err);
     return Response.json({ error: err.message || 'Server error' }, { status: 500 });
   }
