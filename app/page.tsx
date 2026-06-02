@@ -226,7 +226,7 @@ const scrollTo = (href: string) => {
                 ? <button key={link.label} className="cta-btn" onClick={() => scrollTo(link.href)}>{link.label}</button>
                 : <button key={link.label} className="nav-link" onClick={() => scrollTo(link.href)}>{link.label}</button>
             )}
-            <button className="nav-link" style={{ color: "#7BAE8E" }}>Sign In</button>
+            <a href="/signin" className="nav-link" style={{ color: "#7BAE8E", textDecoration: "none" }}>Sign In</a>
           </div>
 
           {/* Hamburger */}
@@ -247,7 +247,7 @@ const scrollTo = (href: string) => {
           {NAV_LINKS.map(link => (
             <button key={link.label} className="nav-link" style={{ fontSize: 18, letterSpacing: "0.15em" }} onClick={() => scrollTo(link.href)}>{link.label}</button>
           ))}
-          <button className="nav-link" style={{ fontSize: 18, color: "#7BAE8E" }}>Sign In</button>
+          <a href="/signin" className="nav-link" style={{ fontSize: 18, color: "#7BAE8E", textDecoration: "none" }}>Sign In</a>
         </div>
       )}
 
