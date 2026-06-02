@@ -10,9 +10,6 @@ export async function POST(req: NextRequest) {
   )
   const body = await req.text()
   const sig = req.headers.get('stripe-signature')!
-export async function POST(req: NextRequest) {
-  const body = await req.text()
-  const sig = req.headers.get('stripe-signature')!
 
   let event: Stripe.Event
 
@@ -31,7 +28,6 @@ export async function POST(req: NextRequest) {
     const session = event.data.object as Stripe.Checkout.Session
 
     try {
-      // Save order to Supabase
       await supabase.from('orders').insert({
         stripe_session_id: session.id,
         customer_email: session.customer_details?.email,
@@ -44,7 +40,6 @@ export async function POST(req: NextRequest) {
         order_metadata: session.metadata,
       })
 
-      // Send confirmation email
       const { Resend } = await import('resend')
       const resend = new Resend(process.env.RESEND_API_KEY)
       const email = session.customer_details?.email
@@ -81,7 +76,7 @@ export async function POST(req: NextRequest) {
                   </div>
                 </div>
                 <div style="text-align:center;margin:28px 0">
-                  <a href="https://prayerbands.com/dashboard" 
+                  <a href="https://prayerbands.com/dashboard"
                      style="display:inline-block;background:#2b7bc4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700">
                     View Your Dashboard ✝
                   </a>
@@ -95,7 +90,6 @@ export async function POST(req: NextRequest) {
         })
       }
 
-      // Also notify you
       await resend.emails.send({
         from: 'PrayerBands <bands@prayerbands.com>',
         to: ['dshipps941@gmail.com'],
