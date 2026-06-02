@@ -94,6 +94,40 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Notify band owner that their band was passed on
+    try {
+      const { data: bandData } = await supabase
+        .from('bands')
+        .select('owner_id')
+        .eq('band_id', bandId)
+        .single()
+
+      if (bandData?.owner_id) {
+        const { data: ownerProfile } = await supabase
+          .from('profiles')
+          .select('email, display_name')
+          .eq('id', bandData.owner_id)
+          .single()
+
+        if (ownerProfile?.email) {
+          await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/send-band-passed-on`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ownerEmail: ownerProfile.email,
+              ownerName: ownerProfile.display_name,
+              bandId,
+              newHolderName: name,
+              city: geoCity,
+              country: geoCountry,
+            })
+          })
+        }
+      }
+    } catch (e) {
+      console.error('Band passed-on notification failed:', e)
+    }
+
     return NextResponse.json({ success: true, registrationId: data.id })
   } catch (err: any) {
     console.error('API error:', err)
