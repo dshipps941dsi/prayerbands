@@ -105,7 +105,18 @@ const [form, setForm] = useState({
             <div style={{padding:'32px'}}>
               {error&&<div style={{background:'#fde8ec',border:'1px solid rgba(232,82,106,0.3)',color:'#c0392b',padding:'12px 16px',borderRadius:'8px',marginBottom:'16px',fontSize:'14px'}}>{error}</div>}
               <label style={{display:'block',fontSize:'11px',fontWeight:'700',letterSpacing:'0.2em',textTransform:'uppercase',color:'#8896a8',marginBottom:'8px'}}>Band ID — found inside your wristband</label>
-              <div style={{display:'flex',gap:'0',borderRadius:'12px',overflow:'hidden',boxShadow:'0 2px 8px rgba(26,95,160,0.1)',marginBottom:'12px'}}>
+              <div style={{marginBottom:'12px'}}>
+  <input
+    value={bandId}
+    onChange={e=>setBandId(formatBandId(e.target.value))}
+    onKeyDown={e=>e.key==='Enter'&&lookupBand()}
+    placeholder="PB-XXXXX"
+    style={{width:'100%',background:'#f7f3ee',border:'2px solid #e2eaf4',color:'#1e2a38',padding:'15px 18px',fontFamily:'monospace',fontSize:'20px',letterSpacing:'0.2em',outline:'none',borderRadius:'12px',marginBottom:'10px',boxSizing:'border-box'}}
+  />
+  <button onClick={lookupBand} disabled={loading} style={{width:'100%',background:'#f5a623',color:'#fff',border:'none',padding:'15px',fontSize:'16px',fontWeight:'700',cursor:'pointer',borderRadius:'12px',boxShadow:'0 4px 12px rgba(245,166,35,0.4)'}}>
+    {loading?'…':'Find It ✝'}
+  </button>
+</div>
                 <input
                   value={bandId}
                   onChange={e=>setBandId(formatBandId(e.target.value))}
