@@ -24,7 +24,6 @@ export default function AdminPage() {
   const [authorized, setAuthorized] = useState(false)
   const [filter, setFilter] = useState('pending')
   const [markingShipped, setMarkingShipped] = useState<number | null>(null)
-  const [assigningBands, setAssigningBands] = useState<number | null>(null)
   const [availableBands, setAvailableBands] = useState<string[]>([])
   const [selectedBands, setSelectedBands] = useState<{[orderId: number]: string[]}>({})
   const [stats, setStats] = useState({ total: 0, pending: 0, shipped: 0, revenue: 0 })
@@ -73,12 +72,7 @@ export default function AdminPage() {
 
   async function markShipped(order: Order) {
     setMarkingShipped(order.id)
-    await supabase
-      .from('orders')
-      .update({ status: 'shipped' })
-      .eq('id', order.id)
-
-    // Send shipped email
+    await supabase.from('orders').update({ status: 'shipped' }).eq('id', order.id)
     await fetch('/api/send-shipped', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -89,7 +83,6 @@ export default function AdminPage() {
         quantity: order.order_metadata?.quantity || '1',
       })
     })
-
     setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'shipped' } : o))
     setStats(prev => ({ ...prev, pending: prev.pending - 1, shipped: prev.shipped + 1 }))
     setMarkingShipped(null)
@@ -99,87 +92,103 @@ export default function AdminPage() {
     const toAssign = availableBands.slice(0, quantity)
     setSelectedBands(prev => ({ ...prev, [orderId]: toAssign }))
     setAvailableBands(prev => prev.slice(quantity))
-    setAssigningBands(null)
-
-    // Update bands in database
     for (const bandId of toAssign) {
-      await supabase
-        .from('bands')
-        .update({ status: 'assigned' })
-        .eq('band_id', bandId)
+      await supabase.from('bands').update({ status: 'assigned' }).eq('band_id', bandId)
     }
   }
 
   const filtered = orders.filter(o => filter === 'all' ? true : o.status === filter)
 
   const formatAddress = (addr: any) => {
-    if (!addr) return 'No address'
-    return [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country]
-      .filter(Boolean).join(', ')
+    if (!addr) return null
+    return [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country].filter(Boolean).join(', ')
   }
 
   if (!authorized || loading) return (
-    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#0a0c10',fontFamily:'sans-serif',textAlign:'center'}}>
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#FDFAF5',fontFamily:'Georgia,serif',textAlign:'center'}}>
       <div>
-        <div style={{fontSize:'48px',color:'#e8b84b',marginBottom:'16px'}}>✝</div>
-        <div style={{fontSize:'16px',color:'#6e7f94'}}>Loading admin panel...</div>
+        <div style={{fontSize:'48px',color:'#C8A96E',marginBottom:'16px'}}>✝</div>
+        <div style={{fontSize:'16px',color:'#9B7B62',fontFamily:'Lato,sans-serif'}}>Loading admin panel...</div>
       </div>
     </div>
   )
 
   return (
-    <div style={{minHeight:'100vh',background:'#0a0c10',color:'#c9d1d9',fontFamily:'sans-serif',fontSize:'14px'}}>
+    <div style={{minHeight:'100vh',background:'#FDFAF5',fontFamily:'Georgia,serif',color:'#2C1A0E'}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap');
+        .playfair { font-family: 'Playfair Display', serif; }
+        .lato { font-family: 'Lato', sans-serif; }
+        * { box-sizing: border-box; }
+      `}</style>
 
       {/* Nav */}
-      <nav style={{background:'#0f1217',borderBottom:'1px solid #21293a',padding:'0 32px',height:'56px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:50}}>
-        <div style={{fontFamily:'Georgia,serif',fontSize:'18px',color:'#e8b84b',display:'flex',alignItems:'center',gap:'8px'}}>✝ PrayerBands Admin</div>
-        <div style={{display:'flex',gap:'16px',alignItems:'center'}}>
-          <a href="/prayer-wall" style={{fontSize:'12px',color:'#6e7f94',textDecoration:'none'}}>Prayer Wall</a>
-          <a href="/shop" style={{fontSize:'12px',color:'#6e7f94',textDecoration:'none'}}>Shop</a>
-          <a href="/dashboard" style={{fontSize:'12px',color:'#6e7f94',textDecoration:'none'}}>Dashboard</a>
+      <nav style={{background:'#2C1A0E',padding:'0 40px',height:60,display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:50}}>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{width:28,height:28,borderRadius:'50%',background:'#C8A96E',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff'}}>✝</div>
+          <span className="playfair" style={{fontSize:17,fontWeight:600,color:'#FDFAF5'}}>PrayerBands</span>
+          <span className="lato" style={{fontSize:11,letterSpacing:'0.2em',textTransform:'uppercase',color:'#C8A96E',marginLeft:8}}>Admin</span>
+        </div>
+        <div style={{display:'flex',gap:20}}>
+          {['/', '/prayer-wall', '/store', '/dashboard'].map((href, i) => (
+            <a key={i} href={href} className="lato" style={{fontSize:12,letterSpacing:'0.1em',textTransform:'uppercase',color:'rgba(253,250,245,0.5)',textDecoration:'none'}}>
+              {['Home','Prayer Wall','Store','Dashboard'][i]}
+            </a>
+          ))}
         </div>
       </nav>
 
-      <div style={{maxWidth:'1200px',margin:'0 auto',padding:'32px 24px'}}>
+      <div style={{maxWidth:'1160px',margin:'0 auto',padding:'40px 32px'}}>
 
-        {/* KPIs */}
+        {/* Page title */}
+        <div style={{marginBottom:'32px'}}>
+          <span className="lato" style={{fontSize:11,letterSpacing:'0.25em',textTransform:'uppercase',color:'#C8A96E',display:'block',marginBottom:8}}>Ministry Operations</span>
+          <h1 className="playfair" style={{fontSize:'clamp(28px,4vw,42px)',fontWeight:700,lineHeight:1.15,marginBottom:4}}>Order Management</h1>
+          <div style={{width:40,height:2,background:'#C8A96E'}}/>
+        </div>
+
+        {/* KPI cards */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'16px',marginBottom:'28px'}}>
           {[
-            {label:'Total Orders', value:stats.total, color:'#4a9eff'},
-            {label:'Pending', value:stats.pending, color:'#fb923c'},
-            {label:'Shipped', value:stats.shipped, color:'#4ade80'},
-            {label:'Revenue', value:`$${stats.revenue.toFixed(2)}`, color:'#e8b84b'},
+            {label:'Total Orders', value:stats.total, color:'#7B8FAE'},
+            {label:'Pending', value:stats.pending, color:'#C8A96E'},
+            {label:'Shipped', value:stats.shipped, color:'#7BAE8E'},
+            {label:'Revenue', value:`$${stats.revenue.toFixed(2)}`, color:'#AE7B7B'},
           ].map((k,i) => (
-            <div key={i} style={{background:'#0f1217',border:'1px solid #21293a',borderRadius:'10px',padding:'20px'}}>
-              <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.15em',textTransform:'uppercase',color:'#3d4f63',marginBottom:'8px'}}>{k.label}</div>
-              <div style={{fontFamily:'Georgia,serif',fontSize:'32px',color:k.color,fontWeight:'700'}}>{k.value}</div>
+            <div key={i} style={{background:'#fff',border:'1px solid #E8DFD0',borderTop:`3px solid ${k.color}`,borderRadius:'10px',padding:'20px 22px'}}>
+              <div className="lato" style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.2em',textTransform:'uppercase',color:'#9B7B62',marginBottom:'8px'}}>{k.label}</div>
+              <div className="playfair" style={{fontSize:'32px',color:k.color,fontWeight:'700',lineHeight:1}}>{k.value}</div>
             </div>
           ))}
         </div>
 
-        {/* Available bands */}
-        <div style={{background:'#0f1217',border:'1px solid #21293a',borderRadius:'10px',padding:'16px 20px',marginBottom:'20px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        {/* Band inventory */}
+        <div style={{background:'#fff',border:'1px solid #E8DFD0',borderLeft:'4px solid #7BAE8E',borderRadius:'10px',padding:'16px 20px',marginBottom:'24px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px'}}>
           <div>
-            <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.15em',textTransform:'uppercase',color:'#3d4f63',marginBottom:'4px'}}>Unassigned Band IDs in Database</div>
-            <div style={{fontFamily:'Georgia,serif',fontSize:'24px',color:'#4ade80'}}>{availableBands.length} bands ready</div>
+            <div className="lato" style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.2em',textTransform:'uppercase',color:'#9B7B62',marginBottom:'4px'}}>Available Band IDs</div>
+            <div className="playfair" style={{fontSize:'24px',color:'#7BAE8E',fontWeight:'700'}}>{availableBands.length} bands ready to assign</div>
           </div>
-          <div style={{fontSize:'13px',color:'#6e7f94',fontStyle:'italic'}}>These will be assigned to orders when you click "Assign Bands"</div>
+          <div className="lato" style={{fontSize:'13px',color:'#C8B49A',fontStyle:'italic'}}>Click "Assign Bands" on any order to assign IDs from inventory</div>
         </div>
 
         {/* Filter tabs */}
         <div style={{display:'flex',gap:'8px',marginBottom:'20px'}}>
-          {['pending','shipped','all'].map(f => (
-            <button key={f} onClick={()=>setFilter(f)} style={{background:filter===f?'#e8b84b':'transparent',color:filter===f?'#0a0c10':'#6e7f94',border:filter===f?'none':'1px solid #21293a',padding:'7px 18px',borderRadius:'100px',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'sans-serif',letterSpacing:'0.08em',textTransform:'uppercase'}}>
-              {f} {f==='pending'?`(${stats.pending})`:f==='shipped'?`(${stats.shipped})`:``}
+          {[
+            {id:'pending', label:`Pending (${stats.pending})`},
+            {id:'shipped', label:`Shipped (${stats.shipped})`},
+            {id:'all', label:'All Orders'},
+          ].map(f => (
+            <button key={f.id} onClick={()=>setFilter(f.id)} className="lato" style={{background:filter===f.id?'#2C1A0E':'transparent',color:filter===f.id?'#FDFAF5':'#9B7B62',border:filter===f.id?'1px solid #2C1A0E':'1px solid #E8DFD0',padding:'8px 18px',borderRadius:'100px',fontSize:'12px',fontWeight:'700',cursor:'pointer',letterSpacing:'0.08em',textTransform:'uppercase',transition:'all 0.2s'}}>
+              {f.label}
             </button>
           ))}
         </div>
 
         {/* Orders */}
         {filtered.length === 0 ? (
-          <div style={{textAlign:'center',padding:'60px',background:'#0f1217',borderRadius:'10px',border:'1px solid #21293a'}}>
-            <div style={{fontSize:'32px',marginBottom:'12px',opacity:0.4}}>✝</div>
-            <div style={{color:'#6e7f94'}}>No {filter} orders</div>
+          <div style={{textAlign:'center',padding:'60px',background:'#fff',borderRadius:'10px',border:'1px solid #E8DFD0'}}>
+            <div style={{fontSize:'32px',marginBottom:'12px',opacity:0.3}}>✝</div>
+            <div className="lato" style={{color:'#9B7B62',fontSize:'14px'}}>No {filter} orders</div>
           </div>
         ) : (
           <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
@@ -188,60 +197,66 @@ export default function AdminPage() {
               const type = order.order_metadata?.type || 'standard'
               const assigned = selectedBands[order.id] || []
               const amount = (order.amount_total / 100).toFixed(2)
+              const address = formatAddress(order.shipping_address)
+              const statusColor = order.status === 'shipped' ? '#7BAE8E' : order.status === 'pending' ? '#C8A96E' : '#7B8FAE'
 
               return (
-                <div key={order.id} style={{background:'#0f1217',border:`1px solid ${order.status==='shipped'?'#1a3a1a':order.status==='pending'?'#3a2a0a':'#21293a'}`,borderRadius:'10px',overflow:'hidden'}}>
+                <div key={order.id} style={{background:'#fff',border:'1px solid #E8DFD0',borderTop:`3px solid ${statusColor}`,borderRadius:'10px',overflow:'hidden',boxShadow:'0 2px 12px rgba(44,26,14,0.05)'}}>
 
-                  {/* Order header */}
-                  <div style={{padding:'16px 20px',borderBottom:'1px solid #21293a',display:'flex',alignItems:'center',gap:'16px',flexWrap:'wrap'}}>
-                    <div style={{fontFamily:'Georgia,serif',fontSize:'18px',color:'#e8b84b'}}>Order #{order.id}</div>
-                    <div style={{fontSize:'12px',color:'#6e7f94'}}>{new Date(order.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
-                    <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'10px'}}>
-                      <span style={{background:order.status==='shipped'?'rgba(74,222,128,0.1)':order.status==='pending'?'rgba(251,146,60,0.1)':'rgba(74,158,255,0.1)',color:order.status==='shipped'?'#4ade80':order.status==='pending'?'#fb923c':'#4a9eff',padding:'4px 12px',borderRadius:'100px',fontSize:'11px',fontWeight:'700',letterSpacing:'0.08em',textTransform:'uppercase'}}>
+                  {/* Header */}
+                  <div style={{padding:'16px 24px',borderBottom:'1px solid #F5EFE4',display:'flex',alignItems:'center',gap:'16px',flexWrap:'wrap',background:'#FDFAF5'}}>
+                    <div className="playfair" style={{fontSize:'18px',fontWeight:'600',color:'#2C1A0E'}}>Order #{order.id}</div>
+                    <div className="lato" style={{fontSize:'12px',color:'#C8B49A'}}>{new Date(order.created_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+                    <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'12px'}}>
+                      <span className="lato" style={{background:`${statusColor}18`,color:statusColor,border:`1px solid ${statusColor}44`,padding:'4px 12px',borderRadius:'100px',fontSize:'11px',fontWeight:'700',letterSpacing:'0.08em',textTransform:'uppercase'}}>
                         {order.status}
                       </span>
-                      <span style={{fontFamily:'Georgia,serif',fontSize:'20px',color:'#e8b84b',fontWeight:'700'}}>${amount}</span>
+                      <span className="playfair" style={{fontSize:'22px',fontWeight:'700',color:'#C8A96E'}}>${amount}</span>
                     </div>
                   </div>
 
-                  {/* Order body */}
-                  <div style={{padding:'16px 20px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'20px'}}>
+                  {/* Body */}
+                  <div style={{padding:'20px 24px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'24px'}}>
 
                     {/* Customer */}
                     <div>
-                      <div style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.15em',textTransform:'uppercase',color:'#3d4f63',marginBottom:'8px'}}>Customer</div>
-                      <div style={{fontWeight:'700',color:'#f0f4f8',marginBottom:'4px'}}>{order.customer_name || 'N/A'}</div>
-                      <div style={{fontSize:'13px',color:'#6e7f94',marginBottom:'4px'}}>{order.customer_email}</div>
-                      <div style={{fontSize:'12px',color:'#4a9eff',marginTop:'8px',lineHeight:'1.6'}}>{formatAddress(order.shipping_address)}</div>
+                      <div className="lato" style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.2em',textTransform:'uppercase',color:'#9B7B62',marginBottom:'10px'}}>Customer</div>
+                      <div className="playfair" style={{fontSize:'17px',fontWeight:'600',marginBottom:'4px'}}>{order.customer_name || 'N/A'}</div>
+                      <div className="lato" style={{fontSize:'13px',color:'#9B7B62',marginBottom:'8px'}}>{order.customer_email}</div>
+                      {address ? (
+                        <div className="lato" style={{fontSize:'12px',color:'#7B8FAE',lineHeight:'1.6',background:'#F5EFE4',padding:'8px 12px',borderRadius:'6px'}}>{address}</div>
+                      ) : (
+                        <div className="lato" style={{fontSize:'12px',color:'#C8B49A',fontStyle:'italic'}}>No address on file</div>
+                      )}
                     </div>
 
                     {/* Order details */}
                     <div>
-                      <div style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.15em',textTransform:'uppercase',color:'#3d4f63',marginBottom:'8px'}}>Order Details</div>
-                      <div style={{marginBottom:'4px'}}><span style={{color:'#6e7f94'}}>Type:</span> <span style={{color:'#f0f4f8',fontWeight:'600',textTransform:'capitalize'}}>{type}</span></div>
-                      <div style={{marginBottom:'4px'}}><span style={{color:'#6e7f94'}}>Quantity:</span> <span style={{color:'#f0f4f8',fontWeight:'600'}}>{qty} band{qty>1?'s':''}</span></div>
+                      <div className="lato" style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.2em',textTransform:'uppercase',color:'#9B7B62',marginBottom:'10px'}}>Order Details</div>
+                      <div className="lato" style={{fontSize:'14px',marginBottom:'6px'}}><span style={{color:'#9B7B62'}}>Type:</span> <strong style={{textTransform:'capitalize'}}>{type}</strong></div>
+                      <div className="lato" style={{fontSize:'14px',marginBottom:'12px'}}><span style={{color:'#9B7B62'}}>Quantity:</span> <strong>{qty} band{qty>1?'s':''}</strong></div>
                       {order.order_metadata?.customMessage && (
-                        <div style={{marginTop:'8px',padding:'8px 12px',background:'rgba(232,184,75,0.08)',border:'1px solid rgba(232,184,75,0.2)',borderRadius:'6px',fontSize:'13px',color:'#c9d1d9',fontStyle:'italic'}}>
+                        <div className="playfair" style={{fontSize:'14px',fontStyle:'italic',color:'#4A2E1A',padding:'10px 14px',background:'rgba(200,169,110,0.06)',borderLeft:'3px solid #C8A96E',borderRadius:'0 6px 6px 0',marginBottom:'8px'}}>
                           "{order.order_metadata.customMessage}"
                         </div>
                       )}
                       {order.order_metadata?.verse && (
-                        <div style={{marginTop:'6px',fontSize:'12px',color:'#2dd4bf'}}>📖 {order.order_metadata.verse}</div>
+                        <div className="lato" style={{fontSize:'12px',color:'#7BAE8E',fontWeight:'700'}}>📖 {order.order_metadata.verse}</div>
                       )}
                     </div>
 
-                    {/* Band assignment + actions */}
+                    {/* Band assignment */}
                     <div>
-                      <div style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.15em',textTransform:'uppercase',color:'#3d4f63',marginBottom:'8px'}}>Band Assignment</div>
+                      <div className="lato" style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.2em',textTransform:'uppercase',color:'#9B7B62',marginBottom:'10px'}}>Band Assignment</div>
 
                       {assigned.length > 0 ? (
                         <div style={{marginBottom:'12px'}}>
                           {assigned.map(b => (
-                            <div key={b} style={{fontFamily:'monospace',fontSize:'13px',color:'#e8b84b',marginBottom:'3px'}}>✝ {b}</div>
+                            <div key={b} className="lato" style={{fontFamily:'monospace',fontSize:'13px',color:'#C8A96E',marginBottom:'4px',letterSpacing:'0.1em'}}>✝ {b}</div>
                           ))}
                         </div>
                       ) : (
-                        <div style={{fontSize:'13px',color:'#3d4f63',marginBottom:'12px',fontStyle:'italic'}}>No bands assigned yet</div>
+                        <div className="lato" style={{fontSize:'13px',color:'#C8B49A',marginBottom:'12px',fontStyle:'italic'}}>No bands assigned yet</div>
                       )}
 
                       {order.status === 'pending' && (
@@ -250,7 +265,8 @@ export default function AdminPage() {
                             <button
                               onClick={() => assignBands(order.id, qty)}
                               disabled={availableBands.length < qty}
-                              style={{background:'rgba(74,158,255,0.1)',color:'#4a9eff',border:'1px solid rgba(74,158,255,0.3)',padding:'8px 14px',borderRadius:'8px',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'sans-serif',letterSpacing:'0.06em'}}
+                              className="lato"
+                              style={{background:'#F5EFE4',color:'#6B4C35',border:'1px solid #E8DFD0',padding:'9px 14px',borderRadius:'6px',fontSize:'12px',fontWeight:'700',cursor:'pointer',letterSpacing:'0.08em',textTransform:'uppercase',transition:'all 0.2s'}}
                             >
                               Assign {qty} Band{qty>1?'s':''} →
                             </button>
@@ -258,7 +274,8 @@ export default function AdminPage() {
                           <button
                             onClick={() => markShipped(order)}
                             disabled={markingShipped === order.id}
-                            style={{background:'rgba(74,222,128,0.1)',color:'#4ade80',border:'1px solid rgba(74,222,128,0.3)',padding:'8px 14px',borderRadius:'8px',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'sans-serif',letterSpacing:'0.06em'}}
+                            className="lato"
+                            style={{background:'#2C1A0E',color:'#FDFAF5',border:'none',padding:'9px 14px',borderRadius:'6px',fontSize:'12px',fontWeight:'700',cursor:'pointer',letterSpacing:'0.08em',textTransform:'uppercase',transition:'all 0.2s'}}
                           >
                             {markingShipped === order.id ? 'Marking...' : '✓ Mark as Shipped'}
                           </button>
@@ -266,7 +283,7 @@ export default function AdminPage() {
                       )}
 
                       {order.status === 'shipped' && (
-                        <div style={{fontSize:'12px',color:'#4ade80',fontWeight:'700'}}>✓ Shipped</div>
+                        <div className="lato" style={{fontSize:'13px',color:'#7BAE8E',fontWeight:'700'}}>✓ Shipped successfully</div>
                       )}
                     </div>
                   </div>
