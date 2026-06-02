@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         payment_status: session.payment_status,
         status: 'pending',
         has_custom_bands: session.metadata?.type === 'custom',
-        shipping_address: (session as any).shipping_details?.address || null,
+        shipping_address: (session as any).shipping?.address || (session as any).shipping_details?.address || null,
         order_metadata: session.metadata,
       })
 
