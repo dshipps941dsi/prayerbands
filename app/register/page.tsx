@@ -1,10 +1,17 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 
 export default function Register() {
   const [step, setStep] = useState(1)
-  const [bandId, setBandId] = useState('')
+  const searchParams = useSearchParams()
+const [bandId, setBandId] = useState('')
+
+useEffect(() => {
+  const id = searchParams.get('id')
+  if (id) setBandId(id.toUpperCase())
+}, [])
   const [bandInfo, setBandInfo] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
