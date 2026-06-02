@@ -84,7 +84,7 @@ export default function PrayerWallPage() {
       .channel('prayer-wall')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'registrations' }, payload => {
         const newPrayer = payload.new as Prayer
-        if (newprayer.prayer) {
+        if (newPrayer.prayer) {
           setPrayers(prev => [newPrayer, ...prev])
           setFiltered(prev => [newPrayer, ...prev])
           setTotalCount(c => c + 1)
