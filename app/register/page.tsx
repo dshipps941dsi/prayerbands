@@ -67,6 +67,8 @@ useEffect(() => {
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error || 'Something went wrong'); setLoading(false); return }
+// Mark this device as registered for this band
+localStorage.setItem(`registered_${bandId}`, 'true')
     setStep(3)
     setLoading(false)
   }
