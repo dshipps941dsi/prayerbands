@@ -1,9 +1,9 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 
-export default function Register() {
+function RegisterInner() {
   const [step, setStep] = useState(1)
   const searchParams = useSearchParams()
 const [bandId, setBandId] = useState('')
@@ -259,5 +259,12 @@ useEffect(() => {
 
       </div>
     </div>
+  )
+}
+export default function Register() {
+  return (
+    <Suspense fallback={<div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#f0f6ff',fontFamily:'sans-serif',textAlign:'center'}}><div><div style={{fontSize:'48px',color:'#f5a623',marginBottom:'16px'}}>✝</div><div style={{fontSize:'16px',color:'#4a5568'}}>Loading...</div></div></div>}>
+      <RegisterInner />
+    </Suspense>
   )
 }
