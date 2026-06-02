@@ -1,16 +1,15 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 
 function RegisterInner() {
   const [step, setStep] = useState(1)
-  const searchParams = useSearchParams()
 const [bandId, setBandId] = useState('')
 
 useEffect(() => {
-  const id = searchParams.get('id')
-  if (id) setBandId(id.toUpperCase())
+  const params = new URLSearchParams(window.location.search)
+  const id = params.get('id')
+  if (id && id !== 'undefined') setBandId(id.toUpperCase())
 }, [])
   const [bandInfo, setBandInfo] = useState<any>(null)
   const [loading, setLoading] = useState(false)
