@@ -38,7 +38,17 @@ export default function Dashboard() {
         <div style={{fontFamily:'Georgia,serif',fontSize:'20px',color:'#f5a623',display:'flex',alignItems:'center',gap:'8px'}}>✝ PrayerBands</div>
         <div style={{display:'flex',alignItems:'center',gap:'16px'}}>
           <span style={{fontSize:'14px',color:'rgba(255,255,255,0.7)'}}>{user.email}</span>
-          <a href="/" style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',textDecoration:'none'}}>Sign out</a>
+          <button onClick={async () => {
+  const { createBrowserClient } = await import('@supabase/ssr')
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+  await supabase.auth.signOut()
+  window.location.href = '/'
+}} style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',background:'none',border:'none',cursor:'pointer',fontFamily:'sans-serif'}}>
+  Sign out
+</button>
         </div>
       </nav>
 
