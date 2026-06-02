@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(req: NextRequest) {
+  const resend = new Resend(process.env.RESEND_API_KEY)
   try {
     const { email, name, bandIds, quantity } = await req.json()
-
     await resend.emails.send({
       from: 'PrayerBands <bands@prayerbands.com>',
       to: [email],
@@ -22,7 +20,6 @@ export async function POST(req: NextRequest) {
             <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 24px">
               Hi ${name}! Your ${quantity} PrayerBand${parseInt(quantity)>1?'s have':' has'} shipped and will arrive within a few days. ✝
             </p>
-
             ${bandIds.length > 0 ? `
             <div style="background:#f0f6ff;border-radius:10px;padding:20px;margin:20px 0">
               <div style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#2b7bc4;margin-bottom:12px">Your Band IDs</div>
@@ -32,7 +29,6 @@ export async function POST(req: NextRequest) {
               `).join('')}
             </div>
             ` : ''}
-
             <div style="background:#e8f4fd;border-radius:10px;padding:20px;margin:20px 0">
               <div style="font-size:14px;color:#4a5568;line-height:2">
                 <strong style="color:#1a5fa0">How to use your bands:</strong><br>
@@ -42,13 +38,11 @@ export async function POST(req: NextRequest) {
                 4. They join the journey ✝
               </div>
             </div>
-
             <div style="text-align:center;margin:28px 0">
               <a href="https://prayerbands.com/dashboard" style="display:inline-block;background:#2b7bc4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700">
                 View Your Dashboard ✝
               </a>
             </div>
-
             <p style="font-size:13px;color:#8896a8;text-align:center;font-style:italic;margin:0">
               "Go into all the world and preach the gospel." — Mark 16:15
             </p>
@@ -56,7 +50,6 @@ export async function POST(req: NextRequest) {
         </div>
       `
     })
-
     return NextResponse.json({ success: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
