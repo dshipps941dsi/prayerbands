@@ -275,7 +275,7 @@ const scrollTo = (href: string) => {
                 A silicone wristband. A unique ID. A digital journey around the world. When you place a PrayerBand on someone's wrist, you are praying for them — no words required.
               </p>
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                <button className="cta-btn" style={{ fontSize: 14, padding: "14px 36px" }} onClick={() => scrollTo("#store")}>Get Bands</button>
+                <a href="/store" style={{ textDecoration: "none" }}><button className="cta-btn" style={{ fontSize: 14, padding: "14px 36px" }}>Get Bands</button></a>
                 <button className="cta-btn-outline" onClick={() => scrollTo("#how")}>See How It Works</button>
               </div>
               <div className="lato" style={{ marginTop: 48, display: "flex", gap: 40 }}>
@@ -536,8 +536,8 @@ const scrollTo = (href: string) => {
               Individual bands. Church packs. Mission quantities. Every order ships NFC-enabled and engraved, ready to carry a prayer.
             </p>
             <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-              <button className="cta-btn" style={{ fontSize: 15, padding: "16px 44px" }}>Shop Bands</button>
-              <button className="cta-btn-outline">Church & Bulk Orders</button>
+              <a href="/store" style={{ textDecoration: "none" }}><button className="cta-btn" style={{ fontSize: 15, padding: "16px 44px" }}>Shop Bands</button></a>
+              <a href="/store#packs" style={{ textDecoration: "none" }}><button className="cta-btn-outline">Church & Bulk Orders</button></a>
             </div>
             <div className="lato" style={{ marginTop: 32, fontSize: 13, color: "#9B7B62", letterSpacing: "0.08em" }}>
               Starting at $5 per band · Ships worldwide · NFC + Laser-engraved ID
