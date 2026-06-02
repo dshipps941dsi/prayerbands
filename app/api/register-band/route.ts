@@ -10,10 +10,6 @@ export async function POST(req: NextRequest) {
   try {
     const { bandId, name, city, state, country, prayer, verse, email } = await req.json()
 
-export async function POST(req: NextRequest) {
-  try {
-    const { bandId, name, city, state, country, prayer, verse, email } = await req.json()
-
     if (!bandId || !name) {
       return NextResponse.json({ error: 'Band ID and name are required' }, { status: 400 })
     }
@@ -39,14 +35,12 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
-    // Get previous registrations for journey alerts
     const { data: prevRegs } = await supabase
       .from('registrations')
       .select('email, user_name')
       .eq('band_id', bandId)
       .not('email', 'is', null)
 
-    // Save new registration
     const { data, error } = await supabase
       .from('registrations')
       .insert({
@@ -70,14 +64,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Update band status
     await supabase
       .from('bands')
       .update({ status: 'registered' })
       .eq('band_id', bandId)
 
-    // Send journey alert emails to previous registrants
-const alertEmails = (prevRegs || []).map((r: any) => r.email).filter(Boolean)
+    const alertEmails = (prevRegs || []).map((r: any) => r.email).filter(Boolean)
     if (alertEmails.length > 0) {
       try {
         const resend = new Resend(process.env.RESEND_API_KEY)
@@ -101,56 +93,4 @@ const alertEmails = (prevRegs || []).map((r: any) => r.email).filter(Boolean)
                   </p>
                   ${prayer ? `<div style="background:#fff;border-left:3px solid #f5a623;padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0"><p style="font-family:Georgia,serif;font-size:17px;font-style:italic;color:#4a5568;line-height:1.75;margin:0">"${prayer}"</p></div>` : ''}
                   <div style="text-align:center;margin:28px 0">
-                    <a href="https://prayerbands.com/band/${bandId}" style="display:inline-block;background:#2b7bc4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700">View Full Journey ✝</a>
-                  </div>
-                  <p style="font-size:13px;color:#8896a8;text-align:center;font-style:italic;margin:0">"Go into all the world and preach the gospel." — Mark 16:15</p>
-                </div>
-              </div>
-            `
-          })
-        }
-      } catch (e) {
-        console.error('Journey alert failed:', e)
-      }
-    }
-
-    // Notify band owner that their band was passed on
-    try {
-      const { data: bandData } = await supabase
-        .from('bands')
-        .select('owner_id')
-        .eq('band_id', bandId)
-        .single()
-
-      if (bandData?.owner_id) {
-        const { data: ownerProfile } = await supabase
-          .from('profiles')
-          .select('email, display_name')
-          .eq('id', bandData.owner_id)
-          .single()
-
-        if (ownerProfile?.email) {
-          await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/send-band-passed-on`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ownerEmail: ownerProfile.email,
-              ownerName: ownerProfile.display_name,
-              bandId,
-              newHolderName: name,
-              city: geoCity,
-              country: geoCountry,
-            })
-          })
-        }
-      }
-    } catch (e) {
-      console.error('Band passed-on notification failed:', e)
-    }
-
-    return NextResponse.json({ success: true, registrationId: data.id })
-  } catch (err: any) {
-    console.error('API error:', err)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
-  }
-}
+                    <a href="ht
