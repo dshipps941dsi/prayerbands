@@ -90,7 +90,7 @@ export default function StorePage() {
   const [customVerse, setCustomVerse] = useState("");
   const [customMsg, setCustomMsg] = useState("");
   const [toast, setToast] = useState("");
-
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(""), 2800);
@@ -433,12 +433,35 @@ export default function StorePage() {
                   </div>
                 </div>
 
-                <button className="checkout-btn" disabled>
-                  Proceed to Checkout — Coming Soon
-                </button>
-                <p className="lato" style={{ fontSize: 11, textAlign: "center", color: "#C8B49A", marginTop: 12, letterSpacing: "0.05em" }}>
-                  Stripe payment coming soon · Secure checkout
-                </p>
+                <button className="checkout-btn" disabled={checkoutLoading || cart.length === 0} onClick={async () => {
+  setCheckoutLoading(true)
+  const hasCustom = cart.some(c => c.type === 'custom')
+  const totalQty = cart.reduce((sum, c) => sum + c.qty, 0)
+  const customItem = cart.find(c => c.type === 'custom')
+  const res = await fetch('/api/create-checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: hasCustom ? 'custom' : 'standard',
+      quantity: totalQty,
+      customMessage: customMsg || '',
+      verse: customVerse || '',
+      color: customColor || 'Amber Gold',
+    })
+  })
+  const data = await res.json()
+  if (data.url) {
+    window.location.href = data.url
+  } else {
+    showToast('Something went wrong — please try again')
+    setCheckoutLoading(false)
+  }
+}}>
+  {checkoutLoading ? 'Redirecting...' : `Proceed to Checkout — $${total.toFixed(2)}`}
+</button>
+<p className="lato" style={{ fontSize: 11, textAlign: "center", color: "#C8B49A", marginTop: 12, letterSpacing: "0.05em" }}>
+  Secure checkout via Stripe · Ships in 3-5 days
+</p>
               </>
             )}
           </div>
