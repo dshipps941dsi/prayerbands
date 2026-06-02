@@ -18,15 +18,29 @@ type Order = {
   created_at: string
 }
 
+type FlaggedPrayer = {
+  id: number
+  band_id: string
+  prayer: string
+  user_name: string
+  city: string
+  country: string
+  flagged_reason: string
+  registered_at: string
+}
+
 export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([])
+  const [flagged, setFlagged] = useState<FlaggedPrayer[]>([])
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
   const [filter, setFilter] = useState('pending')
+  const [showModeration, setShowModeration] = useState(false)
   const [markingShipped, setMarkingShipped] = useState<number | null>(null)
   const [availableBands, setAvailableBands] = useState<string[]>([])
   const [selectedBands, setSelectedBands] = useState<{[orderId: number]: string[]}>({})
   const [stats, setStats] = useState({ total: 0, pending: 0, shipped: 0, revenue: 0 })
+  const [flaggedCount, setFlaggedCount] = useState(0)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,6 +73,12 @@ export default function AdminPage() {
       .is('owner_id', null)
       .limit(500)
 
+    const { data: flaggedPrayers, count: fCount } = await supabase
+      .from('registrations')
+      .select('*', { count: 'exact' })
+      .eq('flagged', true)
+      .order('registered_at', { ascending: false })
+
     if (orders) {
       setOrders(orders)
       const pending = orders.filter(o => o.status === 'pending').length
@@ -67,6 +87,8 @@ export default function AdminPage() {
       setStats({ total: orders.length, pending, shipped, revenue: revenue / 100 })
     }
     if (bands) setAvailableBands(bands.map(b => b.band_id))
+    if (flaggedPrayers) setFlagged(flaggedPrayers as FlaggedPrayer[])
+    setFlaggedCount(fCount || 0)
     setLoading(false)
   }
 
@@ -97,6 +119,18 @@ export default function AdminPage() {
     }
   }
 
+  async function unflagPrayer(id: number) {
+    await supabase.from('registrations').update({ flagged: false, flagged_reason: null }).eq('id', id)
+    setFlagged(prev => prev.filter(p => p.id !== id))
+    setFlaggedCount(prev => prev - 1)
+  }
+
+  async function deletePrayer(id: number) {
+    await supabase.from('registrations').update({ prayer: null, flagged: false }).eq('id', id)
+    setFlagged(prev => prev.filter(p => p.id !== id))
+    setFlaggedCount(prev => prev - 1)
+  }
+
   const filtered = orders.filter(o => filter === 'all' ? true : o.status === filter)
 
   const formatAddress = (addr: any) => {
@@ -122,7 +156,6 @@ export default function AdminPage() {
         * { box-sizing: border-box; }
       `}</style>
 
-      {/* Nav */}
       <nav style={{background:'#2C1A0E',padding:'0 40px',height:60,display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:50}}>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
           <div style={{width:28,height:28,borderRadius:'50%',background:'#C8A96E',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff'}}>✝</div>
@@ -140,7 +173,6 @@ export default function AdminPage() {
 
       <div style={{maxWidth:'1160px',margin:'0 auto',padding:'40px 32px'}}>
 
-        {/* Page title */}
         <div style={{marginBottom:'32px'}}>
           <span className="lato" style={{fontSize:11,letterSpacing:'0.25em',textTransform:'uppercase',color:'#C8A96E',display:'block',marginBottom:8}}>Ministry Operations</span>
           <h1 className="playfair" style={{fontSize:'clamp(28px,4vw,42px)',fontWeight:700,lineHeight:1.15,marginBottom:4}}>Order Management</h1>
@@ -163,13 +195,66 @@ export default function AdminPage() {
         </div>
 
         {/* Band inventory */}
-        <div style={{background:'#fff',border:'1px solid #E8DFD0',borderLeft:'4px solid #7BAE8E',borderRadius:'10px',padding:'16px 20px',marginBottom:'24px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px'}}>
+        <div style={{background:'#fff',border:'1px solid #E8DFD0',borderLeft:'4px solid #7BAE8E',borderRadius:'10px',padding:'16px 20px',marginBottom:'20px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px'}}>
           <div>
             <div className="lato" style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.2em',textTransform:'uppercase',color:'#9B7B62',marginBottom:'4px'}}>Available Band IDs</div>
             <div className="playfair" style={{fontSize:'24px',color:'#7BAE8E',fontWeight:'700'}}>{availableBands.length} bands ready to assign</div>
           </div>
           <div className="lato" style={{fontSize:'13px',color:'#C8B49A',fontStyle:'italic'}}>Click "Assign Bands" on any order to assign IDs from inventory</div>
         </div>
+
+        {/* Moderation alert */}
+        {flaggedCount > 0 && (
+          <div style={{background:'rgba(174,123,123,0.08)',border:'1px solid rgba(174,123,123,0.3)',borderRadius:'10px',padding:'14px 20px',marginBottom:'20px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px'}}>
+            <div className="lato" style={{fontSize:'14px',color:'#AE7B7B',fontWeight:'700'}}>
+              ⚑ {flaggedCount} prayer{flaggedCount>1?'s':''} flagged for review
+            </div>
+            <button onClick={()=>setShowModeration(!showModeration)} className="lato" style={{background:'#AE7B7B',color:'#fff',border:'none',padding:'8px 18px',borderRadius:'6px',fontSize:'12px',fontWeight:'700',cursor:'pointer',letterSpacing:'0.08em',textTransform:'uppercase'}}>
+              {showModeration ? 'Hide Queue' : 'Review Now →'}
+            </button>
+          </div>
+        )}
+
+        {/* Moderation queue */}
+        {showModeration && flagged.length > 0 && (
+          <div style={{background:'#fff',border:'1px solid #E8DFD0',borderTop:'3px solid #AE7B7B',borderRadius:'10px',padding:'24px',marginBottom:'24px'}}>
+            <div style={{marginBottom:'20px'}}>
+              <span className="lato" style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#AE7B7B',display:'block',marginBottom:'6px'}}>Content Moderation</span>
+              <h2 className="playfair" style={{fontSize:'22px',fontWeight:'600'}}>Flagged Prayers</h2>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+              {flagged.map(p => (
+                <div key={p.id} style={{background:'#FDFAF5',border:'1px solid #E8DFD0',borderRadius:'8px',padding:'16px 20px'}}>
+                  <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:'16px',flexWrap:'wrap'}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:'flex',gap:'12px',alignItems:'center',marginBottom:'8px',flexWrap:'wrap'}}>
+                        <div className="lato" style={{fontSize:'13px',fontWeight:'700',color:'#2C1A0E'}}>{p.user_name || 'Anonymous'}</div>
+                        <div className="lato" style={{fontFamily:'monospace',fontSize:'12px',color:'#C8A96E',letterSpacing:'0.1em'}}>{p.band_id}</div>
+                        <div className="lato" style={{fontSize:'11px',color:'#C8B49A'}}>{[p.city, p.country].filter(Boolean).join(', ')}</div>
+                      </div>
+                      <div className="playfair" style={{fontSize:'15px',fontStyle:'italic',color:'#4A2E1A',lineHeight:'1.7',marginBottom:'8px'}}>
+                        "{p.prayer}"
+                      </div>
+                      {p.flagged_reason && (
+                        <div className="lato" style={{fontSize:'12px',color:'#AE7B7B',background:'rgba(174,123,123,0.08)',padding:'6px 10px',borderRadius:'4px',display:'inline-block'}}>
+                          Reason: {p.flagged_reason}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:'8px',flexShrink:0}}>
+                      <button onClick={()=>unflagPrayer(p.id)} className="lato" style={{background:'#F5EFE4',color:'#6B4C35',border:'1px solid #E8DFD0',padding:'7px 14px',borderRadius:'6px',fontSize:'11px',fontWeight:'700',cursor:'pointer',letterSpacing:'0.08em',textTransform:'uppercase',whiteSpace:'nowrap'}}>
+                        ✓ Approve
+                      </button>
+                      <button onClick={()=>deletePrayer(p.id)} className="lato" style={{background:'rgba(174,123,123,0.1)',color:'#AE7B7B',border:'1px solid rgba(174,123,123,0.3)',padding:'7px 14px',borderRadius:'6px',fontSize:'11px',fontWeight:'700',cursor:'pointer',letterSpacing:'0.08em',textTransform:'uppercase',whiteSpace:'nowrap'}}>
+                        ✕ Remove Prayer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Filter tabs */}
         <div style={{display:'flex',gap:'8px',marginBottom:'20px'}}>
@@ -202,11 +287,9 @@ export default function AdminPage() {
 
               return (
                 <div key={order.id} style={{background:'#fff',border:'1px solid #E8DFD0',borderTop:`3px solid ${statusColor}`,borderRadius:'10px',overflow:'hidden',boxShadow:'0 2px 12px rgba(44,26,14,0.05)'}}>
-
-                  {/* Header */}
                   <div style={{padding:'16px 24px',borderBottom:'1px solid #F5EFE4',display:'flex',alignItems:'center',gap:'16px',flexWrap:'wrap',background:'#FDFAF5'}}>
                     <div className="playfair" style={{fontSize:'18px',fontWeight:'600',color:'#2C1A0E'}}>Order #{order.id}</div>
-                    <div className="lato" style={{fontSize:'12px',color:'#C8B49A'}}>{new Date(order.created_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+                    <div className="lato" style={{fontSize:'12px',color:'#C8B49A'}}>{new Date(order.created_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div>
                     <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'12px'}}>
                       <span className="lato" style={{background:`${statusColor}18`,color:statusColor,border:`1px solid ${statusColor}44`,padding:'4px 12px',borderRadius:'100px',fontSize:'11px',fontWeight:'700',letterSpacing:'0.08em',textTransform:'uppercase'}}>
                         {order.status}
@@ -215,10 +298,7 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  {/* Body */}
                   <div style={{padding:'20px 24px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'24px'}}>
-
-                    {/* Customer */}
                     <div>
                       <div className="lato" style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.2em',textTransform:'uppercase',color:'#9B7B62',marginBottom:'10px'}}>Customer</div>
                       <div className="playfair" style={{fontSize:'17px',fontWeight:'600',marginBottom:'4px'}}>{order.customer_name || 'N/A'}</div>
@@ -230,7 +310,6 @@ export default function AdminPage() {
                       )}
                     </div>
 
-                    {/* Order details */}
                     <div>
                       <div className="lato" style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.2em',textTransform:'uppercase',color:'#9B7B62',marginBottom:'10px'}}>Order Details</div>
                       <div className="lato" style={{fontSize:'14px',marginBottom:'6px'}}><span style={{color:'#9B7B62'}}>Type:</span> <strong style={{textTransform:'capitalize'}}>{type}</strong></div>
@@ -245,10 +324,8 @@ export default function AdminPage() {
                       )}
                     </div>
 
-                    {/* Band assignment */}
                     <div>
                       <div className="lato" style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.2em',textTransform:'uppercase',color:'#9B7B62',marginBottom:'10px'}}>Band Assignment</div>
-
                       {assigned.length > 0 ? (
                         <div style={{marginBottom:'12px'}}>
                           {assigned.map(b => (
@@ -258,30 +335,18 @@ export default function AdminPage() {
                       ) : (
                         <div className="lato" style={{fontSize:'13px',color:'#C8B49A',marginBottom:'12px',fontStyle:'italic'}}>No bands assigned yet</div>
                       )}
-
                       {order.status === 'pending' && (
                         <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                           {assigned.length === 0 && (
-                            <button
-                              onClick={() => assignBands(order.id, qty)}
-                              disabled={availableBands.length < qty}
-                              className="lato"
-                              style={{background:'#F5EFE4',color:'#6B4C35',border:'1px solid #E8DFD0',padding:'9px 14px',borderRadius:'6px',fontSize:'12px',fontWeight:'700',cursor:'pointer',letterSpacing:'0.08em',textTransform:'uppercase',transition:'all 0.2s'}}
-                            >
+                            <button onClick={() => assignBands(order.id, qty)} disabled={availableBands.length < qty} className="lato" style={{background:'#F5EFE4',color:'#6B4C35',border:'1px solid #E8DFD0',padding:'9px 14px',borderRadius:'6px',fontSize:'12px',fontWeight:'700',cursor:'pointer',letterSpacing:'0.08em',textTransform:'uppercase'}}>
                               Assign {qty} Band{qty>1?'s':''} →
                             </button>
                           )}
-                          <button
-                            onClick={() => markShipped(order)}
-                            disabled={markingShipped === order.id}
-                            className="lato"
-                            style={{background:'#2C1A0E',color:'#FDFAF5',border:'none',padding:'9px 14px',borderRadius:'6px',fontSize:'12px',fontWeight:'700',cursor:'pointer',letterSpacing:'0.08em',textTransform:'uppercase',transition:'all 0.2s'}}
-                          >
+                          <button onClick={() => markShipped(order)} disabled={markingShipped === order.id} className="lato" style={{background:'#2C1A0E',color:'#FDFAF5',border:'none',padding:'9px 14px',borderRadius:'6px',fontSize:'12px',fontWeight:'700',cursor:'pointer',letterSpacing:'0.08em',textTransform:'uppercase'}}>
                             {markingShipped === order.id ? 'Marking...' : '✓ Mark as Shipped'}
                           </button>
                         </div>
                       )}
-
                       {order.status === 'shipped' && (
                         <div className="lato" style={{fontSize:'13px',color:'#7BAE8E',fontWeight:'700'}}>✓ Shipped successfully</div>
                       )}

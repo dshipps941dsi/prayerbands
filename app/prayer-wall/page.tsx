@@ -67,6 +67,7 @@ export default function PrayerWallPage() {
       .select('id, band_id, prayer, user_name, city, state, country, verse, registered_at', { count: 'exact' })
       .not('prayer', 'is', null)
       .neq('prayer', '')
+      .eq('flagged', false)
       .order('registered_at', { ascending: false })
       .range(from, from + PAGE_SIZE - 1)
 
@@ -81,7 +82,6 @@ export default function PrayerWallPage() {
 
   useEffect(() => {
     loadPrayers(0)
-
     const channel = supabase
       .channel('prayer-wall')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'registrations' }, payload => {
@@ -93,7 +93,6 @@ export default function PrayerWallPage() {
         }
       })
       .subscribe()
-
     return () => { supabase.removeChannel(channel) }
   }, [])
 
@@ -118,6 +117,20 @@ export default function PrayerWallPage() {
     setLocation('')
     setShowForm(false)
     showToast('Your prayer has been added to the wall ✝')
+  }
+
+  async function reportPrayer(id: string) {
+    const reason = prompt('Why are you reporting this prayer? (optional)')
+    if (reason === null) return
+    const { error } = await supabase
+      .from('registrations')
+      .update({ flagged: true, flagged_reason: reason || 'Reported by user' })
+      .eq('id', id)
+    if (!error) {
+      setFiltered(prev => prev.filter(p => p.id !== id))
+      setPrayers(prev => prev.filter(p => p.id !== id))
+      showToast('Prayer reported — thank you for keeping the wall sacred ✝')
+    }
   }
 
   const timeAgo = (date: string) => {
@@ -265,7 +278,13 @@ export default function PrayerWallPage() {
                         onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = color}
                         onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = '#9B7B62'}
                       >See Band Journey →</a>
-                      <div className="lato" style={{ fontSize: 11, color: '#C8A96E' }}>🙏 Pray Along</div>
+                      <button
+                        onClick={() => reportPrayer(prayer.id)}
+                        className="lato"
+                        style={{fontSize:11,color:'#C8B49A',background:'none',border:'none',cursor:'pointer',fontFamily:'Lato,sans-serif',padding:0,transition:'color 0.2s'}}
+                        onMouseEnter={e=>(e.currentTarget as HTMLButtonElement).style.color='#AE7B7B'}
+                        onMouseLeave={e=>(e.currentTarget as HTMLButtonElement).style.color='#C8B49A'}
+                      >⚑ Report</button>
                     </div>
                   </div>
                 )
