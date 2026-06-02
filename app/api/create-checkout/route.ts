@@ -6,10 +6,6 @@ export async function POST(req: NextRequest) {
   try {
     const { type, quantity, customMessage, verse, color, email } = await req.json()
 
-export async function POST(req: NextRequest) {
-  try {
-    const { type, quantity, customMessage, verse, color, email } = await req.json()
-
     const priceId = type === 'custom'
       ? process.env.STRIPE_CUSTOM_PRICE_ID!
       : process.env.STRIPE_STANDARD_PRICE_ID!
