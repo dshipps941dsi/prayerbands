@@ -68,7 +68,7 @@ export default function PrayerWallPage() {
       .range(from, from + PAGE_SIZE - 1)
 
     if (!error && data) {
-      const newPrayers = pageNum === 0 ? (data as Prayer[]) : [...prayers, ...(data as Prayer[])]
+      const newPrayers = pageNum === 0 ? (data as unknown as Prayer[]) : [...prayers, ...(data as unknown as Prayer[])]
       setPrayers(newPrayers)
       setFiltered(applyFilter(newPrayers, filter))
       setTotalCount(count || 0)
