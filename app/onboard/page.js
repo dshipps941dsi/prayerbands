@@ -157,17 +157,13 @@ export default function OnboardPage() {
                   Your church will receive:
                 </div>
                 <div style={{ display: 'flex', gap: 20 }}>
-                  <div>
-                    <span style={{ color: '#8a7c6a', fontSize: 11 }}>BAND PREFIX</span>
-                    <div style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: 15 }}>
-                      {preview.prefix}-XXXXX
-                    </div>
-                  </div>
-                  <div>
-                    <span style={{ color: '#8a7c6a', fontSize: 11 }}>SUBDOMAIN</span>
-                    <div style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: 15 }}>
-                      {preview.subdomain}.prayerbands.com
-                    </div>
+                  <div style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: 15, color: '#1a1208' }}>
+  {preview.prefix}-XXXXX
+</div>
+...
+<div style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: 15, color: '#1a1208' }}>
+  {preview.subdomain}.prayerbands.com
+</div>
                   </div>
                 </div>
               </div>
