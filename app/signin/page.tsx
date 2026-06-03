@@ -38,18 +38,27 @@ export default function SignIn() {
       return
     }
     const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('org_id')
-        .eq('id', user.id)
-        .maybeSingle()
-      if (profile?.org_id) {
-        router.push('/org/dashboard')
-        return
-      }
+    if (!user) {
+      setError('Could not get user after sign in')
+      setLoading(false)
+      return
     }
-    router.push('/dashboard')
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('org_id')
+      .eq('id', user.id)
+      .maybeSingle()
+    if (profileError) {
+      setError('Profile error: ' + profileError.message)
+      setLoading(false)
+      return
+    }
+    if (profile?.org_id) {
+      router.push('/org/dashboard')
+      return
+    }
+    setError('No org found. User ID: ' + user.id)
+    setLoading(false)
   }
 
   const green = '#1a6b4a'
