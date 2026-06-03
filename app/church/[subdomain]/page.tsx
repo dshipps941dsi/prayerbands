@@ -11,7 +11,7 @@ export default function ChurchPage({ params }: { params: { subdomain: string } }
 
   useEffect(() => {
     async function load() {
-      const res = await fetch(`/api/church-public?subdomain=${params.subdomain}`)
+      const res = await fetch(`https://prayerbands.com/api/church-public?subdomain=${params.subdomain}`)
       if (!res.ok) { setNotFound(true); setLoading(false); return }
       const { org, stats, prayers } = await res.json()
       setOrg(org)
