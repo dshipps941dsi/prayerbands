@@ -109,9 +109,7 @@ export default function BandJourney() {
             target="_blank"
             rel="noopener noreferrer"
             style={{color: '#fff', fontWeight: 'bold', textDecoration: 'underline'}}
-          >
-            {org.name}
-          </a>
+          >{org.name}</a>
           <span style={{opacity: 0.9}}> as a prayer ✝</span>
         </div>
       )}
