@@ -1,9 +1,89 @@
 'use client'
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 
 const NAV = ['Overview', 'Bands', 'Prayer Wall', 'Lineage', 'Orders', 'Settings']
+function OrgMap({ orgId, green }: { orgId: string, green: string }) {
+  const [points, setPoints] = useState<any[]>([])
+  const [mapLoaded, setMapLoaded] = useState(false)
+  const [mode, setMode] = useState<'current' | 'all'>('current')
+  const mapRef = useRef<any>(null)
+  const mapInstanceRef = useRef<any>(null)
+
+  useEffect(() => {
+    if (!orgId) return
+    fetch('/api/org-map-data?org_id=' + orgId)
+      .then(r => r.json())
+      .then(d => { setPoints(d.points || []); setMapLoaded(true) })
+  }, [orgId])
+
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current || typeof window === 'undefined') return
+    const loadMap = () => {
+      if (!(window as any).L) {
+        if (!document.getElementById('leaflet-css')) {
+          const link = document.createElement('link')
+          link.id = 'leaflet-css'
+          link.rel = 'stylesheet'
+          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+          document.head.appendChild(link)
+        }
+        const script = document.createElement('script')
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+        script.onload = () => renderMap()
+        document.head.appendChild(script)
+      } else {
+        renderMap()
+      }
+    }
+
+    const renderMap = () => {
+      const L = (window as any).L
+      if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null }
+      const filtered = mode === 'current' ? points.filter(p => p.isCurrent) : points
+      const valid = filtered.filter(p => p.lat && p.lng)
+      if (!valid.length || !mapRef.current) return
+      const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false })
+      mapInstanceRef.current = map
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map)
+      const markers: any[] = []
+      valid.forEach(p => {
+        const dot = L.divIcon({
+          className: '',
+          html: '<div style="width:12px;height:12px;background:' + (mode === 'current' ? green : '#e8526a') + ';border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,0.3);"></div>',
+          iconSize: [12, 12], iconAnchor: [6, 6],
+        })
+        const m = L.marker([p.lat, p.lng], { icon: dot }).addTo(map)
+        m.bindPopup('<div style="font-family:Georgia,serif"><div style="font-family:monospace;font-weight:bold;color:' + green + '">' + p.bandId + '</div>' + (p.name ? '<div style="font-size:13px">' + p.name + '</div>' : '') + (p.city || p.country ? '<div style="font-size:12px;color:#8a7c6a">' + [p.city, p.country].filter(Boolean).join(', ') + '</div>' : '') + (p.prayer ? '<div style="font-size:12px;font-style:italic;border-left:2px solid ' + green + ';padding-left:6px;margin-top:4px">"' + p.prayer.slice(0, 80) + '"</div>' : '') + '</div>')
+        markers.push(m)
+      })
+      if (markers.length === 1) { map.setView([valid[0].lat, valid[0].lng], 5) }
+      else { map.fitBounds(L.featureGroup(markers).getBounds().pad(0.2)) }
+    }
+    loadMap()
+    return () => { if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null } }
+  }, [mapLoaded, points, mode, green])
+
+  const currentCount = points.filter(p => p.isCurrent && p.lat && p.lng).length
+  const allCount = points.filter(p => p.lat && p.lng).length
+
+  if (!mapLoaded) return null
+  if (!points.length) return null
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden', marginBottom: 20 }}>
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0ece6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontWeight: 'bold', fontSize: 15 }}>Ministry Map</span>
+        <div style={{ display: 'flex', gap: 4, background: '#f7f4ef', borderRadius: 6, padding: 3 }}>
+          <button onClick={() => setMode('current')} style={{ padding: '4px 12px', borderRadius: 4, border: 'none', background: mode === 'current' ? green : 'transparent', color: mode === 'current' ? '#fff' : '#8a7c6a', fontSize: 12, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: mode === 'current' ? 700 : 400 }}>Current ({currentCount})</button>
+          <button onClick={() => setMode('all')} style={{ padding: '4px 12px', borderRadius: 4, border: 'none', background: mode === 'all' ? green : 'transparent', color: mode === 'all' ? '#fff' : '#8a7c6a', fontSize: 12, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: mode === 'all' ? 700 : 400 }}>All Journeys ({allCount})</button>
+        </div>
+      </div>
+      <div ref={mapRef} style={{ height: 380, width: '100%' }} />
+    </div>
+  )
+}
 
 function Sidebar({ org, tab, green }: { org: any, tab: string, green: string }) {
   return (
@@ -141,6 +221,9 @@ function OrgDashboardInner() {
               </div>
             ))}
           </div>
+          {/* Ministry Map */}
+          <OrgMap orgId={org?.id} green={green} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 20 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 20 }}>
             <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid #f0ece6', display: 'flex', justifyContent: 'space-between' }}>
