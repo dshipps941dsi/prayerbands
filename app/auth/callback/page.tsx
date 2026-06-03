@@ -22,19 +22,32 @@ export default function AuthCallback() {
       }
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        handleRedirect(data.session.user.id)
-      } else {
-        supabase.auth.onAuthStateChange((event, session) => {
-          if (session) {
-            handleRedirect(session.user.id)
-          } else {
-            window.location.href = '/signin'
-          }
-        })
+    // Listen for auth state change first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        subscription.unsubscribe()
+        handleRedirect(session.user.id)
       }
     })
+
+    // Also check existing session in case it's already set
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        subscription.unsubscribe()
+        handleRedirect(data.session.user.id)
+      }
+    })
+
+    // Timeout fallback
+    const timeout = setTimeout(() => {
+      subscription.unsubscribe()
+      window.location.href = '/signin'
+    }, 5000)
+
+    return () => {
+      clearTimeout(timeout)
+      subscription.unsubscribe()
+    }
   }, [])
 
   return (
