@@ -45,6 +45,7 @@ export default function SignIn() {
     if (!userId) {
       setError('No user ID returned')
       setLoading(false)
+      setStatus('')
       return
     }
 
@@ -57,6 +58,7 @@ export default function SignIn() {
     if (profileError) {
       setError('Profile error: ' + profileError.message)
       setLoading(false)
+      setStatus('')
       return
     }
 
@@ -66,6 +68,7 @@ export default function SignIn() {
     } else {
       window.location.replace('/dashboard')
     }
+  }
 
   const green = '#1a6b4a'
   const inputStyle = {
@@ -152,10 +155,10 @@ export default function SignIn() {
               value={email} onChange={e => setEmail(e.target.value)}
             />
             <input
-  style={inputStyle} type="password" placeholder="Password"
-  value={password} onChange={e => setPassword(e.target.value)}
-  onKeyDown={e => { if (e.key === 'Enter' && email && password) signInWithEmail() }}
-/>
+              style={inputStyle} type="password" placeholder="Password"
+              value={password} onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && email && password) signInWithEmail() }}
+            />
 
             {error && (
               <div style={{
