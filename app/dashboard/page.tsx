@@ -119,21 +119,19 @@ export default function Dashboard() {
         .select('id, band_id, created_at')
         .eq('owner_id', user.id)
         .order('created_at', { ascending: false })
-      setBands((bandsData as Band[]) || [])
 
-      // Get registration counts separately
       const bandIds = (bandsData || []).map((b: any) => b.band_id)
+
       const { data: regCounts } = await supabase
         .from('registrations')
         .select('band_id')
         .in('band_id', bandIds.length > 0 ? bandIds : ['none'])
-      
+
       const regCountMap: Record<string, number> = {}
-      ;(regCounts || []).forEach(r => {
+      ;(regCounts || []).forEach((r: any) => {
         regCountMap[r.band_id] = (regCountMap[r.band_id] || 0) + 1
       })
 
-      // Merge counts back
       const bandsWithCounts = (bandsData || []).map((b: any) => ({
         ...b,
         registrations: [{ count: regCountMap[b.band_id] || 0 }],
@@ -151,7 +149,7 @@ export default function Dashboard() {
       const { data: regs } = await supabase
         .from('registrations')
         .select('id, band_id, location, created_at')
-        .in('band_id', (bandsData || []).map((b: Band) => b.band_id))
+        .in('band_id', bandIds.length > 0 ? bandIds : ['none'])
         .order('created_at', { ascending: false })
         .limit(10)
 
@@ -164,23 +162,21 @@ export default function Dashboard() {
       const totalRegs = Object.values(regCountMap).reduce((sum, c) => sum + c, 0)
       setStats({ bands: (bandsData || []).length, prayers: 0, registrations: totalRegs, countries: 0 })
 
-      // Load map points
-      const mapBandIds = (bandsData || []).map((b: Band) => b.band_id)
-      if (mapBandIds.length > 0) {
+      if (bandIds.length > 0) {
         const { data: mapData } = await supabase
           .from('registrations')
           .select('band_id, user_name, city, country, latitude, longitude, prayer, registered_at')
-          .in('band_id', mapBandIds)
+          .in('band_id', bandIds)
           .not('latitude', 'is', null)
           .not('longitude', 'is', null)
         const latest: Record<string, any> = {}
-        ;(mapData || []).forEach(r => {
+        ;(mapData || []).forEach((r: any) => {
           if (!latest[r.band_id] || new Date(r.registered_at) > new Date(latest[r.band_id].registered_at)) {
             latest[r.band_id] = r
           }
         })
         const latestKeys = new Set(Object.values(latest).map((r: any) => r.band_id + r.registered_at))
-        setMapPoints((mapData || []).map(r => ({
+        setMapPoints((mapData || []).map((r: any) => ({
           lat: r.latitude, lng: r.longitude, bandId: r.band_id,
           name: r.user_name, city: r.city, country: r.country,
           prayer: r.prayer, date: r.registered_at,
@@ -422,7 +418,6 @@ export default function Dashboard() {
             )}
           </div>
         )}
-
       </div>
     </div>
   )
