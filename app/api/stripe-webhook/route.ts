@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
         has_custom_bands: session.metadata?.type === 'custom',
         shipping_address: (session as any).shipping?.address || (session as any).shipping_details?.address || null,
         order_metadata: session.metadata,
+        org_id: session.metadata?.org_id || null,
       })
 
       const { Resend } = await import('resend')
