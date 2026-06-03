@@ -50,7 +50,7 @@ export default function SignIn() {
         return
       }
     }
-    router.push('/dashboard')
+    router.push('/org/dashboard')
   }
 
   const green = '#1a6b4a'
