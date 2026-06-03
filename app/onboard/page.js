@@ -280,7 +280,18 @@ export default function OnboardPage() {
               </span>.
             </p>
             <button
-              onClick={() => router.push('/org/dashboard')}
+  onClick={async () => {
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+    await supabase.auth.signInWithPassword({
+      email: form.email,
+      password: form.password,
+    });
+    router.push('/org/dashboard');
+  }}
               style={{
                 width: '100%', padding: '13px', borderRadius: 8,
                 background: green, color: '#fff', border: 'none',
