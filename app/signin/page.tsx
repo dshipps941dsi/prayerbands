@@ -195,6 +195,12 @@ export default function SignIn() {
             >
               ← Back
             </button>
+            <a href="/reset-password" style={{
+  display: 'block', textAlign: 'center',
+  color: '#8a7c6a', fontSize: 13, textDecoration: 'none', marginTop: 8,
+}}>
+  Forgot your password?
+</a>
           </div>
         )}
       </div>
