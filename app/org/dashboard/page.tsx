@@ -32,14 +32,11 @@ function OrgDashboardInner() {
         userId = user.id
       }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('org_id, organizations(*)')
-        .eq('id', userId)
-        .maybeSingle()
-
+      const profileRes = await fetch('/api/org-profile?uid=' + userId)
+      if (!profileRes.ok) { window.location.href = '/signin'; return }
+      const { profile } = await profileRes.json()
       if (!profile?.org_id) { window.location.href = '/signin'; return }
-      const orgData = (profile as any).organizations
+      const orgData = profile.organizations
       setOrg(orgData)
 
       const { data: statsData } = await supabase
