@@ -223,7 +223,6 @@ function OrgDashboardInner() {
           </div>
           {/* Ministry Map */}
           <OrgMap orgId={org?.id} green={green} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 20 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 20 }}>
             <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid #f0ece6', display: 'flex', justifyContent: 'space-between' }}>
@@ -262,7 +261,6 @@ function OrgDashboardInner() {
           </div>
         </div>
       </div>
-    </div>
   )
 
   // ── BANDS ─────────────────────────────────────────────────
