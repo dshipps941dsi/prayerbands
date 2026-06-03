@@ -8,6 +8,7 @@ export default function SignIn() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [status, setStatus] = useState('')
 
   function getSupabase() {
     return createBrowserClient(
@@ -28,18 +29,43 @@ export default function SignIn() {
   async function signInWithEmail() {
     setLoading(true)
     setError('')
+    setStatus('Signing in...')
     const supabase = getSupabase()
+
     const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
     if (signInError) {
       setError(signInError.message)
       setLoading(false)
+      setStatus('')
       return
     }
-    if (data.session) {
-      document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=3600; SameSite=Lax`
-      document.cookie = `sb-refresh-token=${data.session.refresh_token}; path=/; max-age=86400; SameSite=Lax`
+
+    setStatus('Checking profile...')
+    const userId = data.session?.user?.id || data.user?.id
+    if (!userId) {
+      setError('No user ID returned')
+      setLoading(false)
+      return
     }
-    window.location.href = '/auth/callback'
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('org_id')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (profileError) {
+      setError('Profile error: ' + profileError.message)
+      setLoading(false)
+      return
+    }
+
+    setStatus('Redirecting...')
+    if (profile?.org_id) {
+      window.location.replace('/org/dashboard')
+    } else {
+      window.location.replace('/dashboard')
+    }
   }
 
   const green = '#1a6b4a'
@@ -50,6 +76,20 @@ export default function SignIn() {
     color: '#2c2416', boxSizing: 'border-box' as const, outline: 'none',
     marginBottom: 12,
   }
+
+  if (status) return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', background: '#f7f4ef',
+      fontFamily: 'Georgia, serif', textAlign: 'center',
+    }}>
+      <div>
+        <div style={{ fontSize: 48, color: green, marginBottom: 16 }}>✝</div>
+        <div style={{ fontSize: 16, color: '#5a4f42' }}>{status}</div>
+        {error && <div style={{ color: '#c0392b', marginTop: 12, fontSize: 13 }}>{error}</div>}
+      </div>
+    </div>
+  )
 
   return (
     <div style={{
