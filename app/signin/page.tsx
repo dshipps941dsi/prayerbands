@@ -51,13 +51,7 @@ export default function SignIn() {
       setLoading(false)
       return
     }
-    if (profile?.org_id) {
-      window.location.href = '/org/dashboard'
-      return
-    }
-    window.location.href = '/dashboard'
-  }
-
+    window.location.href = '/auth/callback'
   const green = '#1a6b4a'
   const inputStyle = {
     width: '100%', padding: '11px 14px', borderRadius: 7,
