@@ -62,11 +62,10 @@ export default function SignIn() {
 
     setStatus('Redirecting...')
     if (profile?.org_id) {
-      window.location.replace('/org/dashboard')
+      window.location.replace('/org/dashboard?uid=' + userId)
     } else {
       window.location.replace('/dashboard')
     }
-  }
 
   const green = '#1a6b4a'
   const inputStyle = {
