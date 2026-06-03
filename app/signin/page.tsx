@@ -153,9 +153,10 @@ export default function SignIn() {
               value={email} onChange={e => setEmail(e.target.value)}
             />
             <input
-              style={inputStyle} type="password" placeholder="Password"
-              value={password} onChange={e => setPassword(e.target.value)}
-            />
+  style={inputStyle} type="password" placeholder="Password"
+  value={password} onChange={e => setPassword(e.target.value)}
+  onKeyDown={e => { if (e.key === 'Enter' && email && password) signInWithEmail() }}
+/>
 
             {error && (
               <div style={{
