@@ -9,27 +9,52 @@ export default function AuthCallback() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        window.location.href = '/dashboard'
+    async function handleRedirect(userId: string) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('org_id')
+        .eq('id', userId)
+        .maybeSingle()
+      if (profile?.org_id) {
+        window.location.href = '/org/dashboard'
       } else {
-        // Handle hash fragment tokens
-        supabase.auth.onAuthStateChange((event, session) => {
-          if (session) {
-            window.location.href = '/dashboard'
-          } else {
-            window.location.href = '/signin'
-          }
-        })
+        window.location.href = '/dashboard'
+      }
+    }
+
+    // Listen for auth state change first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        subscription.unsubscribe()
+        handleRedirect(session.user.id)
       }
     })
+
+    // Also check existing session in case it's already set
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        subscription.unsubscribe()
+        handleRedirect(data.session.user.id)
+      }
+    })
+
+    // Timeout fallback
+    const timeout = setTimeout(() => {
+      subscription.unsubscribe()
+      window.location.href = '/signin'
+    }, 5000)
+
+    return () => {
+      clearTimeout(timeout)
+      subscription.unsubscribe()
+    }
   }, [])
 
   return (
-    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#f0f6ff',fontFamily:'sans-serif',textAlign:'center'}}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f4ef', fontFamily: 'Georgia, serif', textAlign: 'center' }}>
       <div>
-        <div style={{fontSize:'48px',color:'#f5a623',marginBottom:'16px'}}>✝</div>
-        <div style={{fontSize:'16px',color:'#4a5568'}}>Signing you in...</div>
+        <div style={{ fontSize: 48, color: '#1a6b4a', marginBottom: 16 }}>✝</div>
+        <div style={{ fontSize: 16, color: '#5a4f42' }}>Signing you in...</div>
       </div>
     </div>
   )
