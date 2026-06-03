@@ -116,10 +116,30 @@ export default function Dashboard() {
 
       const { data: bandsData } = await supabase
         .from('bands')
-        .select('id, band_id, created_at, registrations(count), chain_prayers(count)')
+        .select('id, band_id, created_at')
         .eq('owner_id', user.id)
         .order('created_at', { ascending: false })
       setBands((bandsData as Band[]) || [])
+
+      // Get registration counts separately
+      const bandIds = (bandsData || []).map((b: any) => b.band_id)
+      const { data: regCounts } = await supabase
+        .from('registrations')
+        .select('band_id')
+        .in('band_id', bandIds.length > 0 ? bandIds : ['none'])
+      
+      const regCountMap: Record<string, number> = {}
+      ;(regCounts || []).forEach(r => {
+        regCountMap[r.band_id] = (regCountMap[r.band_id] || 0) + 1
+      })
+
+      // Merge counts back
+      const bandsWithCounts = (bandsData || []).map((b: any) => ({
+        ...b,
+        registrations: [{ count: regCountMap[b.band_id] || 0 }],
+        chain_prayers: [{ count: 0 }],
+      }))
+      setBands(bandsWithCounts as Band[])
 
       const { data: prayers } = await supabase
         .from('chain_prayers')
@@ -141,9 +161,8 @@ export default function Dashboard() {
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 12)
       setActivity(activityItems)
 
-      const totalPrayers = (bandsData || []).reduce((sum: number, b: Band) => sum + (b.chain_prayers?.[0]?.count || 0), 0)
-      const totalRegs = (bandsData || []).reduce((sum: number, b: Band) => sum + (b.registrations?.[0]?.count || 0), 0)
-      setStats({ bands: (bandsData || []).length, prayers: totalPrayers, registrations: totalRegs, countries: 0 })
+      const totalRegs = Object.values(regCountMap).reduce((sum, c) => sum + c, 0)
+      setStats({ bands: (bandsData || []).length, prayers: 0, registrations: totalRegs, countries: 0 })
 
       // Load map points
       const bandIds = (bandsData || []).map((b: Band) => b.band_id)
