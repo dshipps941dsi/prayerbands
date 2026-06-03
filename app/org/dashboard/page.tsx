@@ -27,7 +27,7 @@ function OrgDashboardInner() {
       const { data: profile } = await supabase
         .from('profiles')
         .select('org_id, organizations(*)')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .maybeSingle()
 
       if (!profile?.org_id) { window.location.href = '/signin'; return }
