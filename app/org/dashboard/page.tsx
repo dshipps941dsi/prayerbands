@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 
 const NAV = ['Overview', 'Bands', 'Prayer Wall', 'Lineage', 'Orders', 'Settings']
+
 function OrgMap({ orgId, green }: { orgId: string, green: string }) {
   const [points, setPoints] = useState<any[]>([])
   const [mapLoaded, setMapLoaded] = useState(false)
@@ -37,7 +38,6 @@ function OrgMap({ orgId, green }: { orgId: string, green: string }) {
         renderMap()
       }
     }
-
     const renderMap = () => {
       const L = (window as any).L
       if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null }
@@ -68,8 +68,7 @@ function OrgMap({ orgId, green }: { orgId: string, green: string }) {
   const currentCount = points.filter(p => p.isCurrent && p.lat && p.lng).length
   const allCount = points.filter(p => p.lat && p.lng).length
 
-  if (!mapLoaded) return null
-  if (!points.length) return null
+  if (!mapLoaded || !points.length) return null
 
   return (
     <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden', marginBottom: 20 }}>
@@ -152,22 +151,15 @@ function OrgDashboardInner() {
       if (!profile?.org_id) { window.location.href = '/signin'; return }
       const orgData = profile.organizations
       setOrg(orgData)
-
       const { data: statsData } = await supabase.rpc('get_org_stats', { org_uuid: profile.org_id })
       setStats(statsData)
-
       const { data: bandsData } = await supabase.from('bands').select('band_id, status, created_at').eq('org_id', profile.org_id).order('created_at', { ascending: false }).limit(50)
       setBands(bandsData || [])
-
       const { data: prayersData } = await supabase.from('registrations').select('band_id, user_name, prayer, city, country, registered_at').not('prayer', 'is', null).order('registered_at', { ascending: false }).limit(20)
       setPrayers(prayersData || [])
-
       const { data: ordersData } = await supabase.from('orders').select('*').eq('org_id', profile.org_id).order('created_at', { ascending: false })
       setOrders(ordersData || [])
-
       setLoading(false)
-
-      // Load lineage if on that tab
       if (tab === 'Lineage') {
         setLineageLoading(true)
         const { data: lineageData } = await supabase.rpc('get_org_lineage', { org_uuid: profile.org_id })
@@ -203,7 +195,6 @@ function OrgDashboardInner() {
   if (loading) return <div style={{ color: '#8a7c6a', fontSize: 15, paddingTop: 40, textAlign: 'center' }}>Loading... ✝</div>
   if (!org) return <div style={{ color: '#8a7c6a', fontSize: 15, paddingTop: 40, textAlign: 'center' }}>No organization found. <a href="/signin" style={{ color: '#1a6b4a' }}>Sign in again</a></div>
 
-  // ── OVERVIEW ──────────────────────────────────────────────
   if (tab === 'Overview') return (
     <div style={{ fontFamily: 'Georgia, serif', background: '#f7f4ef', minHeight: '100vh', color: '#2c2416' }}>
       <TopBar org={org} green={green} />
@@ -211,8 +202,8 @@ function OrgDashboardInner() {
         <Sidebar org={org} tab={tab} green={green} />
         <div style={{ flex: 1, padding: 32, maxWidth: 1100 }}>
           <h1 style={{ fontSize: 26, fontWeight: 'bold', marginBottom: 4, color: '#1a1208' }}>Ministry Dashboard</h1>
-          <p style={{ color: '#8a7c6a', marginBottom: 28, fontSize: 14 }}>Every band is a prayer in motion. Here's how far {org?.name}'s love has traveled.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
+          <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>Every band is a prayer in motion. Here's how far {org?.name}'s love has traveled.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 20 }}>
             {[{ label: 'Total Bands', value: stats?.total_bands || 0, icon: '⟳' }, { label: 'Active Bands', value: stats?.active_bands || 0, icon: '✦' }, { label: 'Prayers Offered', value: stats?.total_prayers || 0, icon: '◎' }, { label: 'Countries', value: stats?.countries || 0, icon: '◈' }].map(s => (
               <div key={s.label} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '20px 20px 16px' }}>
                 <div style={{ fontSize: 22, marginBottom: 6, color: green }}>{s.icon}</div>
@@ -221,7 +212,6 @@ function OrgDashboardInner() {
               </div>
             ))}
           </div>
-          {/* Ministry Map */}
           <OrgMap orgId={org?.id} green={green} />
           <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 20 }}>
             <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
@@ -261,9 +251,9 @@ function OrgDashboardInner() {
           </div>
         </div>
       </div>
+    </div>
   )
 
-  // ── BANDS ─────────────────────────────────────────────────
   if (tab === 'Bands') return (
     <div style={{ fontFamily: 'Georgia, serif', background: '#f7f4ef', minHeight: '100vh' }}>
       <TopBar org={org} green={green} />
@@ -292,7 +282,6 @@ function OrgDashboardInner() {
     </div>
   )
 
-  // ── PRAYER WALL ───────────────────────────────────────────
   if (tab === 'Prayer Wall') return (
     <div style={{ fontFamily: 'Georgia, serif', background: '#f7f4ef', minHeight: '100vh' }}>
       <TopBar org={org} green={green} />
@@ -319,7 +308,6 @@ function OrgDashboardInner() {
     </div>
   )
 
-  // ── LINEAGE ───────────────────────────────────────────────
   if (tab === 'Lineage') return (
     <div style={{ fontFamily: 'Georgia, serif', background: '#f7f4ef', minHeight: '100vh' }}>
       <TopBar org={org} green={green} />
@@ -328,9 +316,7 @@ function OrgDashboardInner() {
         <div style={{ flex: 1, padding: 32 }}>
           <h1 style={{ fontSize: 26, fontWeight: 'bold', marginBottom: 4 }}>Band Lineage</h1>
           <p style={{ color: '#8a7c6a', marginBottom: 24, fontSize: 14 }}>Track how far each {org?.prefix} band has traveled and how many hands it has touched.</p>
-
           {lineageLoading && <div style={{ color: '#8a7c6a', textAlign: 'center', padding: 40 }}>Loading lineage data... ✝</div>}
-
           {!lineageLoading && lineage.length === 0 && (
             <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: 40, textAlign: 'center', color: '#8a7c6a' }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>✝</div>
@@ -338,35 +324,21 @@ function OrgDashboardInner() {
               <div style={{ fontSize: 14 }}>Lineage data will appear here once bands are registered by recipients.</div>
             </div>
           )}
-
           {!lineageLoading && lineage.length > 0 && (
             <div>
-              {/* Summary stats */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 24 }}>
-                {[
-                  { label: 'Bands Traveling', value: lineage.length },
-                  { label: 'Total Holders', value: lineage.reduce((sum: number, b: any) => sum + Number(b.total_holders), 0) },
-                  { label: 'Countries Reached', value: lineage.reduce((sum: number, b: any) => sum + Number(b.countries), 0) },
-                ].map(s => (
+                {[{ label: 'Bands Traveling', value: lineage.length }, { label: 'Total Holders', value: lineage.reduce((sum: number, b: any) => sum + Number(b.total_holders), 0) }, { label: 'Countries Reached', value: lineage.reduce((sum: number, b: any) => sum + Number(b.countries), 0) }].map(s => (
                   <div key={s.label} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '20px', textAlign: 'center' }}>
                     <div style={{ fontSize: 28, fontWeight: 'bold', color: green }}>{s.value}</div>
                     <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 4 }}>{s.label}</div>
                   </div>
                 ))}
               </div>
-
-              {/* Band cards */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {lineage.map((b: any) => (
                   <div key={b.band_id} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
-                    <div
-                      onClick={() => setExpandedBand(expandedBand === b.band_id ? null : b.band_id)}
-                      style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', cursor: 'pointer', gap: 16 }}
-                    >
-                      {/* Band ID */}
+                    <div onClick={() => setExpandedBand(expandedBand === b.band_id ? null : b.band_id)} style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', cursor: 'pointer', gap: 16 }}>
                       <div style={{ fontFamily: 'monospace', fontSize: 14, color: green, fontWeight: 'bold', minWidth: 110 }}>{b.band_id}</div>
-
-                      {/* Holders bar */}
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                           <span style={{ fontSize: 12, color: '#5a4f42' }}>{b.total_holders} {Number(b.total_holders) === 1 ? 'person' : 'people'}</span>
@@ -376,26 +348,15 @@ function OrgDashboardInner() {
                           <span style={{ fontSize: 12, color: '#5a4f42' }}>{b.prayers} {Number(b.prayers) === 1 ? 'prayer' : 'prayers'}</span>
                         </div>
                         <div style={{ height: 6, background: '#f0ece6', borderRadius: 3, overflow: 'hidden' }}>
-                          <div style={{
-                            height: '100%',
-                            width: Math.min(100, (Number(b.total_holders) / Math.max(...lineage.map((x: any) => Number(x.total_holders)))) * 100) + '%',
-                            background: 'linear-gradient(90deg, ' + green + ', #2d9966)',
-                            borderRadius: 3,
-                            transition: 'width 0.5s',
-                          }} />
+                          <div style={{ height: '100%', width: Math.min(100, (Number(b.total_holders) / Math.max(...lineage.map((x: any) => Number(x.total_holders)))) * 100) + '%', background: 'linear-gradient(90deg, ' + green + ', #2d9966)', borderRadius: 3 }} />
                         </div>
                       </div>
-
-                      {/* Latest location */}
                       <div style={{ fontSize: 12, color: '#8a7c6a', textAlign: 'right', minWidth: 100 }}>
                         {b.latest_country || '—'}
                         {b.latest_date && <div style={{ fontSize: 11, color: '#b0a090' }}>{timeAgo(b.latest_date)}</div>}
                       </div>
-
                       <div style={{ fontSize: 16, color: '#b0a090', transform: expandedBand === b.band_id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</div>
                     </div>
-
-                    {/* Expanded journey */}
                     {expandedBand === b.band_id && (
                       <div style={{ borderTop: '1px solid #f0ece6', padding: '16px 20px', background: '#fbf9f7' }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: '#8a7c6a', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 12 }}>Journey</div>
@@ -412,7 +373,6 @@ function OrgDashboardInner() {
     </div>
   )
 
-  // ── ORDERS ────────────────────────────────────────────────
   if (tab === 'Orders') return (
     <div style={{ fontFamily: 'Georgia, serif', background: '#f7f4ef', minHeight: '100vh' }}>
       <TopBar org={org} green={green} />
@@ -464,7 +424,6 @@ function OrgDashboardInner() {
     </div>
   )
 
-  // ── SETTINGS ──────────────────────────────────────────────
   return (
     <div style={{ fontFamily: 'Georgia, serif', background: '#f7f4ef', minHeight: '100vh' }}>
       <TopBar org={org} green={green} />
@@ -474,14 +433,7 @@ function OrgDashboardInner() {
           <h1 style={{ fontSize: 26, fontWeight: 'bold', marginBottom: 4 }}>Church Settings</h1>
           <p style={{ color: '#8a7c6a', marginBottom: 28, fontSize: 14 }}>Your organization profile.</p>
           <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 12, padding: 28, maxWidth: 520 }}>
-            {[
-              { label: 'CHURCH NAME', value: org?.name },
-              { label: 'BAND PREFIX', value: org?.prefix + '-XXXXX', mono: true },
-              { label: 'SUBDOMAIN', value: org?.subdomain + '.prayerbands.com', mono: true },
-              { label: 'LOCATION', value: org?.location || '—' },
-              { label: 'WEBSITE', value: org?.website || '—' },
-              { label: 'PLAN', value: org?.plan || 'Ministry' },
-            ].map(field => (
+            {[{ label: 'CHURCH NAME', value: org?.name }, { label: 'BAND PREFIX', value: org?.prefix + '-XXXXX', mono: true }, { label: 'SUBDOMAIN', value: org?.subdomain + '.prayerbands.com', mono: true }, { label: 'LOCATION', value: org?.location || '—' }, { label: 'WEBSITE', value: org?.website || '—' }, { label: 'PLAN', value: org?.plan || 'Ministry' }].map(field => (
               <div key={field.label} style={{ marginBottom: 20 }}>
                 <label style={labelStyle}>{field.label}</label>
                 <div style={{ border: '1px solid #e8e1d6', borderRadius: 6, padding: '10px 14px', fontSize: field.mono ? 13 : 14, fontFamily: field.mono ? 'monospace' : 'Georgia, serif', background: '#fbf9f7', color: '#2c2416' }}>{field.value}</div>
@@ -500,14 +452,8 @@ function LineageJourney({ bandId, green }: { bandId: string, green: string }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-    supabase.from('registrations').select('user_name, city, country, prayer, registered_at').eq('band_id', bandId).order('registered_at', { ascending: true }).then(({ data }) => {
-      setRegs(data || [])
-      setLoading(false)
-    })
+    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+    supabase.from('registrations').select('user_name, city, country, prayer, registered_at').eq('band_id', bandId).order('registered_at', { ascending: true }).then(({ data }) => { setRegs(data || []); setLoading(false) })
   }, [bandId])
 
   if (loading) return <div style={{ fontSize: 13, color: '#8a7c6a' }}>Loading...</div>
