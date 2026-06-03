@@ -31,45 +31,25 @@ export default function SignIn() {
     setLoading(true)
     setError('')
     const supabase = getSupabase()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError(error.message)
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    if (signInError) {
+      setError(signInError.message)
       setLoading(false)
       return
     }
-    // Check if org admin → redirect to org dashboard
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      async function signInWithEmail() {
-  setLoading(true)
-  setError('')
-  const supabase = getSupabase()
-  const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-  if (signInError) {
-    setError(signInError.message)
-    setLoading(false)
-    return
-  }
-  const { data: { user } } = await supabase.auth.getUser()
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('org_id')
-      .eq('id', user.id)
-      .maybeSingle()
-    if (profile?.org_id) {
-      router.push('/org/dashboard')
-      return
-    }
-  }
-  router.push('/dashboard')
-}
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('org_id')
+        .eq('id', user.id)
+        .maybeSingle()
       if (profile?.org_id) {
         router.push('/org/dashboard')
         return
       }
     }
-    router.push('/org/dashboard')
+    router.push('/dashboard')
   }
 
   const green = '#1a6b4a'
