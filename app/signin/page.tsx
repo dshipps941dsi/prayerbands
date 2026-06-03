@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { useRouter } from 'next/navigation'
 
 export default function SignIn() {
   const [loading, setLoading] = useState(false)
@@ -9,7 +8,6 @@ export default function SignIn() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const router = useRouter()
 
   function getSupabase() {
     return createBrowserClient(
@@ -54,11 +52,10 @@ export default function SignIn() {
       return
     }
     if (profile?.org_id) {
-      router.push('/org/dashboard')
+      window.location.href = '/org/dashboard'
       return
     }
-    setError('No org found. User ID: ' + user.id)
-    setLoading(false)
+    window.location.href = '/dashboard'
   }
 
   const green = '#1a6b4a'
