@@ -35,23 +35,9 @@ export default function SignIn() {
       setLoading(false)
       return
     }
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      setError('Could not get user after sign in')
-      setLoading(false)
-      return
-    }
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('org_id')
-      .eq('id', user.id)
-      .maybeSingle()
-    if (profileError) {
-      setError('Profile error: ' + profileError.message)
-      setLoading(false)
-      return
-    }
     window.location.href = '/auth/callback'
+  }
+
   const green = '#1a6b4a'
   const inputStyle = {
     width: '100%', padding: '11px 14px', borderRadius: 7,
