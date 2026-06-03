@@ -12,18 +12,24 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const { data: existing } = await supabase
-      .from('organizations')
-      .select('id')
-      .or(`prefix.eq.${prefix},subdomain.eq.${subdomain}`)
-      .maybeSingle();
+ const { data: existingPrefix } = await supabase
+  .from('organizations')
+  .select('id')
+  .eq('prefix', prefix.toUpperCase())
+  .maybeSingle();
 
-    if (existing) {
-      return Response.json(
-        { error: 'A church with a similar name already exists. Please contact support.' },
-        { status: 409 }
-      );
-    }
+const { data: existingSubdomain } = await supabase
+  .from('organizations')
+  .select('id')
+  .eq('subdomain', subdomain.toLowerCase())
+  .maybeSingle();
+
+if (existingPrefix || existingSubdomain) {
+  return Response.json(
+    { error: 'A church with a similar name already exists. Please contact support.' },
+    { status: 409 }
+  );
+}
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
