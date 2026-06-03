@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { useRouter, usePathname } from 'next/navigation'
+import { createBrowserClient } from '@supabase/ssr'
 
 const NAV = ['Overview', 'Bands', 'Prayer Wall', 'Orders', 'Settings']
 
@@ -9,27 +9,33 @@ export default function OrgDashboardLayout({ children }: { children: React.React
   const router = useRouter()
   const [org, setOrg] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [activeNav, setActiveNav] = useState('Overview')
 
   useEffect(() => {
     async function loadOrg() {
-     const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/signin'); return }
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { router.push('/signin'); return }
 
       const { data: profile } = await supabase
         .from('profiles')
         .select('org_id, organizations(*)')
-        .eq('id', user.id)
-        .single()
+        .eq('id', session.user.id)
+        .maybeSingle()
 
-      if (!profile?.org_id) { router.push('/dashboard'); return }
+      if (!profile?.org_id) { router.push('/signin'); return }
       setOrg((profile as any).organizations)
       setLoading(false)
     }
     loadOrg()
+  }, [])
+
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab') || 'Overview'
+    setActiveNav(tab)
   }, [])
 
   if (loading) return (
@@ -42,11 +48,8 @@ export default function OrgDashboardLayout({ children }: { children: React.React
     </div>
   )
 
-  const activeNav = typeof window !== 'undefined'
-    ? new URLSearchParams(window.location.search).get('tab') || 'Overview'
-    : 'Overview'
-
   function navigate(tab: string) {
+    setActiveNav(tab)
     router.push(`/org/dashboard?tab=${tab}`)
   }
 
@@ -72,9 +75,9 @@ export default function OrgDashboardLayout({ children }: { children: React.React
         <button
           onClick={async () => {
             const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+              process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            )
             await supabase.auth.signOut()
             router.push('/signin')
           }}
