@@ -12,10 +12,10 @@ export default function OrgDashboardLayout({ children }: { children: React.React
 
   useEffect(() => {
     async function loadOrg() {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
+     const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/signin'); return }
 
@@ -71,10 +71,10 @@ export default function OrgDashboardLayout({ children }: { children: React.React
         <div style={{ flex: 1 }} />
         <button
           onClick={async () => {
-            const supabase = createClient(
-              process.env.NEXT_PUBLIC_SUPABASE_URL!,
-              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-            )
+            const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
             await supabase.auth.signOut()
             router.push('/signin')
           }}
