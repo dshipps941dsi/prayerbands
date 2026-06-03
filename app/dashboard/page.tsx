@@ -81,79 +81,37 @@ export default function ChurchDashboard() {
   const accent = org?.color || "#C8A96E";
 
   useEffect(() => {
-    async function load() {
+  async function load() {
+    try {
       const supabase = initSupabase();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
+      console.log("user:", user?.id);
+      if (!user) return;
 
-      // Load org
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("org_id")
         .eq("id", user.id)
         .single();
+      console.log("profile:", profile, profileError);
+      if (!profile?.org_id) return;
 
-      if (profile?.org_id) {
-        const { data: orgData } = await supabase
-          .from("organizations")
-          .select("*")
-          .eq("id", profile.org_id)
-          .single();
-        if (orgData) setOrg(orgData);
+      const { data: orgData, error: orgError } = await supabase
+        .from("organizations")
+        .select("*")
+        .eq("id", profile.org_id)
+        .single();
+      console.log("org:", orgData, orgError);
+      if (orgData) setOrg(orgData);
 
-        // Load bands with prayer + registration counts
-        const { data: bandsData } = await supabase
-          .from("bands")
-          .select("id, band_id, created_at, registrations(count), chain_prayers(count)")
-          .eq("org_id", profile.org_id)
-          .order("created_at", { ascending: false });
-
-        if (bandsData) {
-          setBands(bandsData as BandRow[]);
-          const totalPrayers = bandsData.reduce((s, b) => s + (b.chain_prayers?.[0]?.count || 0), 0);
-          const totalRegs = bandsData.reduce((s, b) => s + (b.registrations?.[0]?.count || 0), 0);
-          setStats(prev => ({ ...prev, bands: bandsData.length, prayers: totalPrayers, registrations: totalRegs }));
-        }
-
-        // Load activity
-        const { data: prayersData } = await supabase
-          .from("chain_prayers")
-          .select("id, band_id, message, location, created_at")
-          .in("band_id", (bandsData || []).map(b => b.band_id))
-          .order("created_at", { ascending: false })
-          .limit(30);
-
-        const { data: regsData } = await supabase
-          .from("registrations")
-          .select("id, band_id, location, created_at")
-          .in("band_id", (bandsData || []).map(b => b.band_id))
-          .order("created_at", { ascending: false })
-          .limit(20);
-
-        const combined = [
-          ...(prayersData || []).map(p => ({ ...p, type: "prayer" as const })),
-          ...(regsData || []).map(r => ({ ...r, type: "registration" as const })),
-        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        setActivity(combined);
-
-        // Count unique countries
-        const allLocations = [...(prayersData || []), ...(regsData || [])].map(r => r.location).filter(Boolean);
-        const uniqueCountries = new Set(allLocations.map(l => l?.split(",").pop()?.trim())).size;
-        setStats(prev => ({ ...prev, countries: uniqueCountries }));
-
-        // Load orders
-        const { data: ordersData } = await supabase
-          .from("orders")
-          .select("id, quantity, total_amount, status, created_at")
-          .eq("org_id", profile.org_id)
-          .order("created_at", { ascending: false });
-        if (ordersData) setOrders(ordersData);
-      }
-
+    } catch (err) {
+      console.error("Dashboard load error:", err);
+    } finally {
       setLoading(false);
     }
-    load();
-  }, []);
+  }
+  load();
+}, []);
 
   if (loading) {
     return (
