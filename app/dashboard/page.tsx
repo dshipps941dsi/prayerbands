@@ -165,12 +165,12 @@ export default function Dashboard() {
       setStats({ bands: (bandsData || []).length, prayers: 0, registrations: totalRegs, countries: 0 })
 
       // Load map points
-      const bandIds = (bandsData || []).map((b: Band) => b.band_id)
-      if (bandIds.length > 0) {
+      const mapBandIds = (bandsData || []).map((b: Band) => b.band_id)
+      if (mapBandIds.length > 0) {
         const { data: mapData } = await supabase
           .from('registrations')
           .select('band_id, user_name, city, country, latitude, longitude, prayer, registered_at')
-          .in('band_id', bandIds)
+          .in('band_id', mapBandIds)
           .not('latitude', 'is', null)
           .not('longitude', 'is', null)
         const latest: Record<string, any> = {}
