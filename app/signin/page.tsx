@@ -40,11 +40,30 @@ export default function SignIn() {
     // Check if org admin → redirect to org dashboard
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('org_id')
-        .eq('id', user.id)
-        .single()
+      async function signInWithEmail() {
+  setLoading(true)
+  setError('')
+  const supabase = getSupabase()
+  const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+  if (signInError) {
+    setError(signInError.message)
+    setLoading(false)
+    return
+  }
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('org_id')
+      .eq('id', user.id)
+      .maybeSingle()
+    if (profile?.org_id) {
+      router.push('/org/dashboard')
+      return
+    }
+  }
+  router.push('/dashboard')
+}
       if (profile?.org_id) {
         router.push('/org/dashboard')
         return
