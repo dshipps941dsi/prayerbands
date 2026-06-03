@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 function generatePrefix(name) {
-  // "Grace Community Church" → "GCC"
   const words = name.trim().split(/\s+/);
   if (words.length === 1) return words[0].slice(0, 4).toUpperCase();
   return words
@@ -28,24 +27,14 @@ export default function OnboardPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({
-    name: '',
-    location: '',
-    website: '',
-    pastor: '',
-    email: '',
-    password: '',
-  });
+  const [form, setForm] = useState({ name: '', location: '', website: '', pastor: '', email: '', password: '' });
   const [preview, setPreview] = useState({ prefix: '', subdomain: '' });
 
   function handleNameChange(e) {
     const val = e.target.value;
     setForm(f => ({ ...f, name: val }));
     if (val.length > 2) {
-      setPreview({
-        prefix: generatePrefix(val),
-        subdomain: generateSubdomain(val),
-      });
+      setPreview({ prefix: generatePrefix(val), subdomain: generateSubdomain(val) });
     } else {
       setPreview({ prefix: '', subdomain: '' });
     }
@@ -64,7 +53,9 @@ export default function OnboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, ...preview }),
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch { throw new Error('Server error — please try again'); }
       if (!res.ok) throw new Error(data.error || 'Something went wrong');
       setStep(3);
     } catch (err) {
@@ -93,8 +84,6 @@ export default function OnboardPage() {
       alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Georgia, serif', padding: '40px 20px',
     }}>
-
-      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 36 }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>✝</div>
         <h1 style={{ fontSize: 26, fontWeight: 'bold', color: '#1a1208', margin: 0 }}>
@@ -105,7 +94,6 @@ export default function OnboardPage() {
         </p>
       </div>
 
-      {/* Step indicator */}
       {step < 3 && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 28, alignItems: 'center' }}>
           {[1, 2].map(s => (
@@ -122,15 +110,12 @@ export default function OnboardPage() {
         </div>
       )}
 
-      {/* Card */}
       <div style={{
         background: '#fff', borderRadius: 14,
         border: '1px solid #e8e1d6',
         padding: '36px 40px', width: '100%', maxWidth: 480,
         boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
       }}>
-
-        {/* STEP 1 — Church info */}
         {step === 1 && (
           <div>
             <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 24, color: '#1a1208' }}>
@@ -146,24 +131,26 @@ export default function OnboardPage() {
               />
             </div>
 
-            {/* Live preview */}
             {preview.prefix && (
               <div style={{
                 background: '#f0f7f3', border: '1px solid #c8e6d4',
-                borderRadius: 8, padding: '12px 16px', marginBottom: 18,
-                fontSize: 13,
+                borderRadius: 8, padding: '12px 16px', marginBottom: 18, fontSize: 13,
               }}>
-                <div style={{ color: '#1a6b4a', fontWeight: 'bold', marginBottom: 6 }}>
+                <div style={{ color: green, fontWeight: 'bold', marginBottom: 8 }}>
                   Your church will receive:
                 </div>
                 <div style={{ display: 'flex', gap: 20 }}>
-                  <div style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: 15, color: '#1a1208' }}>
-  {preview.prefix}-XXXXX
-</div>
-...
-<div style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: 15, color: '#1a1208' }}>
-  {preview.subdomain}.prayerbands.com
-</div>
+                  <div>
+                    <span style={{ color: '#8a7c6a', fontSize: 11 }}>BAND PREFIX</span>
+                    <div style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: 15, color: '#1a1208' }}>
+                      {preview.prefix}-XXXXX
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ color: '#8a7c6a', fontSize: 11 }}>SUBDOMAIN</span>
+                    <div style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: 15, color: '#1a1208' }}>
+                      {preview.subdomain}.prayerbands.com
+                    </div>
                   </div>
                 </div>
               </div>
@@ -203,7 +190,6 @@ export default function OnboardPage() {
           </div>
         )}
 
-        {/* STEP 2 — Admin account */}
         {step === 2 && (
           <div>
             <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 24, color: '#1a1208' }}>
@@ -276,7 +262,6 @@ export default function OnboardPage() {
           </div>
         )}
 
-        {/* STEP 3 — Success */}
         {step === 3 && (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🙏</div>
