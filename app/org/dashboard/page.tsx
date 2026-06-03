@@ -16,18 +16,26 @@ function OrgDashboardInner() {
 
   useEffect(() => {
     async function load() {
-      await new Promise(resolve => setTimeout(resolve, 500))
       const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/signin'; return }
+
+      // Try URL param first, fall back to session
+      const urlParams = new URLSearchParams(window.location.search)
+      const uidFromUrl = urlParams.get('uid')
+      
+      let userId = uidFromUrl
+      if (!userId) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { window.location.href = '/signin'; return }
+        userId = user.id
+      }
 
       const { data: profile } = await supabase
         .from('profiles')
         .select('org_id, organizations(*)')
-        .eq('id', user.id)
+        .eq('id', userId)
         .maybeSingle()
 
       if (!profile?.org_id) { window.location.href = '/signin'; return }
