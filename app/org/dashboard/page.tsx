@@ -16,12 +16,13 @@ function OrgDashboardInner() {
 
   useEffect(() => {
     async function load() {
+      await new Promise(resolve => setTimeout(resolve, 500))
       const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { window.location.href = '/signin'; return }
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { window.location.href = '/signin'; return }
 
       const { data: profile } = await supabase
         .from('profiles')
