@@ -3,6 +3,17 @@ import { NextRequest, NextResponse } from 'next/server'
 export function middleware(request: NextRequest) {
   const host = request.headers.get('host') || ''
   const url = request.nextUrl.clone()
+  const pathname = url.pathname
+
+  // Never rewrite API routes, static files, or Next.js internals
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/static/') ||
+    pathname.includes('.')
+  ) {
+    return NextResponse.next()
+  }
 
   const hostParts = host.split('.')
 
@@ -12,7 +23,7 @@ export function middleware(request: NextRequest) {
     hostParts[0] !== 'www'
   ) {
     const subdomain = hostParts[0]
-    url.pathname = `/church/${subdomain}${url.pathname === '/' ? '' : url.pathname}`
+    url.pathname = `/church/${subdomain}${pathname === '/' ? '' : pathname}`
     return NextResponse.rewrite(url)
   }
 
