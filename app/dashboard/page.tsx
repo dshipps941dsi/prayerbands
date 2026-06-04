@@ -95,7 +95,7 @@ function DashboardMap({ bands, points }: { bands: Band[], points: MapPoint[] }) 
 
   if (!points.length) return (
     <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '40px 20px', textAlign: 'center', color: '#8a7c6a' }}>
-      <div style={{ fontSize: 32, marginBottom: 8 }}>ðŸŒ</div>
+      <div style={{ fontSize: 32, marginBottom: 8 }}>M</div>
       <div style={{ fontSize: 14 }}>Map will appear once bands are registered with location.</div>
     </div>
   )
@@ -154,14 +154,14 @@ function PrayerRequestModal({ userId, onClose }: { userId: string, onClose: () =
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 500, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ background: '#fff', borderRadius: '16px 16px 0 0', padding: '28px 24px', width: '100%', maxWidth: 480, fontFamily: 'Georgia, serif', maxHeight: '90vh', overflowY: 'auto' }}>
-        {step === 'loading' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 32, marginBottom: 12 }}>ðŸ™</div><div style={{ color: '#8a7c6a' }}>Loading your prayer network...</div></div>}
-        {step === 'sending' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 32, marginBottom: 12 }}>âœ</div><div style={{ color: '#8a7c6a' }}>Sending your prayer request...</div></div>}
-        {step === 'sent' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 48, marginBottom: 16 }}>ðŸ™</div><div style={{ fontSize: 20, fontWeight: 'bold', color: '#1a1208', marginBottom: 8 }}>Prayer Request Sent</div><div style={{ fontSize: 14, color: '#8a7c6a' }}>{sentCount} {sentCount === 1 ? 'person is' : 'people are'} standing with you in prayer. âœ</div></div>}
+        {step === 'loading' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 32, marginBottom: 12 }}>P</div><div style={{ color: '#8a7c6a' }}>Loading your prayer network...</div></div>}
+        {step === 'sending' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 32, marginBottom: 12 }}>L</div><div style={{ color: '#8a7c6a' }}>Sending your prayer request...</div></div>}
+        {step === 'sent' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 48, marginBottom: 16 }}>P</div><div style={{ fontSize: 20, fontWeight: 'bold', color: '#1a1208', marginBottom: 8 }}>Prayer Request Sent</div><div style={{ fontSize: 14, color: '#8a7c6a' }}>{sentCount} {sentCount === 1 ? 'person is' : 'people are'} standing with you in prayer. L</div></div>}
         {step === 'error' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ color: '#c0392b', marginBottom: 16 }}>{errorMsg}</div><button onClick={onClose} style={{ padding: '10px 24px', borderRadius: 8, border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Close</button></div>}
         {step === 'compose' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 'bold', margin: 0, color: '#1a1208' }}>ðŸ™ Request Prayer</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 'bold', margin: 0, color: '#1a1208' }}>P Request Prayer</h2>
               <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#8a7c6a' }}>Ã—</button>
             </div>
             <div style={{ marginBottom: 14 }}>
@@ -183,7 +183,7 @@ function PrayerRequestModal({ userId, onClose }: { userId: string, onClose: () =
                     return (
                       <div key={person.email} onClick={() => toggleExclude(person.email)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: isExcluded ? '#f7f4ef' : '#f0f7f3', borderRadius: 8, cursor: 'pointer', border: `1px solid ${isExcluded ? '#e8e1d6' : '#c8e6d4'}`, opacity: isExcluded ? 0.6 : 1 }}>
                         <div style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${isExcluded ? '#b8a898' : '#1a6b4a'}`, background: isExcluded ? 'transparent' : '#1a6b4a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          {!isExcluded && <span style={{ color: '#fff', fontSize: 12, lineHeight: 1 }}>âœ“</span>}
+                          {!isExcluded && <span style={{ color: '#fff', fontSize: 12, lineHeight: 1 }}>L“</span>}
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 14, fontWeight: 600, color: '#2c2416' }}>{person.name}</div>
@@ -197,7 +197,7 @@ function PrayerRequestModal({ userId, onClose }: { userId: string, onClose: () =
             )}
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 8, border: '1px solid #ddd6ca', background: '#fff', color: '#5a4f42', fontSize: 14, cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Cancel</button>
-              <button onClick={send} disabled={!message.trim()} style={{ flex: 2, padding: '12px', borderRadius: 8, border: 'none', background: message.trim() ? AMBER : '#ddd', color: '#fff', fontSize: 15, fontWeight: 'bold', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Send Prayer Request âœ</button>
+              <button onClick={send} disabled={!message.trim()} style={{ flex: 2, padding: '12px', borderRadius: 8, border: 'none', background: message.trim() ? AMBER : '#ddd', color: '#fff', fontSize: 15, fontWeight: 'bold', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Send Prayer Request L</button>
             </div>
           </>
         )}
@@ -314,7 +314,7 @@ export default function Dashboard() {
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f4ef', fontFamily: 'Georgia, serif', textAlign: 'center' }}>
       <div>
-        <div style={{ fontSize: 36, marginBottom: 12 }}>âœ</div>
+        <div style={{ fontSize: 36, marginBottom: 12 }}>L</div>
         <div style={{ fontSize: 15, color: '#8a7c6a' }}>Loading your ministry...</div>
       </div>
     </div>
@@ -325,17 +325,17 @@ export default function Dashboard() {
       <div>
         {/* Greeting */}
         <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 'bold', color: '#1a1208', margin: '0 0 4px' }}>Welcome, {displayName} âœ</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 'bold', color: '#1a1208', margin: '0 0 4px' }}>Welcome, {displayName} L</h1>
           <p style={{ fontSize: 14, color: '#8a7c6a', margin: 0 }}>Here's how far your prayers have traveled.</p>
         </div>
 
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
           {[
-            { label: 'My Bands', value: stats.bands, icon: 'âŸ³' },
-            { label: 'People Reached', value: stats.registrations, icon: 'âœ¦' },
-            { label: 'Prayers', value: stats.prayers, icon: 'ðŸ™' },
-            { label: 'Countries', value: stats.countries, icon: 'ðŸŒ' },
+            { label: 'My Bands', value: stats.bands, icon: 'B' },
+            { label: 'People Reached', value: stats.registrations, icon: 'L¦' },
+            { label: 'Prayers', value: stats.prayers, icon: 'P' },
+            { label: 'Countries', value: stats.countries, icon: 'M' },
           ].map(s => (
             <div key={s.label} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '14px 16px' }}>
               <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
@@ -355,7 +355,7 @@ export default function Dashboard() {
           <div style={{ fontSize: 11, fontWeight: 700, color: '#7a6c5a', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 10 }}>Quick Actions</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button onClick={() => setShowPrayerModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: AMBER, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 14, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 'bold' }}>
-              ðŸ™ Send Prayer Request
+              P Send Prayer Request
             </button>
             <a href="/store" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '10px 16px', fontSize: 14, textDecoration: 'none', color: '#2c2416', fontFamily: 'Georgia, serif' }}>
               ðŸ“¦ Order Bands
@@ -375,7 +375,7 @@ export default function Dashboard() {
               {activity.slice(0, 8).map((item, i) => (
                 <div key={i} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '12px 14px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                   <div style={{ width: 34, height: 34, borderRadius: 8, flexShrink: 0, background: item.type === 'prayer' ? '#7BAE8E18' : `${AMBER}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
-                    {item.type === 'prayer' ? 'ðŸ™' : 'âœ¦'}
+                    {item.type === 'prayer' ? 'P' : 'L¦'}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2c2416' }}>
@@ -399,7 +399,7 @@ export default function Dashboard() {
         <p style={{ fontSize: 14, color: '#8a7c6a', marginBottom: 20 }}>All bands registered to your account.</p>
         {bands.length === 0 ? (
           <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '40px 20px', textAlign: 'center', color: '#8a7c6a' }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>âŸ³</div>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>B</div>
             <div style={{ fontSize: 14, marginBottom: 16 }}>No bands yet.</div>
             <a href="/store" style={{ background: AMBER, color: '#fff', padding: '10px 24px', borderRadius: 8, textDecoration: 'none', fontSize: 14, fontWeight: 'bold', fontFamily: 'Georgia, serif' }}>Order Bands â†’</a>
           </div>
@@ -442,7 +442,7 @@ export default function Dashboard() {
             <p style={{ fontSize: 14, color: '#8a7c6a', margin: 0 }}>Prayers left on your bands.</p>
           </div>
           <button onClick={() => setShowPrayerModal(true)} style={{ background: AMBER, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-            ðŸ™ Send Request
+            P Send Request
           </button>
         </div>
         {prayers.length === 0 ? (
@@ -485,7 +485,7 @@ if (activeTab === 'Prayer List') return (
             {activity.map((item, i) => (
               <div key={i} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '12px 14px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{ width: 34, height: 34, borderRadius: 8, flexShrink: 0, background: item.type === 'prayer' ? '#7BAE8E18' : `${AMBER}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
-                  {item.type === 'prayer' ? 'ðŸ™' : 'âœ¦'}
+                  {item.type === 'prayer' ? 'P' : 'L¦'}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2c2416' }}>
@@ -507,7 +507,7 @@ if (activeTab === 'Prayer List') return (
     <div style={{ minHeight: '100vh', background: '#f7f4ef', fontFamily: 'Georgia, serif', color: '#2c2416' }}>
       {/* Top bar */}
       <div style={{ background: AMBER, color: '#fff', display: 'flex', alignItems: 'center', padding: '0 16px', height: 56, gap: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.15)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <span style={{ fontSize: 18, fontWeight: 'bold', letterSpacing: 1 }}>âœ PrayerBands</span>
+        <span style={{ fontSize: 18, fontWeight: 'bold', letterSpacing: 1 }}>L PrayerBands</span>
         <div style={{ flex: 1 }} />
         <button onClick={async () => { const s = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); await s.auth.signOut(); window.location.href = '/signin' }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontFamily: 'Georgia, serif' }}>Sign out</button>
       </div>
@@ -548,3 +548,4 @@ if (activeTab === 'Prayer List') return (
     </div>
   )
 }
+
