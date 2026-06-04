@@ -562,9 +562,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <a href="/store" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '10px 16px', fontSize: 14, textDecoration: 'none', color: '#2c2416', fontFamily: 'Georgia, serif' }}>
             📦 Order Bands
+          </a>
+          <a href="/subscribe" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: AMBER, border: '1px solid ' + AMBER, borderRadius: 10, padding: '10px 16px', fontSize: 14, textDecoration: 'none', color: '#fff', fontFamily: 'Georgia, serif', fontWeight: 'bold' }}>
+            🔁 Subscribe
           </a>
         </div>
 

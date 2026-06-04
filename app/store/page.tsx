@@ -198,6 +198,7 @@ export default function StorePage() {
           </a>
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
             <a href="/" className="lato" style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "#9B7B62", textDecoration: "none" }}>← Back to Home</a>
+            <a href="/subscribe" className="lato" style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C8A96E", textDecoration: "none", fontWeight: 700 }}>Subscribe</a>
             <button
               onClick={() => setCartOpen(true)}
               style={{ position: "relative", background: "#2C1A0E", border: "none", borderRadius: 4, padding: "9px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
@@ -313,6 +314,24 @@ export default function StorePage() {
             ))}
           </div>
         </div>
+
+        {/* ── SUBSCRIPTION ── */}
+        <a href="/subscribe" style={{ textDecoration: "none", color: "inherit" }}>
+          <div style={{ marginBottom: 80, background: "linear-gradient(135deg, #F5EFE4 0%, #fff 100%)", border: "1px solid #E8DFD0", borderLeft: "4px solid #7B8FAE", borderRadius: 12, padding: "40px 48px", display: "flex", alignItems: "center", gap: 40, flexWrap: "wrap", cursor: "pointer", transition: "box-shadow 0.2s" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 16px 48px rgba(44,26,14,0.10)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}
+          >
+            <div style={{ fontSize: 52 }}>🔁</div>
+            <div style={{ flex: 1, minWidth: 260 }}>
+              <span className="section-label" style={{ color: "#7B8FAE" }}>Subscribe & Save</span>
+              <h3 className="playfair" style={{ fontSize: 30, fontWeight: 600, marginBottom: 10 }}>A Band Delivered to Your Door, Every Month</h3>
+              <p className="lato" style={{ fontSize: 15, color: "#6B4C35", lineHeight: 1.8, fontWeight: 300 }}>Make intercession a rhythm. Subscribe and save up to 25% — bands ship automatically, ready to give away. Cancel anytime.</p>
+            </div>
+            <button style={{ background: "#7B8FAE", border: "none", color: "#fff", padding: "14px 36px", borderRadius: 4, fontFamily: "Lato, sans-serif", fontSize: 13, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap" }}>
+              View Plans →
+            </button>
+          </div>
+        </a>
 
         {/* ── CHURCH PACKS ── */}
         <div style={{ marginBottom: 80 }}>
