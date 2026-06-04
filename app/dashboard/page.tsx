@@ -39,6 +39,7 @@ const TAB_ICONS: Record<string, string> = {
   Activity: '✦',
 }
 const AMBER = '#C8A96E'
+const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 function timeAgo(ts: string) {
   const diff = Date.now() - new Date(ts).getTime()
@@ -111,7 +112,7 @@ function BoundedMap({ points }: { points: MapPoint[] }) {
   return <div ref={mapRef} style={{ height: 280, width: '100%' }} />
 }
 
-function ActivePrayerPreview({ currentUserId }: { currentUserId: string }) {
+function ActivePrayerPreview({ currentUserId, readOnly }: { currentUserId: string; readOnly?: boolean }) {
   const [tab, setTab] = useState<'others' | 'mine'>('others')
   const [others, setOthers] = useState<any[]>([])
   const [mine, setMine] = useState<any[]>([])
@@ -203,7 +204,7 @@ function ActivePrayerPreview({ currentUserId }: { currentUserId: string }) {
                 {req.body && <div style={{ fontSize: 12, color: '#8a7c6a', fontStyle: 'italic', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.body}</div>}
                 <div style={{ fontSize: 11, color: '#b8a898' }}>🙏 {req.total_intercessions || 0} times &middot; {timeAgo(req.created_at)}</div>
               </div>
-              {tab === 'others' && (
+              {tab === 'others' && !readOnly && (
                 <button
                   onClick={() => handlePray(req.id)}
                   style={{ flexShrink: 0, padding: '6px 12px', borderRadius: 8, border: 'none', background: prayedIds.has(req.id) ? '#e8f4e8' : `${AMBER}22`, color: prayedIds.has(req.id) ? '#4a8a4a' : AMBER, fontSize: 12, fontWeight: 600, cursor: prayedIds.has(req.id) ? 'default' : 'pointer', fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}
@@ -211,7 +212,7 @@ function ActivePrayerPreview({ currentUserId }: { currentUserId: string }) {
                   {prayedIds.has(req.id) ? '✓ Prayed' : '🙏 Pray'}
                 </button>
               )}
-              {tab === 'mine' && (
+              {tab === 'mine' && !readOnly && (
                 <button
                   onClick={() => handleAnswered(req.id)}
                   style={{ flexShrink: 0, padding: '6px 12px', borderRadius: 8, border: 'none', background: '#e8f4e8', color: '#4a8a4a', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}
@@ -405,6 +406,7 @@ export default function Dashboard() {
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([])
   const [stats, setStats] = useState({ bands: 0, prayers: 0, registrations: 0, countries: 0 })
   const [loading, setLoading] = useState(true)
+  const [viewAsId, setViewAsId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('Overview')
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700)
   const [showPrayerModal, setShowPrayerModal] = useState(false)
@@ -426,12 +428,20 @@ export default function Dashboard() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) { window.location.href = '/signin'; return }
         setUser(user)
-        const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+
+        // Admin "view as" mode: when an admin opens /dashboard?viewAs=<userId>,
+        // load that user's data instead of their own. Ignored for non-admins.
+        const requestedViewAs = new URLSearchParams(window.location.search).get('viewAs')
+        const viewAs = requestedViewAs && user.email === ADMIN_EMAIL ? requestedViewAs : null
+        setViewAsId(viewAs)
+        const effectiveId = viewAs || user.id
+
+        const { data: prof } = await supabase.from('profiles').select('*').eq('id', effectiveId).single()
         setProfile(prof)
         const { data: bandsData } = await supabase
           .from('bands')
           .select('id, band_id, created_at, registrations(count)')
-          .eq('owner_id', user.id)
+          .eq('owner_id', effectiveId)
           .order('created_at', { ascending: false })
         const myBands = (bandsData as Band[]) || []
         setBands(myBands)
@@ -485,7 +495,11 @@ export default function Dashboard() {
     load()
   }, [])
 
-  const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Friend'
+  const isViewingAs = !!viewAsId
+  const effectiveId = viewAsId || user?.id
+  const displayName = profile?.full_name
+    || (isViewingAs ? profile?.email?.split('@')[0] : (user?.user_metadata?.full_name || user?.email?.split('@')[0]))
+    || 'Friend'
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f4ef', fontFamily: 'Georgia, serif', textAlign: 'center' }}>
@@ -501,9 +515,11 @@ export default function Dashboard() {
             <h1 style={{ fontSize: 22, fontWeight: 'bold', color: '#1a1208', margin: '0 0 4px' }}>Welcome, {displayName} ✝</h1>
             <p style={{ fontSize: 14, color: '#8a7c6a', margin: 0 }}>Here's how far your prayers have traveled.</p>
           </div>
-          <button onClick={() => setShowPrayerModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: AMBER, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 14, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-            🙏 Send Prayer Request
-          </button>
+          {!isViewingAs && (
+            <button onClick={() => setShowPrayerModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: AMBER, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 14, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+              🙏 Send Prayer Request
+            </button>
+          )}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
@@ -542,7 +558,7 @@ export default function Dashboard() {
               <span style={{ fontWeight: 'bold', fontSize: 15 }}>Active Prayer Requests</span>
               <button onClick={() => setActiveTab('Prayer List')} style={{ fontSize: 12, color: AMBER, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>View all &rarr;</button>
             </div>
-            <ActivePrayerPreview currentUserId={user?.id} />
+            <ActivePrayerPreview currentUserId={effectiveId} readOnly={isViewingAs} />
           </div>
         </div>
 
@@ -630,9 +646,11 @@ export default function Dashboard() {
             <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4, color: '#1a1208' }}>Prayers</h1>
             <p style={{ fontSize: 14, color: '#8a7c6a', margin: 0 }}>Prayers left on your bands.</p>
           </div>
-          <button onClick={() => setShowPrayerModal(true)} style={{ background: AMBER, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-            🙏 Send Request
-          </button>
+          {!isViewingAs && (
+            <button onClick={() => setShowPrayerModal(true)} style={{ background: AMBER, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+              🙏 Send Request
+            </button>
+          )}
         </div>
         {prayers.length === 0 ? (
           <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '40px 20px', textAlign: 'center', color: '#8a7c6a', fontSize: 14 }}>
@@ -661,7 +679,7 @@ export default function Dashboard() {
       <div>
         <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4, color: '#1a1208' }}>Living Prayer List</h1>
         <p style={{ fontSize: 14, color: '#8a7c6a', marginBottom: 20 }}>Pray for others. Share your own requests. Celebrate answered prayer.</p>
-        <LivingPrayerList currentUserId={user?.id} />
+        <LivingPrayerList currentUserId={effectiveId} readOnly={isViewingAs} />
       </div>
     )
 
@@ -704,6 +722,16 @@ export default function Dashboard() {
         <button onClick={async () => { const s = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); await s.auth.signOut(); window.location.href = '/signin' }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontFamily: 'Georgia, serif' }}>Sign out</button>
       </div>
 
+      {isViewingAs && (
+        <div style={{ background: '#2C1A0E', color: '#FDFAF5', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '8px 16px', fontSize: 13, flexWrap: 'wrap', position: 'sticky', top: 56, zIndex: 99 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ background: '#7B8FAE', color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 100 }}>Admin View</span>
+            Viewing <strong>{displayName}</strong>{profile?.email ? ` (${profile.email})` : ''} — read only
+          </span>
+          <a href="/admin" style={{ color: '#C8A96E', textDecoration: 'underline', fontWeight: 700, whiteSpace: 'nowrap' }}>Exit to Admin →</a>
+        </div>
+      )}
+
       {!isMobile && (
         <div style={{ background: '#fff', borderBottom: '1px solid #e8e1d6', padding: '0 32px', display: 'flex', gap: 4, justifyContent: 'center' }}>
           {TABS.map(t => (
@@ -731,7 +759,7 @@ export default function Dashboard() {
         </nav>
       )}
 
-      {showPrayerModal && <PrayerRequestModal userId={user?.id} onClose={() => setShowPrayerModal(false)} />}
+      {showPrayerModal && !isViewingAs && <PrayerRequestModal userId={user?.id} onClose={() => setShowPrayerModal(false)} />}
     </div>
   )
 }

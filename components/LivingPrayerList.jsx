@@ -22,7 +22,7 @@ function timeAgo(dateStr) {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function PrayerCard({ request, currentUserId, onPrayed, onMarkAnswered, isOwner }) {
+function PrayerCard({ request, currentUserId, onPrayed, onMarkAnswered, isOwner, readOnly }) {
   const [prayedToday, setPrayedToday] = useState(false);
   const [prayingNow, setPrayingNow] = useState(false);
   const [showAnswerModal, setShowAnswerModal] = useState(false);
@@ -164,7 +164,7 @@ function PrayerCard({ request, currentUserId, onPrayed, onMarkAnswered, isOwner 
         </div>
 
         {/* Action buttons */}
-        {!isAnswered && (
+        {!isAnswered && !readOnly && (
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             {/* I Prayed button — shown to non-owners */}
             {!isOwner && (
@@ -401,7 +401,7 @@ function NewRequestForm({ userId, onCreated, onCancel }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function LivingPrayerList({ currentUserId }) {
+export default function LivingPrayerList({ currentUserId, readOnly }) {
   const [tab, setTab] = useState('pray'); // 'pray' | 'mine'
   const [myRequests, setMyRequests] = useState([]);
   const [networkRequests, setNetworkRequests] = useState([]);
@@ -464,7 +464,7 @@ export default function LivingPrayerList({ currentUserId }) {
             {activeCount} active request{activeCount !== 1 ? 's' : ''} need{activeCount === 1 ? 's' : ''} prayer today
           </p>
         </div>
-        {!showNewForm && (
+        {!showNewForm && !readOnly && (
           <button
             onClick={() => { setShowNewForm(true); setTab('mine'); }}
             style={{
@@ -503,7 +503,7 @@ export default function LivingPrayerList({ currentUserId }) {
       </div>
 
       {/* New Request Form */}
-      {showNewForm && tab === 'mine' && (
+      {showNewForm && tab === 'mine' && !readOnly && (
         <NewRequestForm
           userId={currentUserId}
           onCreated={handleCreated}
@@ -532,6 +532,7 @@ export default function LivingPrayerList({ currentUserId }) {
               request={request}
               currentUserId={currentUserId}
               isOwner={false}
+              readOnly={readOnly}
               onPrayed={() => {}}
               onMarkAnswered={handleAnswered}
             />
@@ -544,7 +545,7 @@ export default function LivingPrayerList({ currentUserId }) {
             <p style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '16px' }}>
               You haven't submitted any prayer requests yet.
             </p>
-            <button
+            {!readOnly && <button
               onClick={() => setShowNewForm(true)}
               style={{
                 marginTop: '12px', background: 'linear-gradient(135deg, #c8a96e, #b8914e)',
@@ -554,7 +555,7 @@ export default function LivingPrayerList({ currentUserId }) {
               }}
             >
               Share a Request
-            </button>
+            </button>}
           </div>
         ) : (
           myRequests.map(request => (
@@ -563,6 +564,7 @@ export default function LivingPrayerList({ currentUserId }) {
               request={request}
               currentUserId={currentUserId}
               isOwner={true}
+              readOnly={readOnly}
               onMarkAnswered={handleAnswered}
             />
           ))
