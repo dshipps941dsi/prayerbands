@@ -412,6 +412,7 @@ export default function Dashboard() {
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([])
   const [stats, setStats] = useState({ bands: 0, prayers: 0, registrations: 0, countries: 0 })
   const [subscription, setSubscription] = useState<any>(null)
+  const [portalLoading, setPortalLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [viewAsId, setViewAsId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('Overview')
@@ -511,6 +512,16 @@ export default function Dashboard() {
 
   const isViewingAs = !!viewAsId
   const effectiveId = viewAsId || user?.id
+
+  async function openBillingPortal() {
+    setPortalLoading(true)
+    try {
+      const res = await fetch('/api/billing-portal', { method: 'POST' })
+      const data = await res.json()
+      if (data.url) { window.location.href = data.url; return }
+    } catch {}
+    setPortalLoading(false)
+  }
   const displayName = profile?.full_name
     || (isViewingAs ? profile?.email?.split('@')[0] : (user?.user_metadata?.full_name || user?.email?.split('@')[0]))
     || 'Friend'
@@ -569,6 +580,11 @@ export default function Dashboard() {
                   <span style={{ fontWeight: 'bold', fontSize: 15, color: '#1a1208' }}>{plan.name || 'Your Subscription'}</span>
                   <span style={{ background: `${badge.color}1f`, color: badge.color, border: `1px solid ${badge.color}55`, fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 100 }}>{badge.label}</span>
                 </div>
+                {!isViewingAs && (
+                  <button onClick={openBillingPortal} disabled={portalLoading} style={{ fontSize: 12, color: AMBER, background: 'none', border: '1px solid ' + AMBER, borderRadius: 8, padding: '6px 14px', fontWeight: 'bold', cursor: portalLoading ? 'wait' : 'pointer', fontFamily: 'Georgia, serif' }}>
+                    {portalLoading ? 'Opening…' : 'Manage'}
+                  </button>
+                )}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12 }}>
                 <div>
