@@ -40,7 +40,6 @@ const TAB_ICONS: Record<string, string> = {
   Activity: '✦'
 }
 }
-}
 const AMBER = '#C8A96E'
 
 function timeAgo(ts: string) {
