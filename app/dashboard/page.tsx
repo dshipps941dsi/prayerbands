@@ -324,10 +324,10 @@ function BoundedMap({ points }: { points: MapPoint[] }) {
       })
       // Fit tightly to actual band locations
       if (markers.length === 1) {
-        map.setView([valid[0].lat, valid[0].lng], 6)
+        map.setView([valid[0].lat, valid[0].lng], 8)
       } else {
         const group = L.featureGroup(markers)
-        map.fitBounds(group.getBounds().pad(0.15), { maxZoom: 10 })
+        map.fitBounds(group.getBounds().pad(0.3), { maxZoom: 7 })
       }
     }
     loadMap()
