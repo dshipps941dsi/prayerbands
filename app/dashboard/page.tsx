@@ -8,7 +8,6 @@ type Band = {
   band_id: string
   created_at: string
   registrations: { count: number }[]
-  chain_prayers: { count: number }[]
 }
 
 type Activity = {
@@ -309,10 +308,10 @@ export default function Dashboard() {
         setProfile(prof)
 
         const { data: bandsData } = await supabase
-          .from('bands')
-          .select('id, band_id, created_at, registrations(count), chain_prayers(count)')
-          .eq('owner_id', user.id)
-          .order('created_at', { ascending: false })
+  .from('bands')
+  .select('id, band_id, created_at, registrations(count)')
+  .eq('owner_id', user.id)
+  .order('created_at', { ascending: false })
         const myBands = (bandsData as Band[]) || []
         setBands(myBands)
 
@@ -330,7 +329,7 @@ export default function Dashboard() {
           setMapPoints(pts)
 
           const countries = new Set((regsData || []).map((r) => r.country).filter(Boolean))
-          const totalPrayers = myBands.reduce((s, b) => s + (b.chain_prayers?.[0]?.count || 0), 0)
+          const totalPrayers = 0
           const totalRegs = myBands.reduce((s, b) => s + (b.registrations?.[0]?.count || 0), 0)
           setStats({ bands: myBands.length, prayers: totalPrayers, registrations: totalRegs, countries: countries.size })
 
