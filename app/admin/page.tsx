@@ -40,6 +40,11 @@ export default function AdminPage() {
   const [availableBands, setAvailableBands] = useState<string[]>([])
   const [selectedBands, setSelectedBands] = useState<{[orderId: number]: string[]}>({})
   const [stats, setStats] = useState({ total: 0, pending: 0, shipped: 0, revenue: 0 })
+  const [userSearch, setUserSearch] = useState('')
+const [userResult, setUserResult] = useState<any>(null)
+const [userBands, setUserBands] = useState<any[]>([])
+const [userSearching, setUserSearching] = useState(false)
+const [userNotFound, setUserNotFound] = useState(false)
   const [flaggedCount, setFlaggedCount] = useState(0)
 
   const supabase = createBrowserClient(
@@ -118,7 +123,28 @@ export default function AdminPage() {
       await supabase.from('bands').update({ status: 'assigned' }).eq('band_id', bandId)
     }
   }
-
+async function searchUser() {
+  if (!userSearch.trim()) return
+  setUserSearching(true)
+  setUserNotFound(false)
+  setUserResult(null)
+  setUserBands([])
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .or(`email.ilike.%${userSearch}%,full_name.ilike.%${userSearch}%`)
+    .limit(1)
+    .single()
+  if (!profile) { setUserNotFound(true); setUserSearching(false); return }
+  setUserResult(profile)
+  const { data: bands } = await supabase
+    .from('bands')
+    .select('band_id, created_at, registrations(count)')
+    .eq('owner_id', profile.id)
+    .order('created_at', { ascending: false })
+  setUserBands(bands || [])
+  setUserSearching(false)
+}
   async function unflagPrayer(id: number) {
     await supabase.from('registrations').update({ flagged: false, flagged_reason: null }).eq('id', id)
     setFlagged(prev => prev.filter(p => p.id !== id))
@@ -178,7 +204,71 @@ export default function AdminPage() {
           <h1 className="playfair" style={{fontSize:'clamp(28px,4vw,42px)',fontWeight:700,lineHeight:1.15,marginBottom:4}}>Order Management</h1>
           <div style={{width:40,height:2,background:'#C8A96E'}}/>
         </div>
-
+{/* User Lookup */}
+<div style={{ background: '#fff', border: '1px solid #E8DFD0', borderTop: '3px solid #7B8FAE', borderRadius: '10px', padding: '24px', marginBottom: '24px' }}>
+  <div style={{ marginBottom: '16px' }}>
+    <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: '#9B7B62', marginBottom: '4px' }}>User Lookup</div>
+    <h2 style={{ fontSize: '20px', fontWeight: 600, margin: 0, fontFamily: 'Georgia, serif' }}>View Any User Dashboard</h2>
+  </div>
+  <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+    <input
+      value={userSearch}
+      onChange={e => setUserSearch(e.target.value)}
+      onKeyDown={e => e.key === 'Enter' && searchUser()}
+      placeholder="Search by email or name..."
+      style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid #E8DFD0', fontSize: '14px', fontFamily: 'Georgia, serif', background: '#FDFAF5', color: '#2C1A0E' }}
+    />
+    <button
+      onClick={searchUser}
+      disabled={userSearching}
+      style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#7B8FAE', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Georgia, serif' }}
+    >
+      {userSearching ? 'Searching...' : 'Search'}
+    </button>
+  </div>
+  {userNotFound && (
+    <div style={{ fontSize: '14px', color: '#AE7B7B', padding: '12px', background: 'rgba(174,123,123,0.08)', borderRadius: '8px' }}>No user found matching that search.</div>
+  )}
+  {userResult && (
+    <div style={{ background: '#FDFAF5', border: '1px solid #E8DFD0', borderRadius: '10px', padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <div style={{ fontSize: '18px', fontWeight: 700, color: '#2C1A0E', fontFamily: 'Georgia, serif' }}>{userResult.full_name || 'No name'}</div>
+          <div style={{ fontSize: '13px', color: '#9B7B62', marginTop: '2px' }}>{userResult.email}</div>
+          <div style={{ fontSize: '12px', color: '#C8B49A', marginTop: '2px' }}>ID: {userResult.id}</div>
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ textAlign: 'center', background: '#fff', border: '1px solid #E8DFD0', borderRadius: '8px', padding: '10px 16px' }}>
+            <div style={{ fontSize: '22px', fontWeight: 700, color: '#C8A96E' }}>{userBands.length}</div>
+            <div style={{ fontSize: '11px', color: '#9B7B62' }}>Bands</div>
+          </div>
+          <div style={{ textAlign: 'center', background: '#fff', border: '1px solid #E8DFD0', borderRadius: '8px', padding: '10px 16px' }}>
+            <div style={{ fontSize: '22px', fontWeight: 700, color: '#7BAE8E' }}>
+              {userBands.reduce((s, b) => s + (b.registrations?.[0]?.count || 0), 0)}
+            </div>
+            <div style={{ fontSize: '11px', color: '#9B7B62' }}>Registrations</div>
+          </div>
+        </div>
+      </div>
+      {userBands.length > 0 && (
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: '#9B7B62', marginBottom: '8px' }}>Their Bands</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '240px', overflowY: 'auto' }}>
+            {userBands.map(band => {
+              const hands = band.registrations?.[0]?.count || 0
+              return (
+                <a key={band.band_id} href={`/band/${band.band_id}`} target="_blank" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', border: '1px solid #E8DFD0', borderRadius: '8px', padding: '10px 14px', textDecoration: 'none', color: 'inherit' }}>
+                  <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#C8A96E', fontSize: '13px' }}>{band.band_id}</span>
+                  <span style={{ fontSize: '12px', color: '#9B7B62' }}>{hands > 0 ? `${hands} registration${hands !== 1 ? 's' : ''}` : 'Unregistered'}</span>
+                </a>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )}
+</div>
         {/* KPI cards */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'16px',marginBottom:'28px'}}>
           {[
