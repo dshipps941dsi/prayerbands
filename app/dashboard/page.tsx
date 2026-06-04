@@ -72,7 +72,7 @@ function BoundedMap({ points }: { points: MapPoint[] }) {
     const renderMap = () => {
       const L = (window as any).L
       if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null }
-      const valid = points.filter(p => p.lat && p.lng)
+      const valid = points.filter(p => p.lat && p.lng && p.lng > -130 && p.lng < -60 && p.lat > 20 && p.lat < 55)
       if (!valid.length || !mapRef.current) return
       const map = L.map(mapRef.current, {
         zoomControl: false,
