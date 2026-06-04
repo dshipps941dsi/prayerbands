@@ -152,7 +152,15 @@ function ActivePrayerPreview({ currentUserId }: { currentUserId: string }) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ requestId, intercessorId: currentUserId }),
-    })
+    }
+  const handleAnswered = async (requestId: string) => {
+  await fetch('/api/prayer-requests/answer', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ requestId, userId: currentUserId, testimony: '' }),
+  })
+  setMine(prev => prev.filter(r => r.id !== requestId))
+})
     setPrayedIds(prev => new Set([...prev, requestId]))
     setOthers(prev => prev.map(r => r.id === requestId ? { ...r, total_intercessions: (r.total_intercessions || 0) + 1 } : r))
   }
