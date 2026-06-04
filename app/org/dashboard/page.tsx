@@ -79,13 +79,35 @@ function OrgMap({ orgId, green }: { orgId: string, green: string }) {
   )
 }
 
-function TopBar({ org, green, tab, setTab }: { org: any, green: string, tab: string, setTab: (t: string) => void }) {
+function TopBar({ org, green }: { org: any, green: string }) {
   return (
     <div style={{ background: green, color: '#fff', display: 'flex', alignItems: 'center', padding: '0 16px', height: 56, gap: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.18)', flexShrink: 0, position: 'sticky', top: 0, zIndex: 100 }}>
       <span style={{ fontSize: 18, fontWeight: 'bold', letterSpacing: 1, whiteSpace: 'nowrap' }}>✝ PrayerBands</span>
       <span style={{ background: 'rgba(255,255,255,0.18)', borderRadius: 4, padding: '2px 8px', fontSize: 11, letterSpacing: 0.5, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{org?.subdomain}.prayerbands.com</span>
       <div style={{ flex: 1 }} />
       <button onClick={async () => { const s = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); await s.auth.signOut(); window.location.href = '/signin' }} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}>Sign out</button>
+    </div>
+  )
+}
+
+function Sidebar({ org, tab, setTab, green }: { org: any, tab: string, setTab: (t: string) => void, green: string }) {
+  return (
+    <div style={{ width: 220, background: '#fff', borderRight: '1px solid #e8e1d6', padding: '28px 0', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 56, height: 'calc(100vh - 56px)', overflowY: 'auto' }}>
+      <div style={{ padding: '0 20px 24px', borderBottom: '1px solid #e8e1d6' }}>
+        <div style={{ fontSize: 15, fontWeight: 'bold', color: green, lineHeight: 1.3 }}>{org?.name}</div>
+        <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 4 }}>{org?.location}</div>
+        <div style={{ display: 'inline-block', marginTop: 8, background: '#e6f4ee', color: green, fontSize: 11, padding: '2px 8px', borderRadius: 12, fontFamily: 'monospace', letterSpacing: 0.5 }}>{org?.prefix}-XXXXX</div>
+      </div>
+      <div style={{ padding: '12px 0' }}>
+        {NAV.map(item => (
+          <div key={item} onClick={() => setTab(item)} style={{ padding: '10px 24px', cursor: 'pointer', fontSize: 14, borderLeft: tab === item ? '3px solid ' + green : '3px solid transparent', color: tab === item ? green : '#5a4f42', background: tab === item ? '#f0f7f3' : 'transparent', fontWeight: tab === item ? 600 : 400 }}>{item}</div>
+        ))}
+      </div>
+      <div style={{ flex: 1 }} />
+      <div style={{ margin: 16, background: 'linear-gradient(135deg, ' + green + ', #2d9966)', color: '#fff', borderRadius: 8, padding: '12px 14px', fontSize: 12 }}>
+        <div style={{ fontWeight: 'bold', marginBottom: 2 }}>{org?.plan || 'Ministry'} Plan</div>
+        <div style={{ opacity: 0.8 }}>{org?.created_at ? 'Since ' + new Date(org.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''}</div>
+      </div>
     </div>
   )
 }
@@ -107,28 +129,6 @@ function BottomNav({ tab, setTab, green }: { tab: string, setTab: (t: string) =>
   )
 }
 
-function Sidebar({ org, tab, setTab, green }: { org: any, tab: string, setTab: (t: string) => void, green: string }) {
-  return (
-    <div className="sidebar" style={{ width: 220, background: '#fff', borderRight: '1px solid #e8e1d6', padding: '28px 0', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-      <div style={{ padding: '0 20px 24px', borderBottom: '1px solid #e8e1d6' }}>
-        <div style={{ fontSize: 15, fontWeight: 'bold', color: green, lineHeight: 1.3 }}>{org?.name}</div>
-        <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 4 }}>{org?.location}</div>
-        <div style={{ display: 'inline-block', marginTop: 8, background: '#e6f4ee', color: green, fontSize: 11, padding: '2px 8px', borderRadius: 12, fontFamily: 'monospace', letterSpacing: 0.5 }}>{org?.prefix}-XXXXX</div>
-      </div>
-      <div style={{ padding: '12px 0' }}>
-        {NAV.map(item => (
-          <div key={item} onClick={() => setTab(item)} style={{ padding: '10px 24px', cursor: 'pointer', fontSize: 14, borderLeft: tab === item ? '3px solid ' + green : '3px solid transparent', color: tab === item ? green : '#5a4f42', background: tab === item ? '#f0f7f3' : 'transparent', fontWeight: tab === item ? 600 : 400 }}>{item}</div>
-        ))}
-      </div>
-      <div style={{ flex: 1 }} />
-      <div style={{ margin: 16, background: 'linear-gradient(135deg, ' + green + ', #2d9966)', color: '#fff', borderRadius: 8, padding: '12px 14px', fontSize: 12 }}>
-        <div style={{ fontWeight: 'bold', marginBottom: 2 }}>{org?.plan || 'Ministry'} Plan</div>
-        <div style={{ opacity: 0.8 }}>{org?.created_at ? 'Since ' + new Date(org.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''}</div>
-      </div>
-    </div>
-  )
-}
-
 function OrgDashboardInner() {
   const searchParams = useSearchParams()
   const [tab, setTab] = useState(searchParams.get('tab') || 'Overview')
@@ -143,6 +143,14 @@ function OrgDashboardInner() {
   const [loading, setLoading] = useState(true)
   const [orderQty, setOrderQty] = useState(100)
   const [orgId, setOrgId] = useState<string>('')
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 700)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -208,26 +216,30 @@ function OrgDashboardInner() {
 
   const labelStyle = { fontSize: 12, fontWeight: 600 as const, color: '#7a6c5a', display: 'block' as const, marginBottom: 6, letterSpacing: 0.4 }
 
-  if (loading) return <div style={{ color: '#8a7c6a', fontSize: 15, paddingTop: 80, textAlign: 'center', fontFamily: 'Georgia, serif' }}>Loading... ✝</div>
+  if (loading) return (
+    <div style={{ color: '#8a7c6a', fontSize: 15, paddingTop: 80, textAlign: 'center', fontFamily: 'Georgia, serif' }}>
+      <div style={{ fontSize: 32, marginBottom: 12 }}>✝</div>
+      Loading your ministry...
+    </div>
+  )
   if (!org) return <div style={{ color: '#8a7c6a', fontSize: 15, paddingTop: 80, textAlign: 'center', fontFamily: 'Georgia, serif' }}>No organization found. <a href="/signin" style={{ color: '#1a6b4a' }}>Sign in again</a></div>
 
-  // ── Tab content ──────────────────────────────────────────────────────────
   const renderContent = () => {
     if (tab === 'Overview') return (
-      <div style={{ padding: '20px 16px', maxWidth: 1100 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4, color: '#1a1208' }}>Ministry Dashboard</h1>
+      <div style={{ padding: isMobile ? '16px 14px' : '32px', maxWidth: 1100 }}>
+        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 'bold', marginBottom: 4, color: '#1a1208' }}>Ministry Dashboard</h1>
         <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>Every band is a prayer in motion. Here's how far {org?.name}'s love has traveled.</p>
-        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: isMobile ? 10 : 16, marginBottom: 20 }}>
           {[{ label: 'Total Bands', value: stats?.total_bands || 0, icon: '⟳' }, { label: 'Active Bands', value: stats?.active_bands || 0, icon: '✦' }, { label: 'Prayers Offered', value: stats?.total_prayers || 0, icon: '◎' }, { label: 'Countries', value: stats?.countries || 0, icon: '◈' }].map(s => (
-            <div key={s.label} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '16px' }}>
+            <div key={s.label} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: isMobile ? '14px 12px' : '20px' }}>
               <div style={{ fontSize: 20, marginBottom: 4, color: green }}>{s.icon}</div>
-              <div style={{ fontSize: 28, fontWeight: 'bold', color: '#1a1208', lineHeight: 1 }}>{Number(s.value).toLocaleString()}</div>
+              <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 'bold', color: '#1a1208', lineHeight: 1 }}>{Number(s.value).toLocaleString()}</div>
               <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 4 }}>{s.label}</div>
             </div>
           ))}
         </div>
         <OrgMap orgId={org?.id} green={green} />
-        <div className="overview-bottom" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr', gap: isMobile ? 14 : 20 }}>
           <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
             <div style={{ padding: '14px 16px', borderBottom: '1px solid #f0ece6', display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontWeight: 'bold', fontSize: 15 }}>Recent Bands</span>
@@ -266,8 +278,8 @@ function OrgDashboardInner() {
     )
 
     if (tab === 'Bands') return (
-      <div style={{ padding: '20px 16px' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4 }}>Your Bands</h1>
+      <div style={{ padding: isMobile ? '16px 14px' : '32px' }}>
+        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 'bold', marginBottom: 4 }}>Your Bands</h1>
         <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>All bands under the {org?.prefix} prefix.</p>
         <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0ece6', background: '#fbf9f7', display: 'flex', gap: 12 }}>
@@ -288,8 +300,8 @@ function OrgDashboardInner() {
     )
 
     if (tab === 'Prayer Wall') return (
-      <div style={{ padding: '20px 16px' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4 }}>Prayer Wall</h1>
+      <div style={{ padding: isMobile ? '16px 14px' : '32px' }}>
+        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 'bold', marginBottom: 4 }}>Prayer Wall</h1>
         <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>Every prayer left by someone holding a {org?.prefix} band.</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {prayers.map((p, i) => (
@@ -308,8 +320,8 @@ function OrgDashboardInner() {
     )
 
     if (tab === 'Lineage') return (
-      <div style={{ padding: '20px 16px' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4 }}>Band Lineage</h1>
+      <div style={{ padding: isMobile ? '16px 14px' : '32px' }}>
+        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 'bold', marginBottom: 4 }}>Band Lineage</h1>
         <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>Track how far each {org?.prefix} band has traveled.</p>
         {lineageLoading && <div style={{ color: '#8a7c6a', textAlign: 'center', padding: 40 }}>Loading lineage... ✝</div>}
         {!lineageLoading && lineage.length === 0 && (
@@ -321,10 +333,10 @@ function OrgDashboardInner() {
         )}
         {!lineageLoading && lineage.length > 0 && (
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: isMobile ? 10 : 16, marginBottom: 20 }}>
               {[{ label: 'Bands Traveling', value: lineage.length }, { label: 'Total Holders', value: lineage.reduce((s: number, b: any) => s + Number(b.total_holders), 0) }, { label: 'Countries', value: lineage.reduce((s: number, b: any) => s + Number(b.countries), 0) }].map(s => (
-                <div key={s.label} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '16px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 24, fontWeight: 'bold', color: green }}>{s.value}</div>
+                <div key={s.label} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: isMobile ? '14px 10px' : '20px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? 22 : 28, fontWeight: 'bold', color: green }}>{s.value}</div>
                   <div style={{ fontSize: 11, color: '#8a7c6a', marginTop: 4 }}>{s.label}</div>
                 </div>
               ))}
@@ -335,12 +347,12 @@ function OrgDashboardInner() {
                   <div onClick={() => setExpandedBand(expandedBand === b.band_id ? null : b.band_id)} style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', cursor: 'pointer', gap: 12 }}>
                     <div style={{ fontFamily: 'monospace', fontSize: 13, color: green, fontWeight: 'bold', minWidth: 90 }}>{b.band_id}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: '#5a4f42', marginBottom: 4 }}>{b.total_holders} people · {b.countries} countries · {b.prayers} prayers</div>
+                      <div style={{ fontSize: 12, color: '#5a4f42', marginBottom: 4 }}>{b.total_holders} people · {b.countries} {Number(b.countries) === 1 ? 'country' : 'countries'} · {b.prayers} prayers</div>
                       <div style={{ height: 5, background: '#f0ece6', borderRadius: 3, overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: Math.min(100, (Number(b.total_holders) / Math.max(...lineage.map((x: any) => Number(x.total_holders)))) * 100) + '%', background: 'linear-gradient(90deg, ' + green + ', #2d9966)', borderRadius: 3 }} />
                       </div>
                     </div>
-                    <div style={{ fontSize: 16, color: '#b0a090', transform: expandedBand === b.band_id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</div>
+                    <div style={{ fontSize: 16, color: '#b0a090', transform: expandedBand === b.band_id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>▾</div>
                   </div>
                   {expandedBand === b.band_id && (
                     <div style={{ borderTop: '1px solid #f0ece6', padding: '16px', background: '#fbf9f7' }}>
@@ -356,10 +368,10 @@ function OrgDashboardInner() {
     )
 
     if (tab === 'Orders') return (
-      <div style={{ padding: '20px 16px' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4 }}>Order Bands</h1>
+      <div style={{ padding: isMobile ? '16px 14px' : '32px' }}>
+        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 'bold', marginBottom: 4 }}>Order Bands</h1>
         <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>All bands ship laser-engraved with NFC chips and your {org?.prefix} prefix.</p>
-        <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 12, padding: '20px 16px', marginBottom: 20 }}>
+        <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 12, padding: isMobile ? '16px 14px' : '28px', marginBottom: 20, maxWidth: isMobile ? '100%' : 520 }}>
           <h2 style={{ fontSize: 17, fontWeight: 'bold', marginBottom: 16 }}>New Band Order</h2>
           <div style={{ marginBottom: 16 }}>
             <label style={labelStyle}>QUANTITY</label>
@@ -385,16 +397,16 @@ function OrgDashboardInner() {
           </div>
           <div style={{ marginTop: 10, fontSize: 11, color: '#8a7c6a', textAlign: 'center' }}>Engraved with {org?.prefix}-XXXXX · NFC chip included · Ships in 2–3 weeks</div>
         </div>
-        <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden', maxWidth: isMobile ? '100%' : 520 }}>
           <div style={{ padding: '14px 16px', borderBottom: '1px solid #f0ece6', fontWeight: 'bold', fontSize: 15 }}>Order History</div>
           {orders.map((o, i) => (
             <div key={o.id} style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', borderBottom: i < orders.length - 1 ? '1px solid #f7f4ef' : 'none', gap: 12 }}>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 'bold' }}>ORD-{o.id.slice(0, 8)}</div>
                 <div style={{ fontSize: 11, color: '#8a7c6a' }}>{new Date(o.created_at).toLocaleDateString()} · {o.order_metadata?.quantity || '—'} bands</div>
               </div>
-              <div style={{ fontWeight: 'bold', fontSize: 15 }}>${((o.amount_total || 0) / 100).toFixed(2)}</div>
-              <div style={{ fontSize: 11, padding: '2px 10px', borderRadius: 10, background: '#e6f4ee', color: green, textTransform: 'capitalize' as const }}>{o.status}</div>
+              <div style={{ fontWeight: 'bold', fontSize: 15, flexShrink: 0 }}>${((o.amount_total || 0) / 100).toFixed(2)}</div>
+              <div style={{ fontSize: 11, padding: '2px 10px', borderRadius: 10, background: '#e6f4ee', color: green, textTransform: 'capitalize' as const, flexShrink: 0 }}>{o.status}</div>
             </div>
           ))}
           {orders.length === 0 && <div style={{ padding: '24px 16px', color: '#8a7c6a', fontSize: 13, textAlign: 'center' }}>No orders yet.</div>}
@@ -402,12 +414,11 @@ function OrgDashboardInner() {
       </div>
     )
 
-    // Settings
     return (
-      <div style={{ padding: '20px 16px' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4 }}>Church Settings</h1>
+      <div style={{ padding: isMobile ? '16px 14px' : '32px' }}>
+        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 'bold', marginBottom: 4 }}>Church Settings</h1>
         <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>Your organization profile.</p>
-        <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 12, padding: '20px 16px' }}>
+        <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 12, padding: isMobile ? '16px 14px' : '28px', maxWidth: isMobile ? '100%' : 520 }}>
           {[{ label: 'CHURCH NAME', value: org?.name }, { label: 'BAND PREFIX', value: org?.prefix + '-XXXXX', mono: true }, { label: 'SUBDOMAIN', value: org?.subdomain + '.prayerbands.com', mono: true }, { label: 'LOCATION', value: org?.location || '—' }, { label: 'WEBSITE', value: org?.website || '—' }, { label: 'PLAN', value: org?.plan || 'Ministry' }].map(field => (
             <div key={field.label} style={{ marginBottom: 18 }}>
               <label style={labelStyle}>{field.label}</label>
@@ -422,37 +433,14 @@ function OrgDashboardInner() {
 
   return (
     <div style={{ fontFamily: 'Georgia, serif', background: '#f7f4ef', minHeight: '100vh', color: '#2c2416' }}>
-      <TopBar org={org} green={green} tab={tab} setTab={setTab} />
-
+      <TopBar org={org} green={green} />
       <div style={{ display: 'flex', minHeight: 'calc(100vh - 56px)' }}>
-        {/* Desktop sidebar */}
-        <Sidebar org={org} tab={tab} setTab={setTab} green={green} />
-
-        {/* Main content — padded for mobile bottom nav */}
-        <div style={{ flex: 1, overflowX: 'hidden', paddingBottom: 80 }} className="main-content">
+        {!isMobile && <Sidebar org={org} tab={tab} setTab={setTab} green={green} />}
+        <div style={{ flex: 1, overflowX: 'hidden', paddingBottom: isMobile ? 80 : 0 }}>
           {renderContent()}
         </div>
       </div>
-
-      {/* Mobile bottom nav */}
-      <BottomNav tab={tab} setTab={setTab} green={green} />
-
-      <style>{`
-        /* Desktop: show sidebar, hide bottom nav, no bottom padding */
-        @media (min-width: 700px) {
-          .sidebar { display: flex !important; }
-          nav[class*="bottom"] { display: none !important; }
-          .main-content { padding-bottom: 0 !important; }
-          .stats-grid { grid-template-columns: repeat(4, 1fr) !important; }
-          .overview-bottom { grid-template-columns: 1.4fr 1fr !important; }
-        }
-        /* Mobile: hide sidebar, show bottom nav */
-        @media (max-width: 699px) {
-          .sidebar { display: none !important; }
-        }
-        * { box-sizing: border-box; }
-        a, button { -webkit-tap-highlight-color: transparent; }
-      `}</style>
+      {isMobile && <BottomNav tab={tab} setTab={setTab} green={green} />}
     </div>
   )
 }
