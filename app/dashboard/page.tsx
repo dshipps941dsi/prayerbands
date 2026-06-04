@@ -200,6 +200,14 @@ function ActivePrayerPreview({ currentUserId }: { currentUserId: string }) {
                   {prayedIds.has(req.id) ? '✓ Prayed' : '🙏 Pray'}
                 </button>
               )}
+              {tab === 'mine' && (
+  <button
+    onClick={() => handleAnswered(req.id)}
+    style={{ flexShrink: 0, padding: '6px 12px', borderRadius: 8, border: 'none', background: '#e8f4e8', color: '#4a8a4a', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}
+  >
+    ✨ Answered
+  </button>
+)}
             </div>
           ))
         )}
