@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
         }
       ],
       mode: 'payment',
+      allow_promotion_codes: true,
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/shop`,
       customer_email: email || undefined,
