@@ -1,632 +1,550 @@
-"use client";
+'use client'
+import { useEffect, useState, useRef } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
 
-import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-interface OrgData {
-  id: string;
-  name: string;
-  prefix: string;
-  subdomain: string;
-  color: string;
-  plan: string;
-  created_at: string;
+type Band = {
+  id: string
+  band_id: string
+  created_at: string
+  registrations: { count: number }[]
+  chain_prayers: { count: number }[]
 }
 
-interface BandRow {
-  id: string;
-  band_id: string;
-  created_at: string;
-  registrations: { count: number }[];
-  chain_prayers: { count: number }[];
+type Activity = {
+  id: string
+  type: 'prayer' | 'registration'
+  band_id: string
+  message?: string
+  location?: string
+  created_at: string
 }
 
-interface ActivityRow {
-  id: string;
-  type: "prayer" | "registration";
-  band_id: string;
-  message?: string;
-  location?: string;
-  created_at: string;
+type MapPoint = {
+  lat: number
+  lng: number
+  band_id: string
+  user_name?: string
+  city?: string
+  country?: string
+  prayer?: string
 }
 
-interface Order {
-  id: string;
-  quantity: number;
-  total_amount: number;
-  status: string;
-  created_at: string;
+const TABS = ['Overview', 'Bands', 'Map', 'Prayers', 'Activity']
+const TAB_ICONS: Record<string, string> = {
+  Overview: '◎', Bands: '⟳', Map: '🌍', Prayers: '🙏', Activity: '✦'
 }
+const AMBER = '#C8A96E'
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 function timeAgo(ts: string) {
-  const diff = Date.now() - new Date(ts).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+  const diff = Date.now() - new Date(ts).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 60) return m + 'm ago'
+  const h = Math.floor(m / 60)
+  if (h < 24) return h + 'h ago'
+  return Math.floor(h / 24) + 'd ago'
 }
 
-function initSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
-
-// ─── Nav config ──────────────────────────────────────────────────────────────
-const NAV_ITEMS = [
-  { id: "overview", label: "Overview", icon: "◎" },
-  { id: "bands", label: "Bands", icon: "⟳" },
-  { id: "prayers", label: "Prayers", icon: "🙏" },
-  { id: "orders", label: "Orders", icon: "📦" },
-  { id: "settings", label: "Settings", icon: "⚙" },
-];
-
-// ─── Main Component ───────────────────────────────────────────────────────────
-export default function ChurchDashboard() {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [org, setOrg] = useState<OrgData | null>(null);
-  const [bands, setBands] = useState<BandRow[]>([]);
-  const [activity, setActivity] = useState<ActivityRow[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [stats, setStats] = useState({ bands: 0, prayers: 0, registrations: 0, countries: 0 });
-  const [loading, setLoading] = useState(true);
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  // Accent color from org or default amber
-  const accent = org?.color || "#C8A96E";
+function DashboardMap({ bands, points }: { bands: Band[], points: MapPoint[] }) {
+  const mapRef = useRef<any>(null)
+  const mapInstanceRef = useRef<any>(null)
+  const [mode, setMode] = useState<'current' | 'all'>('all')
 
   useEffect(() => {
-  async function load() {
-    try {
-      const supabase = initSupabase();
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log("user:", user?.id);
-      if (!user) return;
-
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("org_id")
-        .eq("id", user.id)
-        .single();
-      console.log("profile:", profile, profileError);
-      if (!profile?.org_id) return;
-
-      const { data: orgData, error: orgError } = await supabase
-        .from("organizations")
-        .select("*")
-        .eq("id", profile.org_id)
-        .single();
-      console.log("org:", orgData, orgError);
-      if (orgData) setOrg(orgData);
-
-    } catch (err) {
-      console.error("Dashboard load error:", err);
-    } finally {
-      setLoading(false);
+    if (!mapRef.current || typeof window === 'undefined' || !points.length) return
+    const loadMap = () => {
+      if (!(window as any).L) {
+        if (!document.getElementById('leaflet-css')) {
+          const link = document.createElement('link')
+          link.id = 'leaflet-css'; link.rel = 'stylesheet'
+          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+          document.head.appendChild(link)
+        }
+        const script = document.createElement('script')
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+        script.onload = renderMap
+        document.head.appendChild(script)
+      } else { renderMap() }
     }
-  }
-  load();
-}, []);
+    const renderMap = () => {
+      const L = (window as any).L
+      if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null }
+      const valid = points.filter(p => p.lat && p.lng)
+      if (!valid.length || !mapRef.current) return
+      const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false })
+      mapInstanceRef.current = map
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map)
+      const markers: any[] = []
+      valid.forEach(p => {
+        const dot = L.divIcon({ className: '', html: `<div style="width:12px;height:12px;background:${AMBER};border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,0.3);"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] })
+        const m = L.marker([p.lat, p.lng], { icon: dot }).addTo(map)
+        m.bindPopup(`<div style="font-family:Georgia,serif"><div style="font-family:monospace;font-weight:bold;color:${AMBER}">${p.band_id}</div>${p.user_name ? `<div style="font-size:13px">${p.user_name}</div>` : ''}${p.city || p.country ? `<div style="font-size:12px;color:#8a7c6a">${[p.city, p.country].filter(Boolean).join(', ')}</div>` : ''}${p.prayer ? `<div style="font-size:12px;font-style:italic;border-left:2px solid ${AMBER};padding-left:6px;margin-top:4px">"${p.prayer.slice(0, 80)}"</div>` : ''}</div>`)
+        markers.push(m)
+      })
+      if (markers.length === 1) { map.setView([valid[0].lat, valid[0].lng], 5) }
+      else { map.fitBounds(L.featureGroup(markers).getBounds().pad(0.2)) }
+    }
+    loadMap()
+    return () => { if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null } }
+  }, [points])
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#fdf8f3", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center", color: "#8a7c6a" }}>
-          <div style={{ fontSize: 36, marginBottom: 12 }}>✝</div>
-          <div style={{ fontFamily: "Georgia, serif", fontSize: 16 }}>Loading your ministry…</div>
-        </div>
+  if (!points.length) return (
+    <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '40px 20px', textAlign: 'center', color: '#8a7c6a' }}>
+      <div style={{ fontSize: 32, marginBottom: 8 }}>🌍</div>
+      <div style={{ fontSize: 14 }}>Map will appear once bands are registered with location.</div>
+    </div>
+  )
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ padding: '14px 16px', borderBottom: '1px solid #f0ece6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontWeight: 'bold', fontSize: 15 }}>Band Journey Map</span>
+        <span style={{ fontSize: 12, color: '#8a7c6a' }}>{points.length} location{points.length !== 1 ? 's' : ''}</span>
       </div>
-    );
+      <div ref={mapRef} style={{ height: 320, width: '100%' }} />
+    </div>
+  )
+}
+
+function PrayerRequestModal({ bands, userId, onClose }: { bands: Band[], userId: string, onClose: () => void }) {
+  const [bandId, setBandId] = useState(bands[0]?.band_id || '')
+  const [message, setMessage] = useState('')
+  const [direction, setDirection] = useState<'upline' | 'downline' | 'both'>('both')
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+
+  async function send() {
+    if (!message.trim()) return
+    setSending(true)
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    // Get registrations for this band to find upline/downline
+    const { data: regs } = await supabase
+      .from('registrations')
+      .select('user_id, user_name, registered_at')
+      .eq('band_id', bandId)
+      .order('registered_at', { ascending: true })
+
+    if (regs && regs.length > 0) {
+      const myIndex = regs.findIndex(r => r.user_id === userId)
+      let recipients: string[] = []
+      if (direction === 'upline' || direction === 'both') {
+        const upline = myIndex > 0 ? regs.slice(0, myIndex).map(r => r.user_id).filter(Boolean) : regs.map(r => r.user_id).filter(Boolean)
+        recipients = [...recipients, ...upline]
+      }
+      if (direction === 'downline' || direction === 'both') {
+        const downline = myIndex >= 0 ? regs.slice(myIndex + 1).map(r => r.user_id).filter(Boolean) : []
+        recipients = [...recipients, ...downline]
+      }
+      // Insert prayer request notifications
+      if (recipients.length > 0) {
+        await supabase.from('chain_prayers').insert(
+          recipients.map(recipientId => ({
+            band_id: bandId,
+            sender_id: userId,
+            recipient_id: recipientId,
+            message,
+            direction,
+          }))
+        )
+      }
+    }
+    setSending(false)
+    setSent(true)
+    setTimeout(onClose, 1500)
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#fdf8f3", fontFamily: "Georgia, serif" }}>
-      {/* ── Top Header ─────────────────────────────────────────────────────── */}
-      <header style={{
-        background: "#fff",
-        borderBottom: "1px solid #e8ddd0",
-        padding: "0 16px",
-        height: 56,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-        boxShadow: "0 1px 8px rgba(0,0,0,0.06)",
-      }}>
-        {/* Logo + church name */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: accent,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#fff", fontSize: 16, fontWeight: "bold", flexShrink: 0,
-          }}>✝</div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: "bold", color: "#2c2416", lineHeight: 1.2 }}>
-              {org?.name || "My Church"}
-            </div>
-            <div style={{ fontSize: 11, color: accent, fontFamily: "monospace", letterSpacing: 1 }}>
-              {org?.prefix || "PB"} prefix
-            </div>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div style={{ background: '#fff', borderRadius: 14, padding: '28px 24px', width: '100%', maxWidth: 420, fontFamily: 'Georgia, serif' }}>
+        {sent ? (
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🙏</div>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#2c2416' }}>Prayer Sent</div>
           </div>
-        </div>
+        ) : (
+          <>
+            <h2 style={{ fontSize: 18, fontWeight: 'bold', margin: '0 0 20px', color: '#1a1208' }}>Send a Prayer Request</h2>
 
-        {/* Desktop nav — hidden on mobile */}
-        <nav style={{ display: "flex", gap: 4 }} className="desktop-nav">
-          {NAV_ITEMS.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              style={{
-                padding: "6px 14px",
-                borderRadius: 20,
-                border: "none",
-                background: activeTab === item.id ? accent : "transparent",
-                color: activeTab === item.id ? "#fff" : "#6B4C35",
-                fontSize: 13,
-                cursor: "pointer",
-                fontFamily: "Georgia, serif",
-                fontWeight: activeTab === item.id ? "bold" : "normal",
-                transition: "all 0.15s",
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-
-        {/* Plan badge */}
-        <div style={{
-          background: `${accent}22`,
-          color: accent,
-          fontSize: 11,
-          fontWeight: "bold",
-          padding: "3px 10px",
-          borderRadius: 20,
-          border: `1px solid ${accent}44`,
-          whiteSpace: "nowrap",
-        }}>
-          {org?.plan || "Ministry"}
-        </div>
-      </header>
-
-      {/* ── Page Content ───────────────────────────────────────────────────── */}
-      <main style={{ padding: "16px 16px 80px", maxWidth: 900, margin: "0 auto" }}>
-
-        {/* Page title */}
-        <div style={{ marginBottom: 20 }}>
-          <h1 style={{ margin: 0, fontSize: 22, color: "#2c2416", fontWeight: "bold" }}>
-            {NAV_ITEMS.find(n => n.id === activeTab)?.icon}{" "}
-            {NAV_ITEMS.find(n => n.id === activeTab)?.label}
-          </h1>
-          {activeTab === "overview" && (
-            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#8a7c6a" }}>
-              Ministry impact for {org?.name || "your church"}
-            </p>
-          )}
-        </div>
-
-        {/* ── OVERVIEW ─────────────────────────────────────────── */}
-        {activeTab === "overview" && (
-          <div>
-            {/* Stat cards — 2×2 on mobile, 4-across on desktop */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: 12,
-              marginBottom: 20,
-            }}>
-              {[
-                { label: "Bands Active", value: stats.bands, icon: "⟳", delta: "total distributed" },
-                { label: "People Reached", value: stats.registrations, icon: "✦", delta: "registered bands" },
-                { label: "Prayers Offered", value: stats.prayers, icon: "🙏", delta: "across all bands" },
-                { label: "Countries", value: stats.countries || "—", icon: "🌍", delta: "reached" },
-              ].map((stat) => (
-                <div key={stat.label} style={{
-                  background: "#fff",
-                  borderRadius: 12,
-                  padding: "14px 16px",
-                  border: "1px solid #e8ddd0",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-                }}>
-                  <div style={{ fontSize: 20, marginBottom: 4 }}>{stat.icon}</div>
-                  <div style={{ fontSize: 28, fontWeight: "bold", color: "#2c2416", lineHeight: 1 }}>
-                    {stat.value}
-                  </div>
-                  <div style={{ fontSize: 12, color: "#8a7c6a", marginTop: 4 }}>{stat.label}</div>
-                  <div style={{ fontSize: 11, color: "#b8a898", marginTop: 2 }}>{stat.delta}</div>
-                </div>
-              ))}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#7a6c5a', letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Band</label>
+              <select value={bandId} onChange={e => setBandId(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: 7, border: '1px solid #ddd6ca', fontSize: 14, fontFamily: 'Georgia, serif', background: '#fdfaf7', color: '#2c2416' }}>
+                {bands.map(b => <option key={b.band_id} value={b.band_id}>{b.band_id}</option>)}
+              </select>
             </div>
 
-            {/* Quick actions */}
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: "#2c2416", marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>
-                Quick Actions
-              </div>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                {[
-                  { label: "Order Bands", icon: "📦", href: "/store" },
-                  { label: "Prayer Wall", icon: "🙏", action: () => setActiveTab("prayers") },
-                  { label: "Share Ministry", icon: "✦", href: `/${org?.subdomain}` },
-                ].map((action) => (
-                  <button
-                    key={action.label}
-                    onClick={() => action.action ? action.action() : window.location.href = action.href || "#"}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 8,
-                      background: "#fff",
-                      border: `1px solid ${accent}66`,
-                      borderRadius: 10,
-                      padding: "10px 16px",
-                      color: "#2c2416",
-                      fontSize: 14,
-                      cursor: "pointer",
-                      fontFamily: "Georgia, serif",
-                    }}
-                  >
-                    <span>{action.icon}</span>
-                    <span>{action.label}</span>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#7a6c5a', letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Send To</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {(['upline', 'downline', 'both'] as const).map(d => (
+                  <button key={d} onClick={() => setDirection(d)} style={{ flex: 1, padding: '8px 4px', borderRadius: 7, border: direction === d ? `2px solid ${AMBER}` : '2px solid #e8e1d6', background: direction === d ? '#fdf6e8' : '#fff', color: direction === d ? '#8a6a2a' : '#5a4f42', fontSize: 12, fontWeight: direction === d ? 700 : 400, cursor: 'pointer', fontFamily: 'Georgia, serif', textTransform: 'capitalize' }}>
+                    {d === 'upline' ? '↑ Upline' : d === 'downline' ? '↓ Downline' : '↕ Both'}
                   </button>
                 ))}
               </div>
+              <div style={{ fontSize: 11, color: '#8a7c6a', marginTop: 6 }}>
+                {direction === 'upline' ? 'People who held this band before you' : direction === 'downline' ? 'People who held this band after you' : 'Everyone in this band\'s chain'}
+              </div>
             </div>
 
-            {/* Recent Activity */}
-            <div>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: "#2c2416", marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>
-                Recent Activity
-              </div>
-              {activity.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "40px 20px", color: "#8a7c6a" }}>
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>✝</div>
-                  <div style={{ fontSize: 14 }}>Activity will appear as bands are registered and prayers are left.</div>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {activity.slice(0, 10).map((item) => (
-                    <div key={item.id} style={{
-                      background: "#fff",
-                      borderRadius: 10,
-                      padding: "12px 14px",
-                      border: "1px solid #e8ddd0",
-                      display: "flex",
-                      gap: 12,
-                      alignItems: "flex-start",
-                    }}>
-                      <div style={{
-                        width: 34, height: 34, borderRadius: 8, flexShrink: 0,
-                        background: item.type === "prayer" ? "#7BAE8E18" : `${accent}18`,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 16,
-                      }}>
-                        {item.type === "prayer" ? "🙏" : "✦"}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: "bold", color: "#2c2416" }}>
-                          {item.type === "prayer" ? "Prayer left on" : "Band registered"} ·{" "}
-                          <span style={{ color: accent }}>{item.band_id}</span>
-                        </div>
-                        {item.message && (
-                          <div style={{ fontSize: 13, color: "#6B4C35", fontStyle: "italic", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            "{item.message}"
-                          </div>
-                        )}
-                        {item.location && (
-                          <div style={{ fontSize: 12, color: "#9B7B62", marginTop: 2 }}>📍 {item.location}</div>
-                        )}
-                      </div>
-                      <div style={{ fontSize: 11, color: "#b8a898", flexShrink: 0 }}>{timeAgo(item.created_at)}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#7a6c5a', letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Your Prayer</label>
+              <textarea
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                placeholder="Write your prayer request..."
+                rows={4}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: 7, border: '1px solid #ddd6ca', fontSize: 14, fontFamily: 'Georgia, serif', background: '#fdfaf7', color: '#2c2416', resize: 'none', boxSizing: 'border-box' }}
+              />
             </div>
-          </div>
-        )}
 
-        {/* ── BANDS ────────────────────────────────────────────── */}
-        {activeTab === "bands" && (
-          <div>
-            {bands.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "#8a7c6a" }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>⟳</div>
-                <div style={{ fontSize: 16, fontWeight: "bold", color: "#2c2416", marginBottom: 6 }}>No bands yet</div>
-                <div style={{ fontSize: 14 }}>Order bands to get started.</div>
-                <button
-                  onClick={() => window.location.href = "/store"}
-                  style={{
-                    marginTop: 16, padding: "10px 24px",
-                    background: accent, color: "#fff",
-                    border: "none", borderRadius: 8,
-                    fontSize: 14, cursor: "pointer", fontFamily: "Georgia, serif",
-                  }}
-                >
-                  Order Bands →
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {bands.map((band) => {
-                  const prayers = band.chain_prayers?.[0]?.count || 0;
-                  const hands = band.registrations?.[0]?.count || 0;
-                  const isRegistered = hands > 0;
-                  return (
-                    <a
-                      key={band.id}
-                      href={`/band/${band.band_id}`}
-                      style={{
-                        background: "#fff",
-                        borderRadius: 10,
-                        padding: "14px 16px",
-                        border: "1px solid #e8ddd0",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 14,
-                        textDecoration: "none",
-                        color: "inherit",
-                      }}
-                    >
-                      {/* Band badge */}
-                      <div style={{
-                        width: 40, height: 40, borderRadius: 8, flexShrink: 0,
-                        background: isRegistered ? `${accent}22` : "#f0ebe4",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 11, fontFamily: "monospace", fontWeight: "bold",
-                        color: isRegistered ? accent : "#b8a898",
-                        textAlign: "center", lineHeight: 1.2,
-                      }}>
-                        {band.band_id.split("-")[0]}<br />{band.band_id.split("-")[1]}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: "bold", fontSize: 14, color: "#2c2416" }}>{band.band_id}</div>
-                        <div style={{ fontSize: 12, color: "#8a7c6a", marginTop: 2 }}>
-                          {isRegistered ? `${hands} hand${hands !== 1 ? "s" : ""}` : "Unregistered"} · {prayers} prayer{prayers !== 1 ? "s" : ""}
-                        </div>
-                      </div>
-                      <div style={{
-                        width: 8, height: 8, borderRadius: "50%",
-                        background: isRegistered ? "#7BAE8E" : "#d0c8be",
-                        flexShrink: 0,
-                      }} />
-                    </a>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── PRAYERS ──────────────────────────────────────────── */}
-        {activeTab === "prayers" && (
-          <div>
-            {activity.filter(a => a.type === "prayer").length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "#8a7c6a" }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>🙏</div>
-                <div style={{ fontSize: 16, fontWeight: "bold", color: "#2c2416", marginBottom: 6 }}>No prayers yet</div>
-                <div style={{ fontSize: 14 }}>Prayers will appear here as people receive your bands.</div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {activity.filter(a => a.type === "prayer").map((prayer) => (
-                  <div key={prayer.id} style={{
-                    background: "#fff",
-                    borderRadius: 10,
-                    padding: "14px 16px",
-                    border: "1px solid #e8ddd0",
-                    borderLeft: `3px solid #7BAE8E`,
-                  }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                      <span style={{ fontSize: 12, color: accent, fontFamily: "monospace", fontWeight: "bold" }}>{prayer.band_id}</span>
-                      <span style={{ fontSize: 11, color: "#b8a898" }}>{timeAgo(prayer.created_at)}</span>
-                    </div>
-                    {prayer.message && (
-                      <div style={{ fontSize: 15, color: "#2c2416", fontStyle: "italic", lineHeight: 1.5 }}>
-                        "{prayer.message}"
-                      </div>
-                    )}
-                    {prayer.location && (
-                      <div style={{ fontSize: 12, color: "#9B7B62", marginTop: 6 }}>📍 {prayer.location}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── ORDERS ───────────────────────────────────────────── */}
-        {activeTab === "orders" && (
-          <div>
-            <div style={{ marginBottom: 16 }}>
-              <a
-                href="/store"
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 8,
-                  background: accent, color: "#fff",
-                  padding: "10px 20px", borderRadius: 8,
-                  textDecoration: "none", fontSize: 14, fontFamily: "Georgia, serif",
-                  fontWeight: "bold",
-                }}
-              >
-                📦 Order More Bands
-              </a>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, border: '1px solid #ddd6ca', background: '#fff', color: '#5a4f42', fontSize: 14, cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Cancel</button>
+              <button onClick={send} disabled={sending || !message.trim()} style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: message.trim() ? AMBER : '#ddd', color: '#fff', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>
+                {sending ? 'Sending...' : 'Send Prayer 🙏'}
+              </button>
             </div>
-            {orders.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px 20px", color: "#8a7c6a" }}>
-                <div style={{ fontSize: 14 }}>No orders yet.</div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {orders.map((order) => (
-                  <div key={order.id} style={{
-                    background: "#fff",
-                    borderRadius: 10,
-                    padding: "14px 16px",
-                    border: "1px solid #e8ddd0",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}>
-                    <div>
-                      <div style={{ fontWeight: "bold", fontSize: 14, color: "#2c2416" }}>
-                        {order.quantity} bands
-                      </div>
-                      <div style={{ fontSize: 12, color: "#8a7c6a", marginTop: 2 }}>
-                        {new Date(order.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#2c2416" }}>
-                        ${(order.total_amount / 100).toFixed(2)}
-                      </div>
-                      <div style={{
-                        display: "inline-block",
-                        fontSize: 11,
-                        padding: "2px 8px",
-                        borderRadius: 20,
-                        background: order.status === "paid" ? "#7BAE8E22" : "#C8A96E22",
-                        color: order.status === "paid" ? "#4a8a6a" : "#8a6a2a",
-                        fontWeight: "bold",
-                        marginTop: 3,
-                      }}>
-                        {order.status}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          </>
         )}
+      </div>
+    </div>
+  )
+}
 
-        {/* ── SETTINGS ─────────────────────────────────────────── */}
-        {activeTab === "settings" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {[
-              { label: "Church Name", value: org?.name || "—" },
-              { label: "Band Prefix", value: org?.prefix || "—", mono: true },
-              { label: "Subdomain", value: org ? `${org.subdomain}.prayerbands.com` : "—", mono: true },
-              { label: "Plan", value: org?.plan || "—" },
-              { label: "Member Since", value: org ? new Date(org.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "—" },
-            ].map((field) => (
-              <div key={field.label} style={{
-                background: "#fff",
-                borderRadius: 10,
-                padding: "14px 16px",
-                border: "1px solid #e8ddd0",
-              }}>
-                <div style={{ fontSize: 11, color: "#8a7c6a", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
-                  {field.label}
-                </div>
-                <div style={{
-                  fontSize: 15, color: "#2c2416",
-                  fontFamily: field.mono ? "monospace" : "Georgia, serif",
-                }}>
-                  {field.value}
-                </div>
-              </div>
-            ))}
-            <a
-              href="/api/auth/signout"
-              style={{
-                display: "block", textAlign: "center",
-                padding: "12px", borderRadius: 10,
-                border: "1px solid #e8ddd0", background: "#fff",
-                color: "#c0392b", fontSize: 14, textDecoration: "none",
-                fontFamily: "Georgia, serif",
-              }}
-            >
-              Sign Out
+export default function Dashboard() {
+  const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
+  const [bands, setBands] = useState<Band[]>([])
+  const [activity, setActivity] = useState<Activity[]>([])
+  const [prayers, setPrayers] = useState<any[]>([])
+  const [mapPoints, setMapPoints] = useState<MapPoint[]>([])
+  const [stats, setStats] = useState({ bands: 0, prayers: 0, registrations: 0, countries: 0 })
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('Overview')
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700)
+  const [showPrayerModal, setShowPrayerModal] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 700)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    async function load() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { window.location.href = '/signin'; return }
+        setUser(user)
+
+        const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        setProfile(prof)
+
+        // Bands owned by user
+        const { data: bandsData } = await supabase
+          .from('bands')
+          .select('id, band_id, created_at, registrations(count), chain_prayers(count)')
+          .eq('owner_id', user.id)
+          .order('created_at', { ascending: false })
+        const myBands = (bandsData as Band[]) || []
+        setBands(myBands)
+
+        if (myBands.length > 0) {
+          const bandIds = myBands.map(b => b.band_id)
+
+          // Map points from registrations
+          const { data: regsData } = await supabase
+            .from('registrations')
+            .select('band_id, user_name, city, country, latitude, longitude, prayer')
+            .in('band_id', bandIds)
+            .not('latitude', 'is', null)
+          const pts = (regsData || []).filter(r => r.latitude && r.longitude).map(r => ({
+            lat: r.latitude, lng: r.longitude,
+            band_id: r.band_id, user_name: r.user_name,
+            city: r.city, country: r.country, prayer: r.prayer
+          }))
+          setMapPoints(pts)
+
+          // Unique countries
+          const countries = new Set((regsData || []).map(r => r.country).filter(Boolean))
+          const totalPrayers = myBands.reduce((s, b) => s + (b.chain_prayers?.[0]?.count || 0), 0)
+          const totalRegs = myBands.reduce((s, b) => s + (b.registrations?.[0]?.count || 0), 0)
+          setStats({ bands: myBands.length, prayers: totalPrayers, registrations: totalRegs, countries: countries.size })
+
+          // Prayers
+          const { data: prayersData } = await supabase
+            .from('registrations')
+            .select('band_id, user_name, prayer, city, country, registered_at')
+            .in('band_id', bandIds)
+            .not('prayer', 'is', null)
+            .order('registered_at', { ascending: false })
+            .limit(30)
+          setPrayers(prayersData || [])
+
+          // Activity feed
+          const { data: chainData } = await supabase
+            .from('chain_prayers')
+            .select('id, band_id, message, created_at')
+            .in('band_id', bandIds)
+            .order('created_at', { ascending: false })
+            .limit(20)
+          const { data: regActivity } = await supabase
+            .from('registrations')
+            .select('id, band_id, city, country, registered_at')
+            .in('band_id', bandIds)
+            .order('registered_at', { ascending: false })
+            .limit(20)
+          const combined = [
+            ...(chainData || []).map(p => ({ ...p, type: 'prayer' as const, created_at: p.created_at })),
+            ...(regActivity || []).map(r => ({ ...r, type: 'registration' as const, location: [r.city, r.country].filter(Boolean).join(', '), created_at: r.registered_at }))
+          ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          setActivity(combined)
+        }
+      } catch (err) {
+        console.error('Dashboard error:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Friend'
+
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f4ef', fontFamily: 'Georgia, serif', textAlign: 'center' }}>
+      <div>
+        <div style={{ fontSize: 36, marginBottom: 12 }}>✝</div>
+        <div style={{ fontSize: 15, color: '#8a7c6a' }}>Loading your ministry...</div>
+      </div>
+    </div>
+  )
+
+  const renderContent = () => {
+    if (activeTab === 'Overview') return (
+      <div>
+        {/* Greeting */}
+        <div style={{ marginBottom: 20 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 'bold', color: '#1a1208', margin: '0 0 4px' }}>Welcome, {displayName} ✝</h1>
+          <p style={{ fontSize: 14, color: '#8a7c6a', margin: 0 }}>Here's how far your prayers have traveled.</p>
+        </div>
+
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
+          {[
+            { label: 'My Bands', value: stats.bands, icon: '⟳' },
+            { label: 'People Reached', value: stats.registrations, icon: '✦' },
+            { label: 'Prayers', value: stats.prayers, icon: '🙏' },
+            { label: 'Countries', value: stats.countries, icon: '🌍' },
+          ].map(s => (
+            <div key={s.label} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
+              <div style={{ fontSize: 28, fontWeight: 'bold', color: '#1a1208', lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 4 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Map preview */}
+        <div style={{ marginBottom: 20 }}>
+          <DashboardMap bands={bands} points={mapPoints} />
+        </div>
+
+        {/* Quick actions */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#7a6c5a', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 10 }}>Quick Actions</div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button onClick={() => setShowPrayerModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: AMBER, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 14, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 'bold' }}>
+              🙏 Send Prayer Request
+            </button>
+            <a href="/store" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '10px 16px', fontSize: 14, textDecoration: 'none', color: '#2c2416', fontFamily: 'Georgia, serif' }}>
+              📦 Order Bands
             </a>
           </div>
+        </div>
+
+        {/* Recent activity */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#7a6c5a', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 10 }}>Recent Activity</div>
+          {activity.length === 0 ? (
+            <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '32px 20px', textAlign: 'center', color: '#8a7c6a', fontSize: 14 }}>
+              Activity will appear as your bands are registered and prayers are left.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {activity.slice(0, 8).map((item, i) => (
+                <div key={i} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '12px 14px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 8, flexShrink: 0, background: item.type === 'prayer' ? '#7BAE8E18' : `${AMBER}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+                    {item.type === 'prayer' ? '🙏' : '✦'}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2c2416' }}>
+                      {item.type === 'prayer' ? 'Prayer on' : 'Registered'} · <span style={{ color: AMBER }}>{item.band_id}</span>
+                    </div>
+                    {item.message && <div style={{ fontSize: 13, color: '#6B4C35', fontStyle: 'italic', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>"{item.message}"</div>}
+                    {item.location && <div style={{ fontSize: 12, color: '#9B7B62', marginTop: 2 }}>📍 {item.location}</div>}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#b8a898', flexShrink: 0 }}>{timeAgo(item.created_at)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+
+    if (activeTab === 'Bands') return (
+      <div>
+        <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4, color: '#1a1208' }}>My Bands</h1>
+        <p style={{ fontSize: 14, color: '#8a7c6a', marginBottom: 20 }}>All bands registered to your account.</p>
+        {bands.length === 0 ? (
+          <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '40px 20px', textAlign: 'center', color: '#8a7c6a' }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>⟳</div>
+            <div style={{ fontSize: 14, marginBottom: 16 }}>No bands yet.</div>
+            <a href="/store" style={{ background: AMBER, color: '#fff', padding: '10px 24px', borderRadius: 8, textDecoration: 'none', fontSize: 14, fontWeight: 'bold', fontFamily: 'Georgia, serif' }}>Order Bands →</a>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {bands.map(band => {
+              const prayers = band.chain_prayers?.[0]?.count || 0
+              const hands = band.registrations?.[0]?.count || 0
+              return (
+                <a key={band.band_id} href={`/band/${band.band_id}`} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, textDecoration: 'none', color: 'inherit' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 8, flexShrink: 0, background: hands > 0 ? `${AMBER}22` : '#f0ebe4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontFamily: 'monospace', fontWeight: 'bold', color: hands > 0 ? AMBER : '#b8a898', textAlign: 'center', lineHeight: 1.2 }}>
+                    {band.band_id.split('-')[0]}<br />{band.band_id.split('-')[1]}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 'bold', fontSize: 14, color: '#2c2416' }}>{band.band_id}</div>
+                    <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 2 }}>{hands > 0 ? `${hands} hand${hands !== 1 ? 's' : ''}` : 'Unregistered'} · {prayers} prayer{prayers !== 1 ? 's' : ''}</div>
+                  </div>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: hands > 0 ? '#7BAE8E' : '#d0c8be', flexShrink: 0 }} />
+                </a>
+              )
+            })}
+          </div>
         )}
+      </div>
+    )
 
-      </main>
+    if (activeTab === 'Map') return (
+      <div>
+        <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4, color: '#1a1208' }}>Band Journey Map</h1>
+        <p style={{ fontSize: 14, color: '#8a7c6a', marginBottom: 20 }}>{mapPoints.length} location{mapPoints.length !== 1 ? 's' : ''} across {stats.countries} countr{stats.countries !== 1 ? 'ies' : 'y'}.</p>
+        <DashboardMap bands={bands} points={mapPoints} />
+      </div>
+    )
 
-      {/* ── Bottom Tab Bar (mobile) ─────────────────────────────────────────── */}
-      <nav style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        background: "#fff",
-        borderTop: "1px solid #e8ddd0",
-        display: "flex",
-        boxShadow: "0 -2px 12px rgba(0,0,0,0.08)",
-        zIndex: 200,
-        paddingBottom: "env(safe-area-inset-bottom, 0px)",
-      }} className="mobile-nav">
-        {NAV_ITEMS.map(item => {
-          const active = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              style={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "8px 4px",
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-                gap: 2,
-                position: "relative",
-              }}
-            >
-              {/* Active indicator dot */}
-              {active && (
-                <div style={{
-                  position: "absolute",
-                  top: 0,
-                  width: 28,
-                  height: 2,
-                  background: accent,
-                  borderRadius: "0 0 2px 2px",
-                }} />
-              )}
-              <span style={{ fontSize: 18, lineHeight: 1 }}>{item.icon}</span>
-              <span style={{
-                fontSize: 10,
-                color: active ? accent : "#b8a898",
-                fontFamily: "Georgia, serif",
-                fontWeight: active ? "bold" : "normal",
-              }}>
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
-      </nav>
+    if (activeTab === 'Prayers') return (
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+          <div>
+            <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4, color: '#1a1208' }}>Prayers</h1>
+            <p style={{ fontSize: 14, color: '#8a7c6a', margin: 0 }}>Prayers left on your bands.</p>
+          </div>
+          <button onClick={() => setShowPrayerModal(true)} style={{ background: AMBER, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+            🙏 Send Request
+          </button>
+        </div>
+        {prayers.length === 0 ? (
+          <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '40px 20px', textAlign: 'center', color: '#8a7c6a', fontSize: 14 }}>
+            Prayers will appear here as people register your bands.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {prayers.map((p, i) => (
+              <div key={i} style={{ background: '#fff', border: '1px solid #e8e1d6', borderLeft: '3px solid #7BAE8E', borderRadius: 10, padding: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontWeight: 'bold', fontSize: 14, color: '#2c2416' }}>{p.user_name || 'Anonymous'}</span>
+                  <span style={{ fontSize: 11, color: '#b0a090' }}>{timeAgo(p.registered_at)}</span>
+                </div>
+                <div style={{ fontSize: 15, color: '#3a2f22', lineHeight: 1.7, fontStyle: 'italic', marginBottom: 8 }}>"{p.prayer}"</div>
+                <div style={{ fontSize: 11, color: AMBER, fontFamily: 'monospace' }}>{p.band_id}{p.city || p.country ? ` · ${[p.city, p.country].filter(Boolean).join(', ')}` : ''}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
 
-      {/* ── Responsive CSS ─────────────────────────────────────────────────── */}
-      <style>{`
-        /* Hide bottom nav on desktop, show desktop nav */
-        @media (min-width: 700px) {
-          .mobile-nav { display: none !important; }
-          .desktop-nav { display: flex !important; }
-          main { padding-bottom: 24px !important; }
-        }
-        /* Show bottom nav on mobile, hide desktop nav */
-        @media (max-width: 699px) {
-          .mobile-nav { display: flex !important; }
-          .desktop-nav { display: none !important; }
-        }
-        /* Stat cards 4-across on desktop */
-        @media (min-width: 700px) {
-          .stats-grid { grid-template-columns: repeat(4, 1fr) !important; }
-        }
-        * { box-sizing: border-box; }
-        a { -webkit-tap-highlight-color: transparent; }
-        button { -webkit-tap-highlight-color: transparent; }
-      `}</style>
+    if (activeTab === 'Activity') return (
+      <div>
+        <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4, color: '#1a1208' }}>Activity</h1>
+        <p style={{ fontSize: 14, color: '#8a7c6a', marginBottom: 20 }}>All events across your bands.</p>
+        {activity.length === 0 ? (
+          <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '40px 20px', textAlign: 'center', color: '#8a7c6a', fontSize: 14 }}>
+            Activity will appear as your bands are used.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {activity.map((item, i) => (
+              <div key={i} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '12px 14px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 8, flexShrink: 0, background: item.type === 'prayer' ? '#7BAE8E18' : `${AMBER}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+                  {item.type === 'prayer' ? '🙏' : '✦'}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2c2416' }}>
+                    {item.type === 'prayer' ? 'Prayer on' : 'Registered'} · <span style={{ color: AMBER }}>{item.band_id}</span>
+                  </div>
+                  {item.message && <div style={{ fontSize: 13, color: '#6B4C35', fontStyle: 'italic', marginTop: 2 }}>"{item.message}"</div>}
+                  {item.location && <div style={{ fontSize: 12, color: '#9B7B62', marginTop: 2 }}>📍 {item.location}</div>}
+                </div>
+                <div style={{ fontSize: 11, color: '#b8a898', flexShrink: 0 }}>{timeAgo(item.created_at)}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#f7f4ef', fontFamily: 'Georgia, serif', color: '#2c2416' }}>
+      {/* Top bar */}
+      <div style={{ background: AMBER, color: '#fff', display: 'flex', alignItems: 'center', padding: '0 16px', height: 56, gap: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.15)', position: 'sticky', top: 0, zIndex: 100 }}>
+        <span style={{ fontSize: 18, fontWeight: 'bold', letterSpacing: 1 }}>✝ PrayerBands</span>
+        <div style={{ flex: 1 }} />
+        <button onClick={async () => { const s = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); await s.auth.signOut(); window.location.href = '/signin' }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontFamily: 'Georgia, serif' }}>Sign out</button>
+      </div>
+
+      {/* Desktop tab nav */}
+      {!isMobile && (
+        <div style={{ background: '#fff', borderBottom: '1px solid #e8e1d6', padding: '0 32px', display: 'flex', gap: 4 }}>
+          {TABS.map(t => (
+            <button key={t} onClick={() => setActiveTab(t)} style={{ padding: '14px 18px', border: 'none', borderBottom: activeTab === t ? `2px solid ${AMBER}` : '2px solid transparent', background: 'transparent', color: activeTab === t ? AMBER : '#5a4f42', fontSize: 14, fontWeight: activeTab === t ? 700 : 400, cursor: 'pointer', fontFamily: 'Georgia, serif' }}>{t}</button>
+          ))}
+        </div>
+      )}
+
+      {/* Main content */}
+      <div style={{ padding: isMobile ? '16px 14px' : '28px 32px', maxWidth: 900, margin: '0 auto', paddingBottom: isMobile ? 80 : 28 }}>
+        {renderContent()}
+      </div>
+
+      {/* Mobile bottom nav */}
+      {isMobile && (
+        <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #e8e1d6', display: 'flex', zIndex: 200, boxShadow: '0 -2px 12px rgba(0,0,0,0.08)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+          {TABS.map(item => {
+            const active = activeTab === item
+            return (
+              <button key={item} onClick={() => setActiveTab(item)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 2px 8px', border: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', minWidth: 0 }}>
+                {active && <div style={{ position: 'absolute', top: 0, width: 36, height: 3, background: AMBER, borderRadius: '0 0 3px 3px' }} />}
+                <span style={{ fontSize: 22, lineHeight: 1 }}>{TAB_ICONS[item]}</span>
+                <span style={{ fontSize: 11, color: active ? AMBER : '#b8a898', fontFamily: 'Georgia, serif', fontWeight: active ? 700 : 400, marginTop: 3 }}>{item}</span>
+              </button>
+            )
+          })}
+        </nav>
+      )}
+
+      {showPrayerModal && bands.length > 0 && (
+        <PrayerRequestModal bands={bands} userId={user?.id} onClose={() => setShowPrayerModal(false)} />
+      )}
     </div>
-  );
+  )
 }
