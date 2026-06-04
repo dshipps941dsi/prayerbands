@@ -236,12 +236,13 @@ async function searchUser() {
           <div style={{ fontSize: '18px', fontWeight: 700, color: '#2C1A0E', fontFamily: 'Georgia, serif' }}>{userResult.full_name || 'No name'}</div>
           <div style={{ fontSize: '13px', color: '#9B7B62', marginTop: '2px' }}>{userResult.email}</div>
           <div style={{ fontSize: '12px', color: '#C8B49A', marginTop: '2px' }}>ID: {userResult.id}</div>
-          href={`/dashboard?viewAs=${userResult.id}`}
-  target="_blank"
-  style={{ display: 'inline-block', marginTop: '10px', padding: '8px 16px', borderRadius: '8px', background: '#C8A96E', color: '#fff', fontSize: '13px', fontWeight: 700, textDecoration: 'none', fontFamily: 'Georgia, serif' }}
->
-  View Their Dashboard →
-</a>
+          <a
+            href={`/dashboard?viewAs=${userResult.id}`}
+            target="_blank"
+            style={{ display: 'inline-block', marginTop: '10px', padding: '8px 16px', borderRadius: '8px', background: '#C8A96E', color: '#fff', fontSize: '13px', fontWeight: 700, textDecoration: 'none', fontFamily: 'Georgia, serif' }}
+          >
+            View Their Dashboard →
+          </a>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <div style={{ textAlign: 'center', background: '#fff', border: '1px solid #E8DFD0', borderRadius: '8px', padding: '10px 16px' }}>
