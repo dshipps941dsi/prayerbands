@@ -101,7 +101,7 @@ function BoundedMap({ points }: { points: MapPoint[] }) {
         map.setView([valid[0].lat, valid[0].lng], 8)
       } else {
         const group = L.featureGroup(markers)
-        map.fitBounds(group.getBounds().pad(0.05), { maxZoom: 8 })
+        map.fitBounds(group.getBounds().pad(0.2), { minZoom: 3, maxZoom: 12 })
       }
     }
     loadMap()
@@ -219,70 +219,6 @@ function ActivePrayerPreview({ currentUserId }: { currentUserId: string }) {
                   ✨ Answered
                 </button>
               )}
-            </div>
-          ))
-        )}
-      </div>
-      <div style={{ padding: '10px 16px', borderTop: '1px solid #f0ece6', textAlign: 'right' }}>
-        <span style={{ fontSize: 12, color: AMBER, cursor: 'pointer', fontFamily: 'Georgia, serif' }}>
-          View all in Prayer List &rarr;
-        </span>
-      </div>
-    </div>
-  )
-}
-
-  const requests = tab === 'others' ? others : mine
-
-  if (loading) return (
-    <div style={{ padding: '32px 20px', textAlign: 'center', color: '#8a7c6a', fontSize: 14 }}>Loading prayers...</div>
-  )
-
-  return (
-    <div>
-      <div style={{ display: 'flex', borderBottom: '1px solid #f0ece6' }}>
-        {(['others', 'mine'] as const).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            style={{ flex: 1, padding: '10px', border: 'none', borderBottom: tab === t ? `2px solid ${AMBER}` : '2px solid transparent', background: 'transparent', color: tab === t ? AMBER : '#8a7c6a', fontSize: 13, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: 'Georgia, serif' }}
-          >
-            {t === 'others' ? 'Pray for Others' : 'My Requests'}
-            {t === 'others' && others.length > 0 && (
-              <span style={{ marginLeft: 5, background: AMBER, color: '#fff', borderRadius: 10, padding: '1px 6px', fontSize: 10 }}>{others.length}</span>
-            )}
-          </button>
-        ))}
-      </div>
-      <div style={{ maxHeight: 240, overflowY: 'auto' }}>
-        {requests.length === 0 ? (
-          <div style={{ padding: '24px 16px', textAlign: 'center', color: '#8a7c6a', fontSize: 13 }}>
-            {tab === 'others' ? 'No active requests from others.' : 'You have no active requests.'}
-          </div>
-        ) : (
-          requests.map((req, i) => (
-            <div key={req.id} style={{ padding: '12px 16px', borderBottom: i < requests.length - 1 ? '1px solid #f0ece6' : 'none', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#2c2416', marginBottom: 2 }}>{req.title}</div>
-                {req.body && <div style={{ fontSize: 12, color: '#8a7c6a', fontStyle: 'italic', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.body}</div>}
-                <div style={{ fontSize: 11, color: '#b8a898' }}>🙏 {req.total_intercessions || 0} times &middot; {timeAgo(req.created_at)}</div>
-              </div>
-              {tab === 'others' && (
-                <button
-                  onClick={() => handlePray(req.id)}
-                  style={{ flexShrink: 0, padding: '6px 12px', borderRadius: 8, border: 'none', background: prayedIds.has(req.id) ? '#e8f4e8' : `${AMBER}22`, color: prayedIds.has(req.id) ? '#4a8a4a' : AMBER, fontSize: 12, fontWeight: 600, cursor: prayedIds.has(req.id) ? 'default' : 'pointer', fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}
-                >
-                  {prayedIds.has(req.id) ? '✓ Prayed' : '🙏 Pray'}
-                </button>
-              )}
-              {tab === 'mine' && (
-  <button
-    onClick={() => handleAnswered(req.id)}
-    style={{ flexShrink: 0, padding: '6px 12px', borderRadius: 8, border: 'none', background: '#e8f4e8', color: '#4a8a4a', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}
-  >
-    ✨ Answered
-  </button>
-)}
             </div>
           ))
         )}
