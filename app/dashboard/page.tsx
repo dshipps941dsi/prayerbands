@@ -272,7 +272,116 @@ function PrayerRequestModal({ userId, onClose }: { userId: string; onClose: () =
     </div>
   )
 }
+// ── ADD THESE TWO COMPONENTS just above "export default function Dashboard()" ──
 
+function BoundedMap({ points }: { points: MapPoint[] }) {
+  const mapRef = useRef<any>(null)
+  const mapInstanceRef = useRef<any>(null)
+
+  useEffect(() => {
+    if (!mapRef.current || typeof window === 'undefined' || !points.length) return
+    const loadMap = () => {
+      if (!(window as any).L) {
+        if (!document.getElementById('leaflet-css')) {
+          const link = document.createElement('link')
+          link.id = 'leaflet-css'; link.rel = 'stylesheet'
+          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+          document.head.appendChild(link)
+        }
+        const script = document.createElement('script')
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+        script.onload = renderMap
+        document.head.appendChild(script)
+      } else { renderMap() }
+    }
+    const renderMap = () => {
+      const L = (window as any).L
+      if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null }
+      const valid = points.filter(p => p.lat && p.lng)
+      if (!valid.length || !mapRef.current) return
+      const map = L.map(mapRef.current, {
+        zoomControl: false,
+        attributionControl: false,
+        maxBounds: [[-85, -180], [85, 180]],
+        maxBoundsViscosity: 1.0,
+      })
+      mapInstanceRef.current = map
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, noWrap: true }).addTo(map)
+      const markers: any[] = []
+      valid.forEach(p => {
+        const dot = L.divIcon({
+          className: '',
+          html: `<div style="width:10px;height:10px;background:${AMBER};border-radius:50%;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,0.3);"></div>`,
+          iconSize: [10, 10], iconAnchor: [5, 5],
+        })
+        const m = L.marker([p.lat, p.lng], { icon: dot }).addTo(map)
+        m.bindPopup(`<div style="font-family:Georgia,serif;font-size:13px">
+          <strong style="color:${AMBER}">${p.band_id}</strong><br/>
+          ${p.user_name ? `${p.user_name}<br/>` : ''}
+          ${p.city || p.country ? `<span style="color:#8a7c6a">${[p.city, p.country].filter(Boolean).join(', ')}</span>` : ''}
+        </div>`)
+        markers.push(m)
+      })
+      // Fit tightly to actual band locations
+      if (markers.length === 1) {
+        map.setView([valid[0].lat, valid[0].lng], 6)
+      } else {
+        const group = L.featureGroup(markers)
+        map.fitBounds(group.getBounds().pad(0.15), { maxZoom: 10 })
+      }
+    }
+    loadMap()
+    return () => { if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null } }
+  }, [points])
+
+  return <div ref={mapRef} style={{ height: 280, width: '100%' }} />
+}
+
+function ActivePrayerPreview({ currentUserId }: { currentUserId: string }) {
+  const [requests, setRequests] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  useEffect(() => {
+    if (!currentUserId) return
+    supabase
+      .from('prayer_requests_with_counts')
+      .select('*')
+      .eq('status', 'active')
+      .in('visibility', ['network', 'public'])
+      .order('created_at', { ascending: false })
+      .limit(4)
+      .then(({ data }) => { setRequests(data || []); setLoading(false) })
+  }, [currentUserId])
+
+  if (loading) return (
+    <div style={{ padding: '32px 20px', textAlign: 'center', color: '#8a7c6a', fontSize: 14 }}>Loading prayers...</div>
+  )
+
+  if (requests.length === 0) return (
+    <div style={{ padding: '32px 20px', textAlign: 'center', color: '#8a7c6a', fontSize: 14 }}>
+      <div style={{ fontSize: 28, marginBottom: 8 }}>🙏</div>
+      No active prayer requests yet.
+    </div>
+  )
+
+  return (
+    <div style={{ padding: '8px 0', maxHeight: 280, overflowY: 'auto' }}>
+      {requests.map((req, i) => (
+        <div key={req.id} style={{ padding: '12px 16px', borderBottom: i < requests.length - 1 ? '1px solid #f0ece6' : 'none' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#2c2416', marginBottom: 3 }}>{req.title}</div>
+          {req.body && <div style={{ fontSize: 12, color: '#8a7c6a', fontStyle: 'italic', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.body}</div>}
+          <div style={{ fontSize: 11, color: '#b8a898' }}>
+            🙏 {req.total_intercessions || 0} times &middot; {timeAgo(req.created_at)}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
@@ -385,14 +494,24 @@ export default function Dashboard() {
     if (activeTab === 'Overview')
       return (
         <div>
-          <div style={{ marginBottom: 20 }}>
-            <h1 style={{ fontSize: 22, fontWeight: 'bold', color: '#1a1208', margin: '0 0 4px' }}>Welcome, {displayName} ✝</h1>
-            <p style={{ fontSize: 14, color: '#8a7c6a', margin: 0 }}>Here's how far your prayers have traveled.</p>
+          {/* Greeting + Send Prayer Request */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+            <div>
+              <h1 style={{ fontSize: 22, fontWeight: 'bold', color: '#1a1208', margin: '0 0 4px' }}>Welcome, {displayName} ✝</h1>
+              <p style={{ fontSize: 14, color: '#8a7c6a', margin: 0 }}>Here's how far your prayers have traveled.</p>
+            </div>
+            <button
+              onClick={() => setShowPrayerModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, background: AMBER, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 14, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 'bold', whiteSpace: 'nowrap' }}
+            >
+              🙏 Send Prayer Request
+            </button>
           </div>
 
+          {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
             {[
-              { label: 'My Bands', value: stats.bands, icon: '🙏' },
+              { label: 'My Bands', value: stats.bands, icon: '⟳' },
               { label: 'People Reached', value: stats.registrations, icon: '✦' },
               { label: 'Prayers', value: stats.prayers, icon: '🙏' },
               { label: 'Countries', value: stats.countries, icon: '🌍' },
@@ -405,25 +524,47 @@ export default function Dashboard() {
             ))}
           </div>
 
-          <div style={{ marginBottom: 20 }}>
-            <DashboardMap bands={bands} points={mapPoints} />
-          </div>
+          {/* Map + Prayer List side by side */}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, marginBottom: 20 }}>
+            {/* Map */}
+            <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
+              <div style={{ padding: '14px 16px', borderBottom: '1px solid #f0ece6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 'bold', fontSize: 15 }}>Band Journey Map</span>
+                <span style={{ fontSize: 12, color: '#8a7c6a' }}>{mapPoints.length} location{mapPoints.length !== 1 ? 's' : ''}</span>
+              </div>
+              {mapPoints.length === 0 ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8a7c6a' }}>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>🌍</div>
+                  <div style={{ fontSize: 14 }}>Map will appear once bands are registered with location.</div>
+                </div>
+              ) : (
+                <BoundedMap points={mapPoints} />
+              )}
+            </div>
 
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#7a6c5a', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 10 }}>Quick Actions</div>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setShowPrayerModal(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, background: AMBER, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 14, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 'bold' }}
-              >
-                🙏 Send Prayer Request
-              </button>
-              <a href="/store" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '10px 16px', fontSize: 14, textDecoration: 'none', color: '#2c2416', fontFamily: 'Georgia, serif' }}>
-                📦 Order Bands
-              </a>
+            {/* Active Prayer Requests */}
+            <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
+              <div style={{ padding: '14px 16px', borderBottom: '1px solid #f0ece6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 'bold', fontSize: 15 }}>Active Prayer Requests</span>
+                <button
+                  onClick={() => setActiveTab('Prayer List')}
+                  style={{ fontSize: 12, color: AMBER, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Georgia, serif' }}
+                >
+                  View all →
+                </button>
+              </div>
+              <ActivePrayerPreview currentUserId={user?.id} />
             </div>
           </div>
 
+          {/* Order Bands quick action */}
+          <div style={{ marginBottom: 20 }}>
+            <a href="/store" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '10px 16px', fontSize: 14, textDecoration: 'none', color: '#2c2416', fontFamily: 'Georgia, serif' }}>
+              📦 Order Bands
+            </a>
+          </div>
+
+          {/* Recent activity */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#7a6c5a', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 10 }}>Recent Activity</div>
             {activity.length === 0 ? (
@@ -452,6 +593,7 @@ export default function Dashboard() {
           </div>
         </div>
       )
+
 
     if (activeTab === 'Bands')
       return (
