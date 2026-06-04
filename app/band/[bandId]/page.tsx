@@ -20,7 +20,7 @@ function formatDate(iso: string) {
 
 export default function BandJourney() {
   const params = useParams()
-  const bandId = params.bandId as string
+  const bandId = (params?.bandId ?? '') as string
   const [registrations, setRegistrations] = useState<any[]>([])
   const [org, setOrg] = useState<any>(null)
   const [loading, setLoading] = useState(true)
