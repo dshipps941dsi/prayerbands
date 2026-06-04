@@ -105,108 +105,101 @@ function DashboardMap({ bands, points }: { bands: Band[], points: MapPoint[] }) 
   )
 }
 
-function PrayerRequestModal({ bands, userId, onClose }: { bands: Band[], userId: string, onClose: () => void }) {
-  const [bandId, setBandId] = useState(bands[0]?.band_id || '')
+function PrayerRequestModal({ userId, onClose }: { userId: string, onClose: () => void }) {
+  const [step, setStep] = useState<'loading' | 'compose' | 'sending' | 'sent' | 'error'>('loading')
+  const [network, setNetwork] = useState<{ email: string, name: string, relationship: string }[]>([])
+  const [excluded, setExcluded] = useState<string[]>([])
   const [message, setMessage] = useState('')
-  const [direction, setDirection] = useState<'upline' | 'downline' | 'both'>('both')
-  const [sending, setSending] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [anonymous, setAnonymous] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [sentCount, setSentCount] = useState(0)
+
+  useEffect(() => {
+    fetch('/api/prayer-network?uid=' + userId)
+      .then(r => r.json())
+      .then(d => { setNetwork(d.network || []); setStep('compose') })
+      .catch(() => { setErrorMsg('Could not load your network.'); setStep('error') })
+  }, [userId])
+
+  function toggleExclude(email: string) {
+    setExcluded(prev => prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email])
+  }
 
   async function send() {
     if (!message.trim()) return
-    setSending(true)
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-    // Get registrations for this band to find upline/downline
-    const { data: regs } = await supabase
-      .from('registrations')
-      .select('user_id, user_name, registered_at')
-      .eq('band_id', bandId)
-      .order('registered_at', { ascending: true })
-
-    if (regs && regs.length > 0) {
-      const myIndex = regs.findIndex(r => r.user_id === userId)
-      let recipients: string[] = []
-      if (direction === 'upline' || direction === 'both') {
-        const upline = myIndex > 0 ? regs.slice(0, myIndex).map(r => r.user_id).filter(Boolean) : regs.map(r => r.user_id).filter(Boolean)
-        recipients = [...recipients, ...upline]
-      }
-      if (direction === 'downline' || direction === 'both') {
-        const downline = myIndex >= 0 ? regs.slice(myIndex + 1).map(r => r.user_id).filter(Boolean) : []
-        recipients = [...recipients, ...downline]
-      }
-      // Insert prayer request notifications
-      if (recipients.length > 0) {
-        await supabase.from('chain_prayers').insert(
-          recipients.map(recipientId => ({
-            band_id: bandId,
-            sender_id: userId,
-            recipient_id: recipientId,
-            message,
-            direction,
-          }))
-        )
-      }
+    setStep('sending')
+    try {
+      const res = await fetch('/api/request-prayer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, prayerText: message, anonymous, excludedEmails: excluded })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send')
+      setSentCount(data.sent || 0)
+      setStep('sent')
+      setTimeout(onClose, 2500)
+    } catch (err: any) {
+      setErrorMsg(err.message)
+      setStep('error')
     }
-    setSending(false)
-    setSent(true)
-    setTimeout(onClose, 1500)
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ background: '#fff', borderRadius: 14, padding: '28px 24px', width: '100%', maxWidth: 420, fontFamily: 'Georgia, serif' }}>
-        {sent ? (
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🙏</div>
-            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#2c2416' }}>Prayer Sent</div>
-          </div>
-        ) : (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 500, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div style={{ background: '#fff', borderRadius: '16px 16px 0 0', padding: '28px 24px', width: '100%', maxWidth: 480, fontFamily: 'Georgia, serif', maxHeight: '90vh', overflowY: 'auto' }}>
+        {step === 'loading' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div><div style={{ color: '#8a7c6a' }}>Loading your prayer network...</div></div>}
+        {step === 'sending' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 32, marginBottom: 12 }}>✝</div><div style={{ color: '#8a7c6a' }}>Sending your prayer request...</div></div>}
+        {step === 'sent' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 48, marginBottom: 16 }}>🙏</div><div style={{ fontSize: 20, fontWeight: 'bold', color: '#1a1208', marginBottom: 8 }}>Prayer Request Sent</div><div style={{ fontSize: 14, color: '#8a7c6a' }}>{sentCount} {sentCount === 1 ? 'person is' : 'people are'} standing with you in prayer. ✝</div></div>}
+        {step === 'error' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ color: '#c0392b', marginBottom: 16 }}>{errorMsg}</div><button onClick={onClose} style={{ padding: '10px 24px', borderRadius: 8, border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Close</button></div>}
+        {step === 'compose' && (
           <>
-            <h2 style={{ fontSize: 18, fontWeight: 'bold', margin: '0 0 20px', color: '#1a1208' }}>Send a Prayer Request</h2>
-
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 'bold', margin: 0, color: '#1a1208' }}>🙏 Request Prayer</h2>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#8a7c6a' }}>×</button>
+            </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#7a6c5a', letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Band</label>
-              <select value={bandId} onChange={e => setBandId(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: 7, border: '1px solid #ddd6ca', fontSize: 14, fontFamily: 'Georgia, serif', background: '#fdfaf7', color: '#2c2416' }}>
-                {bands.map(b => <option key={b.band_id} value={b.band_id}>{b.band_id}</option>)}
-              </select>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#7a6c5a', letterSpacing: 0.5, textTransform: 'uppercase' as const, display: 'block', marginBottom: 6 }}>Your Prayer Request</label>
+              <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Share what's on your heart..." rows={4} style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd6ca', fontSize: 15, fontFamily: 'Georgia, serif', background: '#fdfaf7', color: '#2c2416', resize: 'none', boxSizing: 'border-box' as const }} />
             </div>
-
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#7a6c5a', letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Send To</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {(['upline', 'downline', 'both'] as const).map(d => (
-                  <button key={d} onClick={() => setDirection(d)} style={{ flex: 1, padding: '8px 4px', borderRadius: 7, border: direction === d ? `2px solid ${AMBER}` : '2px solid #e8e1d6', background: direction === d ? '#fdf6e8' : '#fff', color: direction === d ? '#8a6a2a' : '#5a4f42', fontSize: 12, fontWeight: direction === d ? 700 : 400, cursor: 'pointer', fontFamily: 'Georgia, serif', textTransform: 'capitalize' }}>
-                    {d === 'upline' ? '↑ Upline' : d === 'downline' ? '↓ Downline' : '↕ Both'}
-                  </button>
-                ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, padding: '10px 14px', background: '#f7f4ef', borderRadius: 8 }}>
+              <input type="checkbox" id="anon" checked={anonymous} onChange={e => setAnonymous(e.target.checked)} style={{ width: 16, height: 16, cursor: 'pointer' }} />
+              <label htmlFor="anon" style={{ fontSize: 14, color: '#5a4f42', cursor: 'pointer' }}>Send anonymously</label>
+            </div>
+            {network.length === 0 ? (
+              <div style={{ background: '#f7f4ef', borderRadius: 10, padding: 16, marginBottom: 20, fontSize: 13, color: '#8a7c6a', textAlign: 'center' }}>No one in your prayer network yet. Share bands with people to build your network.</div>
+            ) : (
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ fontSize: 11, fontWeight: 700, color: '#7a6c5a', letterSpacing: 0.5, textTransform: 'uppercase' as const, display: 'block', marginBottom: 8 }}>Send To ({network.length - excluded.length} of {network.length})</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {network.map(person => {
+                    const isExcluded = excluded.includes(person.email)
+                    return (
+                      <div key={person.email} onClick={() => toggleExclude(person.email)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: isExcluded ? '#f7f4ef' : '#f0f7f3', borderRadius: 8, cursor: 'pointer', border: `1px solid ${isExcluded ? '#e8e1d6' : '#c8e6d4'}`, opacity: isExcluded ? 0.6 : 1 }}>
+                        <div style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${isExcluded ? '#b8a898' : '#1a6b4a'}`, background: isExcluded ? 'transparent' : '#1a6b4a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          {!isExcluded && <span style={{ color: '#fff', fontSize: 12, lineHeight: 1 }}>✓</span>}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: '#2c2416' }}>{person.name}</div>
+                          <div style={{ fontSize: 12, color: '#8a7c6a' }}>{person.relationship}</div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-              <div style={{ fontSize: 11, color: '#8a7c6a', marginTop: 6 }}>
-                {direction === 'upline' ? 'People who held this band before you' : direction === 'downline' ? 'People who held this band after you' : 'Everyone in this band\'s chain'}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#7a6c5a', letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Your Prayer</label>
-              <textarea
-                value={message}
-                onChange={e => setMessage(e.target.value)}
-                placeholder="Write your prayer request..."
-                rows={4}
-                style={{ width: '100%', padding: '10px 12px', borderRadius: 7, border: '1px solid #ddd6ca', fontSize: 14, fontFamily: 'Georgia, serif', background: '#fdfaf7', color: '#2c2416', resize: 'none', boxSizing: 'border-box' }}
-              />
-            </div>
-
+            )}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, border: '1px solid #ddd6ca', background: '#fff', color: '#5a4f42', fontSize: 14, cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Cancel</button>
-              <button onClick={send} disabled={sending || !message.trim()} style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: message.trim() ? AMBER : '#ddd', color: '#fff', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>
-                {sending ? 'Sending...' : 'Send Prayer 🙏'}
-              </button>
+              <button onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 8, border: '1px solid #ddd6ca', background: '#fff', color: '#5a4f42', fontSize: 14, cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Cancel</button>
+              <button onClick={send} disabled={!message.trim()} style={{ flex: 2, padding: '12px', borderRadius: 8, border: 'none', background: message.trim() ? AMBER : '#ddd', color: '#fff', fontSize: 15, fontWeight: 'bold', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Send Prayer Request ✝</button>
             </div>
           </>
         )}
+      </div>
+    </div>
+  )
+}
+
       </div>
     </div>
   )
@@ -543,7 +536,7 @@ export default function Dashboard() {
       )}
 
       {showPrayerModal && bands.length > 0 && (
-        <PrayerRequestModal bands={bands} userId={user?.id} onClose={() => setShowPrayerModal(false)} />
+        <PrayerRequestModal userId={user?.id} onClose={() => setShowPrayerModal(false)} />
       )}
     </div>
   )
