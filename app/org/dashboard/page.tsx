@@ -118,10 +118,10 @@ function BottomNav({ tab, setTab, green }: { tab: string, setTab: (t: string) =>
       {NAV.map(item => {
         const active = tab === item
         return (
-          <button key={item} onClick={() => setTab(item)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '8px 2px', border: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', minWidth: 0 }}>
-            {active && <div style={{ position: 'absolute', top: 0, width: 28, height: 2, background: green, borderRadius: '0 0 2px 2px' }} />}
-            <span style={{ fontSize: 16, lineHeight: 1 }}>{NAV_ICONS[item]}</span>
-            <span style={{ fontSize: 9, color: active ? green : '#b8a898', fontFamily: 'Georgia, serif', fontWeight: active ? 700 : 400, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%', paddingInline: 2 }}>{item}</span>
+          <button key={item} onClick={() => setTab(item)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 2px 8px', border: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', minWidth: 0 }}>
+            {active && <div style={{ position: 'absolute', top: 0, width: 36, height: 3, background: green, borderRadius: '0 0 3px 3px' }} />}
+            <span style={{ fontSize: 22, lineHeight: 1 }}>{NAV_ICONS[item]}</span>
+            <span style={{ fontSize: 11, color: active ? green : '#b8a898', fontFamily: 'Georgia, serif', fontWeight: active ? 700 : 400, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%', paddingInline: 2 }}>{item}</span>
           </button>
         )
       })}
