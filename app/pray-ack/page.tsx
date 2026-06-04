@@ -4,9 +4,9 @@ import { useSearchParams } from 'next/navigation'
 
 function PrayAckInner() {
   const searchParams = useSearchParams()
-  const id = searchParams.get('id')
-  const name = searchParams.get('name')
-  const email = searchParams.get('email')
+  const id = searchParams?.get('id')
+const name = searchParams?.get('name')
+const email = searchParams?.get('email')
   const [status, setStatus] = useState<'loading' | 'done' | 'error'>('loading')
   const [requesterName, setRequesterName] = useState('')
 
