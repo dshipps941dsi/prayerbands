@@ -467,7 +467,7 @@ export default function Dashboard() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {bands.map((band) => {
-                const prayerCount = band.chain_prayers?.[0]?.count || 0
+                const prayerCount = 0
                 const hands = band.registrations?.[0]?.count || 0
                 return (
                   <a key={band.band_id} href={`/band/${band.band_id}`} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, textDecoration: 'none', color: 'inherit' }}>
