@@ -34,17 +34,7 @@ export default function SignInOrg() {
     const userId = data.session?.user?.id || data.user?.id
     if (!userId) { setError('No user ID returned'); setLoading(false); setStatus(''); return }
 
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles').select('org_id').eq('id', userId).maybeSingle()
-
-    if (profileError || !profile?.org_id) {
-      setError('No ministry account found for this email. Did you mean to use personal sign in?')
-      setLoading(false)
-      setStatus('')
-      return
-    }
-
-    window.location.replace('/org/dashboard?uid=' + userId)
+    window.location.replace('/org/dashboard')
   }
 
   const green = '#1a6b4a'
