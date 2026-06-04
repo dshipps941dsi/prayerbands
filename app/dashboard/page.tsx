@@ -477,7 +477,7 @@ export default function Dashboard() {
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 'bold', fontSize: 14, color: '#2c2416' }}>{band.band_id}</div>
                       <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 2 }}>
-                        {hands > 0 ? `${hands} hand${hands !== 1 ? 's' : ''}` : 'Unregistered'} &middot; {prayerCount} prayer{prayerCount !== 1 ? 's' : ''}
+                        {hands > 0 ? `${hands} hand${hands !== 1 ? 's' : ''}` : 'Unregistered'} &middot; 0 prayers
                       </div>
                     </div>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: hands > 0 ? '#7BAE8E' : '#d0c8be', flexShrink: 0 }} />
