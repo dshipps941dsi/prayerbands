@@ -334,7 +334,7 @@ export default function StorePage() {
         </a>
 
         {/* ── CHURCH PACKS ── */}
-        <div style={{ marginBottom: 80 }}>
+        <div id="packs" style={{ marginBottom: 80, scrollMarginTop: 80 }}>
           <div style={{ marginBottom: 40 }}>
             <span className="section-label">Church & Ministry Packs</span>
             <h2 className="playfair" style={{ fontSize: 36, fontWeight: 600 }}>For Communities</h2>
