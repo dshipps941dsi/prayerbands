@@ -451,7 +451,12 @@ export default function Dashboard() {
         // view-as mode, where owner-only RLS would otherwise hide it).
         fetch('/api/my-subscription' + (viewAs ? `?viewAs=${viewAs}` : ''))
           .then(r => r.json())
-          .then(d => setSubscription(d.subscription))
+          .then(d => {
+            setSubscription(d.subscription)
+            // In view-as mode the direct profiles read is RLS-blocked; use the
+            // service-key profile from the route instead.
+            if (d.profile) setProfile(d.profile)
+          })
           .catch(() => {})
         const { data: bandsData } = await supabase
           .from('bands')

@@ -129,20 +129,17 @@ async function searchUser() {
   setUserNotFound(false)
   setUserResult(null)
   setUserBands([])
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .or(`email.ilike.%${userSearch}%,full_name.ilike.%${userSearch}%`)
-    .limit(1)
-    .single()
-  if (!profile) { setUserNotFound(true); setUserSearching(false); return }
-  setUserResult(profile)
-  const { data: bands } = await supabase
-    .from('bands')
-    .select('band_id, created_at, registrations(count)')
-    .eq('owner_id', profile.id)
-    .order('created_at', { ascending: false })
-  setUserBands(bands || [])
+  // profiles is RLS-restricted to the owner, so the lookup runs server-side
+  // with the service key via an admin-only route.
+  try {
+    const res = await fetch('/api/admin-user-lookup?q=' + encodeURIComponent(userSearch.trim()))
+    const data = await res.json()
+    if (!res.ok || !data.profile) { setUserNotFound(true); setUserSearching(false); return }
+    setUserResult(data.profile)
+    setUserBands(data.bands || [])
+  } catch {
+    setUserNotFound(true)
+  }
   setUserSearching(false)
 }
   async function unflagPrayer(id: number) {

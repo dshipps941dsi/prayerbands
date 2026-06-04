@@ -46,5 +46,13 @@ export async function GET(req: NextRequest) {
     .limit(1)
     .maybeSingle()
 
-  return NextResponse.json({ subscription: subscription || null })
+  // Also return the effective user's profile so admin view-as can show the
+  // viewed user's name/email (their profile row is hidden by owner-only RLS).
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('*')
+    .eq('id', effectiveId)
+    .maybeSingle()
+
+  return NextResponse.json({ subscription: subscription || null, profile: profile || null })
 }
