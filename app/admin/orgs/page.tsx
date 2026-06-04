@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 
+const ADMIN_EMAIL = 'dshipps941@gmail.com'
+
 export default function AdminOrgs() {
   const [orgs, setOrgs] = useState<any[]>([])
   const [bands, setBands] = useState<any[]>([])
@@ -9,6 +11,7 @@ export default function AdminOrgs() {
   const [bandInput, setBandInput] = useState('')
   const [generateQty, setGenerateQty] = useState(100)
   const [loading, setLoading] = useState(true)
+  const [authorized, setAuthorized] = useState(false)
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [message, setMessage] = useState('')
@@ -19,6 +22,12 @@ export default function AdminOrgs() {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user || user.email !== ADMIN_EMAIL) {
+        window.location.href = '/signin'
+        return
+      }
+      setAuthorized(true)
       const { data: orgsData } = await supabase
         .from('organizations')
         .select('*')
@@ -84,7 +93,7 @@ export default function AdminOrgs() {
 
   const green = '#1a6b4a'
 
-  if (loading) return (
+  if (!authorized || loading) return (
     <div style={{ padding: 40, fontFamily: 'Georgia, serif', color: '#8a7c6a' }}>Loading... ✝</div>
   )
 
