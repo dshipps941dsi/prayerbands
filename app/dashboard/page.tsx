@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import LivingPrayerList from '@/components/LivingPrayerList'
 
 type Band = {
   id: string
@@ -29,9 +30,10 @@ type MapPoint = {
   prayer?: string
 }
 
-const TABS = ['Overview', 'Bands', 'Map', 'Prayers', 'Activity']
+const TABS = ['Overview', 'Bands', 'Map', 'Prayers', 'Prayer List', 'Activity']
 const TAB_ICONS: Record<string, string> = {
-  Overview: '◎', Bands: '⟳', Map: '🌍', Prayers: '🙏', Activity: '✦'
+  Overview: '◎', Bands: '⟳', Map: '🌍', Prayers: '🙏', 'Prayer List': '✝', Activity: '✦'
+}
 }
 const AMBER = '#C8A96E'
 
@@ -459,7 +461,13 @@ export default function Dashboard() {
         )}
       </div>
     )
-
+if (activeTab === 'Prayer List') return (
+  <div>
+    <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4, color: '#1a1208' }}>Living Prayer List</h1>
+    <p style={{ fontSize: 14, color: '#8a7c6a', marginBottom: 20 }}>Pray for others. Share your own requests. Celebrate answered prayer.</p>
+    <LivingPrayerList currentUserId={user?.id} />
+  </div>
+)
     if (activeTab === 'Activity') return (
       <div>
         <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 4, color: '#1a1208' }}>Activity</h1>
