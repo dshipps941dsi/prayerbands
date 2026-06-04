@@ -31,12 +31,12 @@ type MapPoint = {
 
 const TABS = ['Overview', 'Bands', 'Map', 'Prayers', 'Prayer List', 'Activity']
 const TAB_ICONS: Record<string, string> = {
-  Overview: 'O',
-  Bands: 'B',
-  Map: 'M',
-  Prayers: 'P',
-  'Prayer List': 'L',
-  Activity: 'A',
+  Overview: '◎',
+  Bands: '⟳',
+  Map: '🌍',
+  Prayers: '🙏',
+  'Prayer List': '✝',
+  Activity: '✦',
 }
 const AMBER = '#C8A96E'
 
@@ -705,7 +705,7 @@ export default function Dashboard() {
       </div>
 
       {!isMobile && (
-        <div style={{ background: '#fff', borderBottom: '1px solid #e8e1d6', padding: '0 32px', display: 'flex', gap: 4 }}>
+        <div style={{ background: '#fff', borderBottom: '1px solid #e8e1d6', padding: '0 32px', display: 'flex', gap: 4, justifyContent: 'center' }}>
           {TABS.map(t => (
             <button key={t} onClick={() => setActiveTab(t)} style={{ padding: '14px 18px', border: 'none', borderBottom: activeTab === t ? `2px solid ${AMBER}` : '2px solid transparent', background: 'transparent', color: activeTab === t ? AMBER : '#5a4f42', fontSize: 14, fontWeight: activeTab === t ? 700 : 400, cursor: 'pointer', fontFamily: 'Georgia, serif' }}>{t}</button>
           ))}
