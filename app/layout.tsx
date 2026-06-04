@@ -13,6 +13,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import type { Viewport } from "next";
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
 export const metadata: Metadata = {
   title: "PrayerBands — Carry His Word Around the World",
   description: "A global prayer movement. Every band carries a prayer. Track your band's journey, leave prayers, and watch intercession travel the world.",
