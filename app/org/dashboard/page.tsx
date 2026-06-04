@@ -220,7 +220,6 @@ if (loading) return (
     <div style={{ color: '#8a7c6a', fontSize: 15, paddingTop: 80, textAlign: 'center', fontFamily: 'Georgia, serif' }}>
       <div style={{ fontSize: 32, marginBottom: 12 }}>✝</div>
       Loading your ministry...
-      <div style={{ fontSize: 12, marginTop: 20 }}>width: {typeof window !== 'undefined' ? window.innerWidth : 'ssr'} | mobile: {isMobile ? 'yes' : 'no'}</div>
     </div>
   )
   if (!org) return <div style={{ color: '#8a7c6a', fontSize: 15, paddingTop: 80, textAlign: 'center', fontFamily: 'Georgia, serif' }}>No organization found. <a href="/signin" style={{ color: '#1a6b4a' }}>Sign in again</a></div>
