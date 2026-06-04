@@ -354,7 +354,7 @@ function ActivePrayerPreview({ currentUserId }: { currentUserId: string }) {
       supabase
         .from('prayer_requests_with_counts')
         .select('*')
-        .neq('user_id', currentUserId)
+        .eq('visibility', 'public')
         .eq('status', 'active')
         .in('visibility', ['network', 'public'])
         .order('created_at', { ascending: false })
