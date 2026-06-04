@@ -131,7 +131,7 @@ function BottomNav({ tab, setTab, green }: { tab: string, setTab: (t: string) =>
 
 function OrgDashboardInner() {
   const searchParams = useSearchParams()
-  const [tab, setTab] = useState(searchParams.get('tab') || 'Overview')
+  const [tab, setTab] = useState(searchParams?.get('tab') || 'Overview')
   const [org, setOrg] = useState<any>(null)
   const [stats, setStats] = useState<any>(null)
   const [bands, setBands] = useState<any[]>([])
