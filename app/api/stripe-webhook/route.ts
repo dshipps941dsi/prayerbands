@@ -143,6 +143,40 @@ const shippingFields = (name: any, addr: any) => ({
   shipping_country: addr?.country || 'US',
 })
 
+// The billing period moved from the subscription to its first item in Stripe's
+// 2025 API versions — read whichever is present.
+const subPeriod = (subscription: any) => {
+  const item = subscription?.items?.data?.[0]
+  return {
+    start: toISO(subscription?.current_period_start ?? item?.current_period_start),
+    end: toISO(subscription?.current_period_end ?? item?.current_period_end),
+  }
+}
+
+// invoice.subscription was removed from the top level in newer API versions.
+const invoiceSubId = (invoice: any): string | null => {
+  const s =
+    invoice?.subscription ??
+    invoice?.parent?.subscription_details?.subscription ??
+    invoice?.lines?.data?.[0]?.subscription ??
+    invoice?.lines?.data?.[0]?.parent?.subscription_item_details?.subscription
+  return typeof s === 'string' ? s : s?.id || null
+}
+
+// Stripe has used session.shipping, session.shipping_details, and
+// collected_information.shipping_details across versions — try each.
+const sessionShipping = (session: any) => {
+  const sd =
+    session?.shipping_details ||
+    session?.shipping ||
+    session?.collected_information?.shipping_details ||
+    {}
+  return {
+    name: sd?.name || session?.customer_details?.name,
+    address: sd?.address,
+  }
+}
+
 // Creates the subscription record + its first shipment when checkout completes.
 async function handleSubscriptionCheckout(
   stripe: Stripe,
@@ -165,10 +199,9 @@ async function handleSubscriptionCheckout(
       .eq('id', planId)
       .single()
 
-    const ship = shippingFields(
-      (session as any).shipping_details?.name || session.customer_details?.name,
-      (session as any).shipping_details?.address,
-    )
+    const shipInfo = sessionShipping(session)
+    const ship = shippingFields(shipInfo.name, shipInfo.address)
+    const period = subPeriod(subscription)
 
     const { data: subRow, error: subErr } = await supabase
       .from('subscriptions')
@@ -180,9 +213,9 @@ async function handleSubscriptionCheckout(
         status: 'active',
         band_color: bandColor,
         ...ship,
-        current_period_start: toISO((subscription as any).current_period_start),
-        current_period_end: toISO((subscription as any).current_period_end),
-        next_ship_date: toISO((subscription as any).current_period_end),
+        current_period_start: period.start,
+        current_period_end: period.end,
+        next_ship_date: period.end,
       })
       .select('id')
       .single()
@@ -214,7 +247,7 @@ async function handleInvoicePaid(stripe: Stripe, supabase: any, invoice: Stripe.
   try {
     // The first invoice ('subscription_create') is already handled at checkout.
     if (invoice.billing_reason !== 'subscription_cycle') return
-    const subId = (invoice as any).subscription
+    const subId = invoiceSubId(invoice)
     if (!subId) return
 
     const { data: sub } = await supabase
@@ -251,13 +284,14 @@ async function handleInvoicePaid(stripe: Stripe, supabase: any, invoice: Stripe.
 
     // Advance the stored cycle window.
     const subscription = await stripe.subscriptions.retrieve(subId)
+    const period = subPeriod(subscription)
     await supabase
       .from('subscriptions')
       .update({
         status: 'active',
-        current_period_start: toISO((subscription as any).current_period_start),
-        current_period_end: toISO((subscription as any).current_period_end),
-        next_ship_date: toISO((subscription as any).current_period_end),
+        current_period_start: period.start,
+        current_period_end: period.end,
+        next_ship_date: period.end,
       })
       .eq('id', sub.id)
 
@@ -301,12 +335,13 @@ async function handleSubscriptionUpdated(supabase: any, subscription: Stripe.Sub
   }
   const status = statusMap[subscription.status]
   if (!status) return
+  const period = subPeriod(subscription)
   await supabase
     .from('subscriptions')
     .update({
       status,
-      current_period_start: toISO((subscription as any).current_period_start),
-      current_period_end: toISO((subscription as any).current_period_end),
+      current_period_start: period.start,
+      current_period_end: period.end,
     })
     .eq('stripe_subscription_id', subscription.id)
 }
