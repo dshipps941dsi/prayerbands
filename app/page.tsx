@@ -195,6 +195,11 @@ const scrollTo = (href: string) => {
           .desktop-nav { display: none !important; }
           .hamburger { display: flex !important; }
           .hero-grid { grid-template-columns: 1fr !important; }
+          .hero-grid > div:last-child { 
+  max-width: 280px; 
+  margin: 0 auto;
+  overflow: hidden;
+}
           .steps-grid { grid-template-columns: 1fr !important; }
           .prayers-grid { grid-template-columns: 1fr !important; }
           .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
@@ -288,9 +293,9 @@ const scrollTo = (href: string) => {
               </div>
             </div>
 
-            {/* Right — Band Visualization */}
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative" }}>
-              <div style={{ position: "relative", width: 320, height: 320 }}>
+            {/* Right – Band Visualization */}
+<div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", overflow: "hidden" }}>
+  <div style={{ position: "relative", width: "min(320px, 80vw)", height: "min(320px, 80vw)" }}>
                 {/* Glow */}
                 <div style={{ position: "absolute", inset: 20, borderRadius: "50%", background: "radial-gradient(circle, rgba(200,169,110,0.18) 0%, transparent 70%)" }} />
                 {/* Band ring */}
