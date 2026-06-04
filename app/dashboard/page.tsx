@@ -530,7 +530,7 @@ export default function Dashboard() {
         </nav>
       )}
 
-      {showPrayerModal && bands.length > 0 && (
+      {showPrayerModal && (
         <PrayerRequestModal userId={user?.id} onClose={() => setShowPrayerModal(false)} />
       )}
     </div>
