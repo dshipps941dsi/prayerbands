@@ -200,11 +200,6 @@ function PrayerRequestModal({ userId, onClose }: { userId: string, onClose: () =
   )
 }
 
-      </div>
-    </div>
-  )
-}
-
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
