@@ -32,7 +32,13 @@ type MapPoint = {
 
 const TABS = ['Overview', 'Bands', 'Map', 'Prayers', 'Prayer List', 'Activity']
 const TAB_ICONS: Record<string, string> = {
-  Overview: '◎', Bands: '⟳', Map: '🌍', Prayers: '🙏', 'Prayer List': '✝', Activity: '✦'
+  Overview: '◎',
+  Bands: '⟳',
+  Map: '🌍',
+  Prayers: '🙏',
+  'Prayer List': '✝',
+  Activity: '✦'
+}
 }
 }
 const AMBER = '#C8A96E'
