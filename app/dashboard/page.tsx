@@ -40,6 +40,12 @@ const TAB_ICONS: Record<string, string> = {
 }
 const AMBER = '#C8A96E'
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
+const BAND_HEX: Record<string, string> = { sky: '#7BB8D4', sage: '#7BAE8E', amber: '#C8A96E', slate: '#7B8FAE', rose: '#C47B8E', ivory: '#E8DCC8' }
+const SUB_STATUS: Record<string, { label: string; color: string }> = {
+  active: { label: 'Active', color: '#7BAE8E' },
+  past_due: { label: 'Past Due', color: '#AE7B7B' },
+  paused: { label: 'Paused', color: '#9B7B62' },
+}
 
 function timeAgo(ts: string) {
   const diff = Date.now() - new Date(ts).getTime()
@@ -405,6 +411,7 @@ export default function Dashboard() {
   const [prayers, setPrayers] = useState<any[]>([])
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([])
   const [stats, setStats] = useState({ bands: 0, prayers: 0, registrations: 0, countries: 0 })
+  const [subscription, setSubscription] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [viewAsId, setViewAsId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('Overview')
@@ -438,6 +445,13 @@ export default function Dashboard() {
 
         const { data: prof } = await supabase.from('profiles').select('*').eq('id', effectiveId).single()
         setProfile(prof)
+
+        // Active subscription (read through an API route so it works in admin
+        // view-as mode, where owner-only RLS would otherwise hide it).
+        fetch('/api/my-subscription' + (viewAs ? `?viewAs=${viewAs}` : ''))
+          .then(r => r.json())
+          .then(d => setSubscription(d.subscription))
+          .catch(() => {})
         const { data: bandsData } = await supabase
           .from('bands')
           .select('id, band_id, created_at, registrations(count)')
@@ -536,6 +550,50 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+
+        {subscription && (() => {
+          const plan = subscription.subscription_plans || {}
+          const months = plan.interval_months || 1
+          const cadence = months > 1 ? `Every ${months} months` : 'Every month'
+          const bands = plan.bands_per_cycle || 1
+          const hex = BAND_HEX[subscription.band_color] || AMBER
+          const badge = SUB_STATUS[subscription.status] || { label: subscription.status, color: '#9B7B62' }
+          const nextShip = subscription.next_ship_date
+            ? new Date(subscription.next_ship_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+            : '—'
+          return (
+            <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderLeft: `4px solid ${hex}`, borderRadius: 10, padding: '16px 20px', marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 18 }}>🔁</span>
+                  <span style={{ fontWeight: 'bold', fontSize: 15, color: '#1a1208' }}>{plan.name || 'Your Subscription'}</span>
+                  <span style={{ background: `${badge.color}1f`, color: badge.color, border: `1px solid ${badge.color}55`, fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 100 }}>{badge.label}</span>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 11, color: '#8a7c6a', marginBottom: 2 }}>Cadence</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#2c2416' }}>{cadence}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: '#8a7c6a', marginBottom: 2 }}>Bands / shipment</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#2c2416' }}>{bands}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: '#8a7c6a', marginBottom: 2 }}>Band color</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#2c2416', display: 'flex', alignItems: 'center', gap: 6, textTransform: 'capitalize' }}>
+                    <span style={{ width: 14, height: 14, borderRadius: '50%', background: hex, boxShadow: `0 1px 4px ${hex}88`, flexShrink: 0 }} />
+                    {subscription.band_color}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: '#8a7c6a', marginBottom: 2 }}>Next ship date</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#2c2416' }}>{nextShip}</div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, marginBottom: 20 }}>
           <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
