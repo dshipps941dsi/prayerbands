@@ -8,6 +8,9 @@ const NAV_ICONS: Record<string, string> = {
   Overview: '◎', Bands: '⟳', 'Prayer Wall': '🙏', Lineage: '✦', Orders: '📦', Settings: '⚙'
 }
 
+// Preset theme colors a ministry can pick (plus a custom picker).
+const PRESET_COLORS = ['#1a6b4a', '#2b6cb0', '#6b46c1', '#b83280', '#c05621', '#b8964a', '#2c7a7b', '#9b2c2c']
+
 function OrgMap({ orgId, green }: { orgId: string, green: string }) {
   const [points, setPoints] = useState<any[]>([])
   const [mapLoaded, setMapLoaded] = useState(false)
@@ -144,6 +147,9 @@ function OrgDashboardInner() {
   const [orderQty, setOrderQty] = useState(100)
   const [orgId, setOrgId] = useState<string>('')
   const [isMobile, setIsMobile] = useState(false)
+  const [settings, setSettings] = useState({ name: '', location: '', website: '', color: '#1a6b4a' })
+  const [settingsSaving, setSettingsSaving] = useState(false)
+  const [settingsMsg, setSettingsMsg] = useState('')
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700)
@@ -190,7 +196,29 @@ function OrgDashboardInner() {
     }
   }, [tab, orgId])
 
+  // Keep the Settings form in sync with the loaded org.
+  useEffect(() => {
+    if (org) setSettings({ name: org.name || '', location: org.location || '', website: org.website || '', color: org.color || '#1a6b4a' })
+  }, [org])
+
   const green = org?.color || '#1a6b4a'
+
+  const saveSettings = async () => {
+    setSettingsSaving(true); setSettingsMsg('')
+    try {
+      const res = await fetch('/api/update-org-settings', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      })
+      const data = await res.json()
+      if (res.ok && data.org) { setOrg(data.org); setSettingsMsg('saved') }
+      else setSettingsMsg(data.error || 'Could not save. Please try again.')
+    } catch {
+      setSettingsMsg('Network error. Please try again.')
+    } finally {
+      setSettingsSaving(false)
+    }
+  }
   const pricePerBand = orderQty >= 500 ? 3.75 : orderQty >= 250 ? 4.0 : orderQty >= 100 ? 4.2 : 4.75
   const orderTotal = (orderQty * pricePerBand).toLocaleString('en-US', { minimumFractionDigits: 2 })
 
@@ -209,6 +237,7 @@ function OrgDashboardInner() {
   }
 
   const labelStyle = { fontSize: 12, fontWeight: 600 as const, color: '#7a6c5a', display: 'block' as const, marginBottom: 6, letterSpacing: 0.4 }
+  const settingInput = { width: '100%', border: '1px solid #e8e1d6', borderRadius: 6, padding: '10px 14px', fontSize: 14, fontFamily: 'Georgia, serif', background: '#fff', color: '#2c2416', boxSizing: 'border-box' as const, outline: 'none' }
 
   if (loading) return (
     <div style={{ color: '#8a7c6a', fontSize: 15, paddingTop: 80, textAlign: 'center', fontFamily: 'Georgia, serif' }}>
@@ -411,15 +440,54 @@ function OrgDashboardInner() {
     return (
       <div style={{ padding: isMobile ? '16px 14px' : '32px' }}>
         <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 'bold', marginBottom: 4 }}>Church Settings</h1>
-        <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>Your organization profile.</p>
+        <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>Update your ministry&rsquo;s profile and theme color.</p>
         <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 12, padding: isMobile ? '16px 14px' : '28px', maxWidth: isMobile ? '100%' : 520 }}>
-          {[{ label: 'CHURCH NAME', value: org?.name }, { label: 'BAND PREFIX', value: org?.prefix + '-XXXXX', mono: true }, { label: 'SUBDOMAIN', value: org?.subdomain + '.prayerbands.com', mono: true }, { label: 'LOCATION', value: org?.location || '—' }, { label: 'WEBSITE', value: org?.website || '—' }, { label: 'PLAN', value: org?.plan || 'Ministry' }].map(field => (
+          {/* Editable fields */}
+          <div style={{ marginBottom: 18 }}>
+            <label style={labelStyle}>CHURCH NAME</label>
+            <input value={settings.name} onChange={e => setSettings(s => ({ ...s, name: e.target.value }))} style={settingInput} />
+          </div>
+          <div style={{ marginBottom: 18 }}>
+            <label style={labelStyle}>LOCATION</label>
+            <input value={settings.location} onChange={e => setSettings(s => ({ ...s, location: e.target.value }))} placeholder="City, State" style={settingInput} />
+          </div>
+          <div style={{ marginBottom: 18 }}>
+            <label style={labelStyle}>WEBSITE</label>
+            <input value={settings.website} onChange={e => setSettings(s => ({ ...s, website: e.target.value }))} placeholder="https://yourchurch.org" style={settingInput} />
+          </div>
+
+          {/* Theme color picker */}
+          <div style={{ marginBottom: 22 }}>
+            <label style={labelStyle}>THEME COLOR</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const }}>
+              {PRESET_COLORS.map(c => (
+                <button key={c} onClick={() => setSettings(s => ({ ...s, color: c }))} aria-label={'Theme color ' + c} style={{ width: 30, height: 30, borderRadius: '50%', background: c, border: settings.color.toLowerCase() === c.toLowerCase() ? '3px solid #2c2416' : '2px solid #fff', boxShadow: '0 1px 4px rgba(0,0,0,0.2)', cursor: 'pointer', padding: 0 }} />
+              ))}
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#8a7c6a', cursor: 'pointer' }}>
+                <input type="color" value={settings.color} onChange={e => setSettings(s => ({ ...s, color: e.target.value }))} style={{ width: 30, height: 30, padding: 0, border: 'none', background: 'none', cursor: 'pointer' }} />
+                Custom
+              </label>
+              <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#8a7c6a' }}>{settings.color}</span>
+            </div>
+            <div style={{ fontSize: 11, color: '#8a7c6a', marginTop: 8 }}>Used across your dashboard and your public band pages. Saved changes apply right away.</div>
+          </div>
+
+          {/* Read-only fields */}
+          {[{ label: 'BAND PREFIX', value: org?.prefix + '-XXXXX', mono: true }, { label: 'SUBDOMAIN', value: org?.subdomain + '.prayerbands.com', mono: true }, { label: 'PLAN', value: org?.plan || 'Ministry' }].map(field => (
             <div key={field.label} style={{ marginBottom: 18 }}>
               <label style={labelStyle}>{field.label}</label>
-              <div style={{ border: '1px solid #e8e1d6', borderRadius: 6, padding: '10px 14px', fontSize: field.mono ? 13 : 14, fontFamily: field.mono ? 'monospace' : 'Georgia, serif', background: '#fbf9f7', color: '#2c2416', wordBreak: 'break-all' as const }}>{field.value}</div>
+              <div style={{ border: '1px solid #e8e1d6', borderRadius: 6, padding: '10px 14px', fontSize: field.mono ? 13 : 14, fontFamily: field.mono ? 'monospace' : 'Georgia, serif', background: '#fbf9f7', color: '#8a7c6a', wordBreak: 'break-all' as const }}>{field.value}</div>
             </div>
           ))}
-          <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 4 }}>To update your church details, contact support@prayerbands.com</div>
+
+          {/* Save */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 6, flexWrap: 'wrap' as const }}>
+            <button onClick={saveSettings} disabled={settingsSaving} style={{ background: green, color: '#fff', border: 'none', borderRadius: 8, padding: '11px 24px', fontSize: 14, fontWeight: 'bold', cursor: settingsSaving ? 'wait' : 'pointer', fontFamily: 'Georgia, serif', opacity: settingsSaving ? 0.7 : 1 }}>{settingsSaving ? 'Saving…' : 'Save Changes'}</button>
+            {settingsMsg === 'saved'
+              ? <span style={{ color: green, fontSize: 13, fontWeight: 600 }}>Saved ✓</span>
+              : settingsMsg && <span style={{ color: '#c0392b', fontSize: 13 }}>{settingsMsg}</span>}
+          </div>
+          <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 16 }}>To change your band prefix or subdomain, contact support@prayerbands.com</div>
         </div>
       </div>
     )
