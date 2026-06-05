@@ -239,7 +239,6 @@ export default function ContactPage() {
                     <textarea
                       id="message"
                       name="message"
-                      name="message"
                       value={form.message}
                       onChange={handleChange}
                       placeholder="How can we help? The more detail you share, the better we can serve you."
