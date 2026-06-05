@@ -60,7 +60,8 @@ export default function ContactPage() {
     if (query.length < 20 || query === lastQuery.current) return;
     lastQuery.current = query;
     setFaqLoading(true);
-    setFaqDismissed(false);
+    // Keep the dismissed state and any already-shown results as-is while the
+    // next search runs, so the panel doesn't reset on every keystroke.
 
     try {
       const res = await fetch("/api/faq-search", {
@@ -70,7 +71,12 @@ export default function ContactPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setFaqMatches(data.matches || []);
+        // Lock in results: only replace what's shown when the new search
+        // actually found something. A longer query that matches nothing no
+        // longer wipes out the answers already on screen.
+        if (data.matches && data.matches.length > 0) {
+          setFaqMatches(data.matches);
+        }
       }
     } catch {
       // silently fail — don't block form
@@ -84,7 +90,9 @@ export default function ContactPage() {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     if (combined.length >= 20) {
       debounceTimer.current = setTimeout(() => lookupFaq(combined), 800);
-    } else {
+    } else if (combined.length < 10) {
+      // Only clear once the message is essentially empty — not mid-edit — so
+      // results don't disappear while the user is still typing.
       setFaqMatches([]);
     }
     return () => {
@@ -298,7 +306,7 @@ export default function ContactPage() {
                     </button>
                   </div>
 
-                  {faqLoading && (
+                  {faqLoading && faqMatches.length === 0 && (
                     <div className="faq-searching">
                       <span className="pulse-dot" />
                       <span className="pulse-dot" />
@@ -307,7 +315,7 @@ export default function ContactPage() {
                     </div>
                   )}
 
-                  {!faqLoading && faqMatches.map((match, i) => (
+                  {faqMatches.map((match, i) => (
                     <FaqMatchCard key={i} match={match} />
                   ))}
                 </div>
