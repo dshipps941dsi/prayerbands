@@ -194,12 +194,11 @@ const scrollTo = (href: string) => {
         @media (max-width: 768px) {
           .desktop-nav { display: none !important; }
           .hamburger { display: flex !important; }
-          .hero-grid { grid-template-columns: 1fr !important; }
-          .hero-grid > div:last-child { 
-  max-width: 280px; 
-  margin: 0 auto;
-  overflow: hidden;
-}
+          .hero-inner { padding: 48px 20px !important; }
+          .hero-grid { grid-template-columns: 1fr !important; gap: 44px !important; }
+          .hero-grid > div:last-child { max-width: 100% !important; margin: 0 auto; overflow: visible; }
+          .hero-stats { flex-wrap: wrap; gap: 22px !important; }
+          .hero-copy { max-width: 100% !important; }
           .steps-grid { grid-template-columns: 1fr !important; }
           .prayers-grid { grid-template-columns: 1fr !important; }
           .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
@@ -268,7 +267,7 @@ const scrollTo = (href: string) => {
         {/* Subtle cross motif */}
         <div style={{ position: "absolute", right: -80, top: "50%", transform: "translateY(-50%)", fontSize: 400, color: "rgba(200,169,110,0.06)", fontFamily: "serif", lineHeight: 1, pointerEvents: "none", userSelect: "none" }}>✝</div>
 
-        <div style={{ maxWidth: 1160, margin: "0 auto", padding: "80px 32px", width: "100%", position: "relative" }}>
+        <div className="hero-inner" style={{ maxWidth: 1160, margin: "0 auto", padding: "80px 32px", width: "100%", position: "relative" }}>
           <div className="hero-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
             {/* Left */}
             <div>
@@ -278,14 +277,14 @@ const scrollTo = (href: string) => {
                 <em style={{ color: "#C8A96E", fontStyle: "italic" }}>Carries a Prayer</em>
               </h1>
               <div style={{ width: 48, height: 2, background: "#C8A96E", marginBottom: 28 }} />
-              <p className="lato" style={{ fontSize: 18, lineHeight: 1.8, color: "#6B4C35", maxWidth: 460, marginBottom: 40, fontWeight: 300 }}>
+              <p className="lato hero-copy" style={{ fontSize: 18, lineHeight: 1.8, color: "#6B4C35", maxWidth: 460, marginBottom: 40, fontWeight: 300 }}>
                 A silicone wristband. A unique ID. A digital journey around the world. When you place a PrayerBand on someone's wrist, you are praying for them — no words required.
               </p>
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
                 <a href="/store" style={{ textDecoration: "none" }}><button className="cta-btn" style={{ fontSize: 14, padding: "14px 36px" }}>Get Bands</button></a>
                 <button className="cta-btn-outline" onClick={() => scrollTo("#how")}>See How It Works</button>
               </div>
-              <div className="lato" style={{ marginTop: 48, display: "flex", gap: 40 }}>
+              <div className="lato hero-stats" style={{ marginTop: 48, display: "flex", gap: 40 }}>
                 {[["14,200+", "Bands Active"], ["47", "Countries"], ["91K+", "Prayers"]].map(([num, lbl]) => (
                   <div key={lbl}>
                     <div style={{ fontSize: 22, fontWeight: 700, color: "#C8A96E" }}>{num}</div>
@@ -318,7 +317,7 @@ const scrollTo = (href: string) => {
                 {[0, 60, 120, 180, 240, 300].map((deg, i) => (
                   <div key={i} style={{
                     position: "absolute", top: "50%", left: "50%",
-                    transform: `rotate(${deg}deg) translateX(160px) translateY(-50%)`,
+                    transform: `rotate(${deg}deg) translateX(min(160px, 40vw)) translateY(-50%)`,
                     width: 8, height: 8, borderRadius: "50%",
                     background: ["#C8A96E","#7BAE8E","#7B8FAE","#C8A96E","#AE7B7B","#6E8FAE"][i],
                     boxShadow: `0 0 8px 2px ${["#C8A96E","#7BAE8E","#7B8FAE","#C8A96E","#AE7B7B","#6E8FAE"][i]}44`,
