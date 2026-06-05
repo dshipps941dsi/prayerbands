@@ -573,7 +573,18 @@ export default function Dashboard() {
           const cadence = months > 1 ? `Every ${months} months` : 'Every month'
           const bands = plan.bands_per_cycle || 1
           const hex = BAND_HEX[subscription.band_color] || AMBER
-          const badge = SUB_STATUS[subscription.status] || { label: subscription.status, color: '#9B7B62' }
+          // A subscription cancelled "at period end" stays active until the
+          // period closes — show the scheduled end instead of a plain "Active".
+          const cancelScheduled = !!subscription.cancel_at_period_end
+          const cancelDateLong = subscription.current_period_end
+            ? new Date(subscription.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+            : null
+          const cancelDateShort = subscription.current_period_end
+            ? new Date(subscription.current_period_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            : null
+          const badge = cancelScheduled
+            ? { label: cancelDateShort ? `Cancels ${cancelDateShort}` : 'Cancelling', color: '#C0853E' }
+            : (SUB_STATUS[subscription.status] || { label: subscription.status, color: '#9B7B62' })
           const nextShip = subscription.next_ship_date
             ? new Date(subscription.next_ship_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
             : '—'
@@ -608,8 +619,8 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: '#8a7c6a', marginBottom: 2 }}>Next ship date</div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#2c2416' }}>{nextShip}</div>
+                  <div style={{ fontSize: 11, color: '#8a7c6a', marginBottom: 2 }}>{cancelScheduled ? 'Cancels on' : 'Next ship date'}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: cancelScheduled ? '#C0853E' : '#2c2416' }}>{cancelScheduled ? (cancelDateLong || '—') : nextShip}</div>
                 </div>
               </div>
             </div>

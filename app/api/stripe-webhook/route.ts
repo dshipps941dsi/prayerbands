@@ -373,6 +373,9 @@ async function handleSubscriptionUpdated(supabase: any, subscription: Stripe.Sub
     .from('subscriptions')
     .update({
       status,
+      // A cancel-at-period-end subscription keeps status 'active' until the
+      // period ends, so capture the scheduled-cancel flag for the dashboard.
+      cancel_at_period_end: subscription.cancel_at_period_end ?? false,
       current_period_start: period.start,
       current_period_end: period.end,
     })
