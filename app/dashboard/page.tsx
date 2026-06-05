@@ -479,7 +479,14 @@ export default function Dashboard() {
           setMapPoints(pts)
           const countries = new Set((regsData || []).map(r => r.country).filter(Boolean))
           const totalRegs = myBands.reduce((s, b) => s + (b.registrations?.[0]?.count || 0), 0)
-          setStats({ bands: myBands.length, prayers: 0, registrations: totalRegs, countries: countries.size })
+          // Prayers = prayers people left when registering this owner's bands
+          // (the same data the Prayers tab lists), counted across all of them.
+          const { count: prayerCount } = await supabase
+            .from('registrations')
+            .select('id', { count: 'exact', head: true })
+            .in('band_id', bandIds)
+            .not('prayer', 'is', null)
+          setStats({ bands: myBands.length, prayers: prayerCount || 0, registrations: totalRegs, countries: countries.size })
           const { data: prayersData } = await supabase
             .from('registrations')
             .select('band_id, user_name, prayer, city, country, registered_at')
@@ -589,7 +596,7 @@ export default function Dashboard() {
             ? new Date(subscription.next_ship_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
             : '—'
           return (
-            <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderLeft: `4px solid ${hex}`, borderRadius: 10, padding: '16px 20px', marginBottom: 20 }}>
+            <div style={{ background: 'linear-gradient(135deg, #FBF2DC 0%, #FFFCF4 60%)', border: '1px solid #EAD9AE', borderLeft: `4px solid ${hex}`, borderRadius: 10, padding: '16px 20px', marginBottom: 20, boxShadow: '0 4px 18px rgba(184,150,74,0.13)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontSize: 18 }}>🔁</span>
