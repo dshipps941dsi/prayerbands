@@ -203,40 +203,56 @@ async function handleSubscriptionCheckout(
     const ship = shippingFields(shipInfo.name, shipInfo.address)
     const period = subPeriod(subscription)
 
+    // Upsert on the unique stripe_subscription_id so a replayed/retried
+    // checkout.session.completed event can't create a duplicate subscription.
     const { data: subRow, error: subErr } = await supabase
       .from('subscriptions')
-      .insert({
-        user_id: userId,
-        plan_id: planId,
-        stripe_subscription_id: subscription.id,
-        stripe_customer_id: typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id,
-        status: 'active',
-        band_color: bandColor,
-        ...ship,
-        current_period_start: period.start,
-        current_period_end: period.end,
-        next_ship_date: period.end,
-      })
+      .upsert(
+        {
+          user_id: userId,
+          plan_id: planId,
+          stripe_subscription_id: subscription.id,
+          stripe_customer_id: typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id,
+          status: 'active',
+          band_color: bandColor,
+          ...ship,
+          current_period_start: period.start,
+          current_period_end: period.end,
+          next_ship_date: period.end,
+        },
+        { onConflict: 'stripe_subscription_id' },
+      )
       .select('id')
       .single()
 
     if (subErr) {
-      console.error('Subscription insert error:', subErr)
+      console.error('Subscription upsert error:', subErr)
       return
     }
 
     // First shipment — we have the shipping address here at checkout time.
-    await supabase.from('subscription_shipments').insert({
-      subscription_id: subRow.id,
-      user_id: userId,
-      status: 'pending',
-      bands_quantity: plan?.bands_per_cycle || 1,
-      band_color: bandColor,
-      ...ship,
-      stripe_invoice_id: typeof session.invoice === 'string' ? session.invoice : null,
-    })
+    // Upsert on stripe_invoice_id so a duplicate event can't ship twice.
+    const { data: shipInserted } = await supabase
+      .from('subscription_shipments')
+      .upsert(
+        {
+          subscription_id: subRow.id,
+          user_id: userId,
+          status: 'pending',
+          bands_quantity: plan?.bands_per_cycle || 1,
+          band_color: bandColor,
+          ...ship,
+          stripe_invoice_id: typeof session.invoice === 'string' ? session.invoice : null,
+        },
+        { onConflict: 'stripe_invoice_id', ignoreDuplicates: true },
+      )
+      .select('id')
 
-    await sendSubscriptionEmails(session, plan, bandColor)
+    // Only email on the first delivery — a replayed event inserts no new
+    // shipment row, so skip the activation emails to avoid duplicates.
+    if (shipInserted && shipInserted.length > 0) {
+      await sendSubscriptionEmails(session, plan, bandColor)
+    }
   } catch (err) {
     console.error('Subscription checkout processing error:', err)
   }
@@ -266,21 +282,38 @@ async function handleInvoicePaid(stripe: Stripe, supabase: any, invoice: Stripe.
       .eq('id', sub.plan_id)
       .single()
 
-    await supabase.from('subscription_shipments').insert({
-      subscription_id: sub.id,
-      user_id: sub.user_id,
-      status: 'pending',
-      bands_quantity: plan?.bands_per_cycle || 1,
-      band_color: sub.band_color,
-      shipping_name: sub.shipping_name,
-      shipping_line1: sub.shipping_line1,
-      shipping_line2: sub.shipping_line2,
-      shipping_city: sub.shipping_city,
-      shipping_state: sub.shipping_state,
-      shipping_zip: sub.shipping_zip,
-      shipping_country: sub.shipping_country,
-      stripe_invoice_id: invoice.id,
-    })
+    // Upsert on stripe_invoice_id so a retried/replayed renewal invoice can't
+    // create a duplicate shipment for the same billing cycle. ignoreDuplicates
+    // means a repeat delivery is DO NOTHING and returns no row — we use that to
+    // skip the period update + renewal email so retries stay fully no-op.
+    const { data: shipInserted, error: shipErr } = await supabase
+      .from('subscription_shipments')
+      .upsert(
+        {
+          subscription_id: sub.id,
+          user_id: sub.user_id,
+          status: 'pending',
+          bands_quantity: plan?.bands_per_cycle || 1,
+          band_color: sub.band_color,
+          shipping_name: sub.shipping_name,
+          shipping_line1: sub.shipping_line1,
+          shipping_line2: sub.shipping_line2,
+          shipping_city: sub.shipping_city,
+          shipping_state: sub.shipping_state,
+          shipping_zip: sub.shipping_zip,
+          shipping_country: sub.shipping_country,
+          stripe_invoice_id: invoice.id,
+        },
+        { onConflict: 'stripe_invoice_id', ignoreDuplicates: true },
+      )
+      .select('id')
+
+    if (shipErr) {
+      console.error('Renewal shipment upsert error:', shipErr)
+      return
+    }
+    // Already processed this invoice — nothing new inserted, so stop here.
+    if (!shipInserted || shipInserted.length === 0) return
 
     // Advance the stored cycle window.
     const subscription = await stripe.subscriptions.retrieve(subId)
