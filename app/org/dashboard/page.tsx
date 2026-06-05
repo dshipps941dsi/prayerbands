@@ -97,6 +97,7 @@ function Sidebar({ org, tab, setTab, green }: { org: any, tab: string, setTab: (
   return (
     <div style={{ width: 220, background: '#fff', borderRight: '1px solid #e8e1d6', padding: '28px 0', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 56, height: 'calc(100vh - 56px)', overflowY: 'auto' }}>
       <div style={{ padding: '0 20px 24px', borderBottom: '1px solid #e8e1d6' }}>
+        {org?.logo_url && <img src={org.logo_url} alt={org?.name} style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'contain', marginBottom: 10, border: '1px solid #e8e1d6', background: '#fff', padding: 3 }} />}
         <div style={{ fontSize: 15, fontWeight: 'bold', color: green, lineHeight: 1.3 }}>{org?.name}</div>
         <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 4 }}>{org?.location}</div>
         <div style={{ display: 'inline-block', marginTop: 8, background: '#e6f4ee', color: green, fontSize: 11, padding: '2px 8px', borderRadius: 12, fontFamily: 'monospace', letterSpacing: 0.5 }}>{org?.prefix}-XXXXX</div>
@@ -150,6 +151,7 @@ function OrgDashboardInner() {
   const [settings, setSettings] = useState({ name: '', location: '', website: '', color: '#1a6b4a' })
   const [settingsSaving, setSettingsSaving] = useState(false)
   const [settingsMsg, setSettingsMsg] = useState('')
+  const [logoUploading, setLogoUploading] = useState(false)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700)
@@ -217,6 +219,42 @@ function OrgDashboardInner() {
       setSettingsMsg('Network error. Please try again.')
     } finally {
       setSettingsSaving(false)
+    }
+  }
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setLogoUploading(true); setSettingsMsg('')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload-org-logo', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (res.ok && data.org) { setOrg(data.org); setSettingsMsg('saved') }
+      else setSettingsMsg(data.error || 'Could not upload logo.')
+    } catch {
+      setSettingsMsg('Upload failed. Please try again.')
+    } finally {
+      setLogoUploading(false)
+    }
+  }
+
+  const removeLogo = async () => {
+    setLogoUploading(true); setSettingsMsg('')
+    try {
+      const res = await fetch('/api/update-org-settings', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logo_url: null }),
+      })
+      const data = await res.json()
+      if (res.ok && data.org) setOrg(data.org)
+      else setSettingsMsg(data.error || 'Could not remove logo.')
+    } catch {
+      setSettingsMsg('Network error. Please try again.')
+    } finally {
+      setLogoUploading(false)
     }
   }
   const pricePerBand = orderQty >= 500 ? 3.75 : orderQty >= 250 ? 4.0 : orderQty >= 100 ? 4.2 : 4.75
@@ -454,6 +492,28 @@ function OrgDashboardInner() {
           <div style={{ marginBottom: 18 }}>
             <label style={labelStyle}>WEBSITE</label>
             <input value={settings.website} onChange={e => setSettings(s => ({ ...s, website: e.target.value }))} placeholder="https://yourchurch.org" style={settingInput} />
+          </div>
+
+          {/* Logo upload */}
+          <div style={{ marginBottom: 22 }}>
+            <label style={labelStyle}>MINISTRY LOGO</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' as const }}>
+              {org?.logo_url ? (
+                <img src={org.logo_url} alt="Ministry logo" style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'contain', border: '1px solid #e8e1d6', background: '#fff', padding: 4 }} />
+              ) : (
+                <div style={{ width: 56, height: 56, borderRadius: 8, border: '1px dashed #d8cdbb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#b8a898', fontSize: 22 }}>✝</div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const }}>
+                <label style={{ display: 'inline-block', background: '#fff', color: green, border: '1px solid ' + green, borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 'bold', cursor: logoUploading ? 'wait' : 'pointer', fontFamily: 'Georgia, serif' }}>
+                  {logoUploading ? 'Uploading…' : (org?.logo_url ? 'Replace logo' : 'Upload logo')}
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={handleLogoUpload} disabled={logoUploading} style={{ display: 'none' }} />
+                </label>
+                {org?.logo_url && (
+                  <button onClick={removeLogo} disabled={logoUploading} style={{ background: 'none', border: 'none', color: '#c0392b', fontSize: 13, cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Remove</button>
+                )}
+              </div>
+            </div>
+            <div style={{ fontSize: 11, color: '#8a7c6a', marginTop: 8 }}>PNG, JPG, WEBP, or SVG · up to 2MB.</div>
           </div>
 
           {/* Theme color picker */}

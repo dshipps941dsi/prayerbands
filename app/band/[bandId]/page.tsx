@@ -45,7 +45,7 @@ export default function BandJourney() {
       if (band.org_id) {
         const { data: orgData } = await supabase
           .from('organizations')
-          .select('name, subdomain, color, prefix, location, website')
+          .select('name, subdomain, color, prefix, location, website, logo_url')
           .eq('id', band.org_id)
           .single()
         setOrg(orgData)
@@ -169,10 +169,13 @@ export default function BandJourney() {
 
         {org && (
           <div style={{marginTop:40,background:'#fff',border:'1px solid #e8e1d6',borderLeft:'4px solid '+orgColor,borderRadius:10,padding:'20px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
-            <div>
-              <div style={{fontSize:12,color:'#8a7c6a',marginBottom:4,fontFamily:'Georgia, serif'}}>This band was distributed by</div>
-              <div style={{fontSize:16,fontWeight:'bold',color:'#1a1208',fontFamily:'Georgia, serif'}}>{org.name}</div>
-              {org.location && <div style={{fontSize:13,color:'#8a7c6a'}}>{org.location}</div>}
+            <div style={{display:'flex',alignItems:'center',gap:14}}>
+              {org.logo_url && <img src={org.logo_url} alt={org.name} style={{width:48,height:48,borderRadius:8,objectFit:'contain',border:'1px solid #e8e1d6',background:'#fff',padding:3,flexShrink:0}} />}
+              <div>
+                <div style={{fontSize:12,color:'#8a7c6a',marginBottom:4,fontFamily:'Georgia, serif'}}>This band was distributed by</div>
+                <div style={{fontSize:16,fontWeight:'bold',color:'#1a1208',fontFamily:'Georgia, serif'}}>{org.name}</div>
+                {org.location && <div style={{fontSize:13,color:'#8a7c6a'}}>{org.location}</div>}
+              </div>
             </div>
             <a href={'https://'+org.subdomain+'.prayerbands.com'} target="_blank" rel="noopener noreferrer" style={{background:orgColor,color:'#fff',padding:'10px 20px',borderRadius:8,textDecoration:'none',fontSize:13,fontWeight:'bold',fontFamily:'Georgia, serif',whiteSpace:'nowrap'}}>Visit Ministry Page →</a>
           </div>

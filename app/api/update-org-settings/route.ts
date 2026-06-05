@@ -60,6 +60,8 @@ export async function POST(req: NextRequest) {
     }
     updates.color = body.color.toLowerCase()
   }
+  // Logo is set via /api/upload-org-logo; here we only allow clearing it.
+  if (body.logo_url === null) updates.logo_url = null
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 })
