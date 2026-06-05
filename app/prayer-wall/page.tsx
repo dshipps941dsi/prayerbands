@@ -192,7 +192,7 @@ export default function PrayerWallPage() {
             <span className="playfair" style={{ fontSize: 18, fontWeight: 600, color: '#2C1A0E' }}>PrayerBands</span>
           </a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <a href="/shop" className="lato" style={{ fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9B7B62', textDecoration: 'none' }}>Shop</a>
+            <a href="/store" className="lato" style={{ fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9B7B62', textDecoration: 'none' }}>Shop</a>
             <a href="/dashboard" className="lato" style={{ fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9B7B62', textDecoration: 'none' }}>Dashboard</a>
             <button onClick={() => setShowForm(true)} className="submit-btn" style={{ padding: '9px 20px', fontSize: 12 }}>+ Leave a Prayer</button>
           </div>
