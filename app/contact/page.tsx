@@ -292,8 +292,9 @@ export default function ContactPage() {
 
             {/* Right: FAQ Deflection + Info */}
             <div className="side-section">
-              {/* AI FAQ Panel */}
-              {(faqLoading || (faqMatches.length > 0 && !faqDismissed)) && (
+              {/* AI FAQ Panel — only shown once there are real answers, never
+                  just because a search is running (which made it flash). */}
+              {faqMatches.length > 0 && !faqDismissed && (
                 <div className={`faq-panel ${hasHighConfidenceMatch ? "faq-panel--highlight" : ""}`}>
                   <div className="faq-panel-header">
                     <div className="faq-icon">✦</div>
@@ -306,18 +307,18 @@ export default function ContactPage() {
                     </button>
                   </div>
 
-                  {faqLoading && faqMatches.length === 0 && (
+                  {faqMatches.map((match, i) => (
+                    <FaqMatchCard key={i} match={match} />
+                  ))}
+
+                  {faqLoading && (
                     <div className="faq-searching">
                       <span className="pulse-dot" />
                       <span className="pulse-dot" />
                       <span className="pulse-dot" />
-                      <span>Searching our knowledge base…</span>
+                      <span>Checking for more…</span>
                     </div>
                   )}
-
-                  {faqMatches.map((match, i) => (
-                    <FaqMatchCard key={i} match={match} />
-                  ))}
                 </div>
               )}
 
