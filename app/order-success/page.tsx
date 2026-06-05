@@ -36,7 +36,7 @@ function OrderSuccessInner() {
 
         <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
           <a href="/dashboard" style={{display:'block',background:'#2b7bc4',color:'#fff',padding:'14px 24px',borderRadius:'10px',textDecoration:'none',fontWeight:'700',fontSize:'15px'}}>Go to Dashboard ✝</a>
-          <a href="/shop" style={{display:'block',border:'2px solid #e2eaf4',color:'#8896a8',padding:'12px 24px',borderRadius:'10px',textDecoration:'none',fontWeight:'700',fontSize:'14px'}}>Order More Bands</a>
+          <a href="/store" style={{display:'block',border:'2px solid #e2eaf4',color:'#8896a8',padding:'12px 24px',borderRadius:'10px',textDecoration:'none',fontWeight:'700',fontSize:'14px'}}>Order More Bands</a>
         </div>
       </div>
     </div>

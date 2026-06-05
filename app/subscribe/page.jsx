@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
+import SiteHeader from "../components/SiteHeader";
 
 const PLANS = [
   {
@@ -123,6 +124,7 @@ export default function SubscribePage() {
 
   return (
     <>
+      <SiteHeader />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lato:wght@300;400;700&display=swap');
 

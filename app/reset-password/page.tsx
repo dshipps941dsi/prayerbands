@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import SiteHeader from '../components/SiteHeader'
 
 export default function ResetPassword() {
   const [email, setEmail] = useState('')
@@ -37,11 +38,13 @@ export default function ResetPassword() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', background: '#f7f4ef',
-      fontFamily: 'Georgia, serif',
-    }}>
+    <>
+      <SiteHeader />
+      <div style={{
+        minHeight: 'calc(100vh - 56px)', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', background: '#f7f4ef',
+        fontFamily: 'Georgia, serif',
+      }}>
       <div style={{
         background: '#fff', borderRadius: 14, padding: '48px 40px',
         maxWidth: 400, width: '100%', border: '1px solid #e8e1d6',
@@ -112,6 +115,7 @@ export default function ResetPassword() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   )
 }

@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       mode: 'payment',
       allow_promotion_codes: true,
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/shop`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/store`,
       customer_email: email || undefined,
       shipping_address_collection: {
         allowed_countries: ['US', 'CA', 'GB', 'AU', 'NZ'],

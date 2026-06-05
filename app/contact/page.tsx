@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import SiteHeader from "../components/SiteHeader";
 
 declare global {
   interface Window {
@@ -162,6 +163,8 @@ export default function ContactPage() {
           defer
         />
       )}
+
+      <SiteHeader />
 
       <div className="contact-page">
         <div className="contact-inner">
@@ -393,7 +396,7 @@ function SuccessPage({ name }: { name: string }) {
         <div className="success-divider">· · ·</div>
         <div className="success-actions">
           <a href="/" className="success-btn success-btn--primary">Return Home</a>
-          <a href="/wall" className="success-btn success-btn--ghost">Visit Prayer Wall</a>
+          <a href="/prayer-wall" className="success-btn success-btn--ghost">Visit Prayer Wall</a>
         </div>
       </div>
       <style>{styles}</style>

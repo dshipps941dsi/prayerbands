@@ -522,7 +522,7 @@ const scrollTo = (href: string) => {
 
           <RevealSection>
             <div style={{ textAlign: "center", marginTop: 52 }}>
-              <button className="cta-btn-outline">See Full Prayer Wall</button>
+              <a href="/prayer-wall" style={{ textDecoration: "none" }}><button className="cta-btn-outline">See Full Prayer Wall</button></a>
             </div>
           </RevealSection>
         </div>
