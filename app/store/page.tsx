@@ -317,17 +317,17 @@ export default function StorePage() {
 
         {/* ── SUBSCRIPTION ── */}
         <a href="/subscribe" style={{ textDecoration: "none", color: "inherit" }}>
-          <div style={{ marginBottom: 80, background: "linear-gradient(135deg, #F5EFE4 0%, #fff 100%)", border: "1px solid #E8DFD0", borderLeft: "4px solid #7B8FAE", borderRadius: 12, padding: "40px 48px", display: "flex", alignItems: "center", gap: 40, flexWrap: "wrap", cursor: "pointer", transition: "box-shadow 0.2s" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 16px 48px rgba(44,26,14,0.10)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}
+          <div style={{ marginBottom: 80, background: "linear-gradient(135deg, #7B8FAE 0%, #566f92 100%)", border: "none", borderRadius: 12, padding: "40px 48px", display: "flex", alignItems: "center", gap: 40, flexWrap: "wrap", cursor: "pointer", transition: "box-shadow 0.2s", boxShadow: "0 8px 28px rgba(86,111,146,0.28)" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 16px 48px rgba(86,111,146,0.42)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 28px rgba(86,111,146,0.28)"; }}
           >
             <div style={{ fontSize: 52 }}>🔁</div>
             <div style={{ flex: 1, minWidth: 260 }}>
-              <span className="section-label" style={{ color: "#7B8FAE" }}>Subscribe & Save</span>
-              <h3 className="playfair" style={{ fontSize: 30, fontWeight: 600, marginBottom: 10 }}>A Band Delivered to Your Door, Every Month</h3>
-              <p className="lato" style={{ fontSize: 15, color: "#6B4C35", lineHeight: 1.8, fontWeight: 300 }}>Make intercession a rhythm. Subscribe and save up to 25% — bands ship automatically, ready to give away. Cancel anytime.</p>
+              <span className="section-label" style={{ color: "#E3EAF2" }}>Subscribe & Save</span>
+              <h3 className="playfair" style={{ fontSize: 30, fontWeight: 600, marginBottom: 10, color: "#fff" }}>A Band Delivered to Your Door, Every Month</h3>
+              <p className="lato" style={{ fontSize: 15, color: "#DCE4EF", lineHeight: 1.8, fontWeight: 300 }}>Make intercession a rhythm. Subscribe and save up to 25% — bands ship automatically, ready to give away. Cancel anytime.</p>
             </div>
-            <button style={{ background: "#7B8FAE", border: "none", color: "#fff", padding: "14px 36px", borderRadius: 4, fontFamily: "Lato, sans-serif", fontSize: 13, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap" }}>
+            <button style={{ background: "#FFFDF7", border: "none", color: "#4f6d8f", padding: "14px 36px", borderRadius: 4, fontFamily: "Lato, sans-serif", fontSize: 13, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap" }}>
               View Plans →
             </button>
           </div>
@@ -388,7 +388,7 @@ export default function StorePage() {
             <h3 className="playfair" style={{ fontSize: 28, color: "#FDFAF5", marginBottom: 12 }}>Need 500+ Bands?</h3>
             <p className="lato" style={{ fontSize: 15, color: "#C8B49A", lineHeight: 1.8, fontWeight: 300 }}>We work with denominations, mission organizations, and large congregations for custom quantities and pricing.</p>
           </div>
-          <a href="mailto:hello@prayerbands.com" style={{ textDecoration: "none" }}>
+          <a href="/contact" style={{ textDecoration: "none" }}>
             <button style={{ background: "transparent", border: "1.5px solid #C8A96E", color: "#C8A96E", padding: "14px 36px", borderRadius: 4, fontFamily: "Lato, sans-serif", fontSize: 13, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap", transition: "all 0.2s" }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#C8A96E"; (e.currentTarget as HTMLButtonElement).style.color = "#fff"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "#C8A96E"; }}
