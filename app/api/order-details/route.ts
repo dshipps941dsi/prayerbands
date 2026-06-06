@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     // Find the order in Supabase by matching the Stripe session ID or customer email
     const { data: order } = await supabase
       .from('orders')
-      .select('id, customer_email, quantity')
+      .select('id, customer_email, order_metadata')
       .eq('stripe_session_id', sessionId)
       .single()
 
