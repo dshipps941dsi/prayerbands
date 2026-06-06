@@ -9,8 +9,8 @@ export async function POST(req: NextRequest) {
 
   const { bandId, userId, note } = await req.json()
 
-  if (!bandId || !userId) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+  if (!bandId) {
+    return NextResponse.json({ error: 'Missing band ID' }, { status: 400 })
   }
 
   // Insert transfer record
