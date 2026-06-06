@@ -54,7 +54,7 @@ function avatarColor(i: number) { return AVATAR_COLORS[i % AVATAR_COLORS.length]
 export default function BandPage() {
   const params = useParams()
   const router = useRouter()
-  const bandId = (params?.id as string)?.toUpperCase()
+  const bandId = (params?.bandId as string)?.toUpperCase()
 
   const [status, setStatus] = useState<BandStatus>({ screen: 'loading' })
   const [userId, setUserId] = useState<string | null>(null)
