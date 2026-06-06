@@ -412,7 +412,7 @@ export default function BandPage() {
     )
   }
 
-  function SuccessCard({ title, subtitle }: { title: string; subtitle: string }) {
+  function SuccessCard({ title, subtitle, showCountdown }: { title: string; subtitle: string; showCountdown?: boolean }) {
     const [ageConsent, setAgeConsent] = useState(false)
     const [authMode, setAuthMode] = useState<'prompt' | 'email' | null>(null)
     const [email, setEmail] = useState('')
@@ -420,7 +420,7 @@ export default function BandPage() {
     const [authError, setAuthError] = useState('')
     const [authSubmitting, setAuthSubmitting] = useState(false)
     const [authDone, setAuthDone] = useState(false)
-    const [countdown, setCountdown] = useState(10)
+    const [countdown, setCountdown] = useState(4)
 
     useEffect(() => {
       if (userId) return
@@ -510,9 +510,11 @@ export default function BandPage() {
               </div>
             )}
             <div style={{ textAlign: 'center', marginTop: 16, fontFamily: body, fontSize: 12, color: GRAY }}>No account needed to hold a band or leave a prayer.</div>
-            <div style={{ textAlign: 'center', marginTop: 12, fontFamily: body, fontSize: 13, color: GRAY }}>
-              Redirecting to your band in <span style={{ fontFamily: serif, fontWeight: 700, color: GOLD, fontSize: 16 }}>{countdown}</span>...
-            </div>
+            {showCountdown !== false && (
+              <div style={{ textAlign: 'center', marginTop: 12, fontFamily: body, fontSize: 13, color: GRAY }}>
+                Redirecting to your band in <span style={{ fontFamily: serif, fontWeight: 700, color: GOLD, fontSize: 16 }}>{countdown}</span>...
+              </div>
+            )}
           </div>
         )}
         {authDone && (
@@ -661,7 +663,7 @@ export default function BandPage() {
           <div onClick={() => setShowSignup(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
             <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
               <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
-              <SuccessCard title="Save your place" subtitle="Create a free account to track your prayers and get a new verse every time you tap." />
+              <SuccessCard title="Save your place" subtitle="Create a free account to track your prayers and get a new verse every time you tap." showCountdown={false} />
             </div>
           </div>
         )}
