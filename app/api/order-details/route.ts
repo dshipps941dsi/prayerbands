@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       email: customerEmail,
-      quantity: order.quantity,
+      quantity: order.order_metadata?.quantity ?? 1,
       bands,
     })
   } catch (err: any) {
