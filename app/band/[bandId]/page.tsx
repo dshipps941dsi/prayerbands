@@ -210,6 +210,7 @@ export default function BandPage() {
   const [answeringId, setAnsweringId] = useState<string | null>(null)
   const [testimony, setTestimony] = useState('')
   const [prayerSubmitting, setPrayerSubmitting] = useState(false)
+  const [activeTab, setActiveTab] = useState<'home' | 'prayers' | 'journey' | 'purchase' | 'account'>('home')
 
   useEffect(() => {
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -528,6 +529,52 @@ export default function BandPage() {
     )
   }
 
+  function BottomNav() {
+    const tabs = [
+      { id: 'home', icon: '🏠', label: 'Home' },
+      { id: 'prayers', icon: '🙏', label: 'Prayers' },
+      { id: 'journey', icon: '🗺', label: 'Journey' },
+      { id: 'purchase', icon: '🛍', label: 'Purchase' },
+      { id: 'account', icon: '👤', label: 'Account' },
+    ]
+    return (
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 200,
+        background: DARK, borderTop: '1px solid rgba(255,255,255,0.1)',
+        display: 'flex', paddingBottom: 'env(safe-area-inset-bottom)',
+      }}>
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => {
+              if (tab.id === 'purchase') {
+                window.location.href = '/store'
+              } else {
+                setActiveTab(tab.id as any)
+              }
+            }}
+            style={{
+              flex: 1, padding: '10px 4px 8px', border: 'none', background: 'transparent',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+              cursor: 'pointer',
+            }}
+          >
+            <span style={{ fontSize: 20 }}>{tab.icon}</span>
+            <span style={{
+              fontFamily: body, fontSize: 9, letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: activeTab === tab.id ? GOLD : 'rgba(255,255,255,0.4)',
+              fontWeight: activeTab === tab.id ? 700 : 400,
+            }}>{tab.label}</span>
+            {activeTab === tab.id && (
+              <div style={{ width: 20, height: 2, background: GOLD, borderRadius: 1 }} />
+            )}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
   if (status.screen === 'loading') {
     return <div style={{ background: CREAM, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ fontFamily: body, color: GRAY, fontStyle: 'italic' }}>Loading band journey...</div></div>
   }
@@ -551,101 +598,167 @@ export default function BandPage() {
     return (
       <div style={{ background: CREAM, minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
-        {transferStep === 'pending' && <PendingBanner />}
-        {transferComplete && (
-          <div style={{ margin: '20px 20px 0', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🙏</div>
-            <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Band passed on</div>
-            <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20 }}>Your band is now in new hands. The prayer chain continues. ✝</div>
-            <a href="/dashboard" style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Go to Dashboard</a>
+        <StatsStrip regs={regs} />
+
+        {activeTab === 'home' && (
+          <>
+            {transferStep === 'pending' && <PendingBanner />}
+            {transferComplete && (
+              <div style={{ margin: '20px 20px 0', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>🙏</div>
+                <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Band passed on</div>
+                <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20 }}>Your band is now in new hands. The prayer chain continues. ✝</div>
+                <a href="/dashboard" style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Go to Dashboard</a>
+              </div>
+            )}
+            <div style={{ padding: '24px 20px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700 }}>Your Band</div>
+                  <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginTop: 2 }}>{regs.length === 0 ? 'Just arrived' : 'Held by you'}</div>
+                </div>
+                {transferStep === 'idle' && !transferComplete && (
+                  <button onClick={() => setTransferStep('sheet')} style={{ display: 'flex', alignItems: 'center', gap: 8, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, padding: '10px 18px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Pass On</button>
+                )}
+              </div>
+            </div>
+            <VerseEngine />
+            <div style={{ padding: '20px 20px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid rgba(44,24,16,0.08)' }}>
+                <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700 }}>Prayer Journal</div>
+                {prayerStep === 'list' && userId && <button onClick={() => setPrayerStep('form')} style={{ background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, padding: '6px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>}
+              </div>
+              {!userId && (
+                <div style={{ background: 'white', borderRadius: 10, padding: '16px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
+                  <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Track your prayers</div>
+                  <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14, lineHeight: 1.5 }}>Create a free account to keep a prayer journal on this band.</div>
+                  <button onClick={() => setShowSignup(true)} style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '10px 24px', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Create Account ✝</button>
+                </div>
+              )}
+              {userId && prayerStep === 'form' && (
+                <div style={{ background: 'white', borderRadius: 12, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', marginBottom: 12 }}>
+                  <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Prayer title</label>
+                  <input value={prayerTitle} onChange={e => setPrayerTitle(e.target.value)} placeholder="What are you praying for?" style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }} />
+                  <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Details (optional)</label>
+                  <textarea value={prayerBody} onChange={e => setPrayerBody(e.target.value)} placeholder="Share more about this prayer request..." rows={3} style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={async () => {
+                      if (!prayerTitle.trim()) return
+                      setPrayerSubmitting(true)
+                      const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+                      const { data } = await supabase.from('prayer_requests').insert({ user_id: userId, band_id: bandId, title: prayerTitle, body: prayerBody, status: 'active', visibility: 'private' }).select().single()
+                      if (data) setPrayers(prev => [data, ...prev])
+                      setPrayerTitle(''); setPrayerBody(''); setPrayerStep('list'); setPrayerSubmitting(false)
+                    }} disabled={prayerSubmitting || !prayerTitle.trim()} style={{ flex: 1, padding: '10px', background: prayerTitle.trim() ? GOLD : '#ccc', color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: prayerTitle.trim() ? 'pointer' : 'not-allowed' }}>
+                      {prayerSubmitting ? 'Saving...' : 'Add Prayer ✝'}
+                    </button>
+                    <button onClick={() => setPrayerStep('list')} style={{ padding: '10px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
+                  </div>
+                </div>
+              )}
+              {userId && prayerStep === 'answer' && answeringId && (
+                <div style={{ background: 'white', borderRadius: 12, padding: '20px', border: `1px solid ${GOLD}`, marginBottom: 12 }}>
+                  <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>God answered this prayer ✝</div>
+                  <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14 }}>Share what happened — your testimony encourages others.</div>
+                  <textarea value={testimony} onChange={e => setTestimony(e.target.value)} placeholder="Share how God answered this prayer..." rows={3} style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={async () => {
+                      setPrayerSubmitting(true)
+                      const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+                      await supabase.from('prayer_requests').update({ status: 'answered', answered_testimony: testimony, answered_at: new Date().toISOString() }).eq('id', answeringId)
+                      setPrayers(prev => prev.map(p => p.id === answeringId ? { ...p, status: 'answered', answered_testimony: testimony } : p))
+                      setAnsweringId(null); setTestimony(''); setPrayerStep('list'); setPrayerSubmitting(false)
+                    }} disabled={prayerSubmitting} style={{ flex: 1, padding: '10px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                      {prayerSubmitting ? 'Saving...' : 'Mark Answered ✝'}
+                    </button>
+                    <button onClick={() => { setPrayerStep('list'); setAnsweringId(null) }} style={{ padding: '10px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
+                  </div>
+                </div>
+              )}
+              {userId && prayers.length === 0 && prayerStep === 'list' && (
+                <div style={{ background: 'white', borderRadius: 10, padding: '14px 16px', border: '1px dashed rgba(44,24,16,0.15)', textAlign: 'center', fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>No entries yet — tap + Add to begin ✝</div>
+              )}
+              {userId && prayerStep === 'list' && prayers.map(p => (
+                <div key={p.id} style={{ background: p.status === 'answered' ? 'linear-gradient(135deg, rgba(26,74,58,0.05), white)' : 'white', borderRadius: 12, padding: '16px', marginBottom: 10, border: p.status === 'answered' ? `1px solid ${GREEN}` : '1px solid rgba(44,24,16,0.1)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+                    <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, flex: 1 }}>{p.title}</div>
+                    {p.status === 'answered'
+                      ? <span style={{ background: 'rgba(26,74,58,0.12)', color: GREEN, fontFamily: body, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, flexShrink: 0, marginLeft: 8 }}>Answered ✝</span>
+                      : <button onClick={() => { setAnsweringId(p.id); setPrayerStep('answer') }} style={{ background: 'rgba(184,134,11,0.1)', color: GOLD, border: 'none', borderRadius: 20, fontFamily: body, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 10px', cursor: 'pointer', flexShrink: 0, marginLeft: 8 }}>Mark Answered</button>}
+                  </div>
+                  {p.body && <div style={{ fontFamily: body, fontSize: 13, color: GRAY, lineHeight: 1.5, marginBottom: 4 }}>{p.body}</div>}
+                  {p.answered_testimony && <div style={{ fontFamily: body, fontSize: 13, color: GREEN, fontStyle: 'italic', lineHeight: 1.5, marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(26,74,58,0.1)' }}>"{p.answered_testimony}"</div>}
+                  <div style={{ fontFamily: body, fontSize: 11, color: '#9A8A7A', marginTop: 6 }}>{new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {activeTab === 'prayers' && (
+          <div style={{ padding: '24px 20px' }}>
+            <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Prayer Network</div>
+            <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>
+              The people connected to this band through prayer.
+            </div>
+            <div style={{ background: 'white', borderRadius: 14, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div>
+              <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Full prayer network in your dashboard</div>
+              <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 16, lineHeight: 1.5 }}>
+                See who is praying for you, send prayer requests up and down the chain, and track answered prayers.
+              </div>
+              <a href="/dashboard" style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Open Prayer Network →</a>
+            </div>
           </div>
         )}
-        <StatsStrip regs={regs} />
-        <div style={{ padding: '24px 20px 0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700 }}>Your Band</div>
-              <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginTop: 2 }}>{regs.length === 0 ? 'Just arrived' : 'Held by you'}</div>
-            </div>
-            {transferStep === 'idle' && (
-              <button onClick={() => setTransferStep('sheet')} style={{ display: 'flex', alignItems: 'center', gap: 8, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, padding: '10px 18px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Pass On</button>
+
+        {activeTab === 'journey' && (
+          <div style={{ padding: '0' }}>
+            <PrayerChain regs={regs} />
+          </div>
+        )}
+
+        {activeTab === 'account' && (
+          <div style={{ padding: '24px 20px' }}>
+            <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Account</div>
+            {userId ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <a href="/dashboard" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
+                  📊 My Dashboard
+                </a>
+                <a href="/store" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
+                  🛍 Purchase More Bands
+                </a>
+                <a href="/settings" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
+                  ⚙️ Settings
+                </a>
+                <button onClick={async () => {
+                  const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+                  await supabase.auth.signOut()
+                  window.location.reload()
+                }} style={{ display: 'block', width: '100%', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: '#C0392B', textAlign: 'left', cursor: 'pointer' }}>
+                  🚪 Sign Out
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 8, lineHeight: 1.5 }}>Sign in to access your full account, prayer network, and all your bands.</div>
+                <a href="/signin" style={{ display: 'block', textAlign: 'center', background: GOLD, color: '#0f0d09', borderRadius: 12, padding: '16px 20px', fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Sign In ✝</a>
+                <a href="/store" style={{ display: 'block', textAlign: 'center', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>🛍 Purchase Bands</a>
+              </div>
             )}
           </div>
-        </div>
-        <VerseEngine />
-        <div style={{ padding: '20px 20px 0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid rgba(44,24,16,0.08)' }}>
-            <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700 }}>Prayer Journal</div>
-            {prayerStep === 'list' && userId && <button onClick={() => setPrayerStep('form')} style={{ background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, padding: '6px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>}
+        )}
+
+        {showSignup && (
+          <div onClick={() => setShowSignup(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
+              <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
+              <SuccessCard title="Save your place" subtitle="Create a free account to get your daily verse every time you tap, track your prayers, and follow this band's story." showCountdown={false} />
+            </div>
           </div>
+        )}
 
-          {!userId && (
-            <div style={{ background: 'white', borderRadius: 10, padding: '16px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
-              <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Track your prayers</div>
-              <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14, lineHeight: 1.5 }}>Create a free account to keep a prayer journal on this band.</div>
-              <button onClick={() => setShowSignup(true)} style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '10px 24px', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Create Account ✝</button>
-            </div>
-          )}
-
-          {userId && (<>
-          {prayerStep === 'form' && (
-            <div style={{ background: 'white', borderRadius: 12, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', marginBottom: 12 }}>
-              <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Prayer title</label>
-              <input value={prayerTitle} onChange={e => setPrayerTitle(e.target.value)} placeholder="What are you praying for?" style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }} />
-              <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Details (optional)</label>
-              <textarea value={prayerBody} onChange={e => setPrayerBody(e.target.value)} placeholder="Share more about this prayer request..." rows={3} style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={async () => {
-                  if (!prayerTitle.trim()) return
-                  setPrayerSubmitting(true)
-                  const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-                  const { data } = await supabase.from('prayer_requests').insert({ user_id: userId, band_id: bandId, title: prayerTitle, body: prayerBody, status: 'active', visibility: 'private' }).select().single()
-                  if (data) setPrayers(prev => [data, ...prev])
-                  setPrayerTitle(''); setPrayerBody(''); setPrayerStep('list'); setPrayerSubmitting(false)
-                }} disabled={prayerSubmitting || !prayerTitle.trim()} style={{ flex: 1, padding: '10px', background: prayerTitle.trim() ? GOLD : '#ccc', color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: prayerTitle.trim() ? 'pointer' : 'not-allowed' }}>
-                  {prayerSubmitting ? 'Saving...' : 'Add Prayer ✝'}
-                </button>
-                <button onClick={() => setPrayerStep('list')} style={{ padding: '10px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
-              </div>
-            </div>
-          )}
-          {prayerStep === 'answer' && answeringId && (
-            <div style={{ background: 'white', borderRadius: 12, padding: '20px', border: `1px solid ${GOLD}`, marginBottom: 12 }}>
-              <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>God answered this prayer ✝</div>
-              <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14 }}>Share what happened — your testimony encourages others.</div>
-              <textarea value={testimony} onChange={e => setTestimony(e.target.value)} placeholder="Share how God answered this prayer..." rows={3} style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={async () => {
-                  setPrayerSubmitting(true)
-                  const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-                  await supabase.from('prayer_requests').update({ status: 'answered', answered_testimony: testimony, answered_at: new Date().toISOString() }).eq('id', answeringId)
-                  setPrayers(prev => prev.map(p => p.id === answeringId ? { ...p, status: 'answered', answered_testimony: testimony } : p))
-                  setAnsweringId(null); setTestimony(''); setPrayerStep('list'); setPrayerSubmitting(false)
-                }} disabled={prayerSubmitting} style={{ flex: 1, padding: '10px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-                  {prayerSubmitting ? 'Saving...' : 'Mark Answered ✝'}
-                </button>
-                <button onClick={() => { setPrayerStep('list'); setAnsweringId(null) }} style={{ padding: '10px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
-              </div>
-            </div>
-          )}
-          {prayers.length === 0 && prayerStep === 'list' && (
-            <div style={{ background: 'white', borderRadius: 10, padding: '14px 16px', border: '1px dashed rgba(44,24,16,0.15)', textAlign: 'center', fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>No entries yet — tap + Add to begin ✝</div>
-          )}
-          {prayerStep === 'list' && prayers.map(p => (
-            <div key={p.id} style={{ background: p.status === 'answered' ? 'linear-gradient(135deg, rgba(26,74,58,0.05), white)' : 'white', borderRadius: 12, padding: '16px', marginBottom: 10, border: p.status === 'answered' ? `1px solid ${GREEN}` : '1px solid rgba(44,24,16,0.1)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, flex: 1 }}>{p.title}</div>
-                {p.status === 'answered'
-                  ? <span style={{ background: 'rgba(26,74,58,0.12)', color: GREEN, fontFamily: body, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, flexShrink: 0, marginLeft: 8 }}>Answered ✝</span>
-                  : <button onClick={() => { setAnsweringId(p.id); setPrayerStep('answer') }} style={{ background: 'rgba(184,134,11,0.1)', color: GOLD, border: 'none', borderRadius: 20, fontFamily: body, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 10px', cursor: 'pointer', flexShrink: 0, marginLeft: 8 }}>Mark Answered</button>}
-              </div>
-              {p.body && <div style={{ fontFamily: body, fontSize: 13, color: GRAY, lineHeight: 1.5, marginBottom: 4 }}>{p.body}</div>}
-              {p.answered_testimony && <div style={{ fontFamily: body, fontSize: 13, color: GREEN, fontStyle: 'italic', lineHeight: 1.5, marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(26,74,58,0.1)' }}>"{p.answered_testimony}"</div>}
-              <div style={{ fontFamily: body, fontSize: 11, color: '#9A8A7A', marginTop: 6 }}>{new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-            </div>
-          ))}
-          </>)}
-        </div>
         {transferStep === 'sheet' && (
           <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
             <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
@@ -659,16 +772,8 @@ export default function BandPage() {
             </div>
           </div>
         )}
-        {showSignup && (
-          <div onClick={() => setShowSignup(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
-            <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
-              <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
-              <SuccessCard title="Save your place" subtitle="Create a free account to track your prayers and get a new verse every time you tap." showCountdown={false} />
-            </div>
-          </div>
-        )}
-        <PrayerChain regs={regs} />
-        <div style={{ height: 40 }} />
+        <div style={{ height: 100 }} />
+        <BottomNav />
       </div>
     )
   }
