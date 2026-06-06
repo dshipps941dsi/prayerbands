@@ -226,14 +226,12 @@ useEffect(() => {
   async function handleInitiateTransfer() {
     setSubmitting(true)
     try {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
-      await supabase.from('band_transfers').insert({
-        band_id: bandId, from_user_id: userId, note: transferNote, status: 'pending',
+      const res = await fetch('/api/initiate-transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bandId, userId, note: transferNote }),
       })
-      await supabase.from('bands').update({ status: 'pending_transfer' }).eq('band_id', bandId)
+      if (!res.ok) throw new Error('Transfer failed')
       setTransferStep('pending')
     } catch {
       alert('Something went wrong. Please try again.')
