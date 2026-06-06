@@ -28,9 +28,9 @@ export async function GET(req: NextRequest) {
   // Fetch registrations in order
   const { data: registrations } = await supabase
     .from('registrations')
-    .select('id, name, city, country, created_at, prayer, user_id')
+    .select('id, user_name, city, country, registered_at, prayer, user_id')
     .eq('band_id', bandId)
-    .order('created_at', { ascending: true })
+    .order('registered_at', { ascending: true })
 
   const regs = registrations ?? []
   const latestReg = regs.at(-1) ?? null

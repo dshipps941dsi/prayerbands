@@ -6,10 +6,10 @@ import { createBrowserClient } from '@supabase/ssr'
 // ── Types ─────────────────────────────────────────────────
 type Registration = {
   id: string
-  name: string
+  user_name: string
   city: string
   country: string
-  created_at: string
+  registered_at: string
   prayer: string
   user_id: string | null
 }
@@ -264,11 +264,11 @@ export default function BandPage() {
           }} />
           {regs.map((reg, i) => (
             <div key={reg.id} style={{ display: 'flex', gap: 16, marginBottom: 24, position: 'relative' }}>
-              <Avatar letter={reg.name?.[0]?.toUpperCase() ?? '?'} color={avatarColor(i)} />
+              <Avatar letter={reg.user_name?.[0]?.toUpperCase() ?? '?'} color={avatarColor(i)} />
               <div style={{ flex: 1, paddingTop: 4 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 }}>
                   <span style={{ fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK }}>
-                    {reg.name}
+                    {reg.user_name}
                     {i === 0 && (
                       <span style={{
                         display: 'inline-block', fontSize: 10, fontFamily: body,
@@ -287,7 +287,7 @@ export default function BandPage() {
                     )}
                   </span>
                   <span style={{ fontFamily: body, fontSize: 11, color: '#9A8A7A' }}>
-                    {new Date(reg.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {new Date(reg.registered_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                 </div>
                 {(reg.city || reg.country) && (
