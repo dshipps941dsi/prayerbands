@@ -445,6 +445,20 @@ export default function BandPage() {
                 <button onClick={handleGoogleSignIn} disabled={!ageConsent} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '13px', marginBottom: 10, background: ageConsent ? DARK : '#ccc', color: 'white', border: 'none', borderRadius: 10, fontFamily: body, fontSize: 15, fontWeight: 600, cursor: ageConsent ? 'pointer' : 'not-allowed', boxSizing: 'border-box' }}>
                   <span style={{ fontSize: 18 }}>G</span> Continue with Google
                 </button>
+                <button onClick={async () => {
+                  if (!ageConsent) return
+                  const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+                  await supabase.auth.signInWithOAuth({ provider: 'facebook', options: { redirectTo: `${window.location.origin}/band/${bandId}` } })
+                }} disabled={!ageConsent} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  width: '100%', padding: '13px', marginBottom: 10,
+                  background: ageConsent ? '#1877F2' : '#ccc', color: 'white',
+                  border: 'none', borderRadius: 10, fontFamily: body, fontSize: 15,
+                  fontWeight: 600, cursor: ageConsent ? 'pointer' : 'not-allowed',
+                  boxSizing: 'border-box',
+                }}>
+                  <span style={{ fontSize: 18, fontWeight: 700 }}>f</span> Continue with Facebook
+                </button>
                 <button onClick={() => { if (ageConsent) setAuthMode('email') }} disabled={!ageConsent} style={{ display: 'block', width: '100%', padding: '13px', background: 'transparent', color: ageConsent ? DARK : '#ccc', border: `1px solid ${ageConsent ? 'rgba(44,24,16,0.2)' : '#eee'}`, borderRadius: 10, fontFamily: body, fontSize: 15, cursor: ageConsent ? 'pointer' : 'not-allowed', boxSizing: 'border-box' }}>
                   Create with email & password
                 </button>

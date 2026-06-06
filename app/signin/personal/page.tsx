@@ -26,6 +26,15 @@ export default function SignInPersonal() {
     })
   }
 
+  async function signInWithFacebook() {
+    setLoading(true)
+    const supabase = getSupabase()
+    await supabase.auth.signInWithOAuth({
+      provider: 'facebook',
+      options: { redirectTo: 'https://prayerbands.com/auth/callback' }
+    })
+  }
+
   async function signInWithEmail() {
     setLoading(true)
     setError('')
@@ -80,6 +89,10 @@ export default function SignInPersonal() {
                 <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
               </svg>
               {loading ? 'Signing in...' : 'Continue with Google'}
+            </button>
+            <button onClick={signInWithFacebook} disabled={loading} style={{ width: '100%', padding: '13px', borderRadius: 8, background: '#1877F2', color: '#fff', border: 'none', fontSize: 15, cursor: 'pointer', fontFamily: 'Georgia, serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 12 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>
+              {loading ? 'Signing in...' : 'Continue with Facebook'}
             </button>
             <div style={{ textAlign: 'center', color: '#8a7c6a', fontSize: 13, margin: '14px 0' }}>or</div>
             <button onClick={() => setShowEmail(true)} style={{ width: '100%', padding: '13px', borderRadius: 8, background: green, color: '#fff', border: 'none', fontSize: 15, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 'bold' }}>
