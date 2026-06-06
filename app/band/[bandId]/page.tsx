@@ -469,10 +469,25 @@ export default function BandPage() {
     return (
       <div style={{ background: CREAM, minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
-        <StatsStrip regs={regs} />
         {transferStep === 'pending' && (
-          <div style={{ margin: '20px 20px 0', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>✝</div>
+          // ... the new banner code
+        )}
+        <StatsStrip regs={regs} />
+          <div style={{ margin: '0', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
+            <style>{`
+              @keyframes pb-pulse {
+                0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+                50% { box-shadow: 0 0 0 20px rgba(255,255,255,0); }
+              }
+            `}</style>
+            <div style={{
+              width: 64, height: 64, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)',
+              margin: '0 auto 16px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 28,
+              animation: 'pb-pulse 2s ease-in-out infinite',
+            }}>✝</div>
             <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Waiting for them to tap</div>
             <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.5, marginBottom: 20 }}>Hand the band to the other person and ask them to tap it with their phone.</div>
             <button onClick={handleCancelTransfer} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '10px 20px', fontFamily: body, fontSize: 13, cursor: 'pointer' }}>Cancel transfer</button>
