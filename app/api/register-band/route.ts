@@ -21,22 +21,8 @@ export async function POST(req: NextRequest) {
     let geoState = state || null
     let geoCountry = country || null
 
-    if (ip && ip !== '127.0.0.1') {
-      try {
-        const geo = await fetch(`https://ipapi.co/${ip}/json/`)
-        const geoData = await geo.json()
-        if (!geoData.error) {
-          latitude = geoData.latitude
-          longitude = geoData.longitude
-          if (!city) geoCity = geoData.city
-          if (!state) geoState = geoData.region
-          if (!country) geoCountry = geoData.country_name
-        }
-      } catch {}
-    }
-
-    // If still no coordinates, geocode from city+country
-    if (!latitude && (geoCity || geoCountry)) {
+    // 1. Geocode from typed city/country first (most accurate)
+    if (geoCity || geoCountry) {
       try {
         const query = [geoCity, geoState, geoCountry].filter(Boolean).join(', ')
         const nominatim = await fetch(
@@ -47,6 +33,21 @@ export async function POST(req: NextRequest) {
         if (places.length > 0) {
           latitude = parseFloat(places[0].lat)
           longitude = parseFloat(places[0].lon)
+        }
+      } catch {}
+    }
+
+    // 2. Fall back to IP geolocation only if no typed location
+    if (!latitude && ip && ip !== '127.0.0.1') {
+      try {
+        const geo = await fetch(`https://ipapi.co/${ip}/json/`)
+        const geoData = await geo.json()
+        if (!geoData.error) {
+          latitude = geoData.latitude
+          longitude = geoData.longitude
+          if (!geoCity) geoCity = geoData.city
+          if (!geoState) geoState = geoData.region
+          if (!geoCountry) geoCountry = geoData.country_name
         }
       } catch {}
     }
