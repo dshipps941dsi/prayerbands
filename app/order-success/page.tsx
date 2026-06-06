@@ -56,15 +56,11 @@ function OrderSuccessInner() {
     )
     const { data: { user } } = await supabase.auth.getUser()
 
-    for (const d of dedications) {
-      if (d.recipientName.trim() || d.note.trim()) {
-        await supabase.from('bands').update({
-          dedication_note: d.note.trim() || null,
-          dedication_recipient: d.recipientName.trim() || null,
-          owner_id: user?.id ?? null,
-        }).eq('band_id', d.bandId)
-      }
-    }
+    await fetch('/api/save-dedications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dedications, userId: user?.id ?? null }),
+    })
 
     setAllSaved(true)
     setSaving(false)
