@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Logo from '@/components/Logo'
 
 export default function Shop() {
   const [loading, setLoading] = useState<string | null>(null)
@@ -43,7 +44,7 @@ export default function Shop() {
   return (
     <div style={{minHeight:'100vh',background:'linear-gradient(160deg,#e8f4fd,#fdf6e3)',fontFamily:'sans-serif'}}>
       <nav style={{background:'rgba(255,255,255,0.95)',borderBottom:'2px solid #c8e6f7',padding:'0 40px',height:'60px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:50}}>
-        <a href="/" style={{fontFamily:'Georgia,serif',fontSize:'20px',fontWeight:'700',color:'#1a5fa0',textDecoration:'none'}}>✝ PrayerBands</a>
+        <a href="/" style={{display:'inline-flex',alignItems:'center',gap:8,fontFamily:'Georgia,serif',fontSize:'20px',fontWeight:'700',color:'#1a5fa0',textDecoration:'none'}}><Logo size={26} />PrayerBands</a>
         <a href="/register" style={{fontSize:'13px',color:'#2b7bc4',textDecoration:'none',fontWeight:'600'}}>Register a Band</a>
       </nav>
 

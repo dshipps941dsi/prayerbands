@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from "react";
+import Logo from "@/components/Logo";
 
 const NAV_LINKS = [
   { label: "Our Story", href: "#story" },
@@ -219,7 +220,7 @@ const scrollTo = (href: string) => {
         <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 68 }}>
           {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => scrollTo("#hero")}>
-            <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg, #C8A96E, #B8944A)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>✝</div>
+            <Logo size={34} />
             <span className="playfair" style={{ fontSize: 20, fontWeight: 600, color: "#2C1A0E", letterSpacing: "0.02em" }}>PrayerBands</span>
           </div>
 
@@ -559,7 +560,7 @@ const scrollTo = (href: string) => {
             {/* Brand */}
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-                <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#C8A96E", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "#fff" }}>✝</div>
+                <Logo size={30} color="#FDFAF5" />
                 <span className="playfair" style={{ fontSize: 18, color: "#FDFAF5", fontWeight: 600 }}>PrayerBands</span>
               </div>
               <p className="lato" style={{ fontSize: 13, lineHeight: 1.85, fontWeight: 300, maxWidth: 280 }}>

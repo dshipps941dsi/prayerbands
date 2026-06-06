@@ -2,6 +2,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
+import Logo from '@/components/Logo'
 
 const GOLD  = '#B8860B'
 const GREEN = '#1a4a3a'
@@ -79,9 +80,7 @@ function OrderSuccessInner() {
     <div style={{ minHeight: '100vh', background: CREAM, fontFamily: body, color: DARK }}>
       {/* Nav */}
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)' }}>
-        <span style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK }}>
-          ✝ Prayer<span style={{ color: GOLD }}>Bands</span>
-        </span>
+        <Logo size={28} withName nameColor={DARK} nameSize={18} />
       </nav>
 
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '32px 20px 80px' }}>

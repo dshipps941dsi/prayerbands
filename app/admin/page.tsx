@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import Logo from '@/components/Logo'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
@@ -181,7 +182,7 @@ async function searchUser() {
 
       <nav style={{background:'#2C1A0E',padding:'0 40px',height:60,display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:50}}>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
-          <div style={{width:28,height:28,borderRadius:'50%',background:'#C8A96E',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff'}}>✝</div>
+          <Logo size={28} color="#FDFAF5" />
           <span className="playfair" style={{fontSize:17,fontWeight:600,color:'#FDFAF5'}}>PrayerBands</span>
           <span className="lato" style={{fontSize:11,letterSpacing:'0.2em',textTransform:'uppercase',color:'#C8A96E',marginLeft:8}}>Admin</span>
         </div>

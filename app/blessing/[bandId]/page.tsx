@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
+import Logo from '@/components/Logo'
 
 const VERSES = [
   { ref: "Joshua 1:9", text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", category: "fear" },
@@ -171,7 +172,7 @@ export default function BlessingPage() {
       <nav style={{background:'rgba(253,250,245,0.97)',backdropFilter:'blur(12px)',borderBottom:'1px solid #E8DFD0',padding:'0 32px',position:'sticky',top:0,zIndex:50}}>
         <div style={{maxWidth:760,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'space-between',height:60}}>
           <a href="/" style={{display:'flex',alignItems:'center',gap:8,textDecoration:'none'}}>
-            <div style={{width:28,height:28,borderRadius:'50%',background:'#C8A96E',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff'}}>✝</div>
+            <Logo size={28} />
             <span className="playfair" style={{fontSize:17,fontWeight:600,color:'#2C1A0E'}}>PrayerBands</span>
           </a>
           <a href={`/band/${bandId}`} className="lato" style={{fontSize:12,letterSpacing:'0.12em',textTransform:'uppercase',color:'#9B7B62',textDecoration:'none'}}>View Full Journey →</a>

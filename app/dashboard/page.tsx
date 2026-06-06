@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import LivingPrayerList from '@/components/LivingPrayerList'
+import Logo from '@/components/Logo'
 
 type Band = {
   id: string
@@ -817,7 +818,7 @@ export default function Dashboard() {
   return (
     <div style={{ minHeight: '100vh', background: '#f7f4ef', fontFamily: 'Georgia, serif', color: '#2c2416' }}>
       <div style={{ background: AMBER, color: '#fff', display: 'flex', alignItems: 'center', padding: '0 16px', height: 56, gap: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.15)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <a href="/" style={{ fontSize: 18, fontWeight: 'bold', letterSpacing: 1, color: '#fff', textDecoration: 'none', cursor: 'pointer' }}>✝ PrayerBands</a>
+        <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 'bold', letterSpacing: 1, color: '#fff', textDecoration: 'none', cursor: 'pointer' }}><Logo size={26} color="#fff" />PrayerBands</a>
         <div style={{ flex: 1 }} />
         <button onClick={async () => { const s = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); await s.auth.signOut(); window.location.href = '/signin' }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontFamily: 'Georgia, serif' }}>Sign out</button>
       </div>

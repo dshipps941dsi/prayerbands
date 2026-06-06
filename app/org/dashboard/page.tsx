@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
+import Logo from '@/components/Logo'
 
 const NAV = ['Overview', 'Bands', 'Prayer Wall', 'Lineage', 'Orders', 'Settings']
 const NAV_ICONS: Record<string, string> = {
@@ -85,7 +86,7 @@ function OrgMap({ orgId, green }: { orgId: string, green: string }) {
 function TopBar({ org, green }: { org: any, green: string }) {
   return (
     <div style={{ background: green, color: '#fff', display: 'flex', alignItems: 'center', padding: '0 16px', height: 56, gap: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.18)', flexShrink: 0, position: 'sticky', top: 0, zIndex: 100 }}>
-      <a href="/" style={{ fontSize: 18, fontWeight: 'bold', letterSpacing: 1, whiteSpace: 'nowrap', color: '#fff', textDecoration: 'none', cursor: 'pointer' }}>✝ PrayerBands</a>
+      <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 'bold', letterSpacing: 1, whiteSpace: 'nowrap', color: '#fff', textDecoration: 'none', cursor: 'pointer' }}><Logo size={26} color="#fff" />PrayerBands</a>
       <span style={{ background: 'rgba(255,255,255,0.18)', borderRadius: 4, padding: '2px 8px', fontSize: 11, letterSpacing: 0.5, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{org?.subdomain}.prayerbands.com</span>
       <div style={{ flex: 1 }} />
       <button onClick={async () => { const s = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); await s.auth.signOut(); window.location.href = '/signin' }} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}>Sign out</button>

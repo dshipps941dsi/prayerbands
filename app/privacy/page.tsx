@@ -1,3 +1,5 @@
+import Logo from "@/components/Logo";
+
 export default function PrivacyPolicy() {
   return (
     <div style={{minHeight:'100vh',background:'#fdf8f0',fontFamily:'Georgia,serif',color:'#2C1A0E'}}>
@@ -15,7 +17,7 @@ export default function PrivacyPolicy() {
 
       <nav style={{background:'rgba(253,250,245,0.97)',borderBottom:'1px solid #E8DFD0',padding:'0 32px',height:60,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <a href="/" style={{display:'flex',alignItems:'center',gap:8,textDecoration:'none'}}>
-          <div style={{width:28,height:28,borderRadius:'50%',background:'#C8A96E',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#fff'}}>✝</div>
+          <Logo size={28} />
           <span className="playfair" style={{fontSize:17,fontWeight:600,color:'#2C1A0E'}}>PrayerBands</span>
         </a>
         <a href="/" className="lato" style={{fontSize:12,letterSpacing:'0.12em',textTransform:'uppercase',color:'#9B7B62',textDecoration:'none'}}>← Back to Home</a>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
+import Logo from '@/components/Logo'
 
 const VERSES = [
   { ref: "Joshua 1:9", text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", category: "fear" },
@@ -269,7 +270,7 @@ export default function BandPage() {
     const currentHolder = status.registrations?.[status.registrations.length - 1]
     return (
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <span style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK }}>✝ Prayer<span style={{ color: GOLD }}>Bands</span></span>
+        <Logo size={28} withName nameColor={DARK} nameSize={18} />
         <div style={{ textAlign: 'right' }}>
           {status.screen === 'personal_space' && currentHolder?.user_name && (
             <div style={{ fontFamily: serif, fontSize: 13, fontWeight: 600, color: DARK }}>{currentHolder.user_name}</div>

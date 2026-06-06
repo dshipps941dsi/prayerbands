@@ -2,6 +2,8 @@
 // back to the rest of the site (contact, subscribe, reset-password, etc.).
 // Self-contained styles so it drops into any page without clashing.
 
+import Logo from "@/components/Logo";
+
 const LINKS = [
   { label: "Shop", href: "/store", primary: true },
   { label: "Prayer Wall", href: "/prayer-wall", primary: false },
@@ -14,7 +16,7 @@ export default function SiteHeader() {
     <header className="site-header">
       <div className="site-header-inner">
         <a href="/" className="site-header-logo" aria-label="PrayerBands home">
-          <span className="site-header-cross">✝</span>
+          <Logo size={28} />
           <span className="site-header-name">PrayerBands</span>
         </a>
         <nav className="site-header-nav">
@@ -43,12 +45,6 @@ export default function SiteHeader() {
           padding: 0 20px; gap: 14px;
         }
         .site-header-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; flex-shrink: 0; }
-        .site-header-cross {
-          width: 30px; height: 30px; border-radius: 50%;
-          background: linear-gradient(135deg, #C8A96E, #B8944A);
-          display: flex; align-items: center; justify-content: center;
-          font-size: 14px; color: #fff;
-        }
         .site-header-name { font-size: 18px; font-weight: 700; color: #2C1A0E; }
         .site-header-nav { display: flex; align-items: center; gap: 20px; }
         .site-header-link {

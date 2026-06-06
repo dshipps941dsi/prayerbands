@@ -1,5 +1,6 @@
 'use client'
 import { useState } from "react";
+import Logo from "@/components/Logo";
 
 // ─── Types ───────────────────────────────────────────────────
 type CartItem = {
@@ -193,7 +194,7 @@ export default function StorePage() {
       <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(253,250,245,0.97)", backdropFilter: "blur(12px)", borderBottom: "1px solid #E8DFD0", padding: "0 32px" }}>
         <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-            <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#C8A96E", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "#fff" }}>✝</div>
+            <Logo size={30} />
             <span className="playfair" style={{ fontSize: 18, fontWeight: 600, color: "#2C1A0E" }}>PrayerBands</span>
           </a>
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
