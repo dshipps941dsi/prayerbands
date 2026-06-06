@@ -137,6 +137,52 @@ function Avatar({ letter, color, size = 44 }: { letter: string; color: string; s
 const AVATAR_COLORS = [GOLD, GREEN, NAVY, '#5B4FCF', '#C0392B', '#2E7D6B', '#8B4513']
 function avatarColor(i: number) { return AVATAR_COLORS[i % AVATAR_COLORS.length] }
 
+function ClaimForm({ onSubmit, onBack, title, subtitle, submitLabel, claimName, setClaimName, claimPrayer, setClaimPrayer, claimCity, setClaimCity, claimState, setClaimState, claimCountry, setClaimCountry, submitting }: {
+  onSubmit: () => void
+  onBack?: () => void
+  title: string
+  subtitle: string
+  submitLabel: string
+  claimName: string
+  setClaimName: (v: string) => void
+  claimPrayer: string
+  setClaimPrayer: (v: string) => void
+  claimCity: string
+  setClaimCity: (v: string) => void
+  claimState: string
+  setClaimState: (v: string) => void
+  claimCountry: string
+  setClaimCountry: (v: string) => void
+  submitting: boolean
+}) {
+  return (
+    <div style={{ margin: '16px 20px', background: 'white', borderRadius: 16, padding: '24px', border: '1px solid rgba(44,24,16,0.1)', boxShadow: '0 4px 20px rgba(44,24,16,0.06)' }}>
+      {onBack && <button onClick={onBack} style={{ background: 'none', border: 'none', color: GRAY, fontFamily: body, fontSize: 13, cursor: 'pointer', padding: 0, marginBottom: 16 }}>← Back</button>}
+      <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{title}</div>
+      <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 20 }}>{subtitle}</div>
+      <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your name *</label>
+      <input value={claimName} onChange={e => setClaimName(e.target.value)} placeholder="First name or full name" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', boxSizing: 'border-box' }} />
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+        <div style={{ flex: 1 }}>
+          <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>City *</label>
+          <input value={claimCity} onChange={e => setClaimCity(e.target.value)} placeholder="City" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, outline: 'none', boxSizing: 'border-box' }} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>State / Province *</label>
+          <input value={claimState} onChange={e => setClaimState(e.target.value)} placeholder="State" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, outline: 'none', boxSizing: 'border-box' }} />
+        </div>
+      </div>
+      <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Country *</label>
+      <input value={claimCountry} onChange={e => setClaimCountry(e.target.value)} placeholder="Country" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', boxSizing: 'border-box' }} />
+      <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your prayer (optional)</label>
+      <textarea value={claimPrayer} onChange={e => setClaimPrayer(e.target.value)} placeholder="A prayer, a verse, or what this moment means to you..." rows={4} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 20, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
+      <button onClick={onSubmit} disabled={submitting || !claimName.trim() || !claimCity.trim() || !claimCountry.trim()} style={{ display: 'block', width: '100%', padding: 15, background: claimName.trim() ? GOLD : '#ccc', color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: claimName.trim() ? 'pointer' : 'not-allowed' }}>
+        {submitting ? 'Saving...' : submitLabel}
+      </button>
+    </div>
+  )
+}
+
 export default function BandPage() {
   const params = useParams()
   const router = useRouter()
@@ -363,35 +409,6 @@ export default function BandPage() {
             </div>
           ))}
         </div>
-      </div>
-    )
-  }
-
-  function ClaimForm({ onSubmit, onBack, title, subtitle, submitLabel }: { onSubmit: () => void; onBack?: () => void; title: string; subtitle: string; submitLabel: string }) {
-    return (
-      <div style={{ margin: '16px 20px', background: 'white', borderRadius: 16, padding: '24px', border: '1px solid rgba(44,24,16,0.1)', boxShadow: '0 4px 20px rgba(44,24,16,0.06)' }}>
-        {onBack && <button onClick={onBack} style={{ background: 'none', border: 'none', color: GRAY, fontFamily: body, fontSize: 13, cursor: 'pointer', padding: 0, marginBottom: 16 }}>← Back</button>}
-        <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{title}</div>
-        <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 20 }}>{subtitle}</div>
-        <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your name *</label>
-        <input defaultValue={claimName} onBlur={e => setClaimName(e.target.value)} placeholder="First name or full name" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', boxSizing: 'border-box' }} />
-        <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>City *</label>
-            <input defaultValue={claimCity} onBlur={e => setClaimCity(e.target.value)} placeholder="City" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, outline: 'none', boxSizing: 'border-box' }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>State / Province *</label>
-            <input defaultValue={claimState} onBlur={e => setClaimState(e.target.value)} placeholder="State" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, outline: 'none', boxSizing: 'border-box' }} />
-          </div>
-        </div>
-        <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Country *</label>
-        <input defaultValue={claimCountry} onBlur={e => setClaimCountry(e.target.value)} placeholder="Country" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', boxSizing: 'border-box' }} />
-        <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your prayer (optional)</label>
-        <textarea defaultValue={claimPrayer} onBlur={e => setClaimPrayer(e.target.value)} placeholder="A prayer, a verse, or what this moment means to you..." rows={4} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 20, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
-        <button onClick={onSubmit} disabled={submitting || !claimName.trim() || !claimCity.trim() || !claimCountry.trim()} style={{ display: 'block', width: '100%', padding: 15, background: claimName.trim() ? GOLD : '#ccc', color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: claimName.trim() ? 'pointer' : 'not-allowed' }}>
-          {submitting ? 'Saving...' : submitLabel}
-        </button>
       </div>
     )
   }
@@ -644,7 +661,7 @@ export default function BandPage() {
             <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Just view the journey</button>
           </div>
         )}
-        {claimStep === 'form' && <ClaimForm title="You're joining the chain ✝" subtitle="Add your name and a prayer to complete the handoff." submitLabel="Accept & add my prayer ✝" onSubmit={handleAcceptTransfer} onBack={() => setClaimStep('prompt')} />}
+        {claimStep === 'form' && <ClaimForm title="You're joining the chain ✝" subtitle="Add your name and a prayer to complete the handoff." submitLabel="Accept & add my prayer ✝" onSubmit={handleAcceptTransfer} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
         {claimStep === 'done' && <SuccessCard title="The band is yours now" subtitle="You've been added to the prayer chain. Every time you tap this band, you'll see the full journey — and when you're ready, you can pass it on too." />}
         <PrayerChain regs={regs} />
         <div style={{ height: 40 }} />
@@ -666,7 +683,7 @@ export default function BandPage() {
             <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Just add a prayer</button>
           </div>
         )}
-        {claimStep === 'form' && <ClaimForm title="Join the Journey" subtitle="Your prayer becomes part of this band's story forever." submitLabel="Add my prayer to this band ✝" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} />}
+        {claimStep === 'form' && <ClaimForm title="Join the Journey" subtitle="Your prayer becomes part of this band's story forever." submitLabel="Add my prayer to this band ✝" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
         {claimStep === 'done' && <SuccessCard title="You're part of this story" subtitle="Your prayer has been woven into this band's journey. When you pass it on, they'll see every prayer that came before — including yours." />}
         <div style={{ height: 40 }} />
       </div>
@@ -690,7 +707,7 @@ export default function BandPage() {
             <button onClick={() => setClaimStep('form')} style={{ padding: '10px 24px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>I now have this band →</button>
           </div>
         )}
-        {claimStep === 'form' && <ClaimForm title="Join the Chain" subtitle="Add your name and prayer to continue this band's journey." submitLabel="Join the chain ✝" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} />}
+        {claimStep === 'form' && <ClaimForm title="Join the Chain" subtitle="Add your name and prayer to continue this band's journey." submitLabel="Join the chain ✝" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
         {claimStep === 'done' && <SuccessCard title="Welcome to the chain" subtitle="Your prayer has been added. Tap your band any time to see the full journey." />}
         <PrayerChain regs={regs} />
         <div style={{ height: 40 }} />
@@ -709,7 +726,7 @@ export default function BandPage() {
           <button onClick={() => setClaimStep('form')} style={{ padding: '14px 32px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>Start this band's journey →</button>
         </div>
       )}
-      {claimStep === 'form' && <ClaimForm title="Start the Journey" subtitle="Your prayer is the first link in this band's chain." submitLabel="Begin the journey ✝" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} />}
+      {claimStep === 'form' && <ClaimForm title="Start the Journey" subtitle="Your prayer is the first link in this band's chain." submitLabel="Begin the journey ✝" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
       {claimStep === 'done' && <SuccessCard title="The journey has begun" subtitle="Your prayer is the first in this band's chain. Every person who holds it next will see what you wrote today." />}
       <div style={{ height: 40 }} />
     </div>
