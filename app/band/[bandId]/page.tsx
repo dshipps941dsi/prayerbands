@@ -148,6 +148,7 @@ export default function BandPage() {
   const [claimStep, setClaimStep] = useState<'prompt' | 'form' | 'done'>('prompt')
   const [transferNote, setTransferNote] = useState('')
   const [transferStep, setTransferStep] = useState<'idle' | 'sheet' | 'pending'>('idle')
+  const [transferComplete, setTransferComplete] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [expandedPrayer, setExpandedPrayer] = useState<string | null>(null)
   const [verseCategory, setVerseCategory] = useState('all')
@@ -185,9 +186,9 @@ export default function BandPage() {
         .then(r => r.json())
         .then(data => {
           if (data.band?.status === 'registered') {
-            setTransferStep('idle')
-            setStatus(data)
             clearInterval(interval)
+            setTransferStep('idle')
+            setTransferComplete(true)
           }
         })
     }, 5000)
@@ -484,6 +485,14 @@ export default function BandPage() {
       <div style={{ background: CREAM, minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
         {transferStep === 'pending' && <PendingBanner />}
+        {transferComplete && (
+          <div style={{ margin: '20px 20px 0', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🙏</div>
+            <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Band passed on</div>
+            <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20 }}>Your band is now in new hands. The prayer chain continues. ✝</div>
+            <a href="/dashboard" style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Go to Dashboard</a>
+          </div>
+        )}
         <StatsStrip regs={regs} />
         <div style={{ padding: '24px 20px 0' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
