@@ -733,7 +733,7 @@ export default function BandPage() {
           <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, marginBottom: 8 }}>✝ Prayer Band Journey</div>
           <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{bandId}</div>
           <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>
-            Currently held by {status.currentHolder?.name ?? 'someone'} in {status.currentHolder?.city ?? 'the world'}
+            Currently held by {status.currentHolder?.user_name ?? 'someone'} in {status.currentHolder?.city ?? 'the world'}
           </div>
         </div>
 
