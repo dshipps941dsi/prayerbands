@@ -716,18 +716,82 @@ export default function BandPage() {
   }
 
   return (
-    <div style={{ background: CREAM, minHeight: '100vh', fontFamily: body, color: DARK }}>
-      <Nav />
+    <div style={{ background: DARK, minHeight: '100vh', fontFamily: body, color: 'white' }}>
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <span style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: 'white' }}>✝ Prayer<span style={{ color: GOLD }}>Bands</span></span>
+        <span style={{ fontFamily: body, fontSize: 11, color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>{bandId}</span>
+      </nav>
+
       {claimStep === 'prompt' && (
-        <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>✝</div>
-          <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Welcome to PrayerBands</div>
-          <div style={{ fontFamily: body, fontSize: 14, color: GRAY, fontStyle: 'italic', marginBottom: 28, lineHeight: 1.6 }}>This band is beginning its journey. Be the first to add a prayer.</div>
-          <button onClick={() => setClaimStep('form')} style={{ padding: '14px 32px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>Start this band's journey →</button>
+        <div style={{ minHeight: 'calc(100vh - 57px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 28px', textAlign: 'center' }}>
+
+          {/* Cross */}
+          <div style={{ fontSize: 56, marginBottom: 32, color: GOLD }}>✝</div>
+
+          {/* Main message */}
+          <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, marginBottom: 16, lineHeight: 1.3, maxWidth: 320 }}>
+            Every prayer begins somewhere.
+          </div>
+          <div style={{ fontFamily: body, fontSize: 15, color: 'rgba(255,255,255,0.7)', fontStyle: 'italic', lineHeight: 1.7, marginBottom: 32, maxWidth: 340 }}>
+            This band is yours. What you carry, who you pass it to, the prayers you leave along the way — it starts here, with you.
+          </div>
+
+          {/* Verse */}
+          <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 24px', marginBottom: 40, maxWidth: 380, border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ fontFamily: serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.7, marginBottom: 8, color: 'rgba(255,255,255,0.9)' }}>
+              "For we are God's handiwork, created in Christ Jesus to do good works, which God prepared in advance for us to do."
+            </div>
+            <div style={{ fontFamily: body, fontSize: 12, color: GOLD, letterSpacing: '0.1em' }}>EPHESIANS 2:10</div>
+          </div>
+
+          {/* CTA */}
+          <button
+            onClick={() => setClaimStep('form')}
+            style={{
+              padding: '16px 40px', background: GOLD, color: '#0f0d09',
+              border: 'none', borderRadius: 12, fontFamily: serif,
+              fontSize: 17, fontWeight: 700, cursor: 'pointer',
+              boxShadow: '0 8px 32px rgba(184,134,11,0.3)',
+            }}
+          >
+            Begin your journey →
+          </button>
+
+          <div style={{ marginTop: 20, fontFamily: body, fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>
+            {bandId}
+          </div>
         </div>
       )}
-      {claimStep === 'form' && <ClaimForm title="Start the Journey" subtitle="Your prayer is the first link in this band's chain." submitLabel="Begin the journey ✝" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
-      {claimStep === 'done' && <SuccessCard title="The journey has begun" subtitle="Your prayer is the first in this band's chain. Every person who holds it next will see what you wrote today." />}
+
+      {claimStep === 'form' && (
+        <div style={{ background: CREAM }}>
+          <ClaimForm
+            title="Start the Journey"
+            subtitle="Your prayer is the first link in this band's chain."
+            submitLabel="Begin the journey ✝"
+            onSubmit={handleClaim}
+            onBack={() => setClaimStep('prompt')}
+            claimName={claimName}
+            setClaimName={setClaimName}
+            claimPrayer={claimPrayer}
+            setClaimPrayer={setClaimPrayer}
+            claimCity={claimCity}
+            setClaimCity={setClaimCity}
+            claimState={claimState}
+            setClaimState={setClaimState}
+            claimCountry={claimCountry}
+            setClaimCountry={setClaimCountry}
+            submitting={submitting}
+          />
+        </div>
+      )}
+
+      {claimStep === 'done' && (
+        <div style={{ background: CREAM }}>
+          <SuccessCard title="The journey has begun" subtitle="Your prayer is the first in this band's chain. Every person who holds it next will see what you wrote today." />
+        </div>
+      )}
+
       <div style={{ height: 40 }} />
     </div>
   )
