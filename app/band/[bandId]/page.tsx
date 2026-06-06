@@ -187,6 +187,7 @@ export default function BandPage() {
         .then(data => {
           if (data.band?.status === 'registered') {
             clearInterval(interval)
+            localStorage.removeItem(`holder_${bandId}`)
             setTransferStep('idle')
             setTransferComplete(true)
           }
