@@ -195,6 +195,7 @@ export default function BandPage() {
   const [claimState, setClaimState] = useState('')
   const [claimCountry, setClaimCountry] = useState('United States')
   const [claimPrayer, setClaimPrayer] = useState('')
+  const [showSignup, setShowSignup] = useState(false)
   const [claimStep, setClaimStep] = useState<'prompt' | 'form' | 'done'>('prompt')
   const [transferNote, setTransferNote] = useState('')
   const [transferStep, setTransferStep] = useState<'idle' | 'sheet' | 'pending'>('idle')
@@ -257,7 +258,7 @@ export default function BandPage() {
       })
       localStorage.setItem(`holder_${bandId}`, 'true')
       setClaimStep('done')
-      setTimeout(() => { window.location.reload() }, 2500)
+      setTimeout(() => { window.location.reload() }, 4000)
     } catch {
       alert('Something went wrong. Please try again.')
     } finally {
@@ -305,7 +306,7 @@ export default function BandPage() {
       await supabase.from('bands').update({ status: 'registered' }).eq('band_id', bandId)
       localStorage.setItem(`holder_${bandId}`, 'true')
       setClaimStep('done')
-      setTimeout(() => { window.location.reload() }, 2500)
+      setTimeout(() => { window.location.reload() }, 4000)
     } catch {
       alert('Something went wrong. Please try again.')
     } finally {
@@ -562,7 +563,7 @@ export default function BandPage() {
             <div style={{ background: 'white', borderRadius: 10, padding: '16px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
               <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Track your prayers</div>
               <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14, lineHeight: 1.5 }}>Create a free account to keep a prayer journal on this band.</div>
-              <a href="/signin" style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '10px 24px', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Create Account ✝</a>
+              <button onClick={() => setShowSignup(true)} style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '10px 24px', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Create Account ✝</button>
             </div>
           )}
 
@@ -635,6 +636,14 @@ export default function BandPage() {
               <textarea value={transferNote} onChange={e => setTransferNote(e.target.value)} placeholder="e.g. I'm giving you this band because I've been praying for you..." rows={3} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: 'white', resize: 'none', marginBottom: 16, outline: 'none', lineHeight: 1.5, boxSizing: 'border-box' }} />
               <button onClick={handleInitiateTransfer} disabled={submitting} style={{ display: 'block', width: '100%', padding: 15, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>{submitting ? 'Setting up...' : 'Ready to hand it off →'}</button>
               <button onClick={() => setTransferStep('idle')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
+            </div>
+          </div>
+        )}
+        {showSignup && (
+          <div onClick={() => setShowSignup(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
+              <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
+              <SuccessCard title="Save your place" subtitle="Create a free account to track your prayers and get a new verse every time you tap." />
             </div>
           </div>
         )}
