@@ -258,10 +258,6 @@ export default function BandPage() {
       localStorage.setItem(`holder_${bandId}`, 'true')
       setClaimStep('done')
       setTimeout(() => { window.location.reload() }, 2500)
-      setTimeout(() => {
-        fetch(`/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}`)
-          .then(r => r.json()).then(data => setStatus(data))
-      }, 1500)
     } catch {
       alert('Something went wrong. Please try again.')
     } finally {
