@@ -889,7 +889,7 @@ export default function SubscribePage() {
                   />
                 </div>
                 <p className="band-preview-label">{color?.label} Band</p>
-                <p className="band-preview-sub">Laser-engraved · NFC enabled · Silicone</p>
+                <p className="band-preview-sub">Laser-engraved · NFC enabled</p>
               </div>
 
               <div className="color-grid">

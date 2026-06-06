@@ -30,7 +30,7 @@ export default function PrivacyPolicy() {
         <p className="lato" style={{fontSize:13,color:'#C8B49A'}}>Last updated: June 2025</p>
 
         <h2>Who We Are</h2>
-        <p>PrayerBands.com is a faith-based ministry platform. Our mission is to connect people through prayer via physical silicone wristbands with unique IDs. We are based in the United States.</p>
+        <p>PrayerBands.com is a faith-based ministry platform. Our mission is to connect people through prayer via physical wristbands with unique IDs. We are based in the United States.</p>
         <p>For privacy questions, contact us at: <a href="mailto:hello@prayerbands.com">hello@prayerbands.com</a></p>
 
         <h2>What Information We Collect</h2>

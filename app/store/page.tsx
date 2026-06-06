@@ -22,8 +22,8 @@ const INDIVIDUAL = [
     color: "#C8A96E",
     icon: "✝",
     tag: "Most Popular",
-    desc: "A silicone wristband laser-engraved with a unique PB-XXXXX ID and NFC chip. Ready to carry a prayer.",
-    features: ["Unique PB-XXXXX ID", "NFC chip enabled", "Laser-engraved", "Silicone wristband", "Full journey tracking"],
+    desc: "A wristband laser-engraved with a unique PB-XXXXX ID and NFC chip. Ready to carry a prayer.",
+    features: ["Unique PB-XXXXX ID", "NFC chip enabled", "Laser-engraved", "Full journey tracking"],
   },
   {
     id: "custom",

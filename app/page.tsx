@@ -279,7 +279,7 @@ const scrollTo = (href: string) => {
               </h1>
               <div style={{ width: 48, height: 2, background: "#C8A96E", marginBottom: 28 }} />
               <p className="lato hero-copy" style={{ fontSize: 18, lineHeight: 1.8, color: "#6B4C35", maxWidth: 460, marginBottom: 40, fontWeight: 300 }}>
-                A silicone wristband. A unique ID. A digital journey around the world. When you place a PrayerBand on someone's wrist, you are praying for them — no words required.
+                A wristband. A unique ID. A digital journey around the world. When you place a PrayerBand on someone's wrist, you are praying for them — no words required.
               </p>
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
                 <a href="/store" style={{ textDecoration: "none" }}><button className="cta-btn" style={{ fontSize: 14, padding: "14px 36px" }}>Get Bands</button></a>
