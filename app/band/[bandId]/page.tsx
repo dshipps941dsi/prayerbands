@@ -185,6 +185,22 @@ export default function BandPage() {
       .order('created_at', { ascending: false }).then(({ data }) => setPrayers(data ?? []))
   }, [userId, bandId])
 
+  useEffect(() => {
+    if (transferStep !== 'pending') return
+    const interval = setInterval(() => {
+      fetch(`/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.band?.status === 'registered') {
+            setTransferStep('idle')
+            setStatus(data)
+            clearInterval(interval)
+          }
+        })
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [transferStep, bandId, userId])
+
   async function handleClaim() {
     if (!claimName.trim()) return
     setSubmitting(true)
