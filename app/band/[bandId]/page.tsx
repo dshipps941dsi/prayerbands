@@ -411,12 +411,163 @@ useEffect(() => {
   }
 
   function SuccessCard({ title, subtitle }: { title: string; subtitle: string }) {
+    const [ageConsent, setAgeConsent] = useState(false)
+    const [authMode, setAuthMode] = useState<'prompt' | 'email' | null>(null)
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [authError, setAuthError] = useState('')
+    const [authSubmitting, setAuthSubmitting] = useState(false)
+    const [authDone, setAuthDone] = useState(false)
+
+    async function handleEmailSignUp() {
+      if (!ageConsent || !email.trim() || !password.trim()) return
+      setAuthSubmitting(true)
+      setAuthError('')
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+      const { error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password.trim(),
+        options: { emailRedirectTo: `${window.location.origin}/band/${bandId}` }
+      })
+      if (error) {
+        setAuthError(error.message)
+      } else {
+        setAuthDone(true)
+      }
+      setAuthSubmitting(false)
+    }
+
+    async function handleGoogleSignIn() {
+      if (!ageConsent) return
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/band/${bandId}` }
+      })
+    }
+
+    if (userId) return null
+
     return (
-      <div style={{ margin: '24px 20px', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, borderRadius: 16, padding: '32px 24px', textAlign: 'center', color: 'white' }}>
-        <div style={{ fontSize: 44, marginBottom: 12 }}>🙏</div>
-        <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>{title}</div>
-        <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6 }}>{subtitle}</div>
-      </div>
+      <>
+        <div style={{ margin: '24px 20px', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, borderRadius: 16, padding: '32px 24px', textAlign: 'center', color: 'white' }}>
+          <div style={{ fontSize: 44, marginBottom: 12 }}>🙏</div>
+          <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>{title}</div>
+          <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6 }}>{subtitle}</div>
+        </div>
+
+        {!authDone && (
+          <div style={{ margin: '0 20px 24px', background: 'white', borderRadius: 16, padding: '24px', border: '1px solid rgba(44,24,16,0.1)', boxShadow: '0 4px 20px rgba(44,24,16,0.06)' }}>
+            <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Save your place in this journey</div>
+            <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>
+              Create a free account to get your daily verse every time you tap, track your prayers, and follow this band's story.
+            </div>
+
+            {/* Age consent */}
+            <div
+              onClick={() => setAgeConsent(!ageConsent)}
+              style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20, cursor: 'pointer' }}
+            >
+              <div style={{
+                width: 20, height: 20, borderRadius: 4, flexShrink: 0, marginTop: 1,
+                border: `2px solid ${ageConsent ? GOLD : 'rgba(44,24,16,0.2)'}`,
+                background: ageConsent ? GOLD : 'white',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {ageConsent && <span style={{ color: 'white', fontSize: 12, fontWeight: 700 }}>✓</span>}
+              </div>
+              <div style={{ fontFamily: body, fontSize: 13, color: DARK, lineHeight: 1.5 }}>
+                I confirm that I am <strong>13 years of age or older</strong>, or I am a parent or guardian creating this account on behalf of a child.
+              </div>
+            </div>
+
+            {authMode === null && (
+              <>
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={!ageConsent}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                    width: '100%', padding: '13px', marginBottom: 10,
+                    background: ageConsent ? DARK : '#ccc', color: 'white',
+                    border: 'none', borderRadius: 10, fontFamily: body, fontSize: 15,
+                    fontWeight: 600, cursor: ageConsent ? 'pointer' : 'not-allowed',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>G</span> Continue with Google
+                </button>
+                <button
+                  onClick={() => { if (ageConsent) setAuthMode('email') }}
+                  disabled={!ageConsent}
+                  style={{
+                    display: 'block', width: '100%', padding: '13px',
+                    background: 'transparent', color: ageConsent ? DARK : '#ccc',
+                    border: `1px solid ${ageConsent ? 'rgba(44,24,16,0.2)' : '#eee'}`,
+                    borderRadius: 10, fontFamily: body, fontSize: 15,
+                    cursor: ageConsent ? 'pointer' : 'not-allowed', boxSizing: 'border-box',
+                  }}
+                >
+                  Create with email & password
+                </button>
+              </>
+            )}
+
+            {authMode === 'email' && (
+              <>
+                <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Email</label>
+                <input
+                  type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }}
+                />
+                <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Password</label>
+                <input
+                  type="password" value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 6, outline: 'none', boxSizing: 'border-box' }}
+                />
+                {authError && <div style={{ fontFamily: body, fontSize: 13, color: '#C0392B', marginBottom: 12 }}>{authError}</div>}
+                <div style={{ fontFamily: body, fontSize: 12, color: GRAY, marginBottom: 16 }}>
+                  Already have an account? <a href="/signin" style={{ color: GOLD }}>Sign in</a>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={handleEmailSignUp}
+                    disabled={authSubmitting || !email.trim() || !password.trim()}
+                    style={{ flex: 1, padding: '13px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+                    {authSubmitting ? 'Creating...' : 'Create Account ✝'}
+                  </button>
+                  <button onClick={() => setAuthMode(null)}
+                    style={{ padding: '13px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>
+                    Back
+                  </button>
+                </div>
+              </>
+            )}
+
+            <div style={{ textAlign: 'center', marginTop: 16, fontFamily: body, fontSize: 12, color: GRAY }}>
+              No account needed to hold a band or leave a prayer.
+            </div>
+          </div>
+        )}
+
+        {authDone && (
+          <div style={{ margin: '0 20px 24px', background: 'white', borderRadius: 16, padding: '20px 24px', border: `1px solid ${GOLD}`, textAlign: 'center' }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>✉️</div>
+            <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Check your email</div>
+            <div style={{ fontFamily: body, fontSize: 13, color: GRAY, lineHeight: 1.5 }}>
+              We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.
+            </div>
+          </div>
+        )}
+      </>
     )
   }
 
