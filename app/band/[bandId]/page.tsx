@@ -727,11 +727,11 @@ export default function BandPage() {
                 <a href="/dashboard" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
                   📊 My Dashboard
                 </a>
-                <a href="/store" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
-                  🛍 Purchase More Bands
+                <a href="/store" style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
+                  <Icon name="shop-bag" size={18} color={DARK} bg="white" /> Purchase More Bands
                 </a>
-                <a href="/settings" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
-                  ⚙️ Settings
+                <a href="/settings" style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
+                  <Icon name="settings" size={18} color={DARK} bg="white" /> Settings
                 </a>
                 <button onClick={async () => {
                   const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -745,7 +745,7 @@ export default function BandPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 8, lineHeight: 1.5 }}>Sign in to access your full account, prayer network, and all your bands.</div>
                 <a href="/signin" style={{ display: 'block', textAlign: 'center', background: GOLD, color: '#0f0d09', borderRadius: 12, padding: '16px 20px', fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Sign In ✝</a>
-                <a href="/store" style={{ display: 'block', textAlign: 'center', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>🛍 Purchase Bands</a>
+                <a href="/store" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}><Icon name="shop-bag" size={18} color={DARK} bg="white" /> Purchase Bands</a>
               </div>
             )}
           </div>
