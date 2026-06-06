@@ -162,6 +162,13 @@ export default function BandPage() {
   const [submitting, setSubmitting] = useState(false)
   const [expandedPrayer, setExpandedPrayer] = useState<string | null>(null)
   const [verseCategory, setVerseCategory] = useState('all')
+  const [prayers, setPrayers] = useState<any[]>([])
+const [prayerTitle, setPrayerTitle] = useState('')
+const [prayerBody, setPrayerBody] = useState('')
+const [prayerStep, setPrayerStep] = useState<'list' | 'form' | 'answer'>('list')
+const [answeringId, setAnsweringId] = useState<string | null>(null)
+const [testimony, setTestimony] = useState('')
+const [prayerSubmitting, setPrayerSubmitting] = useState(false)
 
   useEffect(() => {
     const supabase = createBrowserClient(
@@ -181,7 +188,20 @@ export default function BandPage() {
       .then(data => setStatus(data))
       .catch(() => setStatus({ screen: 'not_found' }))
   }, [bandId, userId])
-
+useEffect(() => {
+    if (!userId || !bandId) return
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    supabase
+      .from('prayer_requests')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('band_id', bandId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setPrayers(data ?? []))
+  }, [userId, bandId])
   async function handleClaim() {
     if (!claimName.trim()) return
     setSubmitting(true)
@@ -449,10 +469,111 @@ export default function BandPage() {
         <VerseEngine />
 
         <div style={{ padding: '20px 20px 0' }}>
-          <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid rgba(44,24,16,0.08)' }}>Prayer Requests</div>
-          <div style={{ background: 'white', borderRadius: 10, padding: '14px 16px', border: '1px dashed rgba(44,24,16,0.15)', textAlign: 'center', fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>
-            Prayer requests coming soon ✝
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid rgba(44,24,16,0.08)' }}>
+            <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700 }}>Prayer Requests</div>
+            {prayerStep === 'list' && (
+              <button onClick={() => setPrayerStep('form')} style={{ background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, padding: '6px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>
+            )}
           </div>
+
+          {prayerStep === 'form' && (
+            <div style={{ background: 'white', borderRadius: 12, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', marginBottom: 12 }}>
+              <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Prayer title</label>
+              <input value={prayerTitle} onChange={e => setPrayerTitle(e.target.value)} placeholder="What are you believing for?"
+                style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }} />
+              <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Details (optional)</label>
+              <textarea value={prayerBody} onChange={e => setPrayerBody(e.target.value)} placeholder="Share more about this prayer request..." rows={3}
+                style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={async () => {
+                    if (!prayerTitle.trim()) return
+                    setPrayerSubmitting(true)
+                    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+                    const { data } = await supabase.from('prayer_requests').insert({
+                      user_id: userId, band_id: bandId, title: prayerTitle, body: prayerBody,
+                      status: 'active', visibility: 'private',
+                    }).select().single()
+                    if (data) setPrayers(prev => [data, ...prev])
+                    setPrayerTitle(''); setPrayerBody(''); setPrayerStep('list')
+                    setPrayerSubmitting(false)
+                  }}
+                  disabled={prayerSubmitting || !prayerTitle.trim()}
+                  style={{ flex: 1, padding: '10px', background: prayerTitle.trim() ? GOLD : '#ccc', color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: prayerTitle.trim() ? 'pointer' : 'not-allowed' }}>
+                  {prayerSubmitting ? 'Saving...' : 'Add Prayer ✝'}
+                </button>
+                <button onClick={() => setPrayerStep('list')}
+                  style={{ padding: '10px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {prayerStep === 'answer' && answeringId && (
+            <div style={{ background: 'white', borderRadius: 12, padding: '20px', border: `1px solid ${GOLD}`, marginBottom: 12 }}>
+              <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>God answered this prayer ✝</div>
+              <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14 }}>Share what happened — your testimony encourages others.</div>
+              <textarea value={testimony} onChange={e => setTestimony(e.target.value)} placeholder="Share how God answered this prayer..." rows={3}
+                style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={async () => {
+                    setPrayerSubmitting(true)
+                    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+                    await supabase.from('prayer_requests').update({
+                      status: 'answered', answered_testimony: testimony, answered_at: new Date().toISOString()
+                    }).eq('id', answeringId)
+                    setPrayers(prev => prev.map(p => p.id === answeringId ? { ...p, status: 'answered', answered_testimony: testimony } : p))
+                    setAnsweringId(null); setTestimony(''); setPrayerStep('list')
+                    setPrayerSubmitting(false)
+                  }}
+                  disabled={prayerSubmitting}
+                  style={{ flex: 1, padding: '10px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                  {prayerSubmitting ? 'Saving...' : 'Mark Answered ✝'}
+                </button>
+                <button onClick={() => { setPrayerStep('list'); setAnsweringId(null) }}
+                  style={{ padding: '10px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {prayers.length === 0 && prayerStep === 'list' && (
+            <div style={{ background: 'white', borderRadius: 10, padding: '14px 16px', border: '1px dashed rgba(44,24,16,0.15)', textAlign: 'center', fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>
+              No prayer requests yet — tap + Add to begin ✝
+            </div>
+          )}
+
+          {prayerStep === 'list' && prayers.map(p => (
+            <div key={p.id} style={{
+              background: p.status === 'answered' ? 'linear-gradient(135deg, rgba(26,74,58,0.05), white)' : 'white',
+              borderRadius: 12, padding: '16px', marginBottom: 10,
+              border: p.status === 'answered' ? `1px solid ${GREEN}` : '1px solid rgba(44,24,16,0.1)',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+                <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, flex: 1 }}>{p.title}</div>
+                {p.status === 'answered' ? (
+                  <span style={{ background: 'rgba(26,74,58,0.12)', color: GREEN, fontFamily: body, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, flexShrink: 0, marginLeft: 8 }}>Answered ✝</span>
+                ) : (
+                  <button onClick={() => { setAnsweringId(p.id); setPrayerStep('answer') }}
+                    style={{ background: 'rgba(184,134,11,0.1)', color: GOLD, border: 'none', borderRadius: 20, fontFamily: body, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 10px', cursor: 'pointer', flexShrink: 0, marginLeft: 8 }}>
+                    Mark Answered
+                  </button>
+                )}
+              </div>
+              {p.body && <div style={{ fontFamily: body, fontSize: 13, color: GRAY, lineHeight: 1.5, marginBottom: 4 }}>{p.body}</div>}
+              {p.answered_testimony && (
+                <div style={{ fontFamily: body, fontSize: 13, color: GREEN, fontStyle: 'italic', lineHeight: 1.5, marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(26,74,58,0.1)' }}>
+                  "{p.answered_testimony}"
+                </div>
+              )}
+              <div style={{ fontFamily: body, fontSize: 11, color: '#9A8A7A', marginTop: 6 }}>
+                {new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </div>
+            </div>
+          ))}
         </div>
 
         {transferStep === 'sheet' && (
