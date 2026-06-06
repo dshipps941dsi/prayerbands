@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 
-
 // ── Verse Engine ──────────────────────────────────────────
 const VERSES = [
   { ref: "Joshua 1:9", text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", category: "fear" },
@@ -119,14 +118,12 @@ type BandStatus = {
   dedicatorName?: string
 }
 
-// ── Helpers ───────────────────────────────────────────────
 const GOLD  = '#B8860B'
 const GREEN = '#1a4a3a'
 const NAVY  = '#1a2a4a'
 const DARK  = '#2C1810'
 const CREAM = '#FAF6EF'
 const GRAY  = '#7A6A5A'
-
 const serif = "'Playfair Display', Georgia, serif"
 const body  = "'Lora', Georgia, serif"
 
@@ -135,8 +132,7 @@ function Avatar({ letter, color, size = 44 }: { letter: string; color: string; s
     <div style={{
       width: size, height: size, borderRadius: '50%', background: color,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: serif, fontSize: size * 0.4, fontWeight: 700, color: 'white',
-      flexShrink: 0,
+      fontFamily: serif, fontSize: size * 0.4, fontWeight: 700, color: 'white', flexShrink: 0,
     }}>{letter}</div>
   )
 }
@@ -144,7 +140,6 @@ function Avatar({ letter, color, size = 44 }: { letter: string; color: string; s
 const AVATAR_COLORS = [GOLD, GREEN, NAVY, '#5B4FCF', '#C0392B', '#2E7D6B', '#8B4513']
 function avatarColor(i: number) { return AVATAR_COLORS[i % AVATAR_COLORS.length] }
 
-// ── Main Component ────────────────────────────────────────
 export default function BandPage() {
   const params = useParams()
   const router = useRouter()
@@ -152,63 +147,49 @@ export default function BandPage() {
 
   const [status, setStatus] = useState<BandStatus>({ screen: 'loading' })
   const [userId, setUserId] = useState<string | null>(null)
-
   const [claimName, setClaimName] = useState('')
   const [claimPrayer, setClaimPrayer] = useState('')
   const [claimStep, setClaimStep] = useState<'prompt' | 'form' | 'done'>('prompt')
-
   const [transferNote, setTransferNote] = useState('')
   const [transferStep, setTransferStep] = useState<'idle' | 'sheet' | 'pending'>('idle')
-
   const [submitting, setSubmitting] = useState(false)
   const [expandedPrayer, setExpandedPrayer] = useState<string | null>(null)
   const [verseCategory, setVerseCategory] = useState('all')
   const [prayers, setPrayers] = useState<any[]>([])
-const [prayerTitle, setPrayerTitle] = useState('')
-const [prayerBody, setPrayerBody] = useState('')
-const [prayerStep, setPrayerStep] = useState<'list' | 'form' | 'answer'>('list')
-const [answeringId, setAnsweringId] = useState<string | null>(null)
-const [testimony, setTestimony] = useState('')
-const [prayerSubmitting, setPrayerSubmitting] = useState(false)
+  const [prayerTitle, setPrayerTitle] = useState('')
+  const [prayerBody, setPrayerBody] = useState('')
+  const [prayerStep, setPrayerStep] = useState<'list' | 'form' | 'answer'>('list')
+  const [answeringId, setAnsweringId] = useState<string | null>(null)
+  const [testimony, setTestimony] = useState('')
+  const [prayerSubmitting, setPrayerSubmitting] = useState(false)
 
   useEffect(() => {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data?.user?.id ?? null)
-    })
+    supabase.auth.getUser().then(({ data }) => setUserId(data?.user?.id ?? null))
   }, [])
 
   useEffect(() => {
     if (!bandId) return
     const localHolder = localStorage.getItem(`holder_${bandId}`)
     const url = `/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}${localHolder ? '&localHolder=true' : ''}`
-    fetch(url)
-      .then(r => r.json())
-      .then(data => setStatus(data))
-      .catch(() => setStatus({ screen: 'not_found' }))
+    fetch(url).then(r => r.json()).then(data => setStatus(data)).catch(() => setStatus({ screen: 'not_found' }))
   }, [bandId, userId])
-useEffect(() => {
+
+  useEffect(() => {
     if (!userId || !bandId) return
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-    supabase
-      .from('prayer_requests')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('band_id', bandId)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => setPrayers(data ?? []))
+    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+    supabase.from('prayer_requests').select('*').eq('user_id', userId).eq('band_id', bandId)
+      .order('created_at', { ascending: false }).then(({ data }) => setPrayers(data ?? []))
   }, [userId, bandId])
+
   async function handleClaim() {
     if (!claimName.trim()) return
     setSubmitting(true)
     try {
-    await fetch('/api/register-band', {
+      await fetch('/api/register-band', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bandId, name: claimName, prayer: claimPrayer, userId: userId ?? null }),
@@ -244,12 +225,8 @@ useEffect(() => {
   }
 
   async function handleCancelTransfer() {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-    await supabase.from('band_transfers').update({ status: 'cancelled' })
-      .eq('band_id', bandId).eq('status', 'pending')
+    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+    await supabase.from('band_transfers').update({ status: 'cancelled' }).eq('band_id', bandId).eq('status', 'pending')
     await supabase.from('bands').update({ status: 'registered' }).eq('band_id', bandId)
     setTransferStep('idle')
   }
@@ -258,10 +235,7 @@ useEffect(() => {
     if (!claimName.trim()) return
     setSubmitting(true)
     try {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
+      const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
       await fetch('/api/register-band', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -271,6 +245,7 @@ useEffect(() => {
         .update({ status: 'completed', completed_at: new Date().toISOString() })
         .eq('band_id', bandId).eq('status', 'pending')
       await supabase.from('bands').update({ status: 'registered' }).eq('band_id', bandId)
+      localStorage.setItem(`holder_${bandId}`, 'true')
       setClaimStep('done')
     } catch {
       alert('Something went wrong. Please try again.')
@@ -281,14 +256,8 @@ useEffect(() => {
 
   function Nav() {
     return (
-      <nav style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '16px 24px', borderBottom: '1px solid rgba(44,24,16,0.1)',
-        background: 'rgba(250,246,239,0.97)', position: 'sticky', top: 0, zIndex: 100,
-      }}>
-        <span style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK }}>
-          ✝ Prayer<span style={{ color: GOLD }}>Bands</span>
-        </span>
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', position: 'sticky', top: 0, zIndex: 100 }}>
+        <span style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK }}>✝ Prayer<span style={{ color: GOLD }}>Bands</span></span>
         <span style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>{bandId}</span>
       </nav>
     )
@@ -296,18 +265,11 @@ useEffect(() => {
 
   function StatsStrip({ regs }: { regs: Registration[] }) {
     const countries = new Set(regs.map(r => r.country).filter(Boolean)).size
-    const prayers = regs.filter(r => r.prayer).length
+    const prayerCount = regs.filter(r => r.prayer).length
     return (
       <div style={{ display: 'flex', background: 'white', borderBottom: '1px solid rgba(44,24,16,0.08)' }}>
-        {[
-          { num: regs.length, lbl: 'People' },
-          { num: countries || '—', lbl: 'Countries' },
-          { num: prayers, lbl: 'Prayers' },
-        ].map((s, i) => (
-          <div key={i} style={{
-            flex: 1, padding: '12px 8px', textAlign: 'center',
-            borderRight: i < 2 ? '1px solid rgba(44,24,16,0.08)' : 'none',
-          }}>
+        {[{ num: regs.length, lbl: 'People' }, { num: countries || '—', lbl: 'Countries' }, { num: prayerCount, lbl: 'Prayers' }].map((s, i) => (
+          <div key={i} style={{ flex: 1, padding: '12px 8px', textAlign: 'center', borderRight: i < 2 ? '1px solid rgba(44,24,16,0.08)' : 'none' }}>
             <span style={{ display: 'block', fontFamily: serif, fontSize: 20, fontWeight: 700, color: GOLD }}>{s.num}</span>
             <span style={{ display: 'block', fontFamily: body, fontSize: 10, color: GRAY, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 2 }}>{s.lbl}</span>
           </div>
@@ -323,8 +285,8 @@ useEffect(() => {
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none' }}>
           {CATEGORIES.map(cat => (
             <button key={cat.id} onClick={() => setVerseCategory(cat.id)} style={{
-              flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none',
-              cursor: 'pointer', fontFamily: body, fontSize: 12, fontWeight: 600,
+              flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
+              fontFamily: body, fontSize: 12, fontWeight: 600,
               background: verseCategory === cat.id ? GOLD : 'white',
               color: verseCategory === cat.id ? '#0f0d09' : GRAY,
               boxShadow: '0 1px 4px rgba(44,24,16,0.1)', transition: 'all 0.2s',
@@ -335,9 +297,7 @@ useEffect(() => {
           <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.6, marginBottom: 12 }}>
             {verseCategory === 'all' ? "Today's Verse" : CATEGORIES.find(c => c.id === verseCategory)?.label}
           </div>
-          <div style={{ fontFamily: serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.7, marginBottom: 12 }}>
-            "{verse.text}"
-          </div>
+          <div style={{ fontFamily: serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.7, marginBottom: 12 }}>"{verse.text}"</div>
           <div style={{ fontFamily: body, fontSize: 13, opacity: 0.7, fontWeight: 600 }}>{verse.ref}</div>
         </div>
       </div>
@@ -364,19 +324,11 @@ useEffect(() => {
                     {new Date(reg.registered_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                 </div>
-                {(reg.city || reg.country) && (
-                  <div style={{ fontFamily: body, fontSize: 12, color: GRAY, marginBottom: 6 }}>
-                    📍 {[reg.city, reg.country].filter(Boolean).join(', ')}
-                  </div>
-                )}
+                {(reg.city || reg.country) && <div style={{ fontFamily: body, fontSize: 12, color: GRAY, marginBottom: 6 }}>📍 {[reg.city, reg.country].filter(Boolean).join(', ')}</div>}
                 {reg.prayer && (
                   <>
-                    <div style={{
-                      fontFamily: body, fontSize: 13, color: '#3C2C1C', lineHeight: 1.6, fontStyle: 'italic',
-                      ...(expandedPrayer !== reg.id ? { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}),
-                    }}>"{reg.prayer}"</div>
-                    <button onClick={() => setExpandedPrayer(expandedPrayer === reg.id ? null : reg.id)}
-                      style={{ background: 'none', border: 'none', color: GOLD, fontFamily: body, fontSize: 12, cursor: 'pointer', padding: '4px 0' }}>
+                    <div style={{ fontFamily: body, fontSize: 13, color: '#3C2C1C', lineHeight: 1.6, fontStyle: 'italic', ...(expandedPrayer !== reg.id ? { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}) }}>"{reg.prayer}"</div>
+                    <button onClick={() => setExpandedPrayer(expandedPrayer === reg.id ? null : reg.id)} style={{ background: 'none', border: 'none', color: GOLD, fontFamily: body, fontSize: 12, cursor: 'pointer', padding: '4px 0' }}>
                       {expandedPrayer === reg.id ? 'Show less' : 'Read full prayer'}
                     </button>
                   </>
@@ -389,9 +341,7 @@ useEffect(() => {
     )
   }
 
-  function ClaimForm({ onSubmit, onBack, title, subtitle, submitLabel }: {
-    onSubmit: () => void; onBack?: () => void; title: string; subtitle: string; submitLabel: string
-  }) {
+  function ClaimForm({ onSubmit, onBack, title, subtitle, submitLabel }: { onSubmit: () => void; onBack?: () => void; title: string; subtitle: string; submitLabel: string }) {
     return (
       <div style={{ margin: '16px 20px', background: 'white', borderRadius: 16, padding: '24px', border: '1px solid rgba(44,24,16,0.1)', boxShadow: '0 4px 20px rgba(44,24,16,0.06)' }}>
         {onBack && <button onClick={onBack} style={{ background: 'none', border: 'none', color: GRAY, fontFamily: body, fontSize: 13, cursor: 'pointer', padding: 0, marginBottom: 16 }}>← Back</button>}
@@ -424,33 +374,19 @@ useEffect(() => {
       if (!ageConsent || !email.trim() || !password.trim()) return
       setAuthSubmitting(true)
       setAuthError('')
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
+      const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
       const { error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password: password.trim(),
+        email: email.trim(), password: password.trim(),
         options: { emailRedirectTo: `${window.location.origin}/band/${bandId}` }
       })
-      if (error) {
-        setAuthError(error.message)
-      } else {
-        setAuthDone(true)
-      }
+      if (error) { setAuthError(error.message) } else { setAuthDone(true) }
       setAuthSubmitting(false)
     }
 
     async function handleGoogleSignIn() {
       if (!ageConsent) return
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: `${window.location.origin}/band/${bandId}` }
-      })
+      const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/band/${bandId}` } })
     }
 
     if (userId) return null
@@ -462,110 +398,48 @@ useEffect(() => {
           <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>{title}</div>
           <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6 }}>{subtitle}</div>
         </div>
-
         {!authDone && (
           <div style={{ margin: '0 20px 24px', background: 'white', borderRadius: 16, padding: '24px', border: '1px solid rgba(44,24,16,0.1)', boxShadow: '0 4px 20px rgba(44,24,16,0.06)' }}>
             <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Save your place in this journey</div>
-            <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>
-              Create a free account to get your daily verse every time you tap, track your prayers, and follow this band's story.
-            </div>
-
-            {/* Age consent */}
-            <div
-              onClick={() => setAgeConsent(!ageConsent)}
-              style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20, cursor: 'pointer' }}
-            >
-              <div style={{
-                width: 20, height: 20, borderRadius: 4, flexShrink: 0, marginTop: 1,
-                border: `2px solid ${ageConsent ? GOLD : 'rgba(44,24,16,0.2)'}`,
-                background: ageConsent ? GOLD : 'white',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
+            <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>Create a free account to get your daily verse every time you tap, track your prayers, and follow this band's story.</div>
+            <div onClick={() => setAgeConsent(!ageConsent)} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20, cursor: 'pointer' }}>
+              <div style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, marginTop: 1, border: `2px solid ${ageConsent ? GOLD : 'rgba(44,24,16,0.2)'}`, background: ageConsent ? GOLD : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {ageConsent && <span style={{ color: 'white', fontSize: 12, fontWeight: 700 }}>✓</span>}
               </div>
-              <div style={{ fontFamily: body, fontSize: 13, color: DARK, lineHeight: 1.5 }}>
-                I confirm that I am <strong>13 years of age or older</strong>, or I am a parent or guardian creating this account on behalf of a child.
-              </div>
+              <div style={{ fontFamily: body, fontSize: 13, color: DARK, lineHeight: 1.5 }}>I confirm that I am <strong>13 years of age or older</strong>, or I am a parent or guardian creating this account on behalf of a child.</div>
             </div>
-
             {authMode === null && (
               <>
-                <button
-                  onClick={handleGoogleSignIn}
-                  disabled={!ageConsent}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                    width: '100%', padding: '13px', marginBottom: 10,
-                    background: ageConsent ? DARK : '#ccc', color: 'white',
-                    border: 'none', borderRadius: 10, fontFamily: body, fontSize: 15,
-                    fontWeight: 600, cursor: ageConsent ? 'pointer' : 'not-allowed',
-                    boxSizing: 'border-box',
-                  }}
-                >
+                <button onClick={handleGoogleSignIn} disabled={!ageConsent} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '13px', marginBottom: 10, background: ageConsent ? DARK : '#ccc', color: 'white', border: 'none', borderRadius: 10, fontFamily: body, fontSize: 15, fontWeight: 600, cursor: ageConsent ? 'pointer' : 'not-allowed', boxSizing: 'border-box' }}>
                   <span style={{ fontSize: 18 }}>G</span> Continue with Google
                 </button>
-                <button
-                  onClick={() => { if (ageConsent) setAuthMode('email') }}
-                  disabled={!ageConsent}
-                  style={{
-                    display: 'block', width: '100%', padding: '13px',
-                    background: 'transparent', color: ageConsent ? DARK : '#ccc',
-                    border: `1px solid ${ageConsent ? 'rgba(44,24,16,0.2)' : '#eee'}`,
-                    borderRadius: 10, fontFamily: body, fontSize: 15,
-                    cursor: ageConsent ? 'pointer' : 'not-allowed', boxSizing: 'border-box',
-                  }}
-                >
+                <button onClick={() => { if (ageConsent) setAuthMode('email') }} disabled={!ageConsent} style={{ display: 'block', width: '100%', padding: '13px', background: 'transparent', color: ageConsent ? DARK : '#ccc', border: `1px solid ${ageConsent ? 'rgba(44,24,16,0.2)' : '#eee'}`, borderRadius: 10, fontFamily: body, fontSize: 15, cursor: ageConsent ? 'pointer' : 'not-allowed', boxSizing: 'border-box' }}>
                   Create with email & password
                 </button>
               </>
             )}
-
             {authMode === 'email' && (
               <>
                 <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Email</label>
-                <input
-                  type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }}
-                />
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }} />
                 <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Password</label>
-                <input
-                  type="password" value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="At least 8 characters"
-                  style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 6, outline: 'none', boxSizing: 'border-box' }}
-                />
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 8 characters" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 6, outline: 'none', boxSizing: 'border-box' }} />
                 {authError && <div style={{ fontFamily: body, fontSize: 13, color: '#C0392B', marginBottom: 12 }}>{authError}</div>}
-                <div style={{ fontFamily: body, fontSize: 12, color: GRAY, marginBottom: 16 }}>
-                  Already have an account? <a href="/signin" style={{ color: GOLD }}>Sign in</a>
-                </div>
+                <div style={{ fontFamily: body, fontSize: 12, color: GRAY, marginBottom: 16 }}>Already have an account? <a href="/signin" style={{ color: GOLD }}>Sign in</a></div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    onClick={handleEmailSignUp}
-                    disabled={authSubmitting || !email.trim() || !password.trim()}
-                    style={{ flex: 1, padding: '13px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
-                    {authSubmitting ? 'Creating...' : 'Create Account ✝'}
-                  </button>
-                  <button onClick={() => setAuthMode(null)}
-                    style={{ padding: '13px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>
-                    Back
-                  </button>
+                  <button onClick={handleEmailSignUp} disabled={authSubmitting || !email.trim() || !password.trim()} style={{ flex: 1, padding: '13px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>{authSubmitting ? 'Creating...' : 'Create Account ✝'}</button>
+                  <button onClick={() => setAuthMode(null)} style={{ padding: '13px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Back</button>
                 </div>
               </>
             )}
-
-            <div style={{ textAlign: 'center', marginTop: 16, fontFamily: body, fontSize: 12, color: GRAY }}>
-              No account needed to hold a band or leave a prayer.
-            </div>
+            <div style={{ textAlign: 'center', marginTop: 16, fontFamily: body, fontSize: 12, color: GRAY }}>No account needed to hold a band or leave a prayer.</div>
           </div>
         )}
-
         {authDone && (
           <div style={{ margin: '0 20px 24px', background: 'white', borderRadius: 16, padding: '20px 24px', border: `1px solid ${GOLD}`, textAlign: 'center' }}>
             <div style={{ fontSize: 28, marginBottom: 8 }}>✉️</div>
             <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Check your email</div>
-            <div style={{ fontFamily: body, fontSize: 13, color: GRAY, lineHeight: 1.5 }}>
-              We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.
-            </div>
+            <div style={{ fontFamily: body, fontSize: 13, color: GRAY, lineHeight: 1.5 }}>We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.</div>
           </div>
         )}
       </>
@@ -573,11 +447,7 @@ useEffect(() => {
   }
 
   if (status.screen === 'loading') {
-    return (
-      <div style={{ background: CREAM, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontFamily: body, color: GRAY, fontStyle: 'italic' }}>Loading band journey...</div>
-      </div>
-    )
+    return <div style={{ background: CREAM, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ fontFamily: body, color: GRAY, fontStyle: 'italic' }}>Loading band journey...</div></div>
   }
 
   if (status.screen === 'not_found') {
@@ -605,140 +475,83 @@ useEffect(() => {
             <div style={{ fontSize: 36, marginBottom: 12 }}>✝</div>
             <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Waiting for them to tap</div>
             <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.5, marginBottom: 20 }}>Hand the band to the other person and ask them to tap it with their phone.</div>
-            <button onClick={handleCancelTransfer} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '10px 20px', fontFamily: body, fontSize: 13, cursor: 'pointer' }}>
-              Cancel transfer
-            </button>
+            <button onClick={handleCancelTransfer} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '10px 20px', fontFamily: body, fontSize: 13, cursor: 'pointer' }}>Cancel transfer</button>
           </div>
         )}
-        
         <div style={{ padding: '24px 20px 0' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700 }}>Your Band</div>
-              <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginTop: 2 }}>
-                {regs.length === 0 ? 'Just arrived' : 'Held by you'}
-              </div>
+              <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginTop: 2 }}>{regs.length === 0 ? 'Just arrived' : 'Held by you'}</div>
             </div>
             {transferStep === 'idle' && (
-              <button onClick={() => setTransferStep('sheet')} style={{
-                display: 'flex', alignItems: 'center', gap: 8, background: GOLD, color: '#0f0d09',
-                border: 'none', borderRadius: 10, padding: '10px 18px', fontFamily: serif,
-                fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
-              }}>↗ Pass On</button>
+              <button onClick={() => setTransferStep('sheet')} style={{ display: 'flex', alignItems: 'center', gap: 8, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, padding: '10px 18px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Pass On</button>
             )}
           </div>
         </div>
-
         <VerseEngine />
-
         <div style={{ padding: '20px 20px 0' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid rgba(44,24,16,0.08)' }}>
             <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700 }}>Prayer Requests</div>
-            {prayerStep === 'list' && (
-              <button onClick={() => setPrayerStep('form')} style={{ background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, padding: '6px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>
-            )}
+            {prayerStep === 'list' && <button onClick={() => setPrayerStep('form')} style={{ background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, padding: '6px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>}
           </div>
-
           {prayerStep === 'form' && (
             <div style={{ background: 'white', borderRadius: 12, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', marginBottom: 12 }}>
               <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Prayer title</label>
-              <input value={prayerTitle} onChange={e => setPrayerTitle(e.target.value)} placeholder="What are you praying for?"
-                style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }} />
+              <input value={prayerTitle} onChange={e => setPrayerTitle(e.target.value)} placeholder="What are you praying for?" style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }} />
               <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Details (optional)</label>
-              <textarea value={prayerBody} onChange={e => setPrayerBody(e.target.value)} placeholder="Share more about this prayer request..." rows={3}
-                style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
+              <textarea value={prayerBody} onChange={e => setPrayerBody(e.target.value)} placeholder="Share more about this prayer request..." rows={3} style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
               <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  onClick={async () => {
-                    if (!prayerTitle.trim()) return
-                    setPrayerSubmitting(true)
-                    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-                    const { data } = await supabase.from('prayer_requests').insert({
-                      user_id: userId, band_id: bandId, title: prayerTitle, body: prayerBody,
-                      status: 'active', visibility: 'private',
-                    }).select().single()
-                    if (data) setPrayers(prev => [data, ...prev])
-                    setPrayerTitle(''); setPrayerBody(''); setPrayerStep('list')
-                    setPrayerSubmitting(false)
-                  }}
-                  disabled={prayerSubmitting || !prayerTitle.trim()}
-                  style={{ flex: 1, padding: '10px', background: prayerTitle.trim() ? GOLD : '#ccc', color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: prayerTitle.trim() ? 'pointer' : 'not-allowed' }}>
+                <button onClick={async () => {
+                  if (!prayerTitle.trim()) return
+                  setPrayerSubmitting(true)
+                  const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+                  const { data } = await supabase.from('prayer_requests').insert({ user_id: userId, band_id: bandId, title: prayerTitle, body: prayerBody, status: 'active', visibility: 'private' }).select().single()
+                  if (data) setPrayers(prev => [data, ...prev])
+                  setPrayerTitle(''); setPrayerBody(''); setPrayerStep('list'); setPrayerSubmitting(false)
+                }} disabled={prayerSubmitting || !prayerTitle.trim()} style={{ flex: 1, padding: '10px', background: prayerTitle.trim() ? GOLD : '#ccc', color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: prayerTitle.trim() ? 'pointer' : 'not-allowed' }}>
                   {prayerSubmitting ? 'Saving...' : 'Add Prayer ✝'}
                 </button>
-                <button onClick={() => setPrayerStep('list')}
-                  style={{ padding: '10px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>
-                  Cancel
-                </button>
+                <button onClick={() => setPrayerStep('list')} style={{ padding: '10px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
               </div>
             </div>
           )}
-
           {prayerStep === 'answer' && answeringId && (
             <div style={{ background: 'white', borderRadius: 12, padding: '20px', border: `1px solid ${GOLD}`, marginBottom: 12 }}>
               <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>God answered this prayer ✝</div>
               <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14 }}>Share what happened — your testimony encourages others.</div>
-              <textarea value={testimony} onChange={e => setTestimony(e.target.value)} placeholder="Share how God answered this prayer..." rows={3}
-                style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
+              <textarea value={testimony} onChange={e => setTestimony(e.target.value)} placeholder="Share how God answered this prayer..." rows={3} style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
               <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  onClick={async () => {
-                    setPrayerSubmitting(true)
-                    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-                    await supabase.from('prayer_requests').update({
-                      status: 'answered', answered_testimony: testimony, answered_at: new Date().toISOString()
-                    }).eq('id', answeringId)
-                    setPrayers(prev => prev.map(p => p.id === answeringId ? { ...p, status: 'answered', answered_testimony: testimony } : p))
-                    setAnsweringId(null); setTestimony(''); setPrayerStep('list')
-                    setPrayerSubmitting(false)
-                  }}
-                  disabled={prayerSubmitting}
-                  style={{ flex: 1, padding: '10px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={async () => {
+                  setPrayerSubmitting(true)
+                  const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+                  await supabase.from('prayer_requests').update({ status: 'answered', answered_testimony: testimony, answered_at: new Date().toISOString() }).eq('id', answeringId)
+                  setPrayers(prev => prev.map(p => p.id === answeringId ? { ...p, status: 'answered', answered_testimony: testimony } : p))
+                  setAnsweringId(null); setTestimony(''); setPrayerStep('list'); setPrayerSubmitting(false)
+                }} disabled={prayerSubmitting} style={{ flex: 1, padding: '10px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                   {prayerSubmitting ? 'Saving...' : 'Mark Answered ✝'}
                 </button>
-                <button onClick={() => { setPrayerStep('list'); setAnsweringId(null) }}
-                  style={{ padding: '10px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>
-                  Cancel
-                </button>
+                <button onClick={() => { setPrayerStep('list'); setAnsweringId(null) }} style={{ padding: '10px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
               </div>
             </div>
           )}
-
           {prayers.length === 0 && prayerStep === 'list' && (
-            <div style={{ background: 'white', borderRadius: 10, padding: '14px 16px', border: '1px dashed rgba(44,24,16,0.15)', textAlign: 'center', fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>
-              No prayer requests yet — tap + Add to begin ✝
-            </div>
+            <div style={{ background: 'white', borderRadius: 10, padding: '14px 16px', border: '1px dashed rgba(44,24,16,0.15)', textAlign: 'center', fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>No prayer requests yet — tap + Add to begin ✝</div>
           )}
-
           {prayerStep === 'list' && prayers.map(p => (
-            <div key={p.id} style={{
-              background: p.status === 'answered' ? 'linear-gradient(135deg, rgba(26,74,58,0.05), white)' : 'white',
-              borderRadius: 12, padding: '16px', marginBottom: 10,
-              border: p.status === 'answered' ? `1px solid ${GREEN}` : '1px solid rgba(44,24,16,0.1)',
-            }}>
+            <div key={p.id} style={{ background: p.status === 'answered' ? 'linear-gradient(135deg, rgba(26,74,58,0.05), white)' : 'white', borderRadius: 12, padding: '16px', marginBottom: 10, border: p.status === 'answered' ? `1px solid ${GREEN}` : '1px solid rgba(44,24,16,0.1)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
                 <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, flex: 1 }}>{p.title}</div>
-                {p.status === 'answered' ? (
-                  <span style={{ background: 'rgba(26,74,58,0.12)', color: GREEN, fontFamily: body, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, flexShrink: 0, marginLeft: 8 }}>Answered ✝</span>
-                ) : (
-                  <button onClick={() => { setAnsweringId(p.id); setPrayerStep('answer') }}
-                    style={{ background: 'rgba(184,134,11,0.1)', color: GOLD, border: 'none', borderRadius: 20, fontFamily: body, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 10px', cursor: 'pointer', flexShrink: 0, marginLeft: 8 }}>
-                    Mark Answered
-                  </button>
-                )}
+                {p.status === 'answered'
+                  ? <span style={{ background: 'rgba(26,74,58,0.12)', color: GREEN, fontFamily: body, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, flexShrink: 0, marginLeft: 8 }}>Answered ✝</span>
+                  : <button onClick={() => { setAnsweringId(p.id); setPrayerStep('answer') }} style={{ background: 'rgba(184,134,11,0.1)', color: GOLD, border: 'none', borderRadius: 20, fontFamily: body, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 10px', cursor: 'pointer', flexShrink: 0, marginLeft: 8 }}>Mark Answered</button>}
               </div>
               {p.body && <div style={{ fontFamily: body, fontSize: 13, color: GRAY, lineHeight: 1.5, marginBottom: 4 }}>{p.body}</div>}
-              {p.answered_testimony && (
-                <div style={{ fontFamily: body, fontSize: 13, color: GREEN, fontStyle: 'italic', lineHeight: 1.5, marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(26,74,58,0.1)' }}>
-                  "{p.answered_testimony}"
-                </div>
-              )}
-              <div style={{ fontFamily: body, fontSize: 11, color: '#9A8A7A', marginTop: 6 }}>
-                {new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </div>
+              {p.answered_testimony && <div style={{ fontFamily: body, fontSize: 13, color: GREEN, fontStyle: 'italic', lineHeight: 1.5, marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(26,74,58,0.1)' }}>"{p.answered_testimony}"</div>}
+              <div style={{ fontFamily: body, fontSize: 11, color: '#9A8A7A', marginTop: 6 }}>{new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
             </div>
           ))}
         </div>
-
         {transferStep === 'sheet' && (
           <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
             <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
@@ -746,23 +559,12 @@ useEffect(() => {
               <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Pass This Band On</div>
               <div style={{ fontFamily: body, fontSize: 14, color: GRAY, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>Write a prayer or note for the person you're giving this to.</div>
               <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your prayer for them (optional)</label>
-              <textarea value={transferNote} onChange={e => setTransferNote(e.target.value)}
-                placeholder="e.g. I'm giving you this band because I've been praying for you..." rows={3}
-                style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: 'white', resize: 'none', marginBottom: 16, outline: 'none', lineHeight: 1.5, boxSizing: 'border-box' }} />
-              <button onClick={handleInitiateTransfer} disabled={submitting}
-                style={{ display: 'block', width: '100%', padding: 15, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>
-                {submitting ? 'Setting up...' : 'Ready to hand it off →'}
-              </button>
-              <button onClick={() => setTransferStep('idle')}
-                style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>
-                Cancel
-              </button>
+              <textarea value={transferNote} onChange={e => setTransferNote(e.target.value)} placeholder="e.g. I'm giving you this band because I've been praying for you..." rows={3} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: 'white', resize: 'none', marginBottom: 16, outline: 'none', lineHeight: 1.5, boxSizing: 'border-box' }} />
+              <button onClick={handleInitiateTransfer} disabled={submitting} style={{ display: 'block', width: '100%', padding: 15, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>{submitting ? 'Setting up...' : 'Ready to hand it off →'}</button>
+              <button onClick={() => setTransferStep('idle')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
             </div>
           </div>
         )}
-
-        
-
         <PrayerChain regs={regs} />
         <div style={{ height: 40 }} />
       </div>
@@ -777,17 +579,9 @@ useEffect(() => {
         {claimStep === 'prompt' && (
           <div style={{ margin: '24px 20px', background: `linear-gradient(160deg, ${NAVY}, #2c4a8a)`, borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
             <div style={{ fontSize: 32, marginBottom: 10 }}>✝</div>
-            <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, marginBottom: 6 }}>
-              {status.senderName ? `${status.senderName} is passing this band to you` : 'Someone is passing this band to you'}
-            </div>
-            <div style={{ fontFamily: body, fontSize: 14, opacity: 0.8, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>
-              This band has traveled through {regs.length} {regs.length === 1 ? 'person' : 'people'}. Now it's being offered to you.
-            </div>
-            {status.transfer?.note && (
-              <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: '14px 16px', fontFamily: body, fontSize: 14, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20, textAlign: 'left' }}>
-                "{status.transfer.note}"
-              </div>
-            )}
+            <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, marginBottom: 6 }}>{status.senderName ? `${status.senderName} is passing this band to you` : 'Someone is passing this band to you'}</div>
+            <div style={{ fontFamily: body, fontSize: 14, opacity: 0.8, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>This band has traveled through {regs.length} {regs.length === 1 ? 'person' : 'people'}. Now it's being offered to you.</div>
+            {status.transfer?.note && <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: '14px 16px', fontFamily: body, fontSize: 14, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20, textAlign: 'left' }}>"{status.transfer.note}"</div>}
             <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 16, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>Accept this band →</button>
             <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Just view the journey</button>
           </div>
@@ -807,17 +601,9 @@ useEffect(() => {
         {claimStep === 'prompt' && (
           <div style={{ margin: '24px 20px', background: 'linear-gradient(135deg, #1a4a3a, #2E7D6B)', borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
             <div style={{ fontSize: 32, marginBottom: 10 }}>✝</div>
-            <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, marginBottom: 6 }}>
-              {status.dedicatorName ? `${status.dedicatorName} is praying for you` : 'Someone is praying for you'}
-            </div>
-            <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>
-              This band was sent to you as an act of prayer. You are not forgotten.
-            </div>
-            {status.band?.dedication_note && (
-              <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '14px 16px', fontFamily: body, fontSize: 14, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20, textAlign: 'left' }}>
-                "{status.band.dedication_note}"
-              </div>
-            )}
+            <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, marginBottom: 6 }}>{status.dedicatorName ? `${status.dedicatorName} is praying for you` : 'Someone is praying for you'}</div>
+            <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>This band was sent to you as an act of prayer. You are not forgotten.</div>
+            {status.band?.dedication_note && <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '14px 16px', fontFamily: body, fontSize: 14, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20, textAlign: 'left' }}>"{status.band.dedication_note}"</div>}
             <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 16, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>This band is mine now →</button>
             <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Just add a prayer</button>
           </div>
@@ -837,9 +623,7 @@ useEffect(() => {
         <div style={{ padding: '24px 20px 0', textAlign: 'center' }}>
           <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, marginBottom: 8 }}>✝ Prayer Band Journey</div>
           <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{bandId}</div>
-          <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>
-            Currently held by {status.currentHolder?.user_name ?? 'someone'} in {status.currentHolder?.city ?? 'the world'}
-          </div>
+          <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>Currently held by {status.currentHolder?.user_name ?? 'someone'} in {status.currentHolder?.city ?? 'the world'}</div>
         </div>
         {claimStep === 'prompt' && (
           <div style={{ margin: '20px 20px 0', background: 'white', borderRadius: 14, padding: '18px 20px', border: `1px solid ${GOLD}`, textAlign: 'center' }}>
