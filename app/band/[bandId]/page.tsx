@@ -526,8 +526,18 @@ export default function BandPage() {
         <div style={{ padding: '20px 20px 0' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid rgba(44,24,16,0.08)' }}>
             <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700 }}>Prayer Requests</div>
-            {prayerStep === 'list' && <button onClick={() => setPrayerStep('form')} style={{ background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, padding: '6px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>}
+            {prayerStep === 'list' && userId && <button onClick={() => setPrayerStep('form')} style={{ background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, padding: '6px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>}
           </div>
+
+          {!userId && (
+            <div style={{ background: 'white', borderRadius: 10, padding: '16px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
+              <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Track your prayers</div>
+              <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14, lineHeight: 1.5 }}>Create a free account to add and track prayer requests on this band.</div>
+              <a href="/signin" style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '10px 24px', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Create Account ✝</a>
+            </div>
+          )}
+
+          {userId && (<>
           {prayerStep === 'form' && (
             <div style={{ background: 'white', borderRadius: 12, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', marginBottom: 12 }}>
               <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Prayer title</label>
@@ -584,6 +594,7 @@ export default function BandPage() {
               <div style={{ fontFamily: body, fontSize: 11, color: '#9A8A7A', marginTop: 6 }}>{new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
             </div>
           ))}
+          </>)}
         </div>
         {transferStep === 'sheet' && (
           <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
