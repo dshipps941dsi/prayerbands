@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 
-// ── Verse Engine ──────────────────────────────────────────
 const VERSES = [
   { ref: "Joshua 1:9", text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", category: "fear" },
   { ref: "Philippians 4:13", text: "I can do all this through him who gives me strength.", category: "strength" },
@@ -96,7 +95,6 @@ function getVerseForCategory(category: string) {
   return filtered[dayOfYear % filtered.length]
 }
 
-// ── Types ─────────────────────────────────────────────────
 type Registration = {
   id: string
   user_name: string
@@ -129,11 +127,9 @@ const body  = "'Lora', Georgia, serif"
 
 function Avatar({ letter, color, size = 44 }: { letter: string; color: string; size?: number }) {
   return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', background: color,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: serif, fontSize: size * 0.4, fontWeight: 700, color: 'white', flexShrink: 0,
-    }}>{letter}</div>
+    <div style={{ width: size, height: size, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: serif, fontSize: size * 0.4, fontWeight: 700, color: 'white', flexShrink: 0 }}>
+      {letter}
+    </div>
   )
 }
 
@@ -164,10 +160,7 @@ export default function BandPage() {
   const [prayerSubmitting, setPrayerSubmitting] = useState(false)
 
   useEffect(() => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     supabase.auth.getUser().then(({ data }) => setUserId(data?.user?.id ?? null))
   }, [])
 
@@ -271,10 +264,16 @@ export default function BandPage() {
   }
 
   function Nav() {
+    const currentHolder = status.registrations?.[status.registrations.length - 1]
     return (
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', position: 'sticky', top: 0, zIndex: 100 }}>
         <span style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK }}>✝ Prayer<span style={{ color: GOLD }}>Bands</span></span>
-        <span style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>{bandId}</span>
+        <div style={{ textAlign: 'right' }}>
+          {status.screen === 'personal_space' && currentHolder?.user_name && (
+            <div style={{ fontFamily: serif, fontSize: 13, fontWeight: 600, color: DARK }}>{currentHolder.user_name}</div>
+          )}
+          <div style={{ fontFamily: body, fontSize: 11, color: GRAY, fontStyle: 'italic' }}>{bandId}</div>
+        </div>
       </nav>
     )
   }
@@ -294,19 +293,26 @@ export default function BandPage() {
     )
   }
 
+  function PendingBanner() {
+    return (
+      <div style={{ background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
+        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>✝</div>
+        <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Waiting for them to tap</div>
+        <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.5, marginBottom: 20 }}>Hand the band to the other person and ask them to tap it with their phone.</div>
+        <button onClick={handleCancelTransfer} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '10px 20px', fontFamily: body, fontSize: 13, cursor: 'pointer' }}>Cancel transfer</button>
+      </div>
+    )
+  }
+
   function VerseEngine() {
     const verse = getVerseForCategory(verseCategory)
     return (
       <div style={{ margin: '20px 20px 0' }}>
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none' }}>
           {CATEGORIES.map(cat => (
-            <button key={cat.id} onClick={() => setVerseCategory(cat.id)} style={{
-              flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
-              fontFamily: body, fontSize: 12, fontWeight: 600,
-              background: verseCategory === cat.id ? GOLD : 'white',
-              color: verseCategory === cat.id ? '#0f0d09' : GRAY,
-              boxShadow: '0 1px 4px rgba(44,24,16,0.1)', transition: 'all 0.2s',
-            }}>{cat.icon} {cat.label}</button>
+            <button key={cat.id} onClick={() => setVerseCategory(cat.id)} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontFamily: body, fontSize: 12, fontWeight: 600, background: verseCategory === cat.id ? GOLD : 'white', color: verseCategory === cat.id ? '#0f0d09' : GRAY, boxShadow: '0 1px 4px rgba(44,24,16,0.1)', transition: 'all 0.2s' }}>
+              {cat.icon} {cat.label}
+            </button>
           ))}
         </div>
         <div style={{ background: `linear-gradient(135deg, ${NAVY}, #2c4a8a)`, borderRadius: 14, padding: '24px 20px', color: 'white', textAlign: 'center' }}>
@@ -336,9 +342,7 @@ export default function BandPage() {
                     {i === 0 && <span style={{ display: 'inline-block', fontSize: 10, fontFamily: body, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, marginLeft: 6, background: 'rgba(184,134,11,0.12)', color: GOLD }}>Origin</span>}
                     {i === regs.length - 1 && i > 0 && <span style={{ display: 'inline-block', fontSize: 10, fontFamily: body, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, marginLeft: 6, background: 'rgba(44,24,16,0.08)', color: GRAY }}>Current</span>}
                   </span>
-                  <span style={{ fontFamily: body, fontSize: 11, color: '#9A8A7A' }}>
-                    {new Date(reg.registered_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </span>
+                  <span style={{ fontFamily: body, fontSize: 11, color: '#9A8A7A' }}>{new Date(reg.registered_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                 </div>
                 {(reg.city || reg.country) && <div style={{ fontFamily: body, fontSize: 12, color: GRAY, marginBottom: 6 }}>📍 {[reg.city, reg.country].filter(Boolean).join(', ')}</div>}
                 {reg.prayer && (
@@ -364,13 +368,10 @@ export default function BandPage() {
         <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{title}</div>
         <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 20 }}>{subtitle}</div>
         <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your name</label>
-        <input defaultValue={claimName} onBlur={e => setClaimName(e.target.value)} placeholder="First name or full name"
-          style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', boxSizing: 'border-box' }} />
+        <input defaultValue={claimName} onBlur={e => setClaimName(e.target.value)} placeholder="First name or full name" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', boxSizing: 'border-box' }} />
         <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your prayer (optional)</label>
-        <textarea defaultValue={claimPrayer} onBlur={e => setClaimPrayer(e.target.value)} placeholder="A prayer, a verse, or what this moment means to you..." rows={4}
-          style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 20, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
-        <button onClick={onSubmit} disabled={submitting || !claimName.trim()}
-          style={{ display: 'block', width: '100%', padding: 15, background: claimName.trim() ? GOLD : '#ccc', color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: claimName.trim() ? 'pointer' : 'not-allowed' }}>
+        <textarea defaultValue={claimPrayer} onBlur={e => setClaimPrayer(e.target.value)} placeholder="A prayer, a verse, or what this moment means to you..." rows={4} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 20, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
+        <button onClick={onSubmit} disabled={submitting || !claimName.trim()} style={{ display: 'block', width: '100%', padding: 15, background: claimName.trim() ? GOLD : '#ccc', color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: claimName.trim() ? 'pointer' : 'not-allowed' }}>
           {submitting ? 'Saving...' : submitLabel}
         </button>
       </div>
@@ -391,10 +392,7 @@ export default function BandPage() {
       setAuthSubmitting(true)
       setAuthError('')
       const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-      const { error } = await supabase.auth.signUp({
-        email: email.trim(), password: password.trim(),
-        options: { emailRedirectTo: `${window.location.origin}/band/${bandId}` }
-      })
+      const { error } = await supabase.auth.signUp({ email: email.trim(), password: password.trim(), options: { emailRedirectTo: `${window.location.origin}/band/${bandId}` } })
       if (error) { setAuthError(error.message) } else { setAuthDone(true) }
       setAuthSubmitting(false)
     }
@@ -408,7 +406,7 @@ export default function BandPage() {
     if (userId) return null
 
     return (
-      <>
+      <div>
         <div style={{ margin: '24px 20px', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, borderRadius: 16, padding: '32px 24px', textAlign: 'center', color: 'white' }}>
           <div style={{ fontSize: 44, marginBottom: 12 }}>🙏</div>
           <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>{title}</div>
@@ -425,17 +423,17 @@ export default function BandPage() {
               <div style={{ fontFamily: body, fontSize: 13, color: DARK, lineHeight: 1.5 }}>I confirm that I am <strong>13 years of age or older</strong>, or I am a parent or guardian creating this account on behalf of a child.</div>
             </div>
             {authMode === null && (
-              <>
+              <div>
                 <button onClick={handleGoogleSignIn} disabled={!ageConsent} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '13px', marginBottom: 10, background: ageConsent ? DARK : '#ccc', color: 'white', border: 'none', borderRadius: 10, fontFamily: body, fontSize: 15, fontWeight: 600, cursor: ageConsent ? 'pointer' : 'not-allowed', boxSizing: 'border-box' }}>
                   <span style={{ fontSize: 18 }}>G</span> Continue with Google
                 </button>
                 <button onClick={() => { if (ageConsent) setAuthMode('email') }} disabled={!ageConsent} style={{ display: 'block', width: '100%', padding: '13px', background: 'transparent', color: ageConsent ? DARK : '#ccc', border: `1px solid ${ageConsent ? 'rgba(44,24,16,0.2)' : '#eee'}`, borderRadius: 10, fontFamily: body, fontSize: 15, cursor: ageConsent ? 'pointer' : 'not-allowed', boxSizing: 'border-box' }}>
                   Create with email & password
                 </button>
-              </>
+              </div>
             )}
             {authMode === 'email' && (
-              <>
+              <div>
                 <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Email</label>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }} />
                 <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Password</label>
@@ -446,7 +444,7 @@ export default function BandPage() {
                   <button onClick={handleEmailSignUp} disabled={authSubmitting || !email.trim() || !password.trim()} style={{ flex: 1, padding: '13px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>{authSubmitting ? 'Creating...' : 'Create Account ✝'}</button>
                   <button onClick={() => setAuthMode(null)} style={{ padding: '13px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Back</button>
                 </div>
-              </>
+              </div>
             )}
             <div style={{ textAlign: 'center', marginTop: 16, fontFamily: body, fontSize: 12, color: GRAY }}>No account needed to hold a band or leave a prayer.</div>
           </div>
@@ -458,7 +456,7 @@ export default function BandPage() {
             <div style={{ fontFamily: body, fontSize: 13, color: GRAY, lineHeight: 1.5 }}>We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.</div>
           </div>
         )}
-      </>
+      </div>
     )
   }
 
@@ -485,35 +483,8 @@ export default function BandPage() {
     return (
       <div style={{ background: CREAM, minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
-        {transferStep === 'pending' && (
-          <div style={{ margin: '0', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>✝</div>
-            <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Waiting for them to tap</div>
-            <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.5, marginBottom: 20 }}>Hand the band to the other person and ask them to tap it with their phone.</div>
-            <button onClick={handleCancelTransfer} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '10px 20px', fontFamily: body, fontSize: 13, cursor: 'pointer' }}>Cancel transfer</button>
-          </div>
-        )}
+        {transferStep === 'pending' && <PendingBanner />}
         <StatsStrip regs={regs} />
-          <div style={{ margin: '0', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
-            <style>{`
-              @keyframes pb-pulse {
-                0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
-                50% { box-shadow: 0 0 0 20px rgba(255,255,255,0); }
-              }
-            `}</style>
-            <div style={{
-              width: 64, height: 64, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.15)',
-              margin: '0 auto 16px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 28,
-              animation: 'pb-pulse 2s ease-in-out infinite',
-            }}>✝</div>
-            <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Waiting for them to tap</div>
-            <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.5, marginBottom: 20 }}>Hand the band to the other person and ask them to tap it with their phone.</div>
-            <button onClick={handleCancelTransfer} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '10px 20px', fontFamily: body, fontSize: 13, cursor: 'pointer' }}>Cancel transfer</button>
-          </div>
-        )}
         <div style={{ padding: '24px 20px 0' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
@@ -614,7 +585,7 @@ export default function BandPage() {
         <StatsStrip regs={regs} />
         {claimStep === 'prompt' && (
           <div style={{ margin: '24px 20px', background: `linear-gradient(160deg, ${NAVY}, #2c4a8a)`, borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
-            <div style={{ fontSize: 32, marginBottom: 10 }}>✝</div>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🙏</div>
             <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, marginBottom: 6 }}>{status.senderName ? `${status.senderName} is passing this band to you` : 'Someone is passing this band to you'}</div>
             <div style={{ fontFamily: body, fontSize: 14, opacity: 0.8, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>This band has traveled through {regs.length} {regs.length === 1 ? 'person' : 'people'}. Now it's being offered to you.</div>
             {status.transfer?.note && <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: '14px 16px', fontFamily: body, fontSize: 14, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20, textAlign: 'left' }}>"{status.transfer.note}"</div>}
