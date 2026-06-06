@@ -479,7 +479,7 @@ useEffect(() => {
           {prayerStep === 'form' && (
             <div style={{ background: 'white', borderRadius: 12, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', marginBottom: 12 }}>
               <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Prayer title</label>
-              <input value={prayerTitle} onChange={e => setPrayerTitle(e.target.value)} placeholder="What are you believing for?"
+              <input value={prayerTitle} onChange={e => setPrayerTitle(e.target.value)} placeholder="What are you praying for?"
                 style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }} />
               <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Details (optional)</label>
               <textarea value={prayerBody} onChange={e => setPrayerBody(e.target.value)} placeholder="Share more about this prayer request..." rows={3}
