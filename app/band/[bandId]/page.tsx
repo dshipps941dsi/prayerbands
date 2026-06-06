@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 
+
 // ── Verse Engine ──────────────────────────────────────────
 const VERSES = [
   { ref: "Joshua 1:9", text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", category: "fear" },
@@ -597,6 +598,17 @@ useEffect(() => {
       <div style={{ background: CREAM, minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
         <StatsStrip regs={regs} />
+        {transferStep === 'pending' && (
+          <div style={{ margin: '20px 20px 0', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>✝</div>
+            <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Waiting for them to tap</div>
+            <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.5, marginBottom: 20 }}>Hand the band to the other person and ask them to tap it with their phone.</div>
+            <button onClick={handleCancelTransfer} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '10px 20px', fontFamily: body, fontSize: 13, cursor: 'pointer' }}>
+              Cancel transfer
+            </button>
+          </div>
+        )}
+        
         <div style={{ padding: '24px 20px 0' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
@@ -747,16 +759,7 @@ useEffect(() => {
           </div>
         )}
 
-        {transferStep === 'pending' && (
-          <div style={{ margin: '20px 20px 0', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>✝</div>
-            <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Waiting for them to tap</div>
-            <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.5, marginBottom: 20 }}>Hand the band to the other person and ask them to tap it with their phone.</div>
-            <button onClick={handleCancelTransfer} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '10px 20px', fontFamily: body, fontSize: 13, cursor: 'pointer' }}>
-              Cancel transfer
-            </button>
-          </div>
-        )}
+        
 
         <PrayerChain regs={regs} />
         <div style={{ height: 40 }} />
