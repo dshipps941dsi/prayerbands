@@ -420,6 +420,21 @@ export default function BandPage() {
     const [authError, setAuthError] = useState('')
     const [authSubmitting, setAuthSubmitting] = useState(false)
     const [authDone, setAuthDone] = useState(false)
+    const [countdown, setCountdown] = useState(10)
+
+    useEffect(() => {
+      if (userId) return
+      const interval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(interval)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+      return () => clearInterval(interval)
+    }, [])
 
     async function handleEmailSignUp() {
       if (!ageConsent || !email.trim() || !password.trim()) return
@@ -495,6 +510,9 @@ export default function BandPage() {
               </div>
             )}
             <div style={{ textAlign: 'center', marginTop: 16, fontFamily: body, fontSize: 12, color: GRAY }}>No account needed to hold a band or leave a prayer.</div>
+            <div style={{ textAlign: 'center', marginTop: 12, fontFamily: body, fontSize: 13, color: GRAY }}>
+              Redirecting to your band in <span style={{ fontFamily: serif, fontWeight: 700, color: GOLD, fontSize: 16 }}>{countdown}</span>...
+            </div>
           </div>
         )}
         {authDone && (
