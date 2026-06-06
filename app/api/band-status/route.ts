@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
   // 0. Device previously claimed this band (no account)
   const localHolder = req.nextUrl.searchParams.get('localHolder')
-  if (localHolder === 'true' && !userId) {
+  if (localHolder === 'true') {
     return NextResponse.json({
       screen: 'personal_space',
       reason: 'local_holder',
