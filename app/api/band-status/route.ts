@@ -37,8 +37,20 @@ export async function GET(req: NextRequest) {
   const currentHolderUserId = latestReg?.user_id ?? null
 
   // ── DECISION TREE ────────────────────────────────────
+// ── DECISION TREE ────────────────────────────────────
 
-  // 1. Band pre-linked to buyer, never registered, buyer is tapping
+  // 0. Device previously claimed this band (no account)
+  const localHolder = req.nextUrl.searchParams.get('localHolder')
+  if (localHolder === 'true' && !userId) {
+    return NextResponse.json({
+      screen: 'personal_space',
+      reason: 'local_holder',
+      band,
+      registrations: regs,
+    })
+  }
+
+  // 1. Band pre-linked to buyer account and that person is tapping
   if (band.owner_id && userId && band.owner_id === userId && regs.length === 0) {
     return NextResponse.json({
       screen: 'personal_space',
