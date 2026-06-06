@@ -258,7 +258,7 @@ export default function BandPage() {
       })
       localStorage.setItem(`holder_${bandId}`, 'true')
       setClaimStep('done')
-      setTimeout(() => { window.location.reload() }, 4000)
+      setTimeout(() => { window.location.reload() }, 8000)
     } catch {
       alert('Something went wrong. Please try again.')
     } finally {
@@ -306,7 +306,7 @@ export default function BandPage() {
       await supabase.from('bands').update({ status: 'registered' }).eq('band_id', bandId)
       localStorage.setItem(`holder_${bandId}`, 'true')
       setClaimStep('done')
-      setTimeout(() => { window.location.reload() }, 4000)
+      setTimeout(() => { window.location.reload() }, 8000)
     } catch {
       alert('Something went wrong. Please try again.')
     } finally {
@@ -420,7 +420,7 @@ export default function BandPage() {
     const [authError, setAuthError] = useState('')
     const [authSubmitting, setAuthSubmitting] = useState(false)
     const [authDone, setAuthDone] = useState(false)
-    const [countdown, setCountdown] = useState(4)
+    const [countdown, setCountdown] = useState(8)
 
     useEffect(() => {
       if (userId) return
@@ -511,8 +511,8 @@ export default function BandPage() {
             )}
             <div style={{ textAlign: 'center', marginTop: 16, fontFamily: body, fontSize: 12, color: GRAY }}>No account needed to hold a band or leave a prayer.</div>
             {showCountdown !== false && (
-              <div style={{ textAlign: 'center', marginTop: 12, fontFamily: body, fontSize: 13, color: GRAY }}>
-                Redirecting to your band in <span style={{ fontFamily: serif, fontWeight: 700, color: GOLD, fontSize: 16 }}>{countdown}</span>...
+              <div style={{ textAlign: 'center', marginTop: 16, fontFamily: body, fontSize: 14, color: DARK }}>
+                Taking you to your band in <span style={{ fontFamily: serif, fontWeight: 700, color: GOLD, fontSize: 22 }}>{countdown}</span>
               </div>
             )}
           </div>
