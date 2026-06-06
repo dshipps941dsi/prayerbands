@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from "react";
 import Logo from "@/components/Logo";
+import Icon, { type IconName } from "@/components/Icon";
 
 const NAV_LINKS = [
   { label: "Our Story", href: "#story" },
@@ -567,9 +568,16 @@ const scrollTo = (href: string) => {
                 A global ministry platform connecting people through prayer, one wristband at a time.
               </p>
               <div style={{ display: "flex", gap: 14, marginTop: 24 }}>
-                {["IG", "FB", "TW", "YT"].map(s => (
-                  <div key={s} style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(200,169,110,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                    <span className="lato" style={{ fontSize: 10, color: "#C8A96E", fontWeight: 700 }}>{s}</span>
+                {[
+                  { label: "IG", icon: "instagram" as IconName },
+                  { label: "FB", icon: "facebook" as IconName },
+                  { label: "TW", icon: "twitter" as IconName },
+                  { label: "YT", icon: null },
+                ].map(s => (
+                  <div key={s.label} style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(200,169,110,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                    {s.icon
+                      ? <Icon name={s.icon} size={15} color="#C8A96E" bg="#1A0F06" />
+                      : <span className="lato" style={{ fontSize: 10, color: "#C8A96E", fontWeight: 700 }}>{s.label}</span>}
                   </div>
                 ))}
               </div>

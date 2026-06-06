@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import SiteHeader from "../components/SiteHeader";
+import Icon from "@/components/Icon";
 
 declare global {
   interface Window {
@@ -170,7 +171,7 @@ export default function ContactPage() {
         <div className="contact-inner">
           {/* Header */}
           <div className="contact-header">
-            <div className="cross-ornament">✝</div>
+            <div className="cross-ornament"><Icon name="mail" size={34} color="#b8964a" /></div>
             <h1>Get in Touch</h1>
             <p className="contact-subtitle">
               We&rsquo;re here to help you on your prayer journey. Expect a reply within 1–2 business days.

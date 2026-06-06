@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
+import Icon, { type IconName } from '@/components/Icon'
 
 const VERSES = [
   { ref: "Joshua 1:9", text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", category: "fear" },
@@ -530,12 +531,12 @@ export default function BandPage() {
   }
 
   function BottomNav() {
-    const tabs = [
-      { id: 'home', icon: '🏠', label: 'Home' },
-      { id: 'prayers', icon: '🙏', label: 'Prayers' },
-      { id: 'journey', icon: '🗺', label: 'Journey' },
-      { id: 'purchase', icon: '🛍', label: 'Purchase' },
-      { id: 'account', icon: '👤', label: 'Account' },
+    const tabs: { id: string; icon: IconName; label: string }[] = [
+      { id: 'home', icon: 'church-home', label: 'Home' },
+      { id: 'prayers', icon: 'prayer-hands', label: 'Prayers' },
+      { id: 'journey', icon: 'map-pin', label: 'Journey' },
+      { id: 'purchase', icon: 'shop-bag', label: 'Purchase' },
+      { id: 'account', icon: 'user', label: 'Account' },
     ]
     return (
       <div style={{
@@ -559,7 +560,7 @@ export default function BandPage() {
               cursor: 'pointer',
             }}
           >
-            <span style={{ fontSize: 20 }}>{tab.icon}</span>
+            <Icon name={tab.icon} size={22} color={activeTab === tab.id ? GOLD : 'rgba(255,255,255,0.4)'} bg={DARK} />
             <span style={{
               fontFamily: body, fontSize: 9, letterSpacing: '0.08em',
               textTransform: 'uppercase',

@@ -1,6 +1,7 @@
 'use client'
 import { useState } from "react";
 import Logo from "@/components/Logo";
+import Icon from "@/components/Icon";
 
 // ─── Types ───────────────────────────────────────────────────
 type CartItem = {
@@ -204,7 +205,7 @@ export default function StorePage() {
               onClick={() => setCartOpen(true)}
               style={{ position: "relative", background: "#2C1A0E", border: "none", borderRadius: 4, padding: "9px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
             >
-              <span style={{ fontSize: 16 }}>🛒</span>
+              <Icon name="shop-bag" size={16} color="#FDFAF5" bg="#2C1A0E" />
               <span className="lato" style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: "#FDFAF5", fontWeight: 700 }}>Cart</span>
               {totalItems > 0 && (
                 <span style={{ position: "absolute", top: -8, right: -8, width: 20, height: 20, borderRadius: "50%", background: "#C8A96E", color: "#fff", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Lato, sans-serif", fontWeight: 700 }}>{totalItems}</span>
