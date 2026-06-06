@@ -193,7 +193,7 @@ export default function BandPage() {
   const [claimName, setClaimName] = useState('')
   const [claimCity, setClaimCity] = useState('')
   const [claimState, setClaimState] = useState('')
-  const [claimCountry, setClaimCountry] = useState('')
+  const [claimCountry, setClaimCountry] = useState('United States')
   const [claimPrayer, setClaimPrayer] = useState('')
   const [claimStep, setClaimStep] = useState<'prompt' | 'form' | 'done'>('prompt')
   const [transferNote, setTransferNote] = useState('')
