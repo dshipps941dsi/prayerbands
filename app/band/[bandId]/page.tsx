@@ -257,6 +257,7 @@ export default function BandPage() {
       })
       localStorage.setItem(`holder_${bandId}`, 'true')
       setClaimStep('done')
+      setTimeout(() => { window.location.reload() }, 2500)
       setTimeout(() => {
         fetch(`/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}`)
           .then(r => r.json()).then(data => setStatus(data))
@@ -308,6 +309,7 @@ export default function BandPage() {
       await supabase.from('bands').update({ status: 'registered' }).eq('band_id', bandId)
       localStorage.setItem(`holder_${bandId}`, 'true')
       setClaimStep('done')
+      setTimeout(() => { window.location.reload() }, 2500)
     } catch {
       alert('Something went wrong. Please try again.')
     } finally {
