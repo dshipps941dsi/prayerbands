@@ -183,7 +183,8 @@ const [prayerSubmitting, setPrayerSubmitting] = useState(false)
 
   useEffect(() => {
     if (!bandId) return
-    const url = `/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}`
+    const localHolder = localStorage.getItem(`holder_${bandId}`)
+    const url = `/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}${localHolder ? '&localHolder=true' : ''}`
     fetch(url)
       .then(r => r.json())
       .then(data => setStatus(data))
@@ -207,11 +208,12 @@ useEffect(() => {
     if (!claimName.trim()) return
     setSubmitting(true)
     try {
-      await fetch('/api/register-band', {
+    await fetch('/api/register-band', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bandId, name: claimName, prayer: claimPrayer, userId: userId ?? null }),
       })
+      localStorage.setItem(`holder_${bandId}`, 'true')
       setClaimStep('done')
       setTimeout(() => {
         fetch(`/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}`)
