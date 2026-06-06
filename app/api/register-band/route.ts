@@ -35,6 +35,22 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
+    // If still no coordinates, geocode from city+country
+    if (!latitude && (geoCity || geoCountry)) {
+      try {
+        const query = [geoCity, geoState, geoCountry].filter(Boolean).join(', ')
+        const nominatim = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
+          { headers: { 'User-Agent': 'PrayerBands/1.0 (hello@prayerbands.com)' } }
+        )
+        const places = await nominatim.json()
+        if (places.length > 0) {
+          latitude = parseFloat(places[0].lat)
+          longitude = parseFloat(places[0].lon)
+        }
+      } catch {}
+    }
+
     const { data: prevRegs } = await supabase
       .from('registrations')
       .select('email, user_name')
