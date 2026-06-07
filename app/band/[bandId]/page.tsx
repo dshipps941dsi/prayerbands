@@ -5,6 +5,8 @@ import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
 import Icon, { type IconName } from '@/components/Icon'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
+import CirclesSection from '@/components/CirclesSection'
+import NetworkSection from '@/components/NetworkSection'
 
 const VERSES = [
   { ref: "Joshua 1:9", text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", category: "fear" },
@@ -699,18 +701,22 @@ export default function BandPage() {
 
         {activeTab === 'prayers' && (
           <div style={{ padding: '24px 20px' }}>
-            <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Prayer Network</div>
-            <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>
-              The people connected to this band through prayer.
-            </div>
-            <div style={{ background: 'white', borderRadius: 14, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div>
-              <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Full prayer network in your dashboard</div>
-              <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 16, lineHeight: 1.5 }}>
-                See who is praying for you, send prayer requests up and down the chain, and track answered prayers.
+            {userId ? (
+              <>
+                <NetworkSection userId={userId} />
+                <div style={{ height: 1, background: '#E8DCC8', margin: '0 0 24px' }} />
+                <CirclesSection userId={userId} />
+              </>
+            ) : (
+              <div style={{ background: 'white', borderRadius: 14, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div>
+                <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Sign in to use your Prayer Network</div>
+                <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 16, lineHeight: 1.5 }}>
+                  Connect with others in prayer, share requests, and join circles.
+                </div>
+                <a href="/signin" style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Sign In ✝</a>
               </div>
-              <a href="/dashboard" style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Open Prayer Network →</a>
-            </div>
+            )}
           </div>
         )}
 
