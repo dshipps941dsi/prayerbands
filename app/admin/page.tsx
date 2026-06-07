@@ -68,11 +68,13 @@ export default function AdminPage() {
   }
 
   async function loadSiteConfig() {
-    const { data } = await supabase.from('site_config').select('key, value, label').order('key')
-    if (data) {
-      setSiteConfig(data)
+    const res = await fetch('/api/admin/site-config')
+    if (!res.ok) return
+    const { rows } = await res.json()
+    if (rows) {
+      setSiteConfig(rows)
       const draft: Record<string, string> = {}
-      data.forEach((r: any) => { draft[r.key] = (Number(r.value) / 100).toFixed(2) })
+      rows.forEach((r: any) => { draft[r.key] = (Number(r.value) / 100).toFixed(2) })
       setConfigDraft(draft)
     }
   }
@@ -82,9 +84,13 @@ export default function AdminPage() {
     if (Number.isNaN(dollars) || dollars < 0) { alert('Enter a valid dollar amount.'); return }
     const cents = Math.round(dollars * 100)
     setSavingKey(key)
-    const { error } = await supabase.from('site_config').update({ value: String(cents), updated_at: new Date().toISOString() }).eq('key', key)
+    const res = await fetch('/api/admin/site-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, value: cents }),
+    })
     setSavingKey(null)
-    if (error) { alert('Save failed: ' + error.message); return }
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert('Save failed: ' + (d.error || res.status)); return }
     setSiteConfig(prev => prev.map(r => r.key === key ? { ...r, value: String(cents) } : r))
     setConfigDraft(d => ({ ...d, [key]: (cents / 100).toFixed(2) }))
   }
