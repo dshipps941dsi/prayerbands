@@ -418,6 +418,7 @@ export default function Dashboard() {
   const [viewAsId, setViewAsId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('Overview')
   const [showAllActivity, setShowAllActivity] = useState(false)
+  const [showAllBands, setShowAllBands] = useState(false)
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700)
   const [showPrayerModal, setShowPrayerModal] = useState(false)
 
@@ -756,41 +757,8 @@ export default function Dashboard() {
       <div>
         <h1 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 20, color: '#1a1208' }}>Account</h1>
 
-        {/* My Bands */}
-        <div style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 'bold', marginBottom: 4, color: '#1a1208' }}>My Bands</h2>
-          <p style={{ fontSize: 13, color: '#8a7c6a', marginBottom: 14 }}>All bands registered to your account.</p>
-          {bands.length === 0 ? (
-            <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '40px 20px', textAlign: 'center', color: '#8a7c6a' }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>⟳</div>
-              <div style={{ fontSize: 14, marginBottom: 16 }}>No bands yet.</div>
-              <a href="/store" style={{ background: AMBER, color: '#fff', padding: '10px 24px', borderRadius: 8, textDecoration: 'none', fontSize: 14, fontWeight: 'bold', fontFamily: 'Georgia, serif' }}>Order Bands &rarr;</a>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {bands.map(band => {
-                const hands = band.registrations?.[0]?.count || 0
-                return (
-                  <a key={band.band_id} href={`/band/${band.band_id}`} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 8, flexShrink: 0, background: hands > 0 ? `${AMBER}22` : '#f0ebe4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontFamily: 'monospace', fontWeight: 'bold', color: hands > 0 ? AMBER : '#b8a898', textAlign: 'center', lineHeight: 1.2 }}>
-                      {band.band_id.split('-')[0]}<br />{band.band_id.split('-')[1]}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 'bold', fontSize: 14, color: '#2c2416' }}>{band.band_id}</div>
-                      <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 2 }}>
-                        {hands > 0 ? `${hands} hand${hands !== 1 ? 's' : ''}` : 'Unregistered'} &middot; 0 prayers
-                      </div>
-                    </div>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: hands > 0 ? '#7BAE8E' : '#d0c8be', flexShrink: 0 }} />
-                  </a>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
         {/* Recent Activity */}
-        <div>
+        <div style={{ marginBottom: 32 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
             <h2 style={{ fontSize: 17, fontWeight: 'bold', color: '#1a1208', margin: 0 }}>Recent Activity</h2>
             {activity.length > 3 && (
@@ -821,6 +789,46 @@ export default function Dashboard() {
                   <div style={{ fontSize: 11, color: '#b8a898', flexShrink: 0 }}>{timeAgo(item.created_at)}</div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* My Bands */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 'bold', color: '#1a1208', margin: 0 }}>My Bands</h2>
+            {bands.length > 3 && (
+              <button onClick={() => setShowAllBands(v => !v)} style={{ background: 'none', border: 'none', color: AMBER, fontSize: 13, cursor: 'pointer', fontFamily: 'Georgia, serif' }}>
+                {showAllBands ? 'Show less' : 'View All'}
+              </button>
+            )}
+          </div>
+          <p style={{ fontSize: 13, color: '#8a7c6a', marginBottom: 14 }}>Your most recent bands.</p>
+          {bands.length === 0 ? (
+            <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '40px 20px', textAlign: 'center', color: '#8a7c6a' }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>⟳</div>
+              <div style={{ fontSize: 14, marginBottom: 16 }}>No bands yet.</div>
+              <a href="/store" style={{ background: AMBER, color: '#fff', padding: '10px 24px', borderRadius: 8, textDecoration: 'none', fontSize: 14, fontWeight: 'bold', fontFamily: 'Georgia, serif' }}>Order Bands &rarr;</a>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(showAllBands ? bands : bands.slice(0, 3)).map(band => {
+                const hands = band.registrations?.[0]?.count || 0
+                return (
+                  <a key={band.band_id} href={`/band/${band.band_id}`} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, textDecoration: 'none', color: 'inherit' }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 8, flexShrink: 0, background: hands > 0 ? `${AMBER}22` : '#f0ebe4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontFamily: 'monospace', fontWeight: 'bold', color: hands > 0 ? AMBER : '#b8a898', textAlign: 'center', lineHeight: 1.2 }}>
+                      {band.band_id.split('-')[0]}<br />{band.band_id.split('-')[1]}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 'bold', fontSize: 14, color: '#2c2416' }}>{band.band_id}</div>
+                      <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 2 }}>
+                        {hands > 0 ? `${hands} hand${hands !== 1 ? 's' : ''}` : 'Unregistered'} &middot; 0 prayers
+                      </div>
+                    </div>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: hands > 0 ? '#7BAE8E' : '#d0c8be', flexShrink: 0 }} />
+                  </a>
+                )
+              })}
             </div>
           )}
         </div>
