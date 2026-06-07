@@ -36,8 +36,11 @@ export default function AdminPage() {
   const [userResults, setUserResults] = useState<any[]>([])
   const [searchingUsers, setSearchingUsers] = useState(false)
   const [contactSubmissions, setContactSubmissions] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<'orders' | 'prayers' | 'users' | 'contact' | 'activity'>('orders')
+  const [activeTab, setActiveTab] = useState<'orders' | 'prayers' | 'users' | 'contact' | 'activity' | 'pricing'>('orders')
   const [activityFeed, setActivityFeed] = useState<any[]>([])
+  const [siteConfig, setSiteConfig] = useState<{ key: string; value: string; label: string | null }[]>([])
+  const [configDraft, setConfigDraft] = useState<Record<string, string>>({})
+  const [savingKey, setSavingKey] = useState<string | null>(null)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,8 +62,30 @@ export default function AdminPage() {
   }
 
   async function loadAll() {
-    await Promise.all([loadOrders(), loadStats(), loadFlaggedPrayers(), loadContactSubmissions(), loadActivityFeed()])
+    await Promise.all([loadOrders(), loadStats(), loadFlaggedPrayers(), loadContactSubmissions(), loadActivityFeed(), loadSiteConfig()])
     setLoading(false)
+  }
+
+  async function loadSiteConfig() {
+    const { data } = await supabase.from('site_config').select('key, value, label').order('key')
+    if (data) {
+      setSiteConfig(data)
+      const draft: Record<string, string> = {}
+      data.forEach((r: any) => { draft[r.key] = (Number(r.value) / 100).toFixed(2) })
+      setConfigDraft(draft)
+    }
+  }
+
+  async function saveConfig(key: string) {
+    const dollars = parseFloat(configDraft[key])
+    if (Number.isNaN(dollars) || dollars < 0) { alert('Enter a valid dollar amount.'); return }
+    const cents = Math.round(dollars * 100)
+    setSavingKey(key)
+    const { error } = await supabase.from('site_config').update({ value: String(cents), updated_at: new Date().toISOString() }).eq('key', key)
+    setSavingKey(null)
+    if (error) { alert('Save failed: ' + error.message); return }
+    setSiteConfig(prev => prev.map(r => r.key === key ? { ...r, value: String(cents) } : r))
+    setConfigDraft(d => ({ ...d, [key]: (cents / 100).toFixed(2) }))
   }
 
   async function loadOrders() {
@@ -270,7 +295,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '4px', padding: '20px 32px 0', borderBottom: '1px solid #E8DCC8', marginTop: '8px' }}>
-        {(['orders', 'prayers', 'users', 'contact', 'activity'] as const).map(tab => (
+        {(['orders', 'prayers', 'users', 'contact', 'activity', 'pricing'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             padding: '8px 18px',
             background: activeTab === tab ? '#2C1A0E' : 'transparent',
@@ -554,6 +579,47 @@ export default function AdminPage() {
                     {a.prayer_text && <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#777', fontStyle: 'italic' }}>"{a.prayer_text}"</p>}
                     <div style={{ fontSize: '11px', color: '#AAA', marginTop: '4px' }}>{new Date(a.created_at).toLocaleString()}</div>
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* PRICING & SHIPPING TAB */}
+        {activeTab === 'pricing' && (
+          <div>
+            <h2 style={{ margin: '0 0 6px', fontSize: '18px' }}>Pricing &amp; Shipping</h2>
+            <p style={{ fontSize: '13px', color: '#8B6914', margin: '0 0 20px' }}>Edit amounts in dollars. Saved values drive Stripe checkout immediately.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '480px' }}>
+              {siteConfig.length === 0 && (
+                <div style={{ background: '#fff', border: '1px solid #E8DCC8', borderRadius: '8px', padding: '20px', textAlign: 'center', color: '#8B6914', fontSize: '13px' }}>
+                  No config rows found. Run the site_config migration in Supabase.
+                </div>
+              )}
+              {siteConfig.map(row => (
+                <div key={row.key} style={{ background: '#fff', border: '1px solid #E8DCC8', borderRadius: '8px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '14px', color: '#2C1A0E', fontWeight: 'bold' }}>{row.label || row.key}</div>
+                    <div style={{ fontSize: '11px', color: '#AAA', fontFamily: 'monospace' }}>{row.key}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ color: '#8B6914' }}>$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={configDraft[row.key] ?? ''}
+                      onChange={e => setConfigDraft(d => ({ ...d, [row.key]: e.target.value }))}
+                      style={{ width: '90px', padding: '8px 10px', border: '1px solid #E8DCC8', borderRadius: '6px', fontSize: '14px', fontFamily: 'Georgia, serif', background: '#FDFAF5', color: '#2C1A0E', outline: 'none' }}
+                    />
+                  </div>
+                  <button
+                    onClick={() => saveConfig(row.key)}
+                    disabled={savingKey === row.key}
+                    style={{ background: '#2C1A0E', color: '#C8A96E', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '13px', fontFamily: 'Georgia, serif', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  >
+                    {savingKey === row.key ? 'Saving…' : 'Save'}
+                  </button>
                 </div>
               ))}
             </div>
