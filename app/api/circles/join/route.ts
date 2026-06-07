@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,8 +16,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Circle ID is required' }, { status: 400 })
     }
 
+    // DB ops via service role (avoids the recursive RLS policies on these tables).
+    const admin = createServiceClient()
+
     // Verify circle exists and is open
-    const { data: circle } = await supabase
+    const { data: circle } = await admin
       .from('prayer_circles')
       .select('id, name, is_closed')
       .eq('id', circle_id)
@@ -32,19 +35,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if already a member
-    const { data: existing } = await supabase
+    const { data: existing } = await admin
       .from('circle_members')
       .select('id')
       .eq('circle_id', circle_id)
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     if (existing) {
       return NextResponse.json({ error: 'You are already a member of this circle' }, { status: 409 })
     }
 
     // Join as member
-    const { error: joinError } = await supabase
+    const { error: joinError } = await admin
       .from('circle_members')
       .insert({
         circle_id,

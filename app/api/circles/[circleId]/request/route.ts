@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 // POST — add a prayer request to a circle
 export async function POST(
@@ -15,14 +15,15 @@ export async function POST(
     }
 
     const { circleId } = await params
+    const admin = createServiceClient()
 
     // Verify membership
-    const { data: membership } = await supabase
+    const { data: membership } = await admin
       .from('circle_members')
       .select('id')
       .eq('circle_id', circleId)
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     if (!membership) {
       return NextResponse.json({ error: 'Not a member of this circle' }, { status: 403 })
@@ -34,7 +35,7 @@ export async function POST(
       return NextResponse.json({ error: 'Prayer request text is required' }, { status: 400 })
     }
 
-    const { data: request, error } = await supabase
+    const { data: request, error } = await admin
       .from('circle_prayer_requests')
       .insert({
         circle_id: circleId,
@@ -76,23 +77,25 @@ export async function PATCH(
       return NextResponse.json({ error: 'Request ID is required' }, { status: 400 })
     }
 
+    const admin = createServiceClient()
+
     // Verify the request belongs to this circle, and the user is its author or the circle leader
-    const { data: existingReq } = await supabase
+    const { data: existingReq } = await admin
       .from('circle_prayer_requests')
       .select('id, user_id, circle_id')
       .eq('id', request_id)
       .eq('circle_id', circleId)
-      .single()
+      .maybeSingle()
 
     if (!existingReq) {
       return NextResponse.json({ error: 'Request not found' }, { status: 404 })
     }
 
-    const { data: circle } = await supabase
+    const { data: circle } = await admin
       .from('prayer_circles')
       .select('created_by')
       .eq('id', circleId)
-      .single()
+      .maybeSingle()
 
     const isAuthor = existingReq.user_id === user.id
     const isLeader = circle?.created_by === user.id
@@ -100,7 +103,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Not allowed to update this request' }, { status: 403 })
     }
 
-    const { data: updated, error } = await supabase
+    const { data: updated, error } = await admin
       .from('circle_prayer_requests')
       .update({
         is_answered,
@@ -142,23 +145,25 @@ export async function DELETE(
       return NextResponse.json({ error: 'Request ID is required' }, { status: 400 })
     }
 
+    const admin = createServiceClient()
+
     // Verify the request belongs to this circle, and the user is its author or the circle leader
-    const { data: existingReq } = await supabase
+    const { data: existingReq } = await admin
       .from('circle_prayer_requests')
       .select('id, user_id')
       .eq('id', request_id)
       .eq('circle_id', circleId)
-      .single()
+      .maybeSingle()
 
     if (!existingReq) {
       return NextResponse.json({ error: 'Request not found' }, { status: 404 })
     }
 
-    const { data: circle } = await supabase
+    const { data: circle } = await admin
       .from('prayer_circles')
       .select('created_by')
       .eq('id', circleId)
-      .single()
+      .maybeSingle()
 
     const isAuthor = existingReq.user_id === user.id
     const isLeader = circle?.created_by === user.id
@@ -166,7 +171,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Not allowed to delete this request' }, { status: 403 })
     }
 
-    const { error } = await supabase
+    const { error } = await admin
       .from('circle_prayer_requests')
       .delete()
       .eq('id', request_id)

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -25,20 +25,23 @@ export async function GET(
 
     const { circleId } = await params
 
+    // DB ops via service role (these tables have recursive RLS policies).
+    const admin = createServiceClient()
+
     // Verify membership
-    const { data: membership } = await supabase
+    const { data: membership } = await admin
       .from('circle_members')
       .select('role')
       .eq('circle_id', circleId)
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     if (!membership) {
       return NextResponse.json({ error: 'Not a member of this circle' }, { status: 403 })
     }
 
     // Get circle details
-    const { data: circle, error } = await supabase
+    const { data: circle, error } = await admin
       .from('prayer_circles')
       .select('*')
       .eq('id', circleId)
@@ -48,8 +51,8 @@ export async function GET(
       return NextResponse.json({ error: 'Circle not found' }, { status: 404 })
     }
 
-    // Get members with profile info
-    const { data: members } = await supabase
+    // Get members
+    const { data: members } = await admin
       .from('circle_members')
       .select(`
         id,
@@ -60,8 +63,8 @@ export async function GET(
       .eq('circle_id', circleId)
       .order('joined_at', { ascending: true })
 
-    // Get prayer requests with intercession counts
-    const { data: requests } = await supabase
+    // Get prayer requests
+    const { data: requests } = await admin
       .from('circle_prayer_requests')
       .select(`
         id,
@@ -78,7 +81,7 @@ export async function GET(
     const requestIds = (requests ?? []).map(r => r.id)
     let intercessions: { request_id: string; user_id: string }[] = []
     if (requestIds.length > 0) {
-      const { data: intercessionData } = await supabase
+      const { data: intercessionData } = await admin
         .from('circle_intercessions')
         .select('request_id, user_id')
         .in('request_id', requestIds)
@@ -119,9 +122,10 @@ export async function PATCH(
     }
 
     const { circleId } = await params
+    const admin = createServiceClient()
 
     // Verify leader
-    const { data: circle } = await supabase
+    const { data: circle } = await admin
       .from('prayer_circles')
       .select('id, created_by')
       .eq('id', circleId)
@@ -143,11 +147,11 @@ export async function PATCH(
       let attempts = 0
       while (attempts < 10) {
         const candidate = generateJoinCode()
-        const { data: existing } = await supabase
+        const { data: existing } = await admin
           .from('prayer_circles')
           .select('id')
           .eq('join_code', candidate)
-          .single()
+          .maybeSingle()
         if (!existing) {
           join_code = candidate
           break
@@ -157,7 +161,7 @@ export async function PATCH(
       if (join_code) updates.join_code = join_code
     }
 
-    const { data: updated, error } = await supabase
+    const { data: updated, error } = await admin
       .from('prayer_circles')
       .update(updates)
       .eq('id', circleId)

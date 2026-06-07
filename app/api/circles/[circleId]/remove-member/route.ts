@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 // DELETE — remove a member (leader action) or leave a circle (self)
 export async function DELETE(
@@ -23,14 +23,15 @@ export async function DELETE(
     }
 
     const isSelf = target_user_id === user.id
+    const admin = createServiceClient()
 
     if (!isSelf) {
       // Must be leader to remove others
-      const { data: circle } = await supabase
+      const { data: circle } = await admin
         .from('prayer_circles')
         .select('created_by')
         .eq('id', circleId)
-        .single()
+        .maybeSingle()
 
       if (!circle || circle.created_by !== user.id) {
         return NextResponse.json({ error: 'Only the leader can remove members' }, { status: 403 })
@@ -42,7 +43,7 @@ export async function DELETE(
       }
     }
 
-    const { error } = await supabase
+    const { error } = await admin
       .from('circle_members')
       .delete()
       .eq('circle_id', circleId)
