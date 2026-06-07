@@ -892,10 +892,10 @@ export default function BandPage() {
       </nav>
 
       {claimStep === 'prompt' && (
-        <div style={{ minHeight: 'calc(100vh - 57px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 28px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '20px 28px 140px', textAlign: 'center' }}>
 
           {/* Cross */}
-          <div style={{ fontSize: 56, marginBottom: 32, color: GOLD }}>✝</div>
+          <div style={{ fontSize: 56, marginBottom: 24, color: GOLD }}>✝</div>
 
           {/* Main message */}
           <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, marginBottom: 16, lineHeight: 1.3, maxWidth: 320 }}>

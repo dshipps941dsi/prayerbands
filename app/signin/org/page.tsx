@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import Logo from '@/components/Logo'
 
 export default function SignInOrg() {
   const [loading, setLoading] = useState(false)
@@ -60,6 +61,7 @@ export default function SignInOrg() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f4ef', fontFamily: 'Georgia, serif', padding: '24px 16px' }}>
       <div style={{ background: '#fff', borderRadius: 14, padding: '40px 32px', maxWidth: 400, width: '100%', border: '1px solid #e8e1d6', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}><Logo size={40} /></div>
           <div style={{ fontSize: 28, marginBottom: 8 }}>⛪</div>
           <h1 style={{ fontSize: 22, fontWeight: 'bold', color: '#1a1208', margin: '0 0 6px' }}>Ministry Sign In</h1>
           <p style={{ fontSize: 13, color: '#8a7c6a', margin: 0 }}>Access your church or ministry dashboard</p>

@@ -1,5 +1,7 @@
 'use client'
 
+import Logo from '@/components/Logo'
+
 export default function SignInChooser() {
   const green = '#1a6b4a'
 
@@ -11,6 +13,7 @@ export default function SignInChooser() {
       padding: '24px 16px',
     }}>
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Logo size={44} /></div>
         <div style={{ fontSize: 36, marginBottom: 10 }}>✝</div>
         <h1 style={{ fontSize: 26, fontWeight: 'bold', color: '#1a1208', margin: '0 0 8px' }}>
           Welcome to PrayerBands
