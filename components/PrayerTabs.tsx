@@ -18,7 +18,7 @@ const SUBTABS: { id: Sub; label: string }[] = [
 // Segmented Requests / Partners / Circles view used on the band page and
 // dashboard Prayers tabs.
 export default function PrayerTabs({ userId }: { userId: string }) {
-  const [sub, setSub] = useState<Sub>('partners')
+  const [sub, setSub] = useState<Sub>('requests')
 
   return (
     <div>
