@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 // Server-side Supabase client for API route handlers / server components.
@@ -30,5 +31,18 @@ export async function createClient() {
         },
       },
     }
+  )
+}
+
+// Service-role client — BYPASSES Row Level Security. Use only for trusted,
+// server-side reads/writes that legitimately cross RLS boundaries (e.g. counting
+// members of a circle the viewer hasn't joined, checking band ownership), and
+// always after you've authenticated the user with createClient(). Never expose
+// its results without your own authorization checks. Call inside the handler.
+export function createServiceClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!,
+    { auth: { persistSession: false } }
   )
 }

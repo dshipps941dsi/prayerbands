@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 function generateJoinCode(): string {
   // Exclude 0, O, I, 1 to avoid confusion
@@ -20,8 +20,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify user owns at least one registered band
-    const { data: band } = await supabase
+    // Verify user owns at least one registered band. Uses the service-role
+    // client so this works regardless of RLS on the bands table.
+    const admin = createServiceClient()
+    const { data: band } = await admin
       .from('bands')
       .select('id')
       .eq('owner_id', user.id)
