@@ -887,7 +887,7 @@ export default function BandPage() {
   return (
     <div style={{ background: DARK, minHeight: '100vh', fontFamily: body, color: 'white' }}>
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <span style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: 'white' }}>✝ Prayer<span style={{ color: GOLD }}>Bands</span></span>
+        <Logo size={28} color="#fff" withName nameColor="#fff" nameSize={18} />
         <span style={{ fontFamily: body, fontSize: 11, color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>{bandId}</span>
       </nav>
 
