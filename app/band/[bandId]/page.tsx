@@ -203,7 +203,7 @@ export default function BandPage() {
   const [showSignup, setShowSignup] = useState(false)
   const [claimStep, setClaimStep] = useState<'prompt' | 'form' | 'done'>('prompt')
   const [transferNote, setTransferNote] = useState('')
-  const [transferStep, setTransferStep] = useState<'idle' | 'sheet' | 'pending'>('idle')
+  const [transferStep, setTransferStep] = useState<'idle' | 'sheet' | 'pending' | 'save_prompt'>('idle')
   const [transferComplete, setTransferComplete] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [expandedPrayer, setExpandedPrayer] = useState<string | null>(null)
@@ -221,6 +221,16 @@ export default function BandPage() {
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     supabase.auth.getUser().then(({ data }) => setUserId(data?.user?.id ?? null))
   }, [])
+
+  // Returning from sign-up after choosing "Create Free Account" on the
+  // pass-on save prompt — auto-open the transfer flow.
+  useEffect(() => {
+    if (!bandId || !userId) return
+    if (localStorage.getItem(`pendingTransfer_${bandId}`)) {
+      localStorage.removeItem(`pendingTransfer_${bandId}`)
+      setTransferStep('sheet')
+    }
+  }, [bandId, userId])
 
   useEffect(() => {
     if (!bandId) return
@@ -617,7 +627,10 @@ export default function BandPage() {
                   <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginTop: 2 }}>{regs.length === 0 ? 'Just arrived' : 'Held by you'}</div>
                 </div>
                 {transferStep === 'idle' && !transferComplete && (
-                  <button onClick={() => setTransferStep('sheet')} style={{ display: 'flex', alignItems: 'center', gap: 8, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, padding: '10px 18px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Pass On</button>
+                  <button onClick={() => {
+                    const accountless = !userId && localStorage.getItem(`holder_${bandId}`) === 'true'
+                    setTransferStep(accountless ? 'save_prompt' : 'sheet')
+                  }} style={{ display: 'flex', alignItems: 'center', gap: 8, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, padding: '10px 18px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Pass On</button>
                 )}
               </div>
             </div>
@@ -760,6 +773,23 @@ export default function BandPage() {
             <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
               <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
               <SuccessCard title="Save your place" subtitle="Create a free account to get your daily verse every time you tap, track your prayers, and follow this band's story." showCountdown={false} />
+            </div>
+          </div>
+        )}
+
+        {transferStep === 'save_prompt' && (
+          <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: '#FDFAF5', borderRadius: '20px 20px 0 0', padding: '28px 24px 40px', width: '100%', boxSizing: 'border-box' }}>
+              <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
+              <div style={{ fontSize: 40, textAlign: 'center', marginBottom: 12, color: GOLD }}>✝</div>
+              <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, color: '#2C1A0E', textAlign: 'center', marginBottom: 10, lineHeight: 1.3 }}>Your place in this story matters</div>
+              <div style={{ fontFamily: body, fontSize: 14, color: GRAY, textAlign: 'center', lineHeight: 1.6, marginBottom: 24 }}>You&rsquo;ve been part of this band&rsquo;s journey. Create a free account to preserve your prayer, your name in the chain, and follow where it goes next.</div>
+              <button onClick={() => {
+                localStorage.setItem(`pendingTransfer_${bandId}`, 'true')
+                setTransferStep('idle')
+                setShowSignup(true)
+              }} style={{ display: 'block', width: '100%', padding: 15, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}>Create Free Account</button>
+              <button onClick={() => setTransferStep('sheet')} style={{ display: 'block', width: '100%', padding: 10, background: 'transparent', color: GRAY, border: 'none', fontFamily: body, fontSize: 13, cursor: 'pointer' }}>Continue Without Saving</button>
             </div>
           </div>
         )}
