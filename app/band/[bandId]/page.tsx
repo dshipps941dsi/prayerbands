@@ -7,6 +7,7 @@ import Icon, { type IconName } from '@/components/Icon'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
 import CirclesSection from '@/components/CirclesSection'
 import NetworkSection from '@/components/NetworkSection'
+import PurchaseTab from '@/components/PurchaseTab'
 
 const VERSES = [
   { ref: "Joshua 1:9", text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", category: "fear" },
@@ -550,13 +551,7 @@ export default function BandPage() {
         {tabs.map(tab => (
           <button
             key={tab.id}
-            onClick={() => {
-              if (tab.id === 'purchase') {
-                window.location.href = '/store'
-              } else {
-                setActiveTab(tab.id as any)
-              }
-            }}
+            onClick={() => setActiveTab(tab.id as any)}
             style={{
               flex: 1, padding: '10px 4px 8px', border: 'none', background: 'transparent',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
@@ -725,6 +720,8 @@ export default function BandPage() {
             <PrayerChain regs={regs} />
           </div>
         )}
+
+        {activeTab === 'purchase' && <PurchaseTab bandId={bandId} />}
 
         {activeTab === 'account' && (
           <div style={{ padding: '24px 20px' }}>
