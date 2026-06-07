@@ -1,7 +1,7 @@
 -- ============================================
 -- site_config — editable pricing / shipping (cents)
 -- ============================================
-create table site_config (
+create table if not exists site_config (
   key text primary key,
   value text not null,
   label text,
@@ -13,7 +13,8 @@ insert into site_config (key, value, label) values
   ('shipping_cost_church', '0', 'Church/Org Shipping (cents)'),
   ('band_price_single', '1499', 'Single Band Price (cents)'),
   ('band_price_3pack', '3999', '3-Pack Price (cents)'),
-  ('band_price_5pack', '5999', '5-Pack Price (cents)');
+  ('band_price_5pack', '5999', '5-Pack Price (cents)')
+on conflict (key) do nothing;
 
 -- NOTE: no RLS is enabled here, so the public anon key can read AND write this
 -- table. The admin panel edits it directly with the browser client, which works,

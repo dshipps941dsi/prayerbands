@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import PrayerBandsLogo from "@/components/PrayerBandsLogo";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Prayer {
@@ -724,7 +725,7 @@ export default function HomePage() {
       {/* ── Nav ── */}
       <nav className={`nav${scrolled ? " scrolled" : ""}`}>
         <div className="nav-inner">
-          <Link href="/" className="nav-logo">Prayer<span>Bands</span></Link>
+          <Link href="/" className="nav-logo" style={{ display: "inline-flex", alignItems: "center", gap: 10 }}><PrayerBandsLogo size={26} color="#E2C98A" />Prayer<span>Bands</span></Link>
           <div className="nav-links">
             <Link href="#mission" className="nav-link">Our Mission</Link>
             <Link href="#how" className="nav-link">How It Works</Link>

@@ -31,12 +31,14 @@ type MapPoint = {
   prayer?: string
 }
 
-const TABS = ['Overview', 'Map', 'Prayers', 'Prayer List', 'Account']
+const TABS = ['Overview', 'Prayers', 'Map', 'Account']
+// Mobile bottom nav mirrors the band page: includes a Shop/purchase link.
+const MOBILE_NAV = ['Overview', 'Prayers', 'Map', 'Shop', 'Account']
 const TAB_ICONS: Record<string, string> = {
   Overview: '◎',
-  Map: '🌍',
   Prayers: '🙏',
-  'Prayer List': '✝',
+  Map: '🌍',
+  Shop: '🛍',
   Account: '👤',
 }
 const AMBER = '#C8A96E'
@@ -867,14 +869,14 @@ export default function Dashboard() {
       </div>
 
       {isMobile && (
-        <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #e8e1d6', display: 'flex', zIndex: 200, boxShadow: '0 -2px 12px rgba(0,0,0,0.08)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-          {TABS.map(item => {
+        <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#2C1A0E', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', zIndex: 200, paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+          {MOBILE_NAV.map(item => {
             const active = activeTab === item
             return (
-              <button key={item} onClick={() => setActiveTab(item)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 2px 8px', border: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', minWidth: 0 }}>
+              <button key={item} onClick={() => { if (item === 'Shop') { window.location.href = '/store' } else { setActiveTab(item) } }} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 2px 8px', border: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', minWidth: 0 }}>
                 {active && <div style={{ position: 'absolute', top: 0, width: 36, height: 3, background: AMBER, borderRadius: '0 0 3px 3px' }} />}
                 <span style={{ fontSize: 16, lineHeight: 1 }}>{TAB_ICONS[item]}</span>
-                <span style={{ fontSize: 10, color: active ? AMBER : '#b8a898', fontFamily: 'Georgia, serif', fontWeight: active ? 700 : 400, marginTop: 3 }}>{item}</span>
+                <span style={{ fontSize: 10, color: active ? AMBER : 'rgba(255,255,255,0.45)', fontFamily: 'Georgia, serif', fontWeight: active ? 700 : 400, marginTop: 3 }}>{item}</span>
               </button>
             )
           })}

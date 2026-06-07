@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
@@ -265,9 +266,12 @@ export default function AdminPage() {
     <div style={{ minHeight: '100vh', background: '#FAF6EF', fontFamily: 'Georgia, serif', color: '#2C1A0E' }}>
       {/* Header */}
       <div style={{ background: '#2C1A0E', padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <h1 style={{ margin: 0, color: '#C8A96E', fontSize: '22px', fontFamily: 'Playfair Display, Georgia, serif' }}>PrayerBands Admin</h1>
-          <p style={{ margin: '2px 0 0', color: '#8B6914', fontSize: '13px' }}>Order Management &amp; Fulfillment</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <PrayerBandsLogo size={38} color="#C8A96E" />
+          <div>
+            <h1 style={{ margin: 0, color: '#C8A96E', fontSize: '22px', fontFamily: 'Playfair Display, Georgia, serif' }}>PrayerBands Admin</h1>
+            <p style={{ margin: '2px 0 0', color: '#8B6914', fontSize: '13px' }}>Order Management &amp; Fulfillment</p>
+          </div>
         </div>
         <a href="/dashboard" style={{ color: '#C8A96E', fontSize: '13px', textDecoration: 'none' }}>Back to Dashboard</a>
       </div>
