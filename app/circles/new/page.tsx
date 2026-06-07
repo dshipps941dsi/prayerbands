@@ -9,6 +9,7 @@ export default function NewCirclePage() {
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [needsAccount, setNeedsAccount] = useState(false)
 
   async function handleCreate() {
     if (!name.trim()) return
@@ -24,7 +25,8 @@ export default function NewCirclePage() {
     const data = await res.json()
 
     if (res.status === 401) {
-      router.push('/signin?redirect=/circles/new')
+      setNeedsAccount(true)
+      setLoading(false)
       return
     }
 
@@ -35,7 +37,7 @@ export default function NewCirclePage() {
     }
 
     if (!res.ok) {
-      setError(data.error || 'Something went wrong. Please try again.')
+      setError(data.details ? `${data.error}: ${data.details}` : (data.error || 'Something went wrong. Please try again.'))
       setLoading(false)
       return
     }
@@ -203,6 +205,19 @@ export default function NewCirclePage() {
             </p>
           </div>
         </div>
+
+        {needsAccount && (
+          <div style={{ backgroundColor: '#FFF8E7', border: '1px solid #F0D080', borderRadius: 12, padding: '18px 20px', marginBottom: 16, textAlign: 'center' }}>
+            <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 16, fontWeight: 700, color: '#2C1810', marginBottom: 6 }}>Create a free account first</div>
+            <div style={{ fontSize: 13, color: '#8B7355', lineHeight: 1.5, marginBottom: 14 }}>
+              Prayer Circles are tied to your account so you can lead and return to them. It only takes a moment.
+            </div>
+            <a href="/signin?redirect=/circles/new" style={{ display: 'inline-block', backgroundColor: '#B8860B', color: '#fff', borderRadius: 8, padding: '10px 22px', fontSize: 14, fontFamily: 'Playfair Display, Georgia, serif', fontWeight: 700, textDecoration: 'none' }}>Create Free Account →</a>
+            <div style={{ marginTop: 10 }}>
+              <a href="/signin?redirect=/circles/new" style={{ fontSize: 12, color: '#8B7355', textDecoration: 'underline' }}>Already have an account? Sign in</a>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div style={{

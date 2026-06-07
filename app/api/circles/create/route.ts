@@ -43,16 +43,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Circle name is required' }, { status: 400 })
     }
 
-    // Generate a unique join code
+    // Generate a unique join code. Use the service client so the uniqueness
+    // check sees all codes (incl. closed circles), unaffected by RLS.
     let join_code = ''
     let attempts = 0
     while (attempts < 10) {
       const candidate = generateJoinCode()
-      const { data: existing } = await supabase
+      const { data: existing } = await admin
         .from('prayer_circles')
         .select('id')
         .eq('join_code', candidate)
-        .single()
+        .maybeSingle()
       if (!existing) {
         join_code = candidate
         break
@@ -64,8 +65,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Could not generate a unique code, please try again' }, { status: 500 })
     }
 
-    // Create the circle
-    const { data: circle, error: circleError } = await supabase
+    // Create the circle with the service client (the user is already verified
+    // above; created_by is set server-side, so this is safe and bypasses any
+    // RLS-on-insert pitfalls — matching how the rest of the app does writes).
+    const { data: circle, error: circleError } = await admin
       .from('prayer_circles')
       .insert({
         name: name.trim(),
@@ -79,11 +82,11 @@ export async function POST(req: NextRequest) {
 
     if (circleError || !circle) {
       console.error('Circle creation error:', circleError)
-      return NextResponse.json({ error: 'Failed to create circle' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to create circle', details: circleError?.message }, { status: 500 })
     }
 
     // Auto-join creator as leader
-    const { error: memberError } = await supabase
+    const { error: memberError } = await admin
       .from('circle_members')
       .insert({
         circle_id: circle.id,

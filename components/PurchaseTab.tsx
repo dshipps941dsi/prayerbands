@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 // Inline purchase experience for the band page (no navigation away). Single-band
-// gift checkout + Prayer Partner subscription, both wired to the existing Stripe
+// gift checkout + monthly giving subscription, both wired to the existing Stripe
 // checkout routes.
 
 const GOLD = '#B8860B'
@@ -119,11 +119,11 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
         </button>
       </div>
 
-      {/* Card 2 — Prayer Partner Subscription */}
+      {/* Card 2 — Monthly Giving Subscription */}
       <div style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div>
-            <div style={{ fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK, marginBottom: 4 }}>Become a Prayer Partner</div>
+            <div style={{ fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK, marginBottom: 4 }}>Become a Monthly Sender</div>
             <div style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', lineHeight: 1.5 }}>Receive a new band each month to give away.</div>
           </div>
           <div style={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
