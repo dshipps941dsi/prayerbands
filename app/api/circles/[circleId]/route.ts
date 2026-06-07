@@ -96,7 +96,8 @@ export async function GET(
       circle,
       members: members ?? [],
       requests: requestsWithCounts,
-      my_role: membership.role
+      my_role: membership.role,
+      my_user_id: user.id
     })
   } catch (err) {
     console.error('Circle GET error:', err)

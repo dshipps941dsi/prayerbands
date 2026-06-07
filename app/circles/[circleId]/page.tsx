@@ -84,11 +84,10 @@ export default function CirclePage() {
     setMembers(data.members)
     setRequests(data.requests)
     setMyRole(data.my_role)
+    setMyUserId(data.my_user_id)
     setEditName(data.circle.name)
     setEditDescription(data.circle.description || '')
 
-    // Get current user id from members list by matching role + leader
-    // We'll derive it via the join response context — for now pull from member match
     setLoading(false)
   }, [circleId, router])
 
@@ -161,6 +160,11 @@ export default function CirclePage() {
       method: 'DELETE'
     })
     if (res.ok) {
+      // Leaving the circle yourself — you're no longer a member, so navigate away.
+      if (userId === myUserId) {
+        router.push('/dashboard?tab=prayers')
+        return
+      }
       setMembers(prev => prev.filter(m => m.user_id !== userId))
     }
   }
