@@ -1,111 +1,63 @@
-'use client'
+"use client";
+
 import { useState, useEffect, useRef } from "react";
-import Logo from "@/components/Logo";
-import Icon, { type IconName } from "@/components/Icon";
+import Link from "next/link";
 
-const NAV_LINKS = [
-  { label: "Our Story", href: "#story" },
-  { label: "How It Works", href: "#how" },
-  { label: "Mission", href: "#mission" },
-  { label: "Prayer Wall", href: "#wall" },
-  { label: "Get Bands", href: "#store", cta: true },
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface Prayer {
+  initials: string;
+  location: string;
+  text: string;
+  band: string;
+  time: string;
+}
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
+const PRAYERS: Prayer[] = [
+  { initials: "M.R.", location: "Nashville, TN", text: "Lord, cover whoever holds this band with Your peace that passes all understanding.", band: "PB-47291", time: "2 hours ago" },
+  { initials: "A.O.", location: "Lagos, Nigeria", text: "Father, let Your light shine through every hand this band passes through.", band: "PB-18834", time: "5 hours ago" },
+  { initials: "C.F.", location: "São Paulo, Brazil", text: "May this band carry hope to someone who needs it today. In Jesus' name.", band: "PB-92011", time: "8 hours ago" },
+  { initials: "J.K.", location: "Seoul, South Korea", text: "I pray for healing, restoration, and renewal for everyone this touches.", band: "PB-33107", time: "Yesterday" },
+  { initials: "S.H.", location: "Birmingham, UK", text: "God, let this small band carry Your immeasurable love around the world.", band: "PB-65498", time: "Yesterday" },
 ];
 
-const JOURNEY_STEPS = [
-  {
-    icon: "🙏",
-    title: "Receive a Band",
-    desc: "Someone places a PrayerBand on your wrist. That act alone is a prayer for you — no app required, no obligation.",
-    color: "#C8A96E",
-  },
-  {
-    icon: "✦",
-    title: "Scan & See Your Journey",
-    desc: "Tap the NFC chip or visit PrayerBands.com. See every prayer left for you, and every place the band has traveled.",
-    color: "#7BAE8E",
-  },
-  {
-    icon: "💫",
-    title: "Pass It Forward",
-    desc: "When you feel led, pass your band to someone else. Your prayer travels with it — forever woven into its story.",
-    color: "#7B8FAE",
-  },
+const STEPS = [
+  { num: "01", title: "Get a Band", desc: "Order your NFC-enabled PrayerBand — a simple silicone wristband with a unique ID embedded in a tiny chip." },
+  { num: "02", title: "Dedicate It", desc: "Write a prayer for someone. Slip it on their wrist, drop it in the mail, or give it as a gift. The act itself is a blessing." },
+  { num: "03", title: "Watch It Travel", desc: "Each time someone taps the band, a new prayer is added. The band builds a living chain — names, places, prayers." },
+  { num: "04", title: "Pass It Forward", desc: "When you feel led, pass the band to the next person. Your prayer travels with it — forever woven into its story." },
 ];
 
-const PRAYERS = [
-  {
-    band: "PB-47291",
-    location: "Nashville, TN",
-    time: "2 hours ago",
-    prayer: "Lord, cover whoever holds this band with Your peace that passes all understanding.",
-    initials: "M.R.",
-    color: "#C8A96E",
-  },
-  {
-    band: "PB-18834",
-    location: "Lagos, Nigeria",
-    time: "5 hours ago",
-    prayer: "Father, let Your light shine through every hand this band passes through.",
-    initials: "A.O.",
-    color: "#7BAE8E",
-  },
-  {
-    band: "PB-92011",
-    location: "São Paulo, Brazil",
-    time: "8 hours ago",
-    prayer: "May this band carry hope to someone who needs it today. In Jesus' name.",
-    initials: "C.F.",
-    color: "#7B8FAE",
-  },
-  {
-    band: "PB-33107",
-    location: "Seoul, South Korea",
-    time: "Yesterday",
-    prayer: "I pray for healing, restoration, and renewal for everyone this touches.",
-    initials: "J.K.",
-    color: "#B07BAE",
-  },
-  {
-    band: "PB-65498",
-    location: "Birmingham, UK",
-    time: "Yesterday",
-    prayer: "God, let this small band carry Your immeasurable love around the world.",
-    initials: "S.H.",
-    color: "#AE7B7B",
-  },
-  {
-    band: "PB-20044",
-    location: "Austin, TX",
-    time: "2 days ago",
-    prayer: "Bless the hands that hold this. You know exactly who they are.",
-    initials: "D.W.",
-    color: "#6E8FAE",
-  },
+const PLANS = [
+  { name: "Monthly Grace", price: "$15", period: "/mo", desc: "A new band shipped to your door each month. Keep the prayer chain growing.", badge: null },
+  { name: "Quarterly Faith", price: "$40", period: "/quarter", desc: "Four bands per year — perfect for gifting to those on your heart.", badge: "Most Popular" },
+  { name: "Yearly Devotion", price: "$120", period: "/year", desc: "Best value. Exclusive edition bands, priority shipping, and a year of blessing.", badge: null },
 ];
 
 const STATS = [
-  { value: "14,200+", label: "Bands in the World" },
-  { value: "47", label: "Countries Reached" },
-  { value: "91,000+", label: "Prayers Left" },
-  { value: "∞", label: "Chains of Grace" },
+  { value: "12,400+", label: "Prayers Recorded" },
+  { value: "38", label: "Countries Reached" },
+  { value: "5,200+", label: "Bands in the World" },
+  { value: "1", label: "God Glorified" },
 ];
 
-function useScrollReveal(ref: React.RefObject<HTMLDivElement | null>) {
+// ─── Scroll Reveal Hook ───────────────────────────────────────────────────────
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
-      { threshold: 0.15 }
-    );
-    if (ref.current) obs.observe(ref.current);
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold: 0.15 });
+    obs.observe(el);
     return () => obs.disconnect();
   }, []);
-  return visible;
+  return { ref, visible };
 }
 
-function RevealSection({ children, className = "", style = {} }: { children: React.ReactNode, className?: string, style?: React.CSSProperties }) {
-  const ref = useRef(null);
-  const visible = useScrollReveal(ref);
+// ─── Components ───────────────────────────────────────────────────────────────
+function Reveal({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const { ref, visible } = useReveal();
   return (
     <div
       ref={ref}
@@ -113,8 +65,7 @@ function RevealSection({ children, className = "", style = {} }: { children: Rea
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(32px)",
-        transition: "opacity 0.7s ease, transform 0.7s ease",
-        ...style,
+        transition: `opacity 0.7s ease ${delay}ms, transform 0.7s ease ${delay}ms`,
       }}
     >
       {children}
@@ -122,10 +73,11 @@ function RevealSection({ children, className = "", style = {} }: { children: Rea
   );
 }
 
-export default function PrayerBandsHome() {
+// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activePrayer, setActivePrayer] = useState<number | null>(null);
+  const [activePrayer, setActivePrayer] = useState(0);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -133,488 +85,921 @@ export default function PrayerBandsHome() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-const scrollTo = (href: string) => {
-    setMenuOpen(false);
-    const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  useEffect(() => {
+    const t = setInterval(() => setActivePrayer(p => (p + 1) % PRAYERS.length), 4000);
+    return () => clearInterval(t);
+  }, []);
 
   return (
-    <div style={{ fontFamily: "'Georgia', 'Times New Roman', serif", background: "#FDFAF5", color: "#2C1A0E", minHeight: "100vh" }}>
+    <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+          --navy:   #0A1628;
+          --navy2:  #0E1E38;
+          --navy3:  #132544;
+          --gold:   #C8A96E;
+          --gold2:  #E2C98A;
+          --gold3:  #F0DFA8;
+          --cream:  #F5EDD8;
+          --white:  #FFFFFF;
+          --muted:  rgba(200,169,110,0.45);
+          --border: rgba(200,169,110,0.18);
+        }
+
         html { scroll-behavior: smooth; }
-        body { overflow-x: hidden; }
-        .playfair { font-family: 'Playfair Display', serif; }
-        .lato { font-family: 'Lato', sans-serif; }
-        .nav-link { 
-          font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.12em; 
-          text-transform: uppercase; color: #5C3D2E; text-decoration: none; 
-          transition: color 0.2s; cursor: pointer; background: none; border: none; padding: 0;
+
+        body {
+          background: var(--navy);
+          color: var(--cream);
+          font-family: 'Inter', sans-serif;
+          font-weight: 300;
+          line-height: 1.7;
+          overflow-x: hidden;
         }
-        .nav-link:hover { color: #C8A96E; }
-        .cta-btn {
-          font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.12em;
-          text-transform: uppercase; background: #C8A96E; color: #fff;
-          border: none; padding: 10px 22px; cursor: pointer; border-radius: 3px;
-          transition: background 0.2s, transform 0.15s;
+
+        .font-display  { font-family: 'Cormorant Garamond', serif; }
+        .font-heading  { font-family: 'Cinzel', serif; }
+
+        /* ── Noise overlay ── */
+        body::before {
+          content: '';
+          position: fixed; inset: 0; z-index: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+          pointer-events: none;
+          opacity: 0.4;
         }
-        .cta-btn:hover { background: #B8944A; transform: translateY(-1px); }
-        .cta-btn-outline {
-          font-family: 'Lato', sans-serif; font-size: 14px; letter-spacing: 0.1em;
-          text-transform: uppercase; background: transparent; color: #C8A96E;
-          border: 1.5px solid #C8A96E; padding: 13px 32px; cursor: pointer; border-radius: 3px;
-          transition: all 0.2s;
+
+        /* ── Nav ── */
+        .nav {
+          position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+          transition: background 0.4s, backdrop-filter 0.4s, border-color 0.4s;
+          border-bottom: 1px solid transparent;
         }
-        .cta-btn-outline:hover { background: #C8A96E; color: #fff; }
-        .prayer-card {
-          background: #fff; border: 1px solid #E8DFD0; border-radius: 8px; padding: 24px;
-          transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;
+        .nav.scrolled {
+          background: rgba(10,22,40,0.92);
+          backdrop-filter: blur(20px);
+          border-color: var(--border);
         }
-        .prayer-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(44,26,14,0.10); }
-        .step-card {
-          background: #fff; border: 1px solid #E8DFD0; border-radius: 10px; padding: 36px 28px;
-          transition: transform 0.2s, box-shadow 0.2s;
+        .nav-inner {
+          max-width: 1200px; margin: 0 auto;
+          padding: 0 32px;
+          height: 72px;
+          display: flex; align-items: center; justify-content: space-between;
         }
-        .step-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(44,26,14,0.09); }
-        .stat-item { text-align: center; padding: 24px 16px; }
-        .divider { width: 48px; height: 2px; background: #C8A96E; margin: 0 auto; }
-        .section-label {
-          font-family: 'Lato', sans-serif; font-size: 11px; letter-spacing: 0.22em;
-          text-transform: uppercase; color: #C8A96E; margin-bottom: 12px; display: block;
+        .nav-logo {
+          font-family: 'Cinzel', serif;
+          font-size: 1.25rem; font-weight: 600;
+          color: var(--gold2);
+          letter-spacing: 0.08em;
+          text-decoration: none;
         }
-        .mobile-menu {
-          position: fixed; inset: 0; background: #FDFAF5; z-index: 200;
-          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px;
+        .nav-logo span { color: var(--cream); font-weight: 400; }
+        .nav-links { display: flex; align-items: center; gap: 36px; }
+        .nav-link {
+          color: rgba(245,237,216,0.7);
+          font-size: 0.8rem; font-weight: 400;
+          letter-spacing: 0.12em; text-transform: uppercase;
+          text-decoration: none;
+          transition: color 0.2s;
         }
-        .band-tag {
-          font-family: 'Lato', sans-serif; font-size: 10px; letter-spacing: 0.18em;
-          text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
+        .nav-link:hover { color: var(--gold2); }
+        .nav-cta {
+          background: transparent;
+          border: 1px solid var(--gold);
+          color: var(--gold2);
+          font-family: 'Cinzel', serif;
+          font-size: 0.72rem; font-weight: 600;
+          letter-spacing: 0.12em; text-transform: uppercase;
+          padding: 10px 24px;
+          border-radius: 2px;
+          text-decoration: none;
+          transition: background 0.25s, color 0.25s;
+        }
+        .nav-cta:hover { background: var(--gold); color: var(--navy); }
+
+        /* ── Hero ── */
+        .hero {
+          position: relative;
+          min-height: 100vh;
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          text-align: center;
+          padding: 120px 32px 80px;
+          overflow: hidden;
+        }
+        .hero-bg {
+          position: absolute; inset: 0; z-index: 0;
+          background:
+            radial-gradient(ellipse 80% 60% at 50% 30%, rgba(200,169,110,0.08) 0%, transparent 70%),
+            radial-gradient(ellipse 60% 80% at 20% 80%, rgba(123,174,142,0.05) 0%, transparent 60%),
+            linear-gradient(180deg, #0A1628 0%, #0E1E38 50%, #0A1628 100%);
+        }
+        .hero-grid {
+          position: absolute; inset: 0;
+          background-image:
+            linear-gradient(rgba(200,169,110,0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(200,169,110,0.04) 1px, transparent 1px);
+          background-size: 80px 80px;
+          mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, black 0%, transparent 80%);
+        }
+        .hero-corner {
+          position: absolute;
+          width: 200px; height: 200px;
+          border: 1px solid rgba(200,169,110,0.12);
+        }
+        .hero-corner.tl { top: 80px; left: 40px; border-right: none; border-bottom: none; }
+        .hero-corner.tr { top: 80px; right: 40px; border-left: none; border-bottom: none; }
+        .hero-corner.bl { bottom: 60px; left: 40px; border-right: none; border-top: none; }
+        .hero-corner.br { bottom: 60px; right: 40px; border-left: none; border-top: none; }
+
+        .hero-eyebrow {
+          font-family: 'Cinzel', serif;
+          font-size: 0.7rem; font-weight: 600;
+          letter-spacing: 0.3em; text-transform: uppercase;
+          color: var(--gold);
+          margin-bottom: 28px;
+          display: flex; align-items: center; gap: 16px;
+          position: relative; z-index: 1;
+        }
+        .hero-eyebrow::before, .hero-eyebrow::after {
+          content: '';
+          width: 40px; height: 1px;
+          background: var(--gold);
+          opacity: 0.5;
+        }
+
+        .hero-title {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: clamp(3.2rem, 8vw, 7rem);
+          font-weight: 300;
+          line-height: 1.08;
+          color: var(--white);
+          letter-spacing: -0.01em;
+          margin-bottom: 12px;
+          position: relative; z-index: 1;
+        }
+        .hero-title em {
+          font-style: italic;
+          color: var(--gold2);
+        }
+        .hero-title .line2 {
+          display: block;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+        }
+
+        .hero-sub {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: clamp(1.1rem, 2vw, 1.4rem);
+          font-style: italic;
+          color: rgba(245,237,216,0.65);
+          margin-top: 20px;
+          margin-bottom: 48px;
+          position: relative; z-index: 1;
+          max-width: 520px;
+        }
+
+        .hero-actions {
+          display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+          position: relative; z-index: 1;
+        }
+        .btn-primary {
+          background: var(--gold);
+          color: var(--navy);
+          font-family: 'Cinzel', serif;
+          font-size: 0.78rem; font-weight: 700;
+          letter-spacing: 0.15em; text-transform: uppercase;
+          padding: 16px 40px;
+          border: none; border-radius: 2px;
+          text-decoration: none;
+          transition: background 0.25s, transform 0.2s;
           display: inline-block;
         }
-        @media (max-width: 768px) {
-          .desktop-nav { display: none !important; }
-          .hamburger { display: flex !important; }
-          .hero-inner { padding: 48px 20px !important; }
-          .hero-grid { grid-template-columns: 1fr !important; gap: 44px !important; }
-          .hero-grid > div:last-child { max-width: 100% !important; margin: 0 auto; overflow: visible; }
-          .hero-stats { flex-wrap: wrap; gap: 22px !important; }
-          .hero-copy { max-width: 100% !important; }
-          .steps-grid { grid-template-columns: 1fr !important; }
-          .prayers-grid { grid-template-columns: 1fr !important; }
-          .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .mission-inner { grid-template-columns: 1fr !important; }
-          .footer-cols { grid-template-columns: 1fr !important; gap: 36px !important; }
+        .btn-primary:hover { background: var(--gold2); transform: translateY(-2px); }
+        .btn-ghost {
+          background: transparent;
+          color: var(--cream);
+          font-family: 'Cinzel', serif;
+          font-size: 0.78rem; font-weight: 600;
+          letter-spacing: 0.15em; text-transform: uppercase;
+          padding: 16px 40px;
+          border: 1px solid rgba(245,237,216,0.3);
+          border-radius: 2px;
+          text-decoration: none;
+          transition: border-color 0.25s, color 0.25s;
+          display: inline-block;
+        }
+        .btn-ghost:hover { border-color: var(--gold); color: var(--gold2); }
+
+        .hero-scroll {
+          position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+          z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;
+          color: rgba(200,169,110,0.5);
+          font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.25em;
+          text-transform: uppercase;
+          animation: scrollBounce 2s ease-in-out infinite;
+        }
+        @keyframes scrollBounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
+        .hero-scroll-line {
+          width: 1px; height: 40px;
+          background: linear-gradient(to bottom, var(--gold), transparent);
+        }
+
+        /* ── Section base ── */
+        .section { position: relative; z-index: 1; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+        .section-label {
+          font-family: 'Cinzel', serif;
+          font-size: 0.65rem; font-weight: 600;
+          letter-spacing: 0.35em; text-transform: uppercase;
+          color: var(--gold);
+          margin-bottom: 16px;
+          display: flex; align-items: center; gap: 16px;
+        }
+        .section-label::after { content: ''; flex: 1; max-width: 60px; height: 1px; background: var(--gold); opacity: 0.4; }
+        .section-title {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: clamp(2rem, 4vw, 3.2rem);
+          font-weight: 600; line-height: 1.15;
+          color: var(--white);
+        }
+        .section-title em { font-style: italic; color: var(--gold2); font-weight: 300; }
+        .section-body {
+          font-size: 0.95rem;
+          color: rgba(245,237,216,0.65);
+          max-width: 520px;
+          line-height: 1.9;
+        }
+
+        /* ── Mission ── */
+        .mission {
+          padding: 100px 0;
+          background: linear-gradient(180deg, var(--navy) 0%, var(--navy2) 50%, var(--navy) 100%);
+        }
+        .mission-inner {
+          display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+        }
+        .mission-quote {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: clamp(1.6rem, 3vw, 2.4rem);
+          font-style: italic; font-weight: 300;
+          line-height: 1.5;
+          color: var(--cream);
+          border-left: 3px solid var(--gold);
+          padding-left: 32px;
+          margin-top: 32px;
+        }
+        .mission-quote cite {
+          display: block;
+          font-size: 0.8rem; font-style: normal;
+          font-family: 'Cinzel', serif;
+          letter-spacing: 0.15em;
+          color: var(--gold);
+          margin-top: 16px;
+        }
+        .mission-card {
+          background: rgba(200,169,110,0.05);
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          padding: 40px;
+        }
+        .mission-stat {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 3.5rem; font-weight: 300;
+          color: var(--gold2); line-height: 1;
+          margin-bottom: 8px;
+        }
+        .mission-stat-label {
+          font-size: 0.8rem; letter-spacing: 0.1em;
+          color: rgba(245,237,216,0.55);
+          text-transform: uppercase;
+        }
+        .mission-divider {
+          width: 100%; height: 1px;
+          background: var(--border);
+          margin: 24px 0;
+        }
+
+        /* ── Stats bar ── */
+        .stats-bar {
+          background: var(--navy3);
+          border-top: 1px solid var(--border);
+          border-bottom: 1px solid var(--border);
+          padding: 48px 0;
+        }
+        .stats-grid {
+          display: grid; grid-template-columns: repeat(4, 1fr);
+          divide-x: 1px solid var(--border);
+          text-align: center; gap: 0;
+        }
+        .stat-item {
+          padding: 0 32px;
+          border-right: 1px solid var(--border);
+        }
+        .stat-item:last-child { border-right: none; }
+        .stat-value {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 2.8rem; font-weight: 600;
+          color: var(--gold2); line-height: 1;
+          margin-bottom: 8px;
+        }
+        .stat-label {
+          font-size: 0.75rem; letter-spacing: 0.12em;
+          color: rgba(245,237,216,0.5);
+          text-transform: uppercase;
+        }
+
+        /* ── How It Works ── */
+        .how { padding: 100px 0; }
+        .steps-grid {
+          display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+          margin-top: 64px;
+          background: var(--border);
+        }
+        .step-card {
+          background: var(--navy);
+          padding: 48px 32px;
+          position: relative;
+          transition: background 0.3s;
+        }
+        .step-card:hover { background: var(--navy2); }
+        .step-num {
+          font-family: 'Cinzel', serif;
+          font-size: 0.65rem; font-weight: 600;
+          letter-spacing: 0.3em; color: var(--gold);
+          margin-bottom: 24px;
+        }
+        .step-title {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.5rem; font-weight: 600;
+          color: var(--white);
+          margin-bottom: 16px;
+          line-height: 1.2;
+        }
+        .step-desc {
+          font-size: 0.88rem;
+          color: rgba(245,237,216,0.6);
+          line-height: 1.85;
+        }
+        .step-line {
+          position: absolute; top: 0; left: 0; right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, var(--gold), var(--gold2));
+          transform: scaleX(0); transform-origin: left;
+          transition: transform 0.4s ease;
+        }
+        .step-card:hover .step-line { transform: scaleX(1); }
+
+        /* ── Prayer Wall ── */
+        .wall { padding: 100px 0; background: var(--navy2); }
+        .wall-inner {
+          display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start;
+        }
+        .prayer-ticker {
+          background: rgba(200,169,110,0.04);
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          overflow: hidden;
+        }
+        .prayer-ticker-header {
+          padding: 20px 28px;
+          border-bottom: 1px solid var(--border);
+          display: flex; align-items: center; gap: 10px;
+        }
+        .live-dot {
+          width: 8px; height: 8px;
+          border-radius: 50%;
+          background: #4ade80;
+          animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+        .live-label {
+          font-family: 'Cinzel', serif;
+          font-size: 0.65rem; letter-spacing: 0.2em;
+          color: rgba(245,237,216,0.6);
+          text-transform: uppercase;
+        }
+        .prayer-item {
+          padding: 24px 28px;
+          border-bottom: 1px solid var(--border);
+          transition: opacity 0.5s, transform 0.5s;
+        }
+        .prayer-item:last-child { border-bottom: none; }
+        .prayer-meta {
+          display: flex; align-items: center; gap: 10px;
+          margin-bottom: 10px;
+        }
+        .prayer-avatar {
+          width: 32px; height: 32px; border-radius: 50%;
+          background: linear-gradient(135deg, var(--gold), var(--navy3));
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Cinzel', serif; font-size: 0.6rem; font-weight: 600;
+          color: var(--navy); flex-shrink: 0;
+        }
+        .prayer-who {
+          font-size: 0.78rem; font-weight: 500;
+          color: var(--cream);
+        }
+        .prayer-where {
+          font-size: 0.72rem; color: rgba(245,237,216,0.45);
+        }
+        .prayer-text {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1rem; font-style: italic;
+          color: rgba(245,237,216,0.8);
+          line-height: 1.7;
+        }
+        .prayer-band {
+          margin-top: 8px;
+          font-family: 'Cinzel', serif;
+          font-size: 0.6rem; letter-spacing: 0.2em;
+          color: var(--gold); opacity: 0.7;
+        }
+        .wall-cta {
+          margin-top: 16px; padding: 16px 28px;
+          text-align: center;
+          border-top: 1px solid var(--border);
+        }
+        .wall-cta a {
+          font-family: 'Cinzel', serif;
+          font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+          color: var(--gold); text-decoration: none;
+          transition: color 0.2s;
+        }
+        .wall-cta a:hover { color: var(--gold2); }
+
+        /* ── Subscriptions ── */
+        .subs { padding: 100px 0; }
+        .plans-grid {
+          display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+          margin-top: 64px;
+          background: var(--border);
+        }
+        .plan-card {
+          background: var(--navy);
+          padding: 48px 36px;
+          position: relative;
+          transition: background 0.3s;
+        }
+        .plan-card:hover { background: var(--navy2); }
+        .plan-card.featured { background: var(--navy3); }
+        .plan-badge {
+          position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+          background: var(--gold);
+          color: var(--navy);
+          font-family: 'Cinzel', serif;
+          font-size: 0.6rem; font-weight: 700;
+          letter-spacing: 0.2em; text-transform: uppercase;
+          padding: 5px 16px;
+          border-radius: 0 0 4px 4px;
+        }
+        .plan-name {
+          font-family: 'Cinzel', serif;
+          font-size: 0.8rem; font-weight: 600;
+          letter-spacing: 0.2em; text-transform: uppercase;
+          color: var(--gold);
+          margin-bottom: 20px;
+        }
+        .plan-price {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 3.5rem; font-weight: 300;
+          color: var(--white); line-height: 1;
+        }
+        .plan-period {
+          font-size: 0.85rem;
+          color: rgba(245,237,216,0.4);
+          margin-left: 4px;
+        }
+        .plan-divider { width: 100%; height: 1px; background: var(--border); margin: 24px 0; }
+        .plan-desc {
+          font-size: 0.88rem;
+          color: rgba(245,237,216,0.6);
+          line-height: 1.85;
+          margin-bottom: 32px;
+        }
+        .plan-btn {
+          display: block; width: 100%; text-align: center;
+          background: transparent;
+          border: 1px solid var(--gold);
+          color: var(--gold2);
+          font-family: 'Cinzel', serif;
+          font-size: 0.72rem; font-weight: 600;
+          letter-spacing: 0.15em; text-transform: uppercase;
+          padding: 14px 24px;
+          border-radius: 2px;
+          text-decoration: none;
+          transition: background 0.25s, color 0.25s;
+        }
+        .plan-btn:hover, .plan-card.featured .plan-btn {
+          background: var(--gold); color: var(--navy);
+        }
+        .plan-card.featured .plan-btn:hover { background: var(--gold2); }
+
+        /* ── Testimonials ── */
+        .testimonials { padding: 100px 0; background: var(--navy2); }
+        .testi-grid {
+          display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+          margin-top: 64px;
+        }
+        .testi-card {
+          background: rgba(200,169,110,0.04);
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          padding: 40px;
+        }
+        .testi-stars {
+          color: var(--gold); font-size: 0.8rem;
+          margin-bottom: 20px; letter-spacing: 4px;
+        }
+        .testi-quote {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.1rem; font-style: italic;
+          color: rgba(245,237,216,0.85);
+          line-height: 1.75;
+          margin-bottom: 28px;
+        }
+        .testi-author {
+          font-family: 'Cinzel', serif;
+          font-size: 0.7rem; letter-spacing: 0.15em;
+          color: var(--gold);
+        }
+        .testi-place {
+          font-size: 0.75rem;
+          color: rgba(245,237,216,0.4);
+          margin-top: 4px;
+        }
+
+        /* ── Ministry CTA ── */
+        .ministry { padding: 100px 0; }
+        .ministry-inner {
+          background: rgba(200,169,110,0.06);
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          padding: 80px;
+          display: grid; grid-template-columns: 1fr auto; gap: 60px; align-items: center;
+        }
+        .ministry-title {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: clamp(1.8rem, 3vw, 2.6rem);
+          font-weight: 600; color: var(--white);
+          margin-bottom: 16px;
+          line-height: 1.2;
+        }
+        .ministry-desc {
+          font-size: 0.92rem;
+          color: rgba(245,237,216,0.6);
+          line-height: 1.85;
+        }
+
+        /* ── Footer ── */
+        .footer {
+          border-top: 1px solid var(--border);
+          padding: 60px 0 40px;
+          background: #080F1E;
+        }
+        .footer-inner {
+          display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 60px;
+          margin-bottom: 48px;
+        }
+        .footer-brand {
+          font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 600;
+          color: var(--gold2); letter-spacing: 0.08em;
+          margin-bottom: 16px;
+        }
+        .footer-tagline {
+          font-family: 'Cormorant Garamond', serif; font-style: italic;
+          color: rgba(245,237,216,0.45); font-size: 0.92rem; line-height: 1.7;
+          max-width: 260px;
+        }
+        .footer-col-title {
+          font-family: 'Cinzel', serif;
+          font-size: 0.65rem; font-weight: 600;
+          letter-spacing: 0.25em; text-transform: uppercase;
+          color: var(--gold); margin-bottom: 20px;
+        }
+        .footer-link {
+          display: block; color: rgba(245,237,216,0.5);
+          font-size: 0.85rem; text-decoration: none;
+          margin-bottom: 12px;
+          transition: color 0.2s;
+        }
+        .footer-link:hover { color: var(--gold2); }
+        .footer-bottom {
+          border-top: 1px solid var(--border);
+          padding-top: 32px;
+          display: flex; justify-content: space-between; align-items: center;
+        }
+        .footer-copy {
+          font-size: 0.78rem; color: rgba(245,237,216,0.3);
+        }
+        .footer-verse {
+          font-family: 'Cormorant Garamond', serif;
+          font-style: italic; font-size: 0.85rem;
+          color: rgba(200,169,110,0.5);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+          .mission-inner, .wall-inner, .ministry-inner { grid-template-columns: 1fr; gap: 48px; }
+          .steps-grid, .plans-grid { grid-template-columns: 1fr 1fr; }
+          .testi-grid { grid-template-columns: 1fr; }
+          .stats-grid { grid-template-columns: 1fr 1fr; }
+          .footer-inner { grid-template-columns: 1fr 1fr; }
+          .hero-corner { display: none; }
+          .ministry-inner { padding: 48px; }
+        }
+        @media (max-width: 600px) {
+          .steps-grid, .plans-grid, .stats-grid { grid-template-columns: 1fr; }
+          .nav-links { display: none; }
+          .container { padding: 0 20px; }
+          .hero { padding: 100px 20px 60px; }
+          .footer-inner { grid-template-columns: 1fr; }
+          .ministry-inner { padding: 32px; }
         }
       `}</style>
 
-      {/* NAV */}
-      <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        background: scrolled ? "rgba(253,250,245,0.97)" : "transparent",
-        backdropFilter: scrolled ? "blur(12px)" : "none",
-        borderBottom: scrolled ? "1px solid #E8DFD0" : "none",
-        transition: "all 0.3s ease",
-        padding: "0 32px",
-      }}>
-        <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 68 }}>
-          {/* Logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => scrollTo("#hero")}>
-            <Logo size={34} />
-            <span className="playfair" style={{ fontSize: 20, fontWeight: 600, color: "#2C1A0E", letterSpacing: "0.02em" }}>PrayerBands</span>
+      {/* ── Nav ── */}
+      <nav className={`nav${scrolled ? " scrolled" : ""}`}>
+        <div className="nav-inner">
+          <Link href="/" className="nav-logo">Prayer<span>Bands</span></Link>
+          <div className="nav-links">
+            <Link href="#mission" className="nav-link">Our Mission</Link>
+            <Link href="#how" className="nav-link">How It Works</Link>
+            <Link href="#wall" className="nav-link">Prayer Network</Link>
+            <Link href="/store" className="nav-link">Store</Link>
+            <Link href="/signin" className="nav-cta">Sign In</Link>
           </div>
-
-          {/* Desktop Nav */}
-          <div className="desktop-nav" style={{ display: "flex", alignItems: "center", gap: 36 }}>
-            {NAV_LINKS.map(link =>
-              link.cta
-                ? <button key={link.label} className="cta-btn" onClick={() => scrollTo(link.href)}>{link.label}</button>
-                : <button key={link.label} className="nav-link" onClick={() => scrollTo(link.href)}>{link.label}</button>
-            )}
-            <a href="/subscribe" className="nav-link" style={{ color: "#C8A96E", textDecoration: "none" }}>Subscribe</a>
-            <a href="/signin" className="nav-link" style={{ color: "#7BAE8E", textDecoration: "none" }}>Sign In</a>
-          </div>
-
-          {/* Hamburger */}
-          <button
-            className="hamburger"
-            style={{ display: "none", flexDirection: "column", gap: 5, background: "none", border: "none", cursor: "pointer", padding: 4 }}
-            onClick={() => setMenuOpen(true)}
-          >
-            {[0,1,2].map(i => <span key={i} style={{ display: "block", width: 24, height: 1.5, background: "#2C1A0E" }} />)}
-          </button>
         </div>
       </nav>
 
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="mobile-menu">
-          <button onClick={() => setMenuOpen(false)} style={{ position: "absolute", top: 24, right: 32, background: "none", border: "none", fontSize: 28, cursor: "pointer", color: "#2C1A0E" }}>×</button>
-          {NAV_LINKS.map(link => (
-            <button key={link.label} className="nav-link" style={{ fontSize: 18, letterSpacing: "0.15em" }} onClick={() => scrollTo(link.href)}>{link.label}</button>
-          ))}
-          <a href="/subscribe" className="nav-link" style={{ fontSize: 18, color: "#C8A96E", textDecoration: "none" }}>Subscribe</a>
-          <a href="/signin" className="nav-link" style={{ fontSize: 18, color: "#7BAE8E", textDecoration: "none" }}>Sign In</a>
+      {/* ── Hero ── */}
+      <section className="hero">
+        <div className="hero-bg" />
+        <div className="hero-grid" />
+        <div className="hero-corner tl" />
+        <div className="hero-corner tr" />
+        <div className="hero-corner bl" />
+        <div className="hero-corner br" />
+
+        <div className="hero-eyebrow" style={{ animationDelay: "0ms", opacity: 1 }}>
+          Uniting Believers Through Technology
         </div>
-      )}
 
-      {/* HERO */}
-      <section id="hero" style={{ minHeight: "100vh", display: "flex", alignItems: "center", position: "relative", overflow: "hidden", paddingTop: 68 }}>
-        {/* Background texture */}
-        <div style={{
-          position: "absolute", inset: 0,
-          background: "radial-gradient(ellipse at 70% 40%, rgba(200,169,110,0.10) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(123,174,142,0.08) 0%, transparent 55%)",
-        }} />
-        {/* Subtle cross motif */}
-        <div style={{ position: "absolute", right: -80, top: "50%", transform: "translateY(-50%)", fontSize: 400, color: "rgba(200,169,110,0.06)", fontFamily: "serif", lineHeight: 1, pointerEvents: "none", userSelect: "none" }}>✝</div>
+        <h1 className="hero-title">
+          <em>Connect</em> Through
+          <span className="line2">Prayer, Worldwide</span>
+        </h1>
 
-        <div className="hero-inner" style={{ maxWidth: 1160, margin: "0 auto", padding: "80px 32px", width: "100%", position: "relative" }}>
-          <div className="hero-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
-            {/* Left */}
-            <div>
-              <span className="section-label" style={{ animationDelay: "0s" }}>A Movement of Prayer</span>
-              <h1 className="playfair" style={{ fontSize: "clamp(42px, 6vw, 72px)", lineHeight: 1.1, fontWeight: 700, color: "#2C1A0E", marginBottom: 24 }}>
-                Every Band<br />
-                <em style={{ color: "#C8A96E", fontStyle: "italic" }}>Carries a Prayer</em>
-              </h1>
-              <div style={{ width: 48, height: 2, background: "#C8A96E", marginBottom: 28 }} />
-              <p className="lato hero-copy" style={{ fontSize: 18, lineHeight: 1.8, color: "#6B4C35", maxWidth: 460, marginBottom: 40, fontWeight: 300 }}>
-                A wristband. A unique ID. A digital journey around the world. When you place a PrayerBand on someone's wrist, you are praying for them — no words required.
-              </p>
-              <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                <a href="/store" style={{ textDecoration: "none" }}><button className="cta-btn" style={{ fontSize: 14, padding: "14px 36px" }}>Get Bands</button></a>
-                <button className="cta-btn-outline" onClick={() => scrollTo("#how")}>See How It Works</button>
-              </div>
-              <div className="lato hero-stats" style={{ marginTop: 48, display: "flex", gap: 40 }}>
-                {[["14,200+", "Bands Active"], ["47", "Countries"], ["91K+", "Prayers"]].map(([num, lbl]) => (
-                  <div key={lbl}>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: "#C8A96E" }}>{num}</div>
-                    <div style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "#9B7B62", marginTop: 2 }}>{lbl}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+        <p className="hero-sub">
+          A simple band. A living prayer chain. Passed hand to hand,
+          country to country — carrying faith across every distance.
+        </p>
 
-            {/* Right – Band Visualization */}
-<div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", overflow: "hidden" }}>
-  <div style={{ position: "relative", width: "min(320px, 80vw)", height: "min(320px, 80vw)" }}>
-                {/* Glow */}
-                <div style={{ position: "absolute", inset: 20, borderRadius: "50%", background: "radial-gradient(circle, rgba(200,169,110,0.18) 0%, transparent 70%)" }} />
-                {/* Band ring */}
-                <div style={{
-                  position: "absolute", inset: 0, borderRadius: "50%",
-                  border: "28px solid transparent",
-                  borderImage: "none",
-                  background: "linear-gradient(white, white) padding-box, linear-gradient(135deg, #C8A96E, #7BAE8E, #7B8FAE, #C8A96E) border-box",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 48, marginBottom: 8 }}>✝</div>
-                    <div className="lato" style={{ fontSize: 11, letterSpacing: "0.2em", color: "#9B7B62", textTransform: "uppercase" }}>PrayerBands.com</div>
-                    <div className="playfair" style={{ fontSize: 18, color: "#C8A96E", marginTop: 8, fontStyle: "italic" }}>PB-47291</div>
-                  </div>
-                </div>
-                {/* Orbit dots */}
-                {[0, 60, 120, 180, 240, 300].map((deg, i) => (
-                  <div key={i} style={{
-                    position: "absolute", top: "50%", left: "50%",
-                    transform: `rotate(${deg}deg) translateX(min(160px, 40vw)) translateY(-50%)`,
-                    width: 8, height: 8, borderRadius: "50%",
-                    background: ["#C8A96E","#7BAE8E","#7B8FAE","#C8A96E","#AE7B7B","#6E8FAE"][i],
-                    boxShadow: `0 0 8px 2px ${["#C8A96E","#7BAE8E","#7B8FAE","#C8A96E","#AE7B7B","#6E8FAE"][i]}44`,
-                  }} />
-                ))}
-              </div>
-            </div>
+        <div className="hero-actions">
+          <Link href="/store" className="btn-primary">Get Your Band</Link>
+          <Link href="#how" className="btn-ghost">See How It Works</Link>
+        </div>
+
+        <div className="hero-scroll">
+          <div className="hero-scroll-line" />
+          Scroll
+        </div>
+      </section>
+
+      {/* ── Stats Bar ── */}
+      <div className="stats-bar section">
+        <div className="container">
+          <div className="stats-grid">
+            {STATS.map((s) => (
+              <Reveal key={s.label} className="stat-item">
+                <div className="stat-value">{s.value}</div>
+                <div className="stat-label">{s.label}</div>
+              </Reveal>
+            ))}
           </div>
         </div>
+      </div>
 
-        {/* Scroll hint */}
-        <div style={{ position: "absolute", bottom: 36, left: "50%", transform: "translateX(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, opacity: 0.5 }}>
-          <div className="lato" style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#9B7B62" }}>Scroll</div>
-          <div style={{ width: 1, height: 36, background: "linear-gradient(#C8A96E, transparent)" }} />
+      {/* ── Mission ── */}
+      <section id="mission" className="mission section">
+        <div className="container">
+          <div className="mission-inner">
+            <Reveal>
+              <div className="section-label">Our Mission</div>
+              <h2 className="section-title">
+                Bringing People Together<br />
+                in <em>Prayer</em>, No Matter<br />
+                the Distance
+              </h2>
+              <div className="mission-quote">
+                "The prayer of a righteous person is powerful and effective."
+                <cite>— James 5:16</cite>
+              </div>
+            </Reveal>
+            <Reveal delay={200}>
+              <div className="mission-card">
+                <div className="section-body" style={{ maxWidth: "100%", marginBottom: "32px" }}>
+                  Every PrayerBand begins with a single act of faith — someone who cares enough to pray for another person. That prayer doesn't disappear. It becomes embedded in the band, carried forward as it passes from hand to hand, building a living chain of intercession that spans cities, countries, and generations.
+                </div>
+                <div className="mission-divider" />
+                <div className="mission-stat">38+</div>
+                <div className="mission-stat-label">Countries where bands have traveled</div>
+                <div className="mission-divider" />
+                <div className="mission-stat">12,400</div>
+                <div className="mission-stat-label">Prayers recorded in the network</div>
+              </div>
+            </Reveal>
+          </div>
         </div>
       </section>
 
-      {/* STORY */}
-      <section id="story" style={{ padding: "100px 32px", background: "#F5EFE4" }}>
-        <div style={{ maxWidth: 840, margin: "0 auto" }}>
-          <RevealSection>
-            <div style={{ textAlign: "center", marginBottom: 64 }}>
-              <span className="section-label">Our Story</span>
-              <h2 className="playfair" style={{ fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 600, lineHeight: 1.2, marginBottom: 24 }}>
-                Born from a Simple Conviction
-              </h2>
-              <div className="divider" />
-            </div>
-          </RevealSection>
-
-          <RevealSection>
-            <div style={{ display: "grid", gap: 32 }}>
-              {[
-                { quote: false, text: "It started with a question: what if the act of giving someone something small could be a complete prayer in itself?" },
-                { quote: true, text: "\"I'm praying for you\" means everything — but it can feel empty without evidence. A PrayerBand is evidence. It's a physical covenant that says: I have placed you before God, and this band will carry that prayer wherever it travels." },
-                { quote: false, text: "Every band holds a unique ID. Every tap of an NFC chip opens a digital record — not just of who has held it, but of every prayer ever prayed through it. Communities form. Chains of intercession stretch across cities, continents, generations." },
-                { quote: false, text: "You don't have to be a pastor to start a movement. You just have to be willing to slip a band on someone's wrist." },
-              ].map((block, i) => (
-                <p
-                  key={i}
-                  className={block.quote ? "playfair" : "lato"}
-                  style={{
-                    fontSize: block.quote ? 22 : 17,
-                    lineHeight: 1.85,
-                    color: block.quote ? "#5C3D2E" : "#6B4C35",
-                    fontStyle: block.quote ? "italic" : "normal",
-                    fontWeight: block.quote ? 400 : 300,
-                    paddingLeft: block.quote ? 24 : 0,
-                    borderLeft: block.quote ? "3px solid #C8A96E" : "none",
-                  }}
-                >
-                  {block.text}
-                </p>
-              ))}
-            </div>
-          </RevealSection>
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section id="how" style={{ padding: "100px 32px", background: "#FDFAF5" }}>
-        <div style={{ maxWidth: 1160, margin: "0 auto" }}>
-          <RevealSection>
-            <div style={{ textAlign: "center", marginBottom: 64 }}>
-              <span className="section-label">How It Works</span>
-              <h2 className="playfair" style={{ fontSize: "clamp(30px, 4vw, 48px)", fontWeight: 600, lineHeight: 1.2, marginBottom: 24 }}>
-                Prayer Made Tangible
-              </h2>
-              <div className="divider" />
-            </div>
-          </RevealSection>
-
-          <div className="steps-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 28 }}>
-            {JOURNEY_STEPS.map((step, i) => (
-              <RevealSection key={i} style={{ transitionDelay: `${i * 0.15}s` }}>
+      {/* ── How It Works ── */}
+      <section id="how" className="how section">
+        <div className="container">
+          <Reveal>
+            <div className="section-label">How It Works</div>
+            <h2 className="section-title">Four Steps.<br /><em>One Unbroken Chain.</em></h2>
+          </Reveal>
+          <div className="steps-grid">
+            {STEPS.map((s, i) => (
+              <Reveal key={s.num} delay={i * 100}>
                 <div className="step-card">
-                  <div style={{ fontSize: 40, marginBottom: 20 }}>{step.icon}</div>
-                  <div className="lato" style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: step.color, marginBottom: 10, fontWeight: 700 }}>Step {i + 1}</div>
-                  <h3 className="playfair" style={{ fontSize: 22, fontWeight: 600, marginBottom: 14, color: "#2C1A0E" }}>{step.title}</h3>
-                  <p className="lato" style={{ fontSize: 15, lineHeight: 1.75, color: "#6B4C35", fontWeight: 300 }}>{step.desc}</p>
-                  <div style={{ marginTop: 24, width: 28, height: 2, background: step.color }} />
+                  <div className="step-line" />
+                  <div className="step-num">{s.num}</div>
+                  <div className="step-title">{s.title}</div>
+                  <div className="step-desc">{s.desc}</div>
                 </div>
-              </RevealSection>
-            ))}
-          </div>
-
-          {/* NFC callout */}
-          <RevealSection>
-            <div style={{ marginTop: 56, background: "linear-gradient(135deg, #2C1A0E, #4A2E1A)", borderRadius: 12, padding: "40px 48px", display: "flex", alignItems: "center", gap: 36, flexWrap: "wrap" }}>
-              <div style={{ fontSize: 48 }}>📡</div>
-              <div style={{ flex: 1, minWidth: 240 }}>
-                <h3 className="playfair" style={{ fontSize: 24, color: "#FDFAF5", marginBottom: 10 }}>NFC-Enabled Bands</h3>
-                <p className="lato" style={{ fontSize: 15, color: "#C8A96E", lineHeight: 1.75, fontWeight: 300 }}>Each band contains an NFC chip — just tap any smartphone to instantly open the band's journey page. No app download needed.</p>
-              </div>
-              <button className="cta-btn" style={{ whiteSpace: "nowrap" }} onClick={() => {}}>Learn More</button>
-            </div>
-          </RevealSection>
-        </div>
-      </section>
-
-      {/* MISSION */}
-      <section id="mission" style={{ padding: "100px 32px", background: "#2C1A0E", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 30% 50%, rgba(200,169,110,0.12) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(123,174,142,0.07) 0%, transparent 50%)" }} />
-        <div style={{ maxWidth: 1160, margin: "0 auto", position: "relative" }}>
-          <div className="mission-inner" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
-            <RevealSection>
-              <span className="section-label" style={{ color: "#C8A96E" }}>Our Mission</span>
-              <h2 className="playfair" style={{ fontSize: "clamp(30px, 4vw, 48px)", fontWeight: 600, color: "#FDFAF5", lineHeight: 1.2, marginBottom: 28 }}>
-                A Band Around<br />
-                <em style={{ color: "#C8A96E" }}>Every Wrist on Earth</em>
-              </h2>
-              <div style={{ width: 48, height: 2, background: "#C8A96E", marginBottom: 32 }} />
-              <p className="lato" style={{ fontSize: 16, lineHeight: 1.85, color: "#C8B49A", fontWeight: 300, marginBottom: 24 }}>
-                We believe the Church is not a building — it's a network of people praying for one another across every divide. PrayerBands exists to make that network visible, trackable, and impossible to ignore.
-              </p>
-              <p className="lato" style={{ fontSize: 16, lineHeight: 1.85, color: "#C8B49A", fontWeight: 300 }}>
-                Every registration is a data point in a global map of intercession. Every passed band is a thread connecting strangers through a shared act of faith.
-              </p>
-            </RevealSection>
-
-            <RevealSection>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-                {[
-                  { icon: "🌍", label: "Global Reach", desc: "Bands tracked across 47 countries and counting" },
-                  { icon: "⛪", label: "Church Packs", desc: "Bulk orders with custom ministry prefixes" },
-                  { icon: "🔗", label: "Prayer Chains", desc: "Infinite-depth lineage — your prayers ripple forever" },
-                  { icon: "📊", label: "Ministry Insights", desc: "See your community's impact on a live dashboard" },
-                ].map((item, i) => (
-                  <div key={i} style={{
-                    background: "rgba(253,250,245,0.05)", border: "1px solid rgba(200,169,110,0.15)",
-                    borderRadius: i === 0 ? "8px 0 0 0" : i === 1 ? "0 8px 0 0" : i === 2 ? "0 0 0 8px" : "0 0 8px 0",
-                    padding: "28px 24px",
-                  }}>
-                    <div style={{ fontSize: 30, marginBottom: 12 }}>{item.icon}</div>
-                    <div className="playfair" style={{ fontSize: 16, color: "#FDFAF5", marginBottom: 8, fontWeight: 600 }}>{item.label}</div>
-                    <div className="lato" style={{ fontSize: 13, color: "#9B7B62", lineHeight: 1.6, fontWeight: 300 }}>{item.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </RevealSection>
-          </div>
-        </div>
-      </section>
-
-      {/* STATS */}
-      <section style={{ padding: "64px 32px", background: "#F5EFE4", borderTop: "1px solid #E8DFD0", borderBottom: "1px solid #E8DFD0" }}>
-        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-          <div className="stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }}>
-            {STATS.map((stat, i) => (
-              <RevealSection key={i}>
-                <div className="stat-item" style={{ borderRight: i < STATS.length - 1 ? "1px solid #E8DFD0" : "none" }}>
-                  <div className="playfair" style={{ fontSize: 42, fontWeight: 700, color: "#C8A96E", marginBottom: 8 }}>{stat.value}</div>
-                  <div className="lato" style={{ fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "#9B7B62" }}>{stat.label}</div>
-                </div>
-              </RevealSection>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* PRAYER WALL FEED */}
-      <section id="wall" style={{ padding: "100px 32px", background: "#FDFAF5" }}>
-        <div style={{ maxWidth: 1160, margin: "0 auto" }}>
-          <RevealSection>
-            <div style={{ textAlign: "center", marginBottom: 64 }}>
-              <span className="section-label">Live Prayer Wall</span>
-              <h2 className="playfair" style={{ fontSize: "clamp(30px, 4vw, 48px)", fontWeight: 600, lineHeight: 1.2, marginBottom: 24 }}>
-                Prayers From Around the World
-              </h2>
-              <div className="divider" style={{ marginBottom: 16 }} />
-              <p className="lato" style={{ fontSize: 15, color: "#9B7B62", fontWeight: 300, maxWidth: 480, margin: "0 auto" }}>
-                Each card below represents a real prayer left on a real band, traveling through real hands.
+      {/* ── Prayer Wall ── */}
+      <section id="wall" className="wall section">
+        <div className="container">
+          <div className="wall-inner">
+            <Reveal>
+              <div className="section-label">Live Prayer Wall</div>
+              <h2 className="section-title">Believers Praying<br /><em>Right Now</em></h2>
+              <p className="section-body" style={{ marginTop: "24px" }}>
+                Every prayer attached to a band is a real act of faith from a real person. Watch the network grow in real time — names, places, and words of prayer from around the world.
               </p>
-            </div>
-          </RevealSection>
-
-          <div className="prayers-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
-            {PRAYERS.map((p, i) => (
-              <RevealSection key={i} style={{ transitionDelay: `${(i % 3) * 0.1}s` }}>
-                <div
-                  className="prayer-card"
-                  onClick={() => setActivePrayer(activePrayer === i ? null : i)}
-                  style={{ borderTop: `3px solid ${p.color}` }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: p.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <span className="lato" style={{ fontSize: 12, color: "#fff", fontWeight: 700 }}>{p.initials}</span>
-                      </div>
+              <div style={{ marginTop: "40px" }}>
+                <Link href="/prayer-wall" className="btn-primary">View Full Prayer Wall</Link>
+              </div>
+            </Reveal>
+            <Reveal delay={200}>
+              <div className="prayer-ticker">
+                <div className="prayer-ticker-header">
+                  <div className="live-dot" />
+                  <div className="live-label">Live — Updating Now</div>
+                </div>
+                {PRAYERS.map((p, i) => (
+                  <div
+                    key={p.band}
+                    className="prayer-item"
+                    style={{
+                      opacity: i === activePrayer ? 1 : i === (activePrayer + 1) % PRAYERS.length || i === (activePrayer - 1 + PRAYERS.length) % PRAYERS.length ? 0.6 : 0.35,
+                      background: i === activePrayer ? "rgba(200,169,110,0.06)" : "transparent",
+                    }}
+                  >
+                    <div className="prayer-meta">
+                      <div className="prayer-avatar">{p.initials}</div>
                       <div>
-                        <span className="band-tag" style={{ background: `${p.color}18`, color: p.color, border: `1px solid ${p.color}44` }}>{p.band}</span>
-                        <div className="lato" style={{ fontSize: 11, color: "#9B7B62", marginTop: 3 }}>📍 {p.location}</div>
+                        <div className="prayer-who">{p.initials}</div>
+                        <div className="prayer-where">{p.location} · {p.time}</div>
                       </div>
                     </div>
-                    <div className="lato" style={{ fontSize: 11, color: "#C8B49A", textAlign: "right" }}>{p.time}</div>
+                    <div className="prayer-text">&ldquo;{p.text}&rdquo;</div>
+                    <div className="prayer-band">{p.band}</div>
                   </div>
-                  <p className="playfair" style={{ fontSize: 15, lineHeight: 1.8, color: "#5C3D2E", fontStyle: "italic" }}>"{p.prayer}"</p>
+                ))}
+                <div className="wall-cta">
+                  <a href="/prayer-wall">See all prayers →</a>
                 </div>
-              </RevealSection>
-            ))}
+              </div>
+            </Reveal>
           </div>
-
-          <RevealSection>
-            <div style={{ textAlign: "center", marginTop: 52 }}>
-              <a href="/prayer-wall" style={{ textDecoration: "none" }}><button className="cta-btn-outline">See Full Prayer Wall</button></a>
-            </div>
-          </RevealSection>
         </div>
       </section>
 
-      {/* STORE CTA */}
-      <section id="store" style={{ padding: "100px 32px", background: "linear-gradient(160deg, #F5EFE4 0%, #EDE3D1 100%)" }}>
-        <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
-          <RevealSection>
-            <span className="section-label">Get Started</span>
-            <h2 className="playfair" style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 600, lineHeight: 1.15, marginBottom: 24 }}>
-              Start Your Chain<br />
-              <em style={{ color: "#C8A96E" }}>of Intercession</em>
-            </h2>
-            <div className="divider" style={{ marginBottom: 32 }} />
-            <p className="lato" style={{ fontSize: 17, lineHeight: 1.8, color: "#6B4C35", maxWidth: 520, margin: "0 auto 48px", fontWeight: 300 }}>
-              Individual bands. Church packs. Mission quantities. Every order ships NFC-enabled and engraved, ready to carry a prayer.
+      {/* ── Subscriptions ── */}
+      <section id="subscribe" className="subs section">
+        <div className="container">
+          <Reveal>
+            <div className="section-label">Subscription Bands</div>
+            <h2 className="section-title">Keep the<br /><em>Chain Growing</em></h2>
+            <p className="section-body" style={{ marginTop: "16px" }}>
+              Receive new bands on a schedule — so you always have one ready to give. Each band is a prayer waiting to begin its journey.
             </p>
-            <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-              <a href="/store" style={{ textDecoration: "none" }}><button className="cta-btn" style={{ fontSize: 15, padding: "16px 44px" }}>Shop Bands</button></a>
-              <a href="/store#packs" style={{ textDecoration: "none" }}><button className="cta-btn-outline">Church & Bulk Orders</button></a>
-            </div>
-            <div className="lato" style={{ marginTop: 32, fontSize: 13, color: "#9B7B62", letterSpacing: "0.08em" }}>
-              Starting at $5 per band · Ships worldwide · NFC + Laser-engraved ID
-            </div>
-          </RevealSection>
+          </Reveal>
+          <div className="plans-grid">
+            {PLANS.map((p, i) => (
+              <Reveal key={p.name} delay={i * 100}>
+                <div className={`plan-card${p.badge ? " featured" : ""}`}>
+                  {p.badge && <div className="plan-badge">{p.badge}</div>}
+                  <div className="plan-name">{p.name}</div>
+                  <div>
+                    <span className="plan-price">{p.price}</span>
+                    <span className="plan-period">{p.period}</span>
+                  </div>
+                  <div className="plan-divider" />
+                  <div className="plan-desc">{p.desc}</div>
+                  <Link href="/subscribe" className="plan-btn">Subscribe</Link>
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer style={{ background: "#1A0F06", padding: "72px 32px 40px", color: "#C8B49A" }}>
-        <div style={{ maxWidth: 1160, margin: "0 auto" }}>
-          <div className="footer-cols" style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 56, marginBottom: 56 }}>
-            {/* Brand */}
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-                <Logo size={30} color="#FDFAF5" />
-                <span className="playfair" style={{ fontSize: 18, color: "#FDFAF5", fontWeight: 600 }}>PrayerBands</span>
-              </div>
-              <p className="lato" style={{ fontSize: 13, lineHeight: 1.85, fontWeight: 300, maxWidth: 280 }}>
-                A global ministry platform connecting people through prayer, one wristband at a time.
-              </p>
-              <div style={{ display: "flex", gap: 14, marginTop: 24 }}>
-                {[
-                  { label: "IG", icon: "instagram" as IconName },
-                  { label: "FB", icon: "facebook" as IconName },
-                  { label: "TW", icon: "twitter" as IconName },
-                  { label: "YT", icon: null },
-                ].map(s => (
-                  <div key={s.label} style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(200,169,110,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                    {s.icon
-                      ? <Icon name={s.icon} size={15} color="#C8A96E" bg="#1A0F06" />
-                      : <span className="lato" style={{ fontSize: 10, color: "#C8A96E", fontWeight: 700 }}>{s.label}</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Links */}
+      {/* ── Testimonials ── */}
+      <section className="testimonials section">
+        <div className="container">
+          <Reveal>
+            <div className="section-label">Stories</div>
+            <h2 className="section-title">What People<br /><em>Are Saying</em></h2>
+          </Reveal>
+          <div className="testi-grid">
             {[
-              { title: "Ministry", links: ["Our Story", "Mission", "Prayer Wall", "Band Journeys"] },
-              { title: "Store", links: ["Individual Bands", "Church Packs", "Custom Orders", "Track My Order"] },
-              { title: "Account", links: ["Sign In", "My Dashboard", "My Bands", "Settings"] },
-            ].map(col => (
-              <div key={col.title}>
-                <div className="lato" style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#C8A96E", marginBottom: 20, fontWeight: 700 }}>{col.title}</div>
-                {col.links.map(link => (
-                  <div key={link} style={{ marginBottom: 12 }}>
-                    <a className="lato" style={{ fontSize: 13, color: "#9B7B62", textDecoration: "none", cursor: "pointer", transition: "color 0.2s" }}
-                       onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = "#C8A96E"}
-onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = "#9B7B62"}>{link}</a>
-                  </div>
-                ))}
-              </div>
+              { q: "I received a band from a stranger at a coffee shop. When I tapped it and read the prayers — I wept. Someone I'd never met had been praying for exactly what I was going through.", a: "Rachel M.", where: "Austin, TX" },
+              { q: "We gave 50 bands at our youth retreat. Three months later, kids are still texting me photos of where their bands have traveled. It started conversations about faith I never expected.", a: "Pastor James L.", where: "Atlanta, GA" },
+              { q: "My mother passed this band to me on her deathbed. It now holds her prayer. I will pass it to my daughter. This isn't just a product — it's a legacy.", a: "Anonymous", where: "Dublin, Ireland" },
+            ].map((t, i) => (
+              <Reveal key={i} delay={i * 120}>
+                <div className="testi-card">
+                  <div className="testi-stars">★★★★★</div>
+                  <div className="testi-quote">&ldquo;{t.q}&rdquo;</div>
+                  <div className="testi-author">{t.a}</div>
+                  <div className="testi-place">{t.where}</div>
+                </div>
+              </Reveal>
             ))}
           </div>
+        </div>
+      </section>
 
-          {/* Bottom bar */}
-          <div style={{ borderTop: "1px solid rgba(200,169,110,0.12)", paddingTop: 28, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-            <div className="lato" style={{ fontSize: 12, color: "#5C3D2E", fontWeight: 300 }}>
-              © 2026 PrayerBands.com · Carrying His word around the world
+      {/* ── Ministry CTA ── */}
+      <section className="ministry section">
+        <div className="container">
+          <Reveal>
+            <div className="ministry-inner">
+              <div>
+                <div className="section-label">Churches & Ministries</div>
+                <div className="ministry-title">Equip Your Congregation<br />to Pray Without Ceasing</div>
+                <p className="ministry-desc">
+                  Bulk pricing for churches, youth groups, and mission organizations. Give every member a band and watch your prayer culture transform. We offer 10–20% discounts on orders of 50+.
+                </p>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", flexShrink: 0 }}>
+                <Link href="/store" className="btn-primary">Shop Bulk Orders</Link>
+                <Link href="/contact" className="btn-ghost">Talk to Us</Link>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 28 }}>
-              {["Privacy", "Terms", "Contact"].map(l => (
-                <a key={l} className="lato" style={{ fontSize: 12, color: "#5C3D2E", textDecoration: "none", cursor: "pointer" }}>{l}</a>
-              ))}
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer className="footer section">
+        <div className="container">
+          <div className="footer-inner">
+            <div>
+              <div className="footer-brand">PrayerBands</div>
+              <div className="footer-tagline">
+                A living chain of prayer, passed hand to hand, carried by faith around the world.
+              </div>
             </div>
+            <div>
+              <div className="footer-col-title">Platform</div>
+              <Link href="/store" className="footer-link">Get Bands</Link>
+              <Link href="/subscribe" className="footer-link">Subscribe</Link>
+              <Link href="/prayer-wall" className="footer-link">Prayer Wall</Link>
+              <Link href="/dashboard" className="footer-link">My Dashboard</Link>
+            </div>
+            <div>
+              <div className="footer-col-title">About</div>
+              <Link href="/about" className="footer-link">Our Story</Link>
+              <Link href="/contact" className="footer-link">Contact</Link>
+              <Link href="/faq" className="footer-link">FAQ</Link>
+            </div>
+            <div>
+              <div className="footer-col-title">Account</div>
+              <Link href="/signin" className="footer-link">Sign In</Link>
+              <Link href="/signin" className="footer-link">Create Account</Link>
+              <Link href="/dashboard" className="footer-link">Dashboard</Link>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <div className="footer-copy">© {new Date().getFullYear()} PrayerBands. All rights reserved.</div>
+            <div className="footer-verse">"Pray without ceasing." — 1 Thessalonians 5:17</div>
           </div>
         </div>
       </footer>
-    </div>
+    </>
   );
 }
