@@ -141,7 +141,7 @@ export default function NetworkSection({ userId }: { userId: string }) {
 
   return (
     <div style={{ marginBottom: 32 }}>
-      <h3 style={{ fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK, margin: '0 0 14px 0' }}>Prayer Network</h3>
+      <h3 style={{ fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK, margin: '0 0 14px 0' }}>Prayer Partners</h3>
 
       {/* Pending incoming requests */}
       {pending.map(p => (

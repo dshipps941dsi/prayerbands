@@ -718,7 +718,7 @@ export default function BandPage() {
             ) : (
               <div style={{ background: 'white', borderRadius: 14, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div>
-                <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Sign in to use your Prayer Network</div>
+                <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Sign in to use your Prayer Partners</div>
                 <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 16, lineHeight: 1.5 }}>
                   Connect with others in prayer, share requests, and join circles.
                 </div>

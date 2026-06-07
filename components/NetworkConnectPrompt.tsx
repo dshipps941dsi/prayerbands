@@ -86,7 +86,7 @@ export default function NetworkConnectPrompt({ bandId }: { bandId: string }) {
   if (state.status === 'accepted') {
     return (
       <div style={{ ...cardStyle, border: '1px solid rgba(44,24,16,0.12)' }}>
-        <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, color: DARK }}>Already in your Prayer Network 🙏</div>
+        <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, color: DARK }}>Already in your Prayer Partners 🙏</div>
       </div>
     )
   }
@@ -130,8 +130,8 @@ export default function NetworkConnectPrompt({ bandId }: { bandId: string }) {
   return (
     <div style={cardStyle}>
       {title(`Connect with ${name} in prayer`)}
-      {sub('Add them to your Prayer Network so you can lift each other up.')}
-      {goldButton(working ? 'Sending...' : 'Add to Prayer Network', connect, working)}
+      {sub('Add them to your Prayer Partners so you can lift each other up.')}
+      {goldButton(working ? 'Sending...' : 'Add to Prayer Partners', connect, working)}
     </div>
   )
 }

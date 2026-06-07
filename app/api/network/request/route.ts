@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
               </div>
               <div style="padding:32px">
                 <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 20px">
-                  <strong style="color:#1a6b4a">${requesterName}</strong> tapped your prayer band and asked to connect with you in your Prayer Network. If you accept, you'll be able to lift each other up in prayer.
+                  <strong style="color:#1a6b4a">${requesterName}</strong> tapped your prayer band and asked to connect with you as Prayer Partners. If you accept, you'll be able to lift each other up in prayer.
                 </p>
                 <div style="text-align:center;margin:28px 0">
                   <a href="https://prayerbands.com/dashboard?tab=prayers" style="display:inline-block;background:#1a6b4a;color:#fff;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:16px;font-weight:700;font-family:Georgia,serif">Review the Request ✝</a>
