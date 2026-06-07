@@ -5,8 +5,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
 import Icon, { type IconName } from '@/components/Icon'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
-import CirclesSection from '@/components/CirclesSection'
-import NetworkSection from '@/components/NetworkSection'
+import PrayerTabs from '@/components/PrayerTabs'
 import PurchaseTab from '@/components/PurchaseTab'
 
 const VERSES = [
@@ -710,11 +709,7 @@ export default function BandPage() {
         {activeTab === 'prayers' && (
           <div style={{ padding: '24px 20px' }}>
             {userId ? (
-              <>
-                <NetworkSection userId={userId} />
-                <div style={{ height: 1, background: '#E8DCC8', margin: '0 0 24px' }} />
-                <CirclesSection userId={userId} />
-              </>
+              <PrayerTabs userId={userId} />
             ) : (
               <div style={{ background: 'white', borderRadius: 14, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div>

@@ -3,8 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import LivingPrayerList from '@/components/LivingPrayerList'
 import Logo from '@/components/Logo'
-import CirclesSection from '@/components/CirclesSection'
-import NetworkSection from '@/components/NetworkSection'
+import PrayerTabs from '@/components/PrayerTabs'
 
 type Band = {
   id: string
@@ -721,8 +720,7 @@ export default function Dashboard() {
             </button>
           )}
         </div>
-        {!isViewingAs && <NetworkSection userId={user?.id} />}
-        {!isViewingAs && <CirclesSection userId={user?.id} />}
+        {!isViewingAs && <PrayerTabs userId={user?.id} />}
         {prayers.length === 0 ? (
           <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '40px 20px', textAlign: 'center', color: '#8a7c6a', fontSize: 14 }}>
             Prayers will appear here as people register your bands.

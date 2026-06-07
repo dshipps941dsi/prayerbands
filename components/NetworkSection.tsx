@@ -36,7 +36,9 @@ const BORDER = '#E8DCC8'
 const CREAM = '#FAF6EF'
 const serif = 'Playfair Display, Georgia, serif'
 
-export default function NetworkSection({ userId }: { userId: string }) {
+export default function NetworkSection({ userId, section = 'all' }: { userId: string; section?: 'all' | 'partners' | 'requests' }) {
+  const showPartners = section === 'all' || section === 'partners'
+  const showRequests = section === 'all' || section === 'requests'
   const [connections, setConnections] = useState<Connection[]>([])
   const [pending, setPending] = useState<PendingRequest[]>([])
   const [myRequests, setMyRequests] = useState<NetworkRequest[]>([])
@@ -141,8 +143,9 @@ export default function NetworkSection({ userId }: { userId: string }) {
 
   return (
     <div style={{ marginBottom: 32 }}>
-      <h3 style={{ fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK, margin: '0 0 14px 0' }}>Prayer Partners</h3>
+      {section === 'all' && <h3 style={{ fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK, margin: '0 0 14px 0' }}>Prayer Partners</h3>}
 
+      {showPartners && (<>
       {/* Pending incoming requests */}
       {pending.map(p => (
         <div key={p.connection_id} style={{ backgroundColor: '#FFF8E7', border: `1px solid #F0D080`, borderRadius: 10, padding: '14px 16px', marginBottom: 10 }}>
@@ -183,9 +186,11 @@ export default function NetworkSection({ userId }: { userId: string }) {
           <p style={{ fontSize: 14, color: GRAY, margin: 0, lineHeight: 1.5 }}>Tap your band to someone else&rsquo;s phone to connect in prayer.</p>
         </div>
       )}
+      </>)}
 
       {/* My Prayer Requests */}
-      <div style={{ marginTop: 20 }}>
+      {showRequests && (
+      <div style={{ marginTop: section === 'all' ? 20 : 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <h4 style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0 }}>My Prayer Requests</h4>
           {!showForm && (
@@ -220,6 +225,7 @@ export default function NetworkSection({ userId }: { userId: string }) {
           </div>
         ))}
       </div>
+      )}
     </div>
   )
 }
