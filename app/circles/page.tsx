@@ -163,7 +163,7 @@ export default function CirclesPage() {
           }}>
             Enter Join Code
           </label>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <input
               type="text"
               value={code}
@@ -176,7 +176,8 @@ export default function CirclesPage() {
               maxLength={6}
               placeholder="GRACE7"
               style={{
-                flex: 1,
+                width: '100%',
+                boxSizing: 'border-box',
                 padding: '12px 16px',
                 fontSize: '20px',
                 letterSpacing: '0.2em',
@@ -194,16 +195,17 @@ export default function CirclesPage() {
               onClick={handleLookup}
               disabled={loading || code.length < 4}
               style={{
+                width: '100%',
+                boxSizing: 'border-box',
                 backgroundColor: code.length >= 4 ? '#2C1810' : '#D4C5B0',
                 color: '#fff',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '12px 20px',
-                fontSize: '14px',
+                padding: '14px 20px',
+                fontSize: '15px',
                 fontFamily: 'Georgia, serif',
                 fontWeight: '600',
-                cursor: code.length >= 4 ? 'pointer' : 'default',
-                whiteSpace: 'nowrap'
+                cursor: code.length >= 4 ? 'pointer' : 'default'
               }}
             >
               {loading ? 'Looking...' : 'Find Circle'}

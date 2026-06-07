@@ -20,21 +20,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify user owns at least one registered band. Uses the service-role
-    // client so this works regardless of RLS on the bands table.
+    // Verify the user is a band holder. A holder either OWNS a band
+    // (bands.owner_id — purchasers) OR has REGISTERED one (registrations.user_id
+    // — anyone who claimed/holds a band). Service-role so RLS doesn't interfere.
     const admin = createServiceClient()
-    const { data: band } = await admin
+    const { data: ownedBands } = await admin
       .from('bands')
       .select('id')
       .eq('owner_id', user.id)
       .limit(1)
-      .single()
+    const { data: registeredBands } = await admin
+      .from('registrations')
+      .select('id, band_id')
+      .eq('user_id', user.id)
+      .limit(1)
 
-    if (!band) {
+    const ownsBand = !!(ownedBands && ownedBands.length)
+    const hasRegistration = !!(registeredBands && registeredBands.length)
+    console.log('[circles/create] band check', { userId: user.id, ownsBand, hasRegistration })
+
+    if (!ownsBand && !hasRegistration) {
       return NextResponse.json(
         { error: 'You must be a band holder to create a Prayer Circle' },
         { status: 403 }
       )
+    }
+
+    // Numeric bands.id to record which band qualified them (nullable metadata).
+    let qualifyingBandId: number | null = ownsBand ? (ownedBands![0].id as number) : null
+    if (qualifyingBandId === null && hasRegistration && registeredBands![0].band_id) {
+      const { data: regBand } = await admin
+        .from('bands')
+        .select('id')
+        .eq('band_id', registeredBands![0].band_id)
+        .maybeSingle()
+      qualifyingBandId = (regBand?.id as number) ?? null
     }
 
     const { name, description } = await req.json()
@@ -75,7 +95,7 @@ export async function POST(req: NextRequest) {
         description: description?.trim() || null,
         join_code,
         created_by: user.id,
-        qualifying_band_id: band.id
+        qualifying_band_id: qualifyingBandId
       })
       .select()
       .single()

@@ -10,6 +10,8 @@ export default function NewCirclePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [needsAccount, setNeedsAccount] = useState(false)
+  const [created, setCreated] = useState<{ id: string; join_code: string } | null>(null)
+  const [copied, setCopied] = useState('')
 
   async function handleCreate() {
     if (!name.trim()) return
@@ -42,7 +44,49 @@ export default function NewCirclePage() {
       return
     }
 
-    router.push(`/circles/${data.circle.id}?new=true`)
+    setCreated({ id: data.circle.id, join_code: data.circle.join_code })
+    setLoading(false)
+  }
+
+  function copy(value: string, which: string) {
+    navigator.clipboard.writeText(value)
+    setCopied(which)
+    setTimeout(() => setCopied(''), 2000)
+  }
+
+  // ── Confirmation screen (after a circle is created) ──
+  if (created) {
+    const link = `https://prayerbands.com/circles?code=${created.join_code}`
+    const shareText = `Join my Prayer Circle on PrayerBands. Enter code ${created.join_code} at ${link}`
+    const shareOption = (label: string, onClick: () => void, href?: string) => {
+      const style: React.CSSProperties = { display: 'block', width: '100%', boxSizing: 'border-box', textAlign: 'center', backgroundColor: '#fff', border: '1px solid #E8DCC8', borderRadius: 10, padding: '13px', fontSize: 14, fontFamily: 'Georgia, serif', color: '#2C1810', cursor: 'pointer', textDecoration: 'none', marginBottom: 10 }
+      return href
+        ? <a href={href} style={style}>{label}</a>
+        : <button onClick={onClick} style={style}>{label}</button>
+    }
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: '#FAF6EF', fontFamily: 'Georgia, serif', padding: '0 0 80px 0' }}>
+        <div style={{ padding: '48px 24px 0', maxWidth: 480, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ fontSize: 40, color: '#7BAE8E', marginBottom: 12 }}>✓</div>
+          <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 26, fontWeight: 700, color: '#2C1810', margin: '0 0 8px' }}>Circle Created!</h1>
+          <p style={{ fontSize: 14, color: '#8B7355', margin: '0 0 28px', lineHeight: 1.5 }}>Share this code so others can join your circle.</p>
+
+          <div style={{ backgroundColor: '#fff', border: '2px solid #B8860B', borderRadius: 14, padding: '24px', marginBottom: 24 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#B8860B', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Join Code</div>
+            <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 36, fontWeight: 700, letterSpacing: '0.25em', color: '#2C1810' }}>{created.join_code}</div>
+          </div>
+
+          {shareOption(copied === 'code' ? 'Copied!' : 'Copy Code', () => copy(created.join_code, 'code'))}
+          {shareOption(copied === 'link' ? 'Copied!' : 'Copy Link', () => copy(link, 'link'))}
+          {shareOption('Share via Text', () => {}, `sms:?&body=${encodeURIComponent(shareText)}`)}
+          {shareOption('Share via WhatsApp', () => {}, `https://wa.me/?text=${encodeURIComponent(shareText)}`)}
+
+          <button onClick={() => router.push(`/circles/${created.id}`)} style={{ width: '100%', boxSizing: 'border-box', backgroundColor: '#B8860B', color: '#fff', border: 'none', borderRadius: 10, padding: '16px', fontSize: 16, fontFamily: 'Playfair Display, Georgia, serif', fontWeight: 700, cursor: 'pointer', marginTop: 14 }}>
+            Go to Circle →
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
