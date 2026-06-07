@@ -817,6 +817,7 @@ export default function BandPage() {
             <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Just add a prayer</button>
           </div>
         )}
+        <NetworkConnectPrompt bandId={bandId} />
         {claimStep === 'form' && <ClaimForm title="Join the Journey" subtitle="Your prayer becomes part of this band's story forever." submitLabel="Add my prayer to this band ✝" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
         {claimStep === 'done' && <SuccessCard title="You're part of this story" subtitle="Your prayer has been woven into this band's journey. When you pass it on, they'll see every prayer that came before — including yours." />}
         <div style={{ height: 40 }} />
