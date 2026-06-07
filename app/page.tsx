@@ -181,6 +181,38 @@ export default function HomePage() {
           transition: background 0.25s, color 0.25s;
         }
         .nav-cta:hover { background: var(--gold); color: var(--navy); }
+        .nav-toggle {
+          display: none;
+          flex-direction: column; justify-content: center; gap: 5px;
+          width: 40px; height: 40px;
+          background: none; border: none; cursor: pointer; padding: 8px;
+        }
+        .nav-toggle span {
+          display: block; width: 22px; height: 2px;
+          background: var(--cream); border-radius: 2px;
+          transition: transform 0.25s, opacity 0.25s;
+        }
+        .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .nav-toggle.open span:nth-child(2) { opacity: 0; }
+        .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+        .nav-mobile {
+          display: flex; flex-direction: column;
+          background: rgba(10,22,40,0.98);
+          backdrop-filter: blur(20px);
+          border-top: 1px solid var(--border);
+          padding: 8px 24px 16px;
+        }
+        .nav-mobile-link {
+          color: rgba(245,237,216,0.85);
+          font-size: 0.95rem; letter-spacing: 0.08em;
+          text-decoration: none;
+          padding: 15px 4px;
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .nav-mobile-link:last-child {
+          border-bottom: none; color: var(--gold2); font-family: 'Cinzel', serif; font-weight: 600;
+        }
+        @media (min-width: 601px) { .nav-mobile { display: none !important; } }
 
         /* ── Hero ── */
         .hero {
@@ -715,6 +747,7 @@ export default function HomePage() {
         @media (max-width: 600px) {
           .steps-grid, .plans-grid, .stats-grid { grid-template-columns: 1fr; }
           .nav-links { display: none; }
+          .nav-toggle { display: flex; }
           .container { padding: 0 20px; }
           .hero { padding: 100px 20px 60px; }
           .footer-inner { grid-template-columns: 1fr; }
@@ -723,7 +756,7 @@ export default function HomePage() {
       `}</style>
 
       {/* ── Nav ── */}
-      <nav className={`nav${scrolled ? " scrolled" : ""}`}>
+      <nav className={`nav${scrolled || menuOpen ? " scrolled" : ""}`}>
         <div className="nav-inner">
           <Link href="/" className="nav-logo" style={{ display: "inline-flex", alignItems: "center", gap: 10 }}><PrayerBandsLogo size={26} color="#E2C98A" />Prayer<span>Bands</span></Link>
           <div className="nav-links">
@@ -733,7 +766,24 @@ export default function HomePage() {
             <Link href="/store" className="nav-link">Store</Link>
             <Link href="/signin" className="nav-cta">Sign In</Link>
           </div>
+          <button
+            className={`nav-toggle${menuOpen ? " open" : ""}`}
+            aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(o => !o)}
+          >
+            <span /><span /><span />
+          </button>
         </div>
+        {menuOpen && (
+          <div className="nav-mobile">
+            <Link href="#mission" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Our Mission</Link>
+            <Link href="#how" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>How It Works</Link>
+            <Link href="#wall" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Prayer Network</Link>
+            <Link href="/store" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Store</Link>
+            <Link href="/signin" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Sign In</Link>
+          </div>
+        )}
       </nav>
 
       {/* ── Hero ── */}
