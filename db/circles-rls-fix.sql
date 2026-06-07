@@ -12,6 +12,7 @@
 -- while open circles stay publicly look-up-able by join code.
 
 DROP POLICY IF EXISTS "Anyone can look up a circle by join code" ON prayer_circles;
+DROP POLICY IF EXISTS "View circles" ON prayer_circles;
 
 CREATE POLICY "View circles"
   ON prayer_circles FOR SELECT
