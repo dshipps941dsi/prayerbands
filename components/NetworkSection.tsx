@@ -47,6 +47,8 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [showForm, setShowForm] = useState(false)
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [visibility, setVisibility] = useState<'private' | 'public'>('private')
+  const [anonymity, setAnonymity] = useState<'anonymous' | 'first_initial'>('first_initial')
 
   async function load() {
     const res = await fetch('/api/network/my-network')
@@ -104,7 +106,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       const res = await fetch('/api/network/prayer-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_text: text.trim() }),
+        body: JSON.stringify({ request_text: text.trim(), visibility, anonymity }),
       })
       if (res.ok) {
         const d = await res.json()
@@ -201,8 +203,25 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         {showForm && (
           <div style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, marginBottom: 10 }}>
             <textarea value={text} onChange={e => setText(e.target.value)} placeholder="What would you like your network to pray for?" rows={3} maxLength={400} autoFocus style={{ width: '100%', padding: '10px 14px', fontSize: 14, fontFamily: 'Georgia, serif', color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', resize: 'none', boxSizing: 'border-box', lineHeight: 1.6 }} />
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <button onClick={() => { setShowForm(false); setText('') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid #D4C5B0`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
+
+            <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Who can see this?</div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => setVisibility('private')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: `1px solid ${visibility === 'private' ? GOLD : BORDER}`, background: visibility === 'private' ? '#FFF8E7' : '#fff', color: visibility === 'private' ? GOLD : GRAY, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: visibility === 'private' ? 600 : 400, cursor: 'pointer' }}>🔒 My Network</button>
+              <button onClick={() => setVisibility('public')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: `1px solid ${visibility === 'public' ? GOLD : BORDER}`, background: visibility === 'public' ? '#FFF8E7' : '#fff', color: visibility === 'public' ? GOLD : GRAY, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: visibility === 'public' ? 600 : 400, cursor: 'pointer' }}>🌍 Public Wall</button>
+            </div>
+
+            {visibility === 'public' && (
+              <>
+                <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Show on the wall as</div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button onClick={() => setAnonymity('first_initial')} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: `1px solid ${anonymity === 'first_initial' ? GOLD : BORDER}`, background: anonymity === 'first_initial' ? '#FFF8E7' : '#fff', color: anonymity === 'first_initial' ? GOLD : GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: anonymity === 'first_initial' ? 600 : 400, cursor: 'pointer' }}>First name, last initial</button>
+                  <button onClick={() => setAnonymity('anonymous')} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: `1px solid ${anonymity === 'anonymous' ? GOLD : BORDER}`, background: anonymity === 'anonymous' ? '#FFF8E7' : '#fff', color: anonymity === 'anonymous' ? GOLD : GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: anonymity === 'anonymous' ? 600 : 400, cursor: 'pointer' }}>Anonymous</button>
+                </div>
+              </>
+            )}
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <button onClick={() => { setShowForm(false); setText(''); setVisibility('private'); setAnonymity('first_initial') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid #D4C5B0`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
               <button onClick={shareRequest} disabled={!text.trim() || submitting} style={{ flex: 2, backgroundColor: text.trim() ? GOLD : '#D4C5B0', border: 'none', borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: text.trim() ? 'pointer' : 'default' }}>{submitting ? 'Sharing...' : 'Share Request'}</button>
             </div>
           </div>

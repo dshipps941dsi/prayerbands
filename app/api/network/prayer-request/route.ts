@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
-// POST /api/network/prayer-request  { request_text }
+// POST /api/network/prayer-request  { request_text, visibility, anonymity }
 // Share a prayer request with your accepted network.
+//   visibility: 'private' (network only) | 'public' (shown on the prayer wall)
+//   anonymity (public only): 'anonymous' | 'first_initial'
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
@@ -11,14 +13,40 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { request_text } = await req.json()
+    const { request_text, visibility, anonymity } = await req.json()
     if (!request_text?.trim()) {
       return NextResponse.json({ error: 'Prayer request text is required' }, { status: 400 })
     }
 
+    const vis = visibility === 'public' ? 'public' : 'private'
+
+    // For public requests, freeze a display name now: "Anonymous", or first
+    // name + last initial from the user's profile.
+    let public_name: string | null = null
+    if (vis === 'public') {
+      if (anonymity === 'first_initial') {
+        const admin = createServiceClient()
+        const { data: prof } = await admin
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', user.id)
+          .maybeSingle()
+        const full = (prof?.full_name || '').trim()
+        if (full) {
+          const parts = full.split(/\s+/)
+          const lastInitial = parts.length > 1 ? `${parts[parts.length - 1][0].toUpperCase()}.` : ''
+          public_name = lastInitial ? `${parts[0]} ${lastInitial}` : parts[0]
+        } else {
+          public_name = prof?.email?.split('@')[0] || 'A believer'
+        }
+      } else {
+        public_name = 'Anonymous'
+      }
+    }
+
     const { data: request, error } = await supabase
       .from('prayer_network_requests')
-      .insert({ user_id: user.id, request_text: request_text.trim() })
+      .insert({ user_id: user.id, request_text: request_text.trim(), visibility: vis, public_name })
       .select()
       .single()
 

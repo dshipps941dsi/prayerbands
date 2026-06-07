@@ -13,6 +13,7 @@ type Prayer = {
   country?: string
   verse?: string
   registered_at: string
+  isNetwork?: boolean
 }
 
 const FILTERS = ['All', 'Today', 'This Week', 'International'] as const
@@ -22,6 +23,7 @@ const ACCENT_COLORS = ['#C8A96E', '#7BAE8E', '#7B8FAE', '#AE7B7B', '#B07BAE', '#
 
 export default function PrayerWallPage() {
   const [prayers, setPrayers] = useState<Prayer[]>([])
+  const [networkPrayers, setNetworkPrayers] = useState<Prayer[]>([])
   const [filtered, setFiltered] = useState<Prayer[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>('All')
@@ -83,6 +85,24 @@ export default function PrayerWallPage() {
 
   useEffect(() => {
     loadPrayers(0)
+    // Public network requests (shown alongside band prayers).
+    supabase
+      .from('prayer_network_requests')
+      .select('id, request_text, public_name, created_at')
+      .eq('visibility', 'public')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          setNetworkPrayers(data.map((r: any) => ({
+            id: 'nr-' + r.id,
+            band_id: '',
+            prayer: r.request_text,
+            user_name: r.public_name || 'Anonymous',
+            registered_at: r.created_at,
+            isNetwork: true,
+          })))
+        }
+      })
     const channel = supabase
       .channel('prayer-wall')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'registrations' }, payload => {
@@ -98,8 +118,11 @@ export default function PrayerWallPage() {
   }, [])
 
   useEffect(() => {
-    setFiltered(applyFilter(prayers, filter))
-  }, [filter, prayers, applyFilter])
+    const merged = [...networkPrayers, ...prayers].sort(
+      (a, b) => new Date(b.registered_at).getTime() - new Date(a.registered_at).getTime()
+    )
+    setFiltered(applyFilter(merged, filter))
+  }, [filter, prayers, networkPrayers, applyFilter])
 
   const submitPrayer = async () => {
     if (!message.trim()) { showToast('Please write a prayer first'); return }
@@ -149,11 +172,12 @@ export default function PrayerWallPage() {
   const getInitials = (prayer: Prayer) => {
     const name = prayer.user_name
     if (name) return name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-    return prayer.band_id.slice(-2).toUpperCase()
+    return (prayer.band_id || prayer.id).slice(-2).toUpperCase()
   }
 
   const getColor = (prayer: Prayer) => {
-    const idx = prayer.band_id.charCodeAt(prayer.band_id.length - 1) % ACCENT_COLORS.length
+    const s = prayer.band_id || prayer.id
+    const idx = s.charCodeAt(s.length - 1) % ACCENT_COLORS.length
     return ACCENT_COLORS[idx]
   }
 
@@ -268,30 +292,32 @@ export default function PrayerWallPage() {
                         {location && <div className="lato" style={{ fontSize: 12, color: '#C8B49A', marginTop: 1 }}>📍 {location}</div>}
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <span className="lato" style={{ fontSize: 10, letterSpacing: '0.15em', background: `${color}18`, color, border: `1px solid ${color}44`, padding: '2px 8px', borderRadius: 20, display: 'block', marginBottom: 4 }}>{prayer.band_id}</span>
+                        <span className="lato" style={{ fontSize: 10, letterSpacing: '0.15em', background: `${color}18`, color, border: `1px solid ${color}44`, padding: '2px 8px', borderRadius: 20, display: 'block', marginBottom: 4 }}>{prayer.isNetwork ? 'Network' : prayer.band_id}</span>
                         <span className="lato" style={{ fontSize: 11, color: '#C8B49A' }}>{timeAgo(prayer.registered_at)}</span>
                       </div>
                     </div>
                     <p className="playfair" style={{ fontSize: 15, lineHeight: 1.85, color: '#4A2E1A', fontStyle: 'italic' }}>"{prayer.prayer}"</p>
                     {prayer.verse && <div className="lato" style={{ fontSize: 12, color: '#7BAE8E', marginTop: 10, fontWeight: 700 }}>📖 {prayer.verse}</div>}
-                    <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #F5EFE4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <a href={`/band/${prayer.band_id}`} className="lato" style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9B7B62', textDecoration: 'none' }}
-                        onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = color}
-                        onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = '#9B7B62'}
-                      >See Band Journey →</a>
-                      <button
-                        onClick={() => reportPrayer(prayer.id)}
-                        className="lato"
-                        style={{fontSize:11,color:'#C8B49A',background:'none',border:'none',cursor:'pointer',fontFamily:'Lato,sans-serif',padding:0,transition:'color 0.2s'}}
-                        onMouseEnter={e=>(e.currentTarget as HTMLButtonElement).style.color='#AE7B7B'}
-                        onMouseLeave={e=>(e.currentTarget as HTMLButtonElement).style.color='#C8B49A'}
-                      >⚑ Report</button>
-                    </div>
+                    {!prayer.isNetwork && (
+                      <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #F5EFE4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <a href={`/band/${prayer.band_id}`} className="lato" style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9B7B62', textDecoration: 'none' }}
+                          onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = color}
+                          onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = '#9B7B62'}
+                        >See Band Journey →</a>
+                        <button
+                          onClick={() => reportPrayer(prayer.id)}
+                          className="lato"
+                          style={{fontSize:11,color:'#C8B49A',background:'none',border:'none',cursor:'pointer',fontFamily:'Lato,sans-serif',padding:0,transition:'color 0.2s'}}
+                          onMouseEnter={e=>(e.currentTarget as HTMLButtonElement).style.color='#AE7B7B'}
+                          onMouseLeave={e=>(e.currentTarget as HTMLButtonElement).style.color='#C8B49A'}
+                        >⚑ Report</button>
+                      </div>
+                    )}
                   </div>
                 )
               })}
             </div>
-            {filtered.length < totalCount && (
+            {prayers.length < totalCount && (
               <div style={{ textAlign: 'center', marginTop: 40 }}>
                 <button className="load-more-btn" onClick={() => { const next = page + 1; setPage(next); loadPrayers(next) }}>Load More Prayers</button>
                 <div className="lato" style={{ fontSize: 12, color: '#C8B49A', marginTop: 12 }}>Showing {filtered.length} of {totalCount.toLocaleString()} prayers</div>

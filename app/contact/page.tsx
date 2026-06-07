@@ -34,6 +34,7 @@ interface FormState {
   name: string;
   email: string;
   category: string;
+  orderNumber: string;
   subject: string;
   message: string;
 }
@@ -43,6 +44,7 @@ export default function ContactPage() {
     name: "",
     email: "",
     category: "",
+    orderNumber: "",
     subject: "",
     message: "",
   });
@@ -228,6 +230,21 @@ export default function ContactPage() {
                       ))}
                     </select>
                   </div>
+
+                  {/* Order number — only for Order & Shipping */}
+                  {form.category === "order" && (
+                    <div className="field-group field-full">
+                      <label htmlFor="orderNumber">Order Number</label>
+                      <input
+                        id="orderNumber"
+                        name="orderNumber"
+                        value={form.orderNumber}
+                        onChange={handleChange}
+                        placeholder="e.g. PB-12345 or your order/receipt number"
+                        autoComplete="off"
+                      />
+                    </div>
+                  )}
 
                   {/* Subject */}
                   <div className="field-group field-full">

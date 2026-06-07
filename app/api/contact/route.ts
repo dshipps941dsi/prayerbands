@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { name, email, category, subject, message, recaptchaToken } = body;
+    const { name, email, category, orderNumber, subject, message, recaptchaToken } = body;
 
     // --- 1. Validate required fields ---
     if (!name?.trim() || !email?.trim() || !category || !message?.trim()) {
@@ -28,6 +28,12 @@ export async function POST(req: NextRequest) {
     if (message.length > 1000) {
       return NextResponse.json({ error: "Message too long." }, { status: 400 });
     }
+
+    // Fold an order number (Order & Shipping enquiries) into the stored message
+    // and the admin email, so support has it without a schema change.
+    const fullMessage = orderNumber?.trim()
+      ? `Order #: ${orderNumber.trim()}\n\n${message.trim()}`
+      : message.trim();
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -79,7 +85,7 @@ export async function POST(req: NextRequest) {
         email: email.trim().toLowerCase(),
         category,
         subject: subject?.trim() || null,
-        message: message.trim(),
+        message: fullMessage,
         recaptcha_score: recaptchaScore,
         status: "new",
         ip_address: req.headers.get("x-forwarded-for")?.split(",")[0] || null,
@@ -118,7 +124,7 @@ export async function POST(req: NextRequest) {
               </table>
               <hr style="border: none; border-top: 1px solid #e8d8b0; margin: 20px 0;">
               <h3 style="color: #3a2f1e; margin: 0 0 10px;">Message</h3>
-              <p style="color: #3a2f1e; line-height: 1.65; white-space: pre-wrap; margin: 0;">${message}</p>
+              <p style="color: #3a2f1e; line-height: 1.65; white-space: pre-wrap; margin: 0;">${fullMessage}</p>
               <hr style="border: none; border-top: 1px solid #e8d8b0; margin: 20px 0;">
               <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://prayerbands.com"}/admin/contacts/${submission?.id}"
                  style="display: inline-block; background: #b8964a; color: #fffdf7; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-family: Georgia, serif; font-weight: 600;">
