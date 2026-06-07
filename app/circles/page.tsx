@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface CirclePreview {
@@ -21,13 +21,14 @@ export default function CirclesPage() {
   const [error, setError] = useState('')
   const [joinError, setJoinError] = useState('')
 
-  async function handleLookup() {
-    if (!code.trim()) return
+  async function handleLookup(lookupCode?: string) {
+    const c = (lookupCode ?? code).trim().toUpperCase()
+    if (!c) return
     setLoading(true)
     setError('')
     setCircle(null)
 
-    const res = await fetch(`/api/circles/lookup?code=${code.trim().toUpperCase()}`)
+    const res = await fetch(`/api/circles/lookup?code=${c}`)
     const data = await res.json()
 
     if (!res.ok) {
@@ -37,6 +38,19 @@ export default function CirclesPage() {
     }
     setLoading(false)
   }
+
+  // Pre-fill (and look up) a code passed via the share link: /circles?code=GRACE7
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get('code')
+    if (fromUrl) {
+      const clean = fromUrl.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)
+      if (clean) {
+        setCode(clean)
+        handleLookup(clean)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleJoin() {
     if (!circle) return
@@ -192,7 +206,7 @@ export default function CirclesPage() {
               }}
             />
             <button
-              onClick={handleLookup}
+              onClick={() => handleLookup()}
               disabled={loading || code.length < 4}
               style={{
                 width: '100%',
