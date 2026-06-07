@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
 import Icon, { type IconName } from '@/components/Icon'
+import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
 
 const VERSES = [
   { ref: "Joshua 1:9", text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", category: "fear" },
@@ -833,6 +834,7 @@ export default function BandPage() {
           <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{bandId}</div>
           <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>Currently held by {status.currentHolder?.user_name ?? 'someone'} in {status.currentHolder?.city ?? 'the world'}</div>
         </div>
+        <NetworkConnectPrompt bandId={bandId} />
         {claimStep === 'prompt' && (
           <div style={{ margin: '20px 20px 0', background: 'white', borderRadius: 14, padding: '18px 20px', border: `1px solid ${GOLD}`, textAlign: 'center' }}>
             <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Do you now have this band?</div>
