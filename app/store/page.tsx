@@ -1,5 +1,5 @@
 'use client'
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Logo from "@/components/Logo";
 import Icon from "@/components/Icon";
 
@@ -85,6 +85,15 @@ const COLORS = [
   { name: "Ivory", hex: "#F5EFE4" },
 ];
 
+// Cart product id → site_config price key (cents). Prices are admin-editable.
+const PRICE_KEY: Record<string, string> = {
+  standard: "band_price_single",
+  custom: "band_price_custom",
+  "pack-50": "pack_price_50",
+  "pack-100": "pack_price_100",
+  "pack-200": "pack_price_200",
+};
+
 export default function StorePage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
@@ -93,6 +102,16 @@ export default function StorePage() {
   const [customMsg, setCustomMsg] = useState("");
   const [toast, setToast] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [pricing, setPricing] = useState<Record<string, number>>({});
+  useEffect(() => {
+    fetch("/api/pricing")
+      .then(r => r.json())
+      .then(d => { if (d.pricing) setPricing(d.pricing); })
+      .catch(() => {});
+  }, []);
+  // Live price in dollars from site_config, falling back to the static default.
+  const priceFor = (id: string, fallbackDollars: number) =>
+    (pricing[PRICE_KEY[id]] ?? Math.round(fallbackDollars * 100)) / 100;
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(""), 2800);
@@ -114,8 +133,10 @@ export default function StorePage() {
     );
   };
 
-  const total = cart.reduce((sum, c) => sum + c.price * c.qty, 0);
+  const subtotal = cart.reduce((sum, c) => sum + c.price * c.qty, 0);
   const totalItems = cart.reduce((sum, c) => sum + c.qty, 0);
+  const shipping = (pricing["shipping_cost_standard"] ?? 599) / 100;
+  const total = subtotal + shipping;
 
   return (
     <div style={{ fontFamily: "'Georgia', serif", background: "#FDFAF5", color: "#2C1A0E", minHeight: "100vh" }}>
@@ -238,7 +259,9 @@ export default function StorePage() {
           </div>
 
           <div className="products-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>
-            {INDIVIDUAL.map(product => (
+            {INDIVIDUAL.map(product => {
+              const price = priceFor(product.id, product.price);
+              return (
               <div key={product.id} className="product-card">
                 {/* Band visual */}
                 <div style={{ height: 200, background: `linear-gradient(135deg, ${product.color}22, ${product.color}44)`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
@@ -259,7 +282,7 @@ export default function StorePage() {
                 <div style={{ padding: "28px 28px 32px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                     <h3 className="playfair" style={{ fontSize: 24, fontWeight: 600 }}>{product.name}</h3>
-                    <div className="playfair" style={{ fontSize: 28, fontWeight: 700, color: "#C8A96E" }}>${product.price}</div>
+                    <div className="playfair" style={{ fontSize: 28, fontWeight: 700, color: "#C8A96E" }}>${price}</div>
                   </div>
                   <p className="lato" style={{ fontSize: 14, lineHeight: 1.75, color: "#6B4C35", fontWeight: 300, marginBottom: 20 }}>{product.desc}</p>
 
@@ -304,16 +327,17 @@ export default function StorePage() {
                     onClick={() => addToCart({
                       id: product.id,
                       name: product.name,
-                      price: product.price,
+                      price: price,
                       type: product.type,
                       detail: product.type === "custom" ? `${customColor}${customVerse ? ` · ${customVerse}` : ""}` : undefined,
                     })}
                   >
-                    Add to Cart — ${product.price}
+                    Add to Cart — ${price}
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -344,7 +368,10 @@ export default function StorePage() {
           </div>
 
           <div className="packs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
-            {PACKS.map(pack => (
+            {PACKS.map(pack => {
+              const price = priceFor(pack.id, pack.price);
+              const perBand = price / pack.bands;
+              return (
               <div key={pack.id} className="pack-card" style={{ borderTop: `4px solid ${pack.color}` }}>
                 {pack.popular && (
                   <div className="lato" style={{ position: "absolute", top: -1, left: "50%", transform: "translateX(-50%)", background: pack.color, color: "#fff", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", padding: "3px 14px", borderRadius: "0 0 8px 8px", fontWeight: 700, whiteSpace: "nowrap" }}>Most Popular</div>
@@ -355,9 +382,9 @@ export default function StorePage() {
                 </div>
 
                 <div style={{ marginBottom: 24 }}>
-                  <div className="playfair" style={{ fontSize: 38, fontWeight: 700, color: pack.color, lineHeight: 1 }}>${pack.price}</div>
+                  <div className="playfair" style={{ fontSize: 38, fontWeight: 700, color: pack.color, lineHeight: 1 }}>${price.toFixed(2)}</div>
                   <div className="lato" style={{ fontSize: 12, color: "#9B7B62", marginTop: 4 }}>
-                    ${pack.perBand.toFixed(2)}/band · {pack.bands} bands
+                    ${perBand.toFixed(2)}/band · {pack.bands} bands
                   </div>
                   <div className="lato" style={{ fontSize: 11, color: pack.color, fontWeight: 700, marginTop: 4, letterSpacing: "0.08em" }}>{pack.savings} vs individual</div>
                 </div>
@@ -373,12 +400,13 @@ export default function StorePage() {
                 <button
                   className="add-btn"
                   style={{ background: pack.color, color: "#fff" }}
-                  onClick={() => addToCart({ id: pack.id, name: `${pack.name} (${pack.bands} bands)`, price: pack.price, type: "pack" })}
+                  onClick={() => addToCart({ id: pack.id, name: `${pack.name} (${pack.bands} bands)`, price: price, type: "pack" })}
                 >
-                  Add to Cart — ${pack.price}
+                  Add to Cart — ${price.toFixed(2)}
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -442,11 +470,11 @@ export default function StorePage() {
                 <div style={{ background: "#F5EFE4", borderRadius: 8, padding: "20px 20px", marginBottom: 8 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                     <span className="lato" style={{ fontSize: 13, color: "#9B7B62" }}>Subtotal</span>
-                    <span className="lato" style={{ fontSize: 13, color: "#2C1A0E", fontWeight: 700 }}>${total.toFixed(2)}</span>
+                    <span className="lato" style={{ fontSize: 13, color: "#2C1A0E", fontWeight: 700 }}>${subtotal.toFixed(2)}</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                     <span className="lato" style={{ fontSize: 13, color: "#9B7B62" }}>Shipping</span>
-                    <span className="lato" style={{ fontSize: 13, color: "#9B7B62" }}>Calculated at checkout</span>
+                    <span className="lato" style={{ fontSize: 13, color: "#9B7B62" }}>${shipping.toFixed(2)}</span>
                   </div>
                   <div style={{ borderTop: "1px solid #E8DFD0", paddingTop: 12, marginTop: 8, display: "flex", justifyContent: "space-between" }}>
                     <span className="playfair" style={{ fontSize: 18, fontWeight: 600 }}>Total</span>
@@ -456,15 +484,11 @@ export default function StorePage() {
 
                 <button className="checkout-btn" disabled={checkoutLoading || cart.length === 0} onClick={async () => {
   setCheckoutLoading(true)
-  const hasCustom = cart.some(c => c.type === 'custom')
-  const totalQty = cart.reduce((sum, c) => sum + c.qty, 0)
-  const customItem = cart.find(c => c.type === 'custom')
   const res = await fetch('/api/create-checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      type: hasCustom ? 'custom' : 'standard',
-      quantity: totalQty,
+      items: cart.map(c => ({ id: c.id, qty: c.qty })),
       customMessage: customMsg || '',
       verse: customVerse || '',
       color: customColor || 'Amber Gold',
