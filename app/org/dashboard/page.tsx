@@ -178,7 +178,10 @@ function OrgDashboardInner() {
         setStats(statsData)
         const { data: bandsData } = await supabase.from('bands').select('band_id, status, created_at').eq('org_id', profile.org_id).order('created_at', { ascending: false }).limit(50)
         setBands(bandsData || [])
-        const { data: prayersData } = await supabase.from('registrations').select('band_id, user_name, prayer, city, country, registered_at').not('prayer', 'is', null).order('registered_at', { ascending: false }).limit(20)
+        // Only prayers left on THIS org's bands (band ids are prefixed, e.g. FBC-XXXXX).
+        const prayerQuery = supabase.from('registrations').select('band_id, user_name, prayer, city, country, registered_at').not('prayer', 'is', null)
+        if (orgData?.prefix) prayerQuery.ilike('band_id', `${orgData.prefix}-%`)
+        const { data: prayersData } = await prayerQuery.order('registered_at', { ascending: false }).limit(20)
         setPrayers(prayersData || [])
         const { data: ordersData } = await supabase.from('orders').select('*').eq('org_id', profile.org_id).order('created_at', { ascending: false })
         setOrders(ordersData || [])
