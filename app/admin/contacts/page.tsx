@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+import PrayerBandsLogo from "@/components/PrayerBandsLogo";
 
 // Use service role only on server; this page should be protected by admin auth
 const supabase = createClient(
@@ -152,6 +153,10 @@ export default function AdminContactsPage() {
 
   return (
     <div className="admin-contacts">
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+        <PrayerBandsLogo size={30} color="#b8964a" />
+        <a href="/admin" style={{ color: "#b8964a", fontSize: 14, textDecoration: "none", fontFamily: "inherit" }}>← Admin</a>
+      </div>
       {/* Tabs */}
       <div className="admin-tabs">
         <button className={`admin-tab ${tab === "submissions" ? "active" : ""}`} onClick={() => setTab("submissions")}>

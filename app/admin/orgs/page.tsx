@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
@@ -101,6 +102,7 @@ export default function AdminOrgs() {
     <div style={{ fontFamily: 'Georgia, serif', background: '#f7f4ef', minHeight: '100vh', padding: 32 }}>
       <div style={{ maxWidth: 1000, margin: '0 auto' }}>
         <div style={{ marginBottom: 32 }}>
+          <div style={{ marginBottom: 12 }}><PrayerBandsLogo size={34} color={green} /></div>
           <a href="/admin" style={{ color: green, fontSize: 14, textDecoration: 'none' }}>← Admin</a>
           <h1 style={{ fontSize: 26, fontWeight: 'bold', marginTop: 8, color: '#1a1208' }}>Church Accounts</h1>
           <p style={{ color: '#8a7c6a', fontSize: 14 }}>Manage organizations, generate and assign bands.</p>

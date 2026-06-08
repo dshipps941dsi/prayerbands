@@ -2,6 +2,7 @@
 import { useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
+import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
 function RegisterRedirect() {
   const searchParams = useSearchParams()
@@ -18,7 +19,7 @@ function RegisterRedirect() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAF6EF' }}>
       <div style={{ textAlign: 'center', fontFamily: 'Georgia, serif', color: '#7A6A5A' }}>
-        <div style={{ fontSize: 40, marginBottom: 12 }}>✝</div>
+        <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={42} color="#B8860B" /></div>
         <div style={{ fontStyle: 'italic' }}>Opening your band...</div>
       </div>
     </div>

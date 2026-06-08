@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
 export default function NewCirclePage() {
   const router = useRouter()
@@ -67,6 +68,7 @@ export default function NewCirclePage() {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#FAF6EF', fontFamily: 'Georgia, serif', padding: '0 0 80px 0' }}>
         <div style={{ padding: '48px 24px 0', maxWidth: 480, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={36} color="#B8860B" /></div>
           <div style={{ fontSize: 40, color: '#7BAE8E', marginBottom: 12 }}>✓</div>
           <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 26, fontWeight: 700, color: '#2C1810', margin: '0 0 8px' }}>Circle Created!</h1>
           <p style={{ fontSize: 14, color: '#8B7355', margin: '0 0 28px', lineHeight: 1.5 }}>Share this code so others can join your circle.</p>
@@ -119,6 +121,7 @@ export default function NewCirclePage() {
         >
           ←
         </button>
+        <PrayerBandsLogo size={30} color="#B8860B" />
         <div>
           <h1 style={{
             fontFamily: 'Playfair Display, Georgia, serif',

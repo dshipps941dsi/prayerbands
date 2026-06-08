@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
 export default function ChurchPage({ params }: { params: { subdomain: string } }) {
   const [org, setOrg] = useState<any>(null)
@@ -75,7 +76,7 @@ export default function ChurchPage({ params }: { params: { subdomain: string } }
         background: green, color: '#fff',
         padding: '48px 32px', textAlign: 'center',
       }}>
-        <div style={{ fontSize: 36, marginBottom: 12 }}>✝</div>
+        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={44} color="#fff" /></div>
         <h1 style={{ fontSize: 32, fontWeight: 'bold', margin: '0 0 8px', fontFamily: 'Georgia, serif' }}>
           {org.name}
         </h1>

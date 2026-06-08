@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
 function PrayAckInner() {
   const searchParams = useSearchParams()
@@ -28,6 +29,7 @@ const email = searchParams?.get('email')
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f4ef', fontFamily: 'Georgia, serif', padding: 24 }}>
       <div style={{ background: '#fff', borderRadius: 14, padding: '48px 40px', maxWidth: 440, width: '100%', border: '1px solid #e8e1d6', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', textAlign: 'center' }}>
+        <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={40} color="#1a6b4a" /></div>
         {status === 'loading' && (
           <div>
             <div style={{ fontSize: 48, marginBottom: 16 }}>✝</div>

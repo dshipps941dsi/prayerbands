@@ -1,6 +1,7 @@
 'use client'
 import { useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
 export default function NFCRedirect() {
   const params = useParams()
@@ -13,7 +14,7 @@ export default function NFCRedirect() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAF6EF' }}>
       <div style={{ textAlign: 'center', fontFamily: 'Georgia, serif', color: '#7A6A5A' }}>
-        <div style={{ fontSize: 40, marginBottom: 12 }}>✝</div>
+        <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={42} color="#B8860B" /></div>
         <div style={{ fontStyle: 'italic' }}>Opening your band...</div>
       </div>
     </div>

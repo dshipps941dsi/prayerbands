@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
 export default function ResetPasswordConfirm() {
   const [password, setPassword] = useState('')
@@ -56,7 +57,7 @@ export default function ResetPasswordConfirm() {
         boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
       }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontSize: 32, marginBottom: 8 }}>✝</div>
+          <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={40} color="#1a6b4a" /></div>
           <h1 style={{ fontSize: 22, fontWeight: 'bold', color: '#1a1208', margin: 0 }}>
             Set New Password
           </h1>

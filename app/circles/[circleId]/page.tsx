@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
+import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
 interface CircleData {
   id: string
@@ -314,6 +315,7 @@ export default function CirclePage() {
             >
               ←
             </button>
+            <PrayerBandsLogo size={28} color="#B8860B" />
             <div>
               <h1 style={{
                 fontFamily: 'Playfair Display, Georgia, serif',
