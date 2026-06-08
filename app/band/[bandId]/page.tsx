@@ -374,19 +374,19 @@ export default function BandPage() {
     const verse = getVerseForCategory(verseCategory)
     return (
       <div style={{ margin: '20px 20px 0' }}>
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none' }}>
-          {CATEGORIES.map(cat => (
-            <button key={cat.id} onClick={() => setVerseCategory(cat.id)} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontFamily: body, fontSize: 12, fontWeight: 600, background: verseCategory === cat.id ? GOLD : 'white', color: verseCategory === cat.id ? '#0f0d09' : GRAY, boxShadow: '0 1px 4px rgba(44,24,16,0.1)', transition: 'all 0.2s' }}>
-              {cat.icon} {cat.label}
-            </button>
-          ))}
-        </div>
         <div style={{ background: `linear-gradient(135deg, ${NAVY}, #2c4a8a)`, borderRadius: 14, padding: '24px 20px', color: 'white', textAlign: 'center' }}>
           <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.6, marginBottom: 12 }}>
             {verseCategory === 'all' ? "Today's Verse" : CATEGORIES.find(c => c.id === verseCategory)?.label}
           </div>
           <div style={{ fontFamily: serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.7, marginBottom: 12 }}>"{verse.text}"</div>
           <div style={{ fontFamily: body, fontSize: 13, opacity: 0.7, fontWeight: 600 }}>{verse.ref}</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginTop: 12, paddingBottom: 2, scrollbarWidth: 'none' }}>
+          {CATEGORIES.map(cat => (
+            <button key={cat.id} onClick={() => setVerseCategory(cat.id)} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontFamily: body, fontSize: 12, fontWeight: 600, background: verseCategory === cat.id ? GOLD : 'white', color: verseCategory === cat.id ? '#0f0d09' : GRAY, boxShadow: '0 1px 4px rgba(44,24,16,0.1)', transition: 'all 0.2s' }}>
+              {cat.icon} {cat.label}
+            </button>
+          ))}
         </div>
       </div>
     )
@@ -614,7 +614,7 @@ export default function BandPage() {
             {transferComplete && (
               <div style={{ margin: '20px 20px 0', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>🙏</div>
-                <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Band passed on</div>
+                <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Band transferred</div>
                 <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20 }}>Your band is now in new hands. The prayer chain continues. ✝</div>
                 <a href="/dashboard" style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Go to Dashboard</a>
               </div>
@@ -629,7 +629,7 @@ export default function BandPage() {
                   <button onClick={() => {
                     const accountless = !userId && localStorage.getItem(`holder_${bandId}`) === 'true'
                     setTransferStep(accountless ? 'save_prompt' : 'sheet')
-                  }} style={{ display: 'flex', alignItems: 'center', gap: 8, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, padding: '10px 18px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Pass On</button>
+                  }} style={{ display: 'flex', alignItems: 'center', gap: 8, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, padding: '10px 18px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Transfer Band</button>
                 )}
               </div>
             </div>
