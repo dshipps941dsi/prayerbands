@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
 interface CirclePreview {
   id: string
@@ -102,17 +103,20 @@ export default function CirclesPage() {
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <div>
-          <h1 style={{
-            fontFamily: 'Playfair Display, Georgia, serif',
-            fontSize: '22px',
-            fontWeight: '700',
-            color: '#2C1810',
-            margin: 0
-          }}>Prayer Circles</h1>
-          <p style={{ fontSize: '13px', color: '#8B7355', margin: '2px 0 0 0' }}>
-            Join a group or gather one
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <PrayerBandsLogo size={34} color="#B8860B" />
+          <div>
+            <h1 style={{
+              fontFamily: 'Playfair Display, Georgia, serif',
+              fontSize: '22px',
+              fontWeight: '700',
+              color: '#2C1810',
+              margin: 0
+            }}>Prayer Circles</h1>
+            <p style={{ fontSize: '13px', color: '#8B7355', margin: '2px 0 0 0' }}>
+              Join a group or gather one
+            </p>
+          </div>
         </div>
         <button
           onClick={() => router.push('/circles/new')}
