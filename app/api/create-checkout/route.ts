@@ -6,6 +6,8 @@ import { getSiteConfig } from '@/lib/getSiteConfig'
 const CATALOG: Record<string, { key: string; name: string; bands: number }> = {
   standard: { key: 'band_price_single', name: 'PrayerBand', bands: 1 },
   custom: { key: 'band_price_custom', name: 'Custom PrayerBand', bands: 1 },
+  'pack-3': { key: 'band_price_3pack', name: '3-Pack — 3 Bands', bands: 3 },
+  'pack-5': { key: 'band_price_5pack', name: '5-Pack — 5 Bands', bands: 5 },
   'pack-50': { key: 'pack_price_50', name: 'Starter Pack — 50 Bands', bands: 50 },
   'pack-100': { key: 'pack_price_100', name: 'Community Pack — 100 Bands', bands: 100 },
   'pack-200': { key: 'pack_price_200', name: 'Mission Pack — 200 Bands', bands: 200 },
