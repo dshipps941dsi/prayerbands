@@ -96,9 +96,9 @@ function TopBar({ org, green }: { org: any, green: string }) {
 
 function Sidebar({ org, tab, setTab, green }: { org: any, tab: string, setTab: (t: string) => void, green: string }) {
   return (
-    <div style={{ width: 220, background: '#fff', borderRight: '1px solid #e8e1d6', padding: '28px 0', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 56, height: 'calc(100vh - 56px)', overflowY: 'auto' }}>
+    <div style={{ width: 290, background: '#fff', borderRight: '1px solid #e8e1d6', padding: '28px 0', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 56, height: 'calc(100vh - 56px)', overflowY: 'auto' }}>
       <div style={{ padding: '0 20px 24px', borderBottom: '1px solid #e8e1d6' }}>
-        {org?.logo_url && <img src={org.logo_url} alt={org?.name} style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'contain', marginBottom: 10, border: '1px solid #e8e1d6', background: '#fff', padding: 3 }} />}
+        {org?.logo_url && <img src={org.logo_url} alt={org?.name} style={{ width: 250, height: 125, objectFit: 'contain', display: 'block', marginBottom: 12, borderRadius: 8, border: '1px solid #e8e1d6', background: '#fff', padding: 6 }} />}
         <div style={{ fontSize: 15, fontWeight: 'bold', color: green, lineHeight: 1.3 }}>{org?.name}</div>
         <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 4 }}>{org?.location}</div>
         <div style={{ display: 'inline-block', marginTop: 8, background: '#e6f4ee', color: green, fontSize: 11, padding: '2px 8px', borderRadius: 12, fontFamily: 'monospace', letterSpacing: 0.5 }}>{org?.prefix}-XXXXX</div>
