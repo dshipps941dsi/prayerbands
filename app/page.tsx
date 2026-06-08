@@ -734,6 +734,28 @@ export default function HomePage() {
           color: rgba(200,169,110,0.5);
         }
 
+        /* ── Gold section treatment (breaks up the navy; navy text on gold) ── */
+        .section--gold { background: linear-gradient(180deg, #E4CE93 0%, #D2B26A 100%); }
+        .section--gold .section-label { color: var(--navy); }
+        .section--gold .section-label::after { background: var(--navy); opacity: 0.3; }
+        .section--gold .section-title { color: var(--navy); }
+        .section--gold .section-title em { color: #5A3E12; }
+        .section--gold .section-body { color: rgba(10,22,40,0.72); }
+        /* How It Works */
+        .section--gold .steps-grid { background: rgba(10,22,40,0.14); }
+        .section--gold .step-card { background: rgba(255,255,255,0.42); }
+        .section--gold .step-card:hover { background: rgba(255,255,255,0.62); }
+        .section--gold .step-num { color: #5A3E12; }
+        .section--gold .step-title { color: var(--navy); }
+        .section--gold .step-desc { color: rgba(10,22,40,0.72); }
+        .section--gold .step-line { background: linear-gradient(90deg, var(--navy), #5A3E12); }
+        /* Testimonials */
+        .section--gold .testi-card { background: rgba(255,255,255,0.4); border-color: rgba(10,22,40,0.15); }
+        .section--gold .testi-stars { color: #5A3E12; }
+        .section--gold .testi-quote { color: rgba(10,22,40,0.85); }
+        .section--gold .testi-author { color: var(--navy); }
+        .section--gold .testi-place { color: rgba(10,22,40,0.5); }
+
         /* ── Responsive ── */
         @media (max-width: 900px) {
           .mission-inner, .wall-inner, .ministry-inner { grid-template-columns: 1fr; gap: 48px; }
@@ -868,7 +890,7 @@ export default function HomePage() {
       </section>
 
       {/* ── How It Works ── */}
-      <section id="how" className="how section">
+      <section id="how" className="how section section--gold">
         <div className="container">
           <Reveal>
             <div className="section-label">How It Works</div>
@@ -969,7 +991,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Testimonials ── */}
-      <section className="testimonials section">
+      <section className="testimonials section section--gold">
         <div className="container">
           <Reveal>
             <div className="section-label">Stories</div>
