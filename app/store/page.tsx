@@ -207,21 +207,26 @@ export default function StorePage() {
           .packs-grid { grid-template-columns: 1fr !important; }
           .cart-drawer { width: 100vw; }
         }
+        @media (max-width: 600px) {
+          /* Keep only the logo + cart so nothing runs off the edge. */
+          .nav-extra { display: none !important; }
+          .store-nav { padding: 0 16px !important; }
+        }
       `}</style>
 
       {/* TOAST */}
       {toast && <div className="toast">✝ {toast}</div>}
 
       {/* NAV */}
-      <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(253,250,245,0.97)", backdropFilter: "blur(12px)", borderBottom: "1px solid #E8DFD0", padding: "0 32px" }}>
+      <nav className="store-nav" style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(253,250,245,0.97)", backdropFilter: "blur(12px)", borderBottom: "1px solid #E8DFD0", padding: "0 32px" }}>
         <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <Logo size={30} />
             <span className="playfair" style={{ fontSize: 18, fontWeight: 600, color: "#2C1A0E" }}>PrayerBands</span>
           </a>
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-            <a href="/" className="lato" style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "#9B7B62", textDecoration: "none" }}>← Back to Home</a>
-            <a href="/subscribe" className="lato" style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C8A96E", textDecoration: "none", fontWeight: 700 }}>Subscribe</a>
+            <a href="/" className="lato nav-extra" style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "#9B7B62", textDecoration: "none" }}>← Back to Home</a>
+            <a href="/subscribe" className="lato nav-extra" style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C8A96E", textDecoration: "none", fontWeight: 700 }}>Subscribe</a>
             <button
               onClick={() => setCartOpen(true)}
               style={{ position: "relative", background: "#2C1A0E", border: "none", borderRadius: 4, padding: "9px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
