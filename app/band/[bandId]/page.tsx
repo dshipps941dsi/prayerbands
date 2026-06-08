@@ -7,6 +7,7 @@ import Icon, { type IconName } from '@/components/Icon'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
 import PrayerTabs from '@/components/PrayerTabs'
 import PurchaseTab from '@/components/PurchaseTab'
+import { useApplyTheme } from '@/components/ThemeProvider'
 
 const VERSES = [
   { ref: "Joshua 1:9", text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", category: "fear" },
@@ -121,12 +122,14 @@ type BandStatus = {
   dedicatorName?: string
 }
 
-const GOLD  = '#B8860B'
-const GREEN = '#1a4a3a'
-const NAVY  = '#1a2a4a'
-const DARK  = '#2C1810'
-const CREAM = '#FAF6EF'
-const GRAY  = '#7A6A5A'
+// Colors resolve from theme CSS variables (set on :root by useApplyTheme).
+// Fallbacks equal the original palette, so an unthemed band looks unchanged.
+const GOLD  = 'var(--primary, #B8860B)'
+const GREEN = 'var(--accent, #1a4a3a)'
+const NAVY  = 'var(--deep, #1a2a4a)'
+const DARK  = 'var(--text, #2C1810)'
+const CREAM = 'var(--background, #FAF6EF)'
+const GRAY  = 'var(--muted, #7A6A5A)'
 const serif = "'Playfair Display', Georgia, serif"
 const body  = "'Lora', Georgia, serif"
 
@@ -215,6 +218,9 @@ export default function BandPage() {
   const [testimony, setTestimony] = useState('')
   const [prayerSubmitting, setPrayerSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState<'home' | 'prayers' | 'journey' | 'purchase' | 'account'>('home')
+
+  // Apply this band's color theme (CSS variables on :root).
+  useApplyTheme(status.band?.theme)
 
   useEffect(() => {
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)

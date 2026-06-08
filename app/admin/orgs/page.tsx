@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
+import { THEME_OPTIONS } from '@/lib/themes'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
@@ -11,6 +12,7 @@ export default function AdminOrgs() {
   const [selectedOrg, setSelectedOrg] = useState<any>(null)
   const [bandInput, setBandInput] = useState('')
   const [generateQty, setGenerateQty] = useState(100)
+  const [bandTheme, setBandTheme] = useState('default')
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -80,7 +82,7 @@ export default function AdminOrgs() {
     const res = await fetch('/api/generate-org-bands', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ org_id: selectedOrg.id, quantity: generateQty }),
+      body: JSON.stringify({ org_id: selectedOrg.id, quantity: generateQty, theme: bandTheme }),
     })
     const data = await res.json()
     if (res.ok) {
@@ -189,8 +191,20 @@ export default function AdminOrgs() {
                         }}>{qty}</button>
                       ))}
                     </div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#7a6c5a', display: 'block', marginBottom: 8 }}>
+                      THEME
+                    </label>
+                    <select
+                      value={bandTheme}
+                      onChange={e => setBandTheme(e.target.value)}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '2px solid #e8e1d6', background: '#fff', color: '#1a1208', fontSize: 13, fontFamily: 'Georgia, serif', marginBottom: 16, cursor: 'pointer' }}
+                    >
+                      {THEME_OPTIONS.map(t => (
+                        <option key={t.id} value={t.id}>{t.label}</option>
+                      ))}
+                    </select>
                     <div style={{ fontSize: 12, color: '#8a7c6a', marginBottom: 16, lineHeight: 1.5 }}>
-                      Generates {generateQty} unique {selectedOrg.prefix}-XXXXX IDs, seeds them into Supabase, and emails you the supplier NFC CSV.
+                      Generates {generateQty} unique {selectedOrg.prefix}-XXXXX IDs in the <strong>{THEME_OPTIONS.find(t => t.id === bandTheme)?.label}</strong> theme, seeds them into Supabase, and emails you the supplier NFC CSV.
                     </div>
                     <button
                       onClick={generateBands}

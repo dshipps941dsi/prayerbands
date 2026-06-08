@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   )
 
   try {
-    const { org_id, quantity } = await req.json()
+    const { org_id, quantity, theme } = await req.json()
     if (!org_id || !quantity) {
       return NextResponse.json({ error: 'Missing org_id or quantity' }, { status: 400 })
     }
@@ -49,6 +49,9 @@ export async function POST(req: NextRequest) {
       .eq('id', org_id)
       .single()
     if (!org) return NextResponse.json({ error: 'Org not found' }, { status: 404 })
+
+    // Theme for the generated bands: explicit choice → org default → 'default'.
+    const bandTheme = theme || org.default_theme || 'default'
 
     // Get existing band IDs to avoid duplicates
     const { data: existing } = await supabase
@@ -69,6 +72,7 @@ export async function POST(req: NextRequest) {
           band_id: id,
           org_id,
           status: 'unregistered',
+          theme: bandTheme,
           nfc_url: `https://prayerbands.com/r/${id}`,
           outside_text: 'PrayerBands.com ✝',
           inside_text: id,
