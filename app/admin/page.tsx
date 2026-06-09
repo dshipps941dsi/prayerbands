@@ -279,7 +279,11 @@ export default function AdminPage() {
             <p style={{ margin: '2px 0 0', color: '#8B6914', fontSize: '13px' }}>Order Management &amp; Fulfillment</p>
           </div>
         </div>
-        <a href="/dashboard" style={{ color: '#C8A96E', fontSize: '13px', textDecoration: 'none' }}>Back to Dashboard</a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+          <a href="/admin/bands" style={{ color: '#C8A96E', fontSize: '13px', textDecoration: 'none', fontWeight: 600 }}>Band Management</a>
+          <a href="/admin/orgs" style={{ color: '#C8A96E', fontSize: '13px', textDecoration: 'none' }}>Churches</a>
+          <a href="/dashboard" style={{ color: '#C8A96E', fontSize: '13px', textDecoration: 'none' }}>Back to Dashboard</a>
+        </div>
       </div>
 
       {/* KPI Row */}
