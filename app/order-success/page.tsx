@@ -3,6 +3,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
+import { track } from '@/lib/analytics'
 
 const GOLD  = '#B8860B'
 const GREEN = '#1a4a3a'
@@ -36,6 +37,13 @@ function OrderSuccessInner() {
       .then(r => r.json())
       .then(data => {
         setOrderData(data)
+        // GA4 purchase conversion (deduped by transaction_id in GA).
+        track('purchase', {
+          transaction_id: sessionId,
+          value: data.value ?? 0,
+          currency: data.currency ?? 'USD',
+          items: (data.bands ?? []).map((b: string) => ({ item_id: b })),
+        })
         // Build one dedication card per band
         const bands = data.bands ?? []
         setDedications(bands.map((b: string) => ({

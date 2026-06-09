@@ -8,6 +8,7 @@ import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
 import PrayerTabs from '@/components/PrayerTabs'
 import PurchaseTab from '@/components/PurchaseTab'
 import { useApplyTheme } from '@/components/ThemeProvider'
+import { track } from '@/lib/analytics'
 
 const VERSES = [
   { ref: "Joshua 1:9", text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", category: "fear" },
@@ -465,7 +466,7 @@ export default function BandPage() {
       setAuthError('')
       const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
       const { error } = await supabase.auth.signUp({ email: email.trim(), password: password.trim(), options: { emailRedirectTo: `${window.location.origin}/band/${bandId}` } })
-      if (error) { setAuthError(error.message) } else { setAuthDone(true) }
+      if (error) { setAuthError(error.message) } else { track('sign_up', { method: 'email' }); setAuthDone(true) }
       setAuthSubmitting(false)
     }
 

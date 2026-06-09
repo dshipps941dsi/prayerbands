@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Logo from "@/components/Logo";
 import Icon from "@/components/Icon";
+import { track } from "@/lib/analytics";
 
 // ─── Types ───────────────────────────────────────────────────
 type CartItem = {
@@ -513,6 +514,11 @@ export default function StorePage() {
 
                 <button className="checkout-btn" disabled={checkoutLoading || cart.length === 0} onClick={async () => {
   setCheckoutLoading(true)
+  track('begin_checkout', {
+    currency: 'USD',
+    value: subtotal,
+    items: cart.map(c => ({ item_id: c.id, item_name: c.name, quantity: c.qty, price: c.price })),
+  })
   const res = await fetch('/api/create-checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

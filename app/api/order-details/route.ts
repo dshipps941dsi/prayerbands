@@ -16,6 +16,8 @@ export async function GET(req: NextRequest) {
     // Get the Stripe session
     const session = await stripe.checkout.sessions.retrieve(sessionId)
     const customerEmail = session.customer_details?.email ?? null
+    const value = (session.amount_total ?? 0) / 100
+    const currency = (session.currency ?? 'usd').toUpperCase()
 
     // Find the order in Supabase by matching the Stripe session ID or customer email
     const { data: order } = await supabase
@@ -30,6 +32,8 @@ export async function GET(req: NextRequest) {
         email: customerEmail,
         quantity: session.metadata?.quantity ?? 1,
         bands: [],
+        value,
+        currency,
       })
     }
 
@@ -45,6 +49,8 @@ export async function GET(req: NextRequest) {
       email: customerEmail,
       quantity: order.order_metadata?.quantity ?? 1,
       bands,
+      value,
+      currency,
     })
   } catch (err: any) {
     console.error('Order details error:', err)

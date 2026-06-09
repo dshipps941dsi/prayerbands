@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { track } from '@/lib/analytics';
 
 function generatePrefix(name) {
   const words = name.trim().split(/\s+/);
@@ -57,6 +58,7 @@ export default function OnboardPage() {
       let data;
       try { data = JSON.parse(text); } catch { throw new Error('Server error — please try again'); }
       if (!res.ok) throw new Error(data.error || 'Something went wrong');
+      track('sign_up', { method: 'organization' });
       setStep(3);
     } catch (err) {
       setError(err.message);
