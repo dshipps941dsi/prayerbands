@@ -130,6 +130,8 @@ const NAVY  = 'var(--pb-tab-bar, #1a2a4a)'
 const DARK  = 'var(--pb-text, #2C1810)'
 const CREAM = 'var(--pb-background, #FAF6EF)'
 const GRAY  = 'var(--pb-text-muted, #7A6A5A)'
+// Full-screen page background — theme color, or a subtle themed image when set.
+const PAGEBG = 'var(--pb-page, #FAF6EF)'
 const serif = "'Playfair Display', Georgia, serif"
 const body  = "'Lora', Georgia, serif"
 
@@ -590,12 +592,12 @@ export default function BandPage() {
   }
 
   if (status.screen === 'loading') {
-    return <div style={{ background: CREAM, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ fontFamily: body, color: GRAY, fontStyle: 'italic' }}>Loading band journey...</div></div>
+    return <div style={{ background: PAGEBG, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ fontFamily: body, color: GRAY, fontStyle: 'italic' }}>Loading band journey...</div></div>
   }
 
   if (status.screen === 'not_found') {
     return (
-      <div style={{ background: CREAM, minHeight: '100vh' }}>
+      <div style={{ background: PAGEBG, minHeight: '100vh' }}>
         <Nav />
         <div style={{ padding: '60px 24px', textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>✝</div>
@@ -610,7 +612,7 @@ export default function BandPage() {
 
   if (status.screen === 'personal_space') {
     return (
-      <div style={{ background: CREAM, minHeight: '100vh', fontFamily: body, color: DARK }}>
+      <div style={{ background: PAGEBG, minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
         <StatsStrip regs={regs} />
 
@@ -816,7 +818,7 @@ export default function BandPage() {
 
   if (status.screen === 'incoming_transfer') {
     return (
-      <div style={{ background: CREAM, minHeight: '100vh', fontFamily: body, color: DARK }}>
+      <div style={{ background: PAGEBG, minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
         <StatsStrip regs={regs} />
         {claimStep === 'prompt' && (
@@ -839,7 +841,7 @@ export default function BandPage() {
 
   if (status.screen === 'first_tap_gift') {
     return (
-      <div style={{ background: CREAM, minHeight: '100vh', fontFamily: body, color: DARK }}>
+      <div style={{ background: PAGEBG, minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
         {claimStep === 'prompt' && (
           <div style={{ margin: '24px 20px', background: 'linear-gradient(135deg, #1a4a3a, #2E7D6B)', borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
@@ -861,7 +863,7 @@ export default function BandPage() {
 
   if (status.screen === 'journey') {
     return (
-      <div style={{ background: CREAM, minHeight: '100vh', fontFamily: body, color: DARK }}>
+      <div style={{ background: PAGEBG, minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
         <StatsStrip regs={regs} />
         <div style={{ padding: '24px 20px 0', textAlign: 'center' }}>

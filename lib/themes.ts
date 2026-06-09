@@ -56,6 +56,10 @@ export interface BandTheme {
   // --- Optional: left-border accent on verse / quote cards ---
   cardAccent?: string;
 
+  // --- Optional: full-screen background image (path under /public, e.g. /themes/beach.jpg).
+  // Rendered subtly behind the content with a translucent wash for readability. ---
+  backgroundImage?: string;
+
   // --- Optional: default verse shown on first tap ---
   defaultVerse?: {
     text: string;
@@ -126,6 +130,8 @@ export const themes: Record<ThemeKey, BandTheme> = {
 
     cardAccent:    '#2A5298',  // mountain blue left-border
 
+    backgroundImage: '/themes/mountain.jpg',
+
     defaultVerse: {
       text:      'I lift up my eyes to the mountains — where does my help come from? My help comes from the Lord, the Maker of heaven and earth.',
       reference: 'Psalm 121:1–2',
@@ -157,6 +163,8 @@ export const themes: Record<ThemeKey, BandTheme> = {
     border:        '#A0D8EE',  // shoreline
 
     cardAccent:    '#1B8FAD',  // tide blue left-border
+
+    backgroundImage: '/themes/beach.jpg',
 
     defaultVerse: {
       text:      'He stilled the storm to a whisper; the waves of the sea were hushed. They were glad when it grew calm, and he guided them to their desired haven.',
@@ -190,6 +198,8 @@ export const themes: Record<ThemeKey, BandTheme> = {
 
     cardAccent:    '#4A5C3A',  // olive drab left-border
 
+    backgroundImage: '/themes/military.jpg',
+
     defaultVerse: {
       text:      'Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.',
       reference: 'Joshua 1:9',
@@ -216,10 +226,27 @@ export function getTheme(key?: string | null): BandTheme {
 //   const vars = themeToVars(getTheme(band.theme))
 //   <div style={vars as React.CSSProperties}>...</div>
 // ============================================================
+function hexToRgba(hex: string, alpha: number): string {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const n = parseInt(full, 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
+// Full-screen page background: a translucent wash of the theme background over
+// the optional image (kept subtle so cards/text stay readable). Falls back to a
+// solid background color when the theme has no image.
+function pageBackground(theme: BandTheme): string {
+  if (!theme.backgroundImage) return theme.background;
+  const wash = hexToRgba(theme.background, 0.82);
+  return `linear-gradient(${wash}, ${wash}), url("${theme.backgroundImage}") center / cover no-repeat, ${theme.background}`;
+}
+
 export function themeToVars(theme: BandTheme): Record<string, string> {
   return {
     '--pb-primary':          theme.primary,
     '--pb-background':       theme.background,
+    '--pb-page':             pageBackground(theme),
     '--pb-surface':          theme.surface,
     '--pb-surface-alt':      theme.surfaceAlt,
     '--pb-text':             theme.text,
