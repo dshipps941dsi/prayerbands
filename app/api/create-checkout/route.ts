@@ -44,7 +44,8 @@ export async function POST(req: NextRequest) {
       price_data: {
         currency: 'usd',
         unit_amount: prices[CATALOG[i.id].key],
-        product_data: { name: CATALOG[i.id].name },
+        tax_behavior: 'exclusive', // tax added on top (US sales tax)
+        product_data: { name: CATALOG[i.id].name, tax_code: 'txcd_99999999' }, // General - Tangible Goods
       },
     }))
 
@@ -58,6 +59,9 @@ export async function POST(req: NextRequest) {
       line_items: lineItems,
       mode: 'payment',
       allow_promotion_codes: true,
+      // Stripe Tax. Off until STRIPE_TAX_ENABLED=true so it can't break checkout
+      // before Tax is configured (origin address + registrations) in the dashboard.
+      automatic_tax: { enabled: process.env.STRIPE_TAX_ENABLED === 'true' },
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/store`,
       customer_email: email || undefined,
@@ -66,7 +70,7 @@ export async function POST(req: NextRequest) {
       },
       // Shipping pulled from site_config (omit when free).
       shipping_options: shippingCost > 0
-        ? [{ shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: shippingCost, currency: 'usd' }, display_name: 'Standard Shipping' } }]
+        ? [{ shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: shippingCost, currency: 'usd' }, display_name: 'Standard Shipping', tax_behavior: 'exclusive', tax_code: 'txcd_92010001' } }]
         : undefined,
       metadata: {
         type: hasCustom ? 'custom' : 'standard',
