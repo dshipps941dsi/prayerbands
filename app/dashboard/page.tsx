@@ -871,6 +871,15 @@ export default function Dashboard() {
                     >{replacing ? 'Replacing…' : 'Replace band'}</button>
                     <button onClick={() => { setShowReplace(false); setReplaceOld(''); setReplaceNew(''); setReplaceMsg('') }} style={{ background: 'transparent', border: '1px solid #ddd6ca', borderRadius: 8, padding: '10px 18px', fontSize: 14, color: '#8a7c6a', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Cancel</button>
                   </div>
+                  <div style={{ marginTop: 12, fontSize: 12, color: '#8a7c6a' }}>
+                    Don&rsquo;t have a replacement yet?{' '}
+                    <a
+                      href={replaceOld ? `/store?replaces=${encodeURIComponent(replaceOld)}` : '#'}
+                      onClick={e => { if (!replaceOld) { e.preventDefault(); setReplaceMsg('❌ Pick the lost band first.') } }}
+                      style={{ color: AMBER, fontWeight: 'bold', textDecoration: 'underline' }}
+                    >Order one &rarr;</a>{' '}
+                    and its journey will transfer automatically.
+                  </div>
                   {replaceMsg && <div style={{ marginTop: 12, fontSize: 13, color: replaceMsg.startsWith('❌') ? '#c0392b' : '#1a6b4a', lineHeight: 1.5 }}>{replaceMsg}</div>}
                 </div>
               )}

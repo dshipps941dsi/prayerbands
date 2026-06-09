@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
   try {
     const body = await req.json()
-    const { customMessage, verse, color, email } = body
+    const { customMessage, verse, color, email, replaces } = body
 
     // Preferred shape: items: [{ id, qty }]. Fall back to the old single-type body.
     let items: { id: string; qty: number }[] = Array.isArray(body.items) ? body.items : []
@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
         verse: verse || '',
         color: color || 'blue',
         items: JSON.stringify(items),
+        replaces: replaces ? String(replaces).trim().toUpperCase() : '',
       }
     })
 

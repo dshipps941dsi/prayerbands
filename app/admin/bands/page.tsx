@@ -22,14 +22,44 @@ export default function AdminBands() {
   const [replacing, setReplacing] = useState(false)
   const [replaceMsg, setReplaceMsg] = useState('')
 
+  // Pending replacement orders
+  const [pending, setPending] = useState<any[]>([])
+  const [pendingIds, setPendingIds] = useState<Record<string, string>>({})
+  const [completingId, setCompletingId] = useState<string | null>(null)
+  const [pendingMsg, setPendingMsg] = useState('')
+
+  function loadPending() {
+    fetch('/api/admin/replacements').then(r => r.json()).then(d => { if (d.pending) setPending(d.pending) }).catch(() => {})
+  }
+
   useEffect(() => {
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user || user.email !== ADMIN_EMAIL) { window.location.href = '/signin'; return }
       setAuthorized(true)
       setLoading(false)
+      loadPending()
     })
   }, [])
+
+  async function completeReplacement(orderId: string) {
+    const newBandId = (pendingIds[orderId] || '').trim()
+    if (!newBandId) return
+    setCompletingId(orderId); setPendingMsg('')
+    const res = await fetch('/api/admin/replacements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: orderId, new_band_id: newBandId }),
+    })
+    const data = await res.json()
+    if (res.ok) {
+      setPendingMsg(`✅ ${data.oldBandId} → ${data.newBandId}: moved ${data.movedRegistrations} prayer record(s).`)
+      loadPending()
+    } else {
+      setPendingMsg('❌ ' + (data.error || 'Failed to complete replacement.'))
+    }
+    setCompletingId(null)
+  }
 
   async function assignBands() {
     setAssigning(true); setAssignMsg('')
@@ -98,6 +128,33 @@ export default function AdminBands() {
           <button onClick={assignBands} disabled={assigning || !email.trim() || !assignIds.trim()} style={btn(assigning || !email.trim() || !assignIds.trim())}>{assigning ? 'Assigning…' : 'Assign Bands'}</button>
           {assignMsg && <div style={{ marginTop: 14, fontSize: 13, color: assignMsg.startsWith('❌') ? '#c0392b' : green, lineHeight: 1.5 }}>{assignMsg}</div>}
         </div>
+
+        {/* Pending replacement orders */}
+        {pending.length > 0 && (
+          <div style={{ ...card, borderColor: '#B8972A', background: '#fffdf5' }}>
+            <h2 style={{ fontSize: 17, fontWeight: 'bold', marginBottom: 6, color: '#1a1208' }}>Pending Replacement Orders ({pending.length})</h2>
+            <p style={{ fontSize: 13, color: '#8a7c6a', marginBottom: 18, lineHeight: 1.5 }}>Customers who ordered a replacement. Enter the band ID you&rsquo;re shipping and complete — the lost band&rsquo;s journey transfers automatically.</p>
+            {pending.map(p => (
+              <div key={p.order_id} style={{ borderTop: '1px solid #efe6cf', paddingTop: 14, marginTop: 14 }}>
+                <div style={{ fontSize: 13, color: '#2c2416', marginBottom: 8 }}>
+                  Replacing <strong>{p.replaces}</strong> &middot; <span style={{ color: '#8a7c6a' }}>{p.email || 'unknown email'}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <input
+                    value={pendingIds[p.order_id] || ''}
+                    onChange={e => setPendingIds(prev => ({ ...prev, [p.order_id]: e.target.value }))}
+                    placeholder="Shipped band ID (e.g. PB-NEW34)"
+                    style={{ ...input, marginBottom: 0, flex: 1, minWidth: 200 }}
+                  />
+                  <button onClick={() => completeReplacement(p.order_id)} disabled={completingId === p.order_id || !(pendingIds[p.order_id] || '').trim()} style={btn(completingId === p.order_id || !(pendingIds[p.order_id] || '').trim())}>
+                    {completingId === p.order_id ? 'Completing…' : 'Complete'}
+                  </button>
+                </div>
+              </div>
+            ))}
+            {pendingMsg && <div style={{ marginTop: 14, fontSize: 13, color: pendingMsg.startsWith('❌') ? '#c0392b' : green, lineHeight: 1.5 }}>{pendingMsg}</div>}
+          </div>
+        )}
 
         {/* Replace a lost band */}
         <div style={card}>

@@ -128,11 +128,14 @@ export default function StorePage() {
   const [toast, setToast] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [pricing, setPricing] = useState<Record<string, number>>({});
+  const [replaces, setReplaces] = useState("");
   useEffect(() => {
     fetch("/api/pricing")
       .then(r => r.json())
       .then(d => { if (d.pricing) setPricing(d.pricing); })
       .catch(() => {});
+    const r = new URLSearchParams(window.location.search).get("replaces");
+    if (r) setReplaces(r.trim().toUpperCase());
   }, []);
   // Live price in dollars from site_config, falling back to the static default.
   const priceFor = (id: string, fallbackDollars: number) =>
@@ -241,6 +244,13 @@ export default function StorePage() {
 
       {/* TOAST */}
       {toast && <div className="toast">✝ {toast}</div>}
+
+      {/* Replacement banner */}
+      {replaces && (
+        <div style={{ background: "#2C1A0E", color: "#F5EFE4", textAlign: "center", padding: "10px 20px", fontFamily: "'Lato', sans-serif", fontSize: 13, letterSpacing: "0.03em" }}>
+          ✝ Replacing band <strong style={{ color: "#E2C98A" }}>{replaces}</strong> — its prayer journey will move to your new band once it ships.
+        </div>
+      )}
 
       {/* NAV */}
       <nav className="store-nav" style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(253,250,245,0.97)", backdropFilter: "blur(12px)", borderBottom: "1px solid #E8DFD0", padding: "0 32px" }}>
@@ -527,6 +537,7 @@ export default function StorePage() {
       customMessage: customMsg || '',
       verse: customVerse || '',
       color: customColor || 'Amber Gold',
+      replaces: replaces || '',
     })
   })
   const data = await res.json()
