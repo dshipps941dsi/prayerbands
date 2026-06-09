@@ -122,14 +122,14 @@ type BandStatus = {
   dedicatorName?: string
 }
 
-// Colors resolve from theme CSS variables (set on :root by useApplyTheme).
+// Colors resolve from theme CSS variables (--pb-*, set on :root by useApplyTheme).
 // Fallbacks equal the original palette, so an unthemed band looks unchanged.
-const GOLD  = 'var(--primary, #B8860B)'
-const GREEN = 'var(--accent, #1a4a3a)'
-const NAVY  = 'var(--deep, #1a2a4a)'
-const DARK  = 'var(--text, #2C1810)'
-const CREAM = 'var(--background, #FAF6EF)'
-const GRAY  = 'var(--muted, #7A6A5A)'
+const GOLD  = 'var(--pb-primary, #B8860B)'
+const GREEN = 'var(--pb-accent-alt, #1a4a3a)'
+const NAVY  = 'var(--pb-tab-bar, #1a2a4a)'
+const DARK  = 'var(--pb-text, #2C1810)'
+const CREAM = 'var(--pb-background, #FAF6EF)'
+const GRAY  = 'var(--pb-text-muted, #7A6A5A)'
 const serif = "'Playfair Display', Georgia, serif"
 const body  = "'Lora', Georgia, serif"
 

@@ -1,16 +1,16 @@
 'use client'
 import { useEffect } from 'react'
-import { themeVars } from '@/lib/themes'
+import { getTheme, themeToVars } from '@/lib/themes'
 
-// Applies a theme's CSS variables to :root for the band experience.
+// Applies a band theme's CSS variables (--pb-*) to :root for the band experience.
 // Restores the default palette on unmount so other pages are unaffected.
 export function useApplyTheme(themeName?: string | null) {
   useEffect(() => {
     const root = document.documentElement
-    const vars = themeVars(themeName)
+    const vars = themeToVars(getTheme(themeName))
     Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v))
     return () => {
-      const def = themeVars('default')
+      const def = themeToVars(getTheme('default'))
       Object.entries(def).forEach(([k, v]) => root.style.setProperty(k, v))
     }
   }, [themeName])
