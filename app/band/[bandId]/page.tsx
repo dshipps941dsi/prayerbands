@@ -804,12 +804,6 @@ export default function BandPage() {
           <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{bandId}</div>
           <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>Currently held by {status.currentHolder?.user_name ?? 'someone'} in {status.currentHolder?.city ?? 'the world'}</div>
         </div>
-        {userId && status.band && !status.band.owner_id && (
-          <div style={{ margin: '16px 20px 0', background: 'white', borderRadius: 12, padding: '14px 18px', border: `1px solid ${GOLD}`, textAlign: 'center' }}>
-            <div style={{ fontFamily: body, fontSize: 13, color: DARK, marginBottom: 10, lineHeight: 1.5 }}>Add this band to your account to manage and track it from your dashboard.</div>
-            <button onClick={claimToAccount} disabled={claimingOwnership} style={{ padding: '9px 20px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>{claimingOwnership ? 'Claiming…' : '+ Claim this band to my account'}</button>
-          </div>
-        )}
         <NetworkConnectPrompt bandId={bandId} />
         {claimStep === 'prompt' && (
           <div style={{ margin: '20px 20px 0', background: 'white', borderRadius: 14, padding: '18px 20px', border: `1px solid ${GOLD}`, textAlign: 'center' }}>

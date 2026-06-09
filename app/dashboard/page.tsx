@@ -421,6 +421,11 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('Overview')
   const [showAllActivity, setShowAllActivity] = useState(false)
   const [showAllBands, setShowAllBands] = useState(false)
+  const [showReplace, setShowReplace] = useState(false)
+  const [replaceOld, setReplaceOld] = useState('')
+  const [replaceNew, setReplaceNew] = useState('')
+  const [replacing, setReplacing] = useState(false)
+  const [replaceMsg, setReplaceMsg] = useState('')
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700)
   const [showPrayerModal, setShowPrayerModal] = useState(false)
 
@@ -831,6 +836,44 @@ export default function Dashboard() {
                   </a>
                 )
               })}
+            </div>
+          )}
+
+          {/* Lost a band? Self-service replacement */}
+          {bands.length > 0 && (
+            <div style={{ marginTop: 14 }}>
+              {!showReplace ? (
+                <button onClick={() => { setShowReplace(true); setReplaceMsg('') }} style={{ background: 'none', border: 'none', color: '#8a7c6a', fontSize: 13, cursor: 'pointer', fontFamily: 'Georgia, serif', textDecoration: 'underline' }}>
+                  Lost a band? Replace it &rarr;
+                </button>
+              ) : (
+                <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '16px 18px' }}>
+                  <div style={{ fontSize: 14, fontWeight: 'bold', color: '#1a1208', marginBottom: 4 }}>Replace a lost band</div>
+                  <p style={{ fontSize: 12, color: '#8a7c6a', marginBottom: 12, lineHeight: 1.5 }}>Once your replacement band arrives, pick the lost band and enter the new band&rsquo;s ID. Its prayer journey moves to the new band; the old one is retired.</p>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: '#7a6c5a', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Lost band</label>
+                  <select value={replaceOld} onChange={e => setReplaceOld(e.target.value)} style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: '1px solid #ddd6ca', fontSize: 14, fontFamily: 'Georgia, serif', background: '#fdfaf7', color: '#2c2416', marginBottom: 12, boxSizing: 'border-box' }}>
+                    <option value="">Select the band you lost…</option>
+                    {bands.map(b => <option key={b.band_id} value={b.band_id}>{b.band_id}</option>)}
+                  </select>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: '#7a6c5a', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>New band ID</label>
+                  <input value={replaceNew} onChange={e => setReplaceNew(e.target.value)} placeholder="e.g. PB-NEW34" style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: '1px solid #ddd6ca', fontSize: 14, fontFamily: 'Georgia, serif', background: '#fdfaf7', color: '#2c2416', marginBottom: 14, boxSizing: 'border-box' }} />
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button
+                      disabled={replacing || !replaceOld || !replaceNew.trim()}
+                      onClick={async () => {
+                        setReplacing(true); setReplaceMsg('')
+                        const res = await fetch('/api/replace-band', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ old_band_id: replaceOld, new_band_id: replaceNew }) })
+                        const d = await res.json()
+                        if (res.ok) { setReplaceMsg(`✅ Done — moved ${d.movedRegistrations} prayer record(s) to ${d.newBandId}.`); setTimeout(() => window.location.reload(), 1800) }
+                        else { setReplaceMsg('❌ ' + (d.error || 'Could not replace band.')); setReplacing(false) }
+                      }}
+                      style={{ background: (replacing || !replaceOld || !replaceNew.trim()) ? '#ccc' : AMBER, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', fontFamily: 'Georgia, serif' }}
+                    >{replacing ? 'Replacing…' : 'Replace band'}</button>
+                    <button onClick={() => { setShowReplace(false); setReplaceOld(''); setReplaceNew(''); setReplaceMsg('') }} style={{ background: 'transparent', border: '1px solid #ddd6ca', borderRadius: 8, padding: '10px 18px', fontSize: 14, color: '#8a7c6a', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Cancel</button>
+                  </div>
+                  {replaceMsg && <div style={{ marginTop: 12, fontSize: 13, color: replaceMsg.startsWith('❌') ? '#c0392b' : '#1a6b4a', lineHeight: 1.5 }}>{replaceMsg}</div>}
+                </div>
+              )}
             </div>
           )}
         </div>
