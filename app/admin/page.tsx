@@ -280,6 +280,7 @@ export default function AdminPage() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+          <a href="/admin/products" style={{ color: '#C8A96E', fontSize: '13px', textDecoration: 'none', fontWeight: 600 }}>Products</a>
           <a href="/admin/bands" style={{ color: '#C8A96E', fontSize: '13px', textDecoration: 'none', fontWeight: 600 }}>Band Management</a>
           <a href="/admin/orgs" style={{ color: '#C8A96E', fontSize: '13px', textDecoration: 'none' }}>Churches</a>
           <a href="/dashboard" style={{ color: '#C8A96E', fontSize: '13px', textDecoration: 'none' }}>Back to Dashboard</a>

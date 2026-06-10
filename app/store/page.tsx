@@ -8,75 +8,33 @@ import { track } from "@/lib/analytics";
 type CartItem = {
   id: string;
   name: string;
-  price: number;       // base unit price (standard recalculates by tier in cart)
+  price: number;
   qty: number;
-  type: "standard" | "custom" | "pack";
-  size?: string;       // S | M | L (individual bands only)
+  type: string;
+  size?: string;
+  multiDiscount?: boolean;
   detail?: string;
 };
 
-// ─── Product Data ─────────────────────────────────────────────
-const INDIVIDUAL = [
-  {
-    id: "standard",
-    type: "standard" as const,
-    name: "Standard Band",
-    price: 5,
-    color: "#C8A96E",
-    icon: "✝",
-    tag: "Most Popular",
-    desc: "A wristband laser-engraved with a unique PB-XXXXX ID and NFC chip. Ready to carry a prayer.",
-    features: ["Unique PB-XXXXX ID", "NFC chip enabled", "Laser-engraved", "Full journey tracking"],
-  },
-  {
-    id: "custom",
-    type: "custom" as const,
-    name: "Custom Band",
-    price: 10,
-    color: "#7BAE8E",
-    icon: "✦",
-    tag: "Personalized",
-    desc: "Everything in Standard, plus your choice of color, a custom scripture verse, and a personal message engraved.",
-    features: ["Everything in Standard", "Choose band color", "Custom scripture verse", "Personal message", "Gift-ready packaging"],
-  },
-];
-
-const PACKS = [
-  {
-    id: "pack-50",
-    type: "pack" as const,
-    name: "Starter Pack",
-    bands: 50,
-    price: 225.00,
-    perBand: 4.50,
-    color: "#7BAE8E",
-    desc: "Perfect for small groups, house churches, or personal outreach.",
-    savings: "Save 10%",
-  },
-  {
-    id: "pack-100",
-    type: "pack" as const,
-    name: "Community Pack",
-    bands: 100,
-    price: 425.00,
-    perBand: 4.25,
-    color: "#C8A96E",
-    desc: "Ideal for congregation-wide initiatives and mission trips.",
-    savings: "Save 15%",
-    popular: true,
-  },
-  {
-    id: "pack-200",
-    type: "pack" as const,
-    name: "Mission Pack",
-    bands: 200,
-    price: 800.00,
-    perBand: 4.00,
-    color: "#7B8FAE",
-    desc: "For conferences, large outreaches, and denominational orders.",
-    savings: "Save 20%",
-  },
-];
+type Variant = { size: string; stock: number; backorder: boolean };
+type Product = {
+  slug: string;
+  name: string;
+  description: string;
+  category: string;       // 'band' | 'pack'
+  theme: string;
+  color: string;
+  icon: string;
+  tag?: string | null;
+  price: number;          // dollars
+  bandsPerUnit: number;
+  features: string[];
+  sizes: string[];
+  hasSizes: boolean;
+  multiDiscount: boolean;
+  images: string[];
+  variants: Variant[];
+};
 
 const COLORS = [
   { name: "Amber Gold", hex: "#C8A96E" },
@@ -100,24 +58,8 @@ const SIZE_CHART = [
   { size: "Large", wrist: "18–20 cm (7.1–7.9 in)", fit: "Larger wrists" },
 ];
 
-// Up to 3 images per product. Drop files in /public/products/.
-// Until they exist, the card gracefully shows the band illustration.
-const PRODUCT_IMAGES: Record<string, string[]> = {
-  standard: ["/products/standard-1.jpg", "/products/standard-2.jpg", "/products/standard-3.jpg"],
-  custom: ["/products/custom-1.jpg", "/products/custom-2.jpg", "/products/custom-3.jpg"],
-};
-
-// Cart product id → site_config price key (cents). Prices are admin-editable.
-const PRICE_KEY: Record<string, string> = {
-  standard: "band_price_single",
-  custom: "band_price_custom",
-  "pack-50": "pack_price_50",
-  "pack-100": "pack_price_100",
-  "pack-200": "pack_price_200",
-};
-
 // ─── Image carousel (falls back to the band illustration) ─────
-function BandCarousel({ images, color, icon, tag }: { images: string[]; color: string; icon: string; tag?: string }) {
+function BandCarousel({ images, color, icon, tag }: { images: string[]; color: string; icon: string; tag?: string | null }) {
   const [broken, setBroken] = useState<Record<string, boolean>>({});
   const [idx, setIdx] = useState(0);
   const ok = images.filter(src => !broken[src]);
@@ -163,54 +105,65 @@ export default function StorePage() {
   const [toast, setToast] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [pricing, setPricing] = useState<Record<string, number>>({});
+  const [catalog, setCatalog] = useState<Product[]>([]);
   const [replaces, setReplaces] = useState("");
   const [sizes, setSizes] = useState<Record<string, string>>({});
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+
   useEffect(() => {
-    fetch("/api/pricing")
-      .then(r => r.json())
-      .then(d => { if (d.pricing) setPricing(d.pricing); })
-      .catch(() => {});
+    fetch("/api/pricing").then(r => r.json()).then(d => { if (d.pricing) setPricing(d.pricing); }).catch(() => {});
+    fetch("/api/products").then(r => r.json()).then(d => { if (Array.isArray(d.products) && d.products.length) setCatalog(d.products); }).catch(() => {});
     const r = new URLSearchParams(window.location.search).get("replaces");
     if (r) setReplaces(r.trim().toUpperCase());
   }, []);
-  // Live price in dollars from site_config, falling back to the static default.
-  const priceFor = (id: string, fallbackDollars: number) =>
-    (pricing[PRICE_KEY[id]] ?? Math.round(fallbackDollars * 100)) / 100;
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 2800);
-  };
 
-  // ── Automatic multi-band pricing (standard bands) ──
-  const single = priceFor("standard", 5);
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 2800); };
+
+  // Fallback catalog (used only until db/products.sql is run) so the store never breaks.
+  const fallback: Product[] = [
+    { slug: "standard", name: "Standard Band", description: "A wristband laser-engraved with a unique PB-XXXXX ID and NFC chip. Ready to carry a prayer.", category: "band", theme: "default", color: "#C8A96E", icon: "✝", tag: "Most Popular", price: (pricing["band_price_single"] ?? 1499) / 100, bandsPerUnit: 1, features: ["Unique PB-XXXXX ID", "NFC chip enabled", "Laser-engraved", "Full journey tracking"], sizes: ["S", "M", "L"], hasSizes: true, multiDiscount: true, images: [], variants: [] },
+    { slug: "custom", name: "Custom Band", description: "Everything in Standard, plus your choice of color, a custom scripture verse, and a personal message engraved.", category: "band", theme: "default", color: "#7BAE8E", icon: "✦", tag: "Personalized", price: (pricing["band_price_custom"] ?? 1000) / 100, bandsPerUnit: 1, features: ["Everything in Standard", "Choose band color", "Custom scripture verse", "Personal message", "Gift-ready packaging"], sizes: ["S", "M", "L"], hasSizes: true, multiDiscount: false, images: [], variants: [] },
+    { slug: "pack-50", name: "Starter Pack", description: "Perfect for small groups, house churches, or personal outreach.", category: "pack", theme: "default", color: "#7BAE8E", icon: "✝", tag: null, price: (pricing["pack_price_50"] ?? 22500) / 100, bandsPerUnit: 50, features: ["Custom ministry prefix", "Ministry dashboard", "NFC + laser-engraved", "Journey tracking", "Bulk reorder pricing"], sizes: [], hasSizes: false, multiDiscount: false, images: [], variants: [] },
+    { slug: "pack-100", name: "Community Pack", description: "Ideal for congregation-wide initiatives and mission trips.", category: "pack", theme: "default", color: "#C8A96E", icon: "✝", tag: "Most Popular", price: (pricing["pack_price_100"] ?? 42500) / 100, bandsPerUnit: 100, features: ["Custom ministry prefix", "Ministry dashboard", "NFC + laser-engraved", "Journey tracking", "Bulk reorder pricing"], sizes: [], hasSizes: false, multiDiscount: false, images: [], variants: [] },
+    { slug: "pack-200", name: "Mission Pack", description: "For conferences, large outreaches, and denominational orders.", category: "pack", theme: "default", color: "#7B8FAE", icon: "✝", tag: null, price: (pricing["pack_price_200"] ?? 80000) / 100, bandsPerUnit: 200, features: ["Custom ministry prefix", "Ministry dashboard", "NFC + laser-engraved", "Journey tracking", "Bulk reorder pricing"], sizes: [], hasSizes: false, multiDiscount: false, images: [], variants: [] },
+  ];
+
+  const products = catalog.length ? catalog : fallback;
+  const bandProducts = products.filter(p => p.category === "band");
+  const packProducts = products.filter(p => p.category === "pack");
+
+  // ── Automatic multi-band discount (products flagged multiDiscount) ──
+  const discountBase = bandProducts.find(p => p.multiDiscount);
+  const single = discountBase?.price ?? ((pricing["band_price_single"] ?? 1499) / 100);
   const tier3 = ((pricing["band_price_3pack"] ?? 3999) / 100) / 3;
   const tier5 = ((pricing["band_price_5pack"] ?? 5999) / 100) / 5;
   const standardUnitFor = (qty: number) => (qty >= 5 ? tier5 : qty >= 3 ? tier3 : single);
 
+  // ── Availability ──
+  const variantFor = (p: Product, size: string): Variant => {
+    if (!p.variants || p.variants.length === 0) return { size, stock: 9999, backorder: false };
+    return p.variants.find(v => v.size === (p.hasSizes ? size : "")) || p.variants[0];
+  };
+  const availabilityOf = (p: Product, size: string): "in" | "backorder" | "out" => {
+    const v = variantFor(p, size);
+    return v.stock > 0 ? "in" : v.backorder ? "backorder" : "out";
+  };
+
   const addToCart = (item: Omit<CartItem, "qty">) => {
     setCart(prev => {
       const i = prev.findIndex(c => c.id === item.id && c.size === item.size);
-      if (i >= 0) {
-        const copy = [...prev];
-        copy[i] = { ...copy[i], qty: copy[i].qty + 1 };
-        return copy;
-      }
+      if (i >= 0) { const copy = [...prev]; copy[i] = { ...copy[i], qty: copy[i].qty + 1 }; return copy; }
       return [...prev, { ...item, qty: 1 }];
     });
     showToast(`${item.name} added to cart`);
   };
-
   const updateQty = (id: string, size: string | undefined, delta: number) => {
-    setCart(prev => prev
-      .map(c => (c.id === id && c.size === size) ? { ...c, qty: c.qty + delta } : c)
-      .filter(c => c.qty > 0)
-    );
+    setCart(prev => prev.map(c => (c.id === id && c.size === size) ? { ...c, qty: c.qty + delta } : c).filter(c => c.qty > 0));
   };
 
-  const standardQty = cart.filter(c => c.id === "standard").reduce((s, c) => s + c.qty, 0);
+  const standardQty = cart.filter(c => c.multiDiscount).reduce((s, c) => s + c.qty, 0);
   const stdUnit = standardUnitFor(standardQty);
-  const lineUnit = (c: CartItem) => (c.id === "standard" ? stdUnit : c.price);
+  const lineUnit = (c: CartItem) => (c.multiDiscount ? stdUnit : c.price);
   const subtotal = cart.reduce((sum, c) => sum + lineUnit(c) * c.qty, 0);
   const stdSavings = (single - stdUnit) * standardQty;
   const totalItems = cart.reduce((sum, c) => sum + c.qty, 0);
@@ -225,82 +178,32 @@ export default function StorePage() {
         .playfair { font-family: 'Playfair Display', serif; }
         .lato { font-family: 'Lato', sans-serif; }
         .section-label { font-family:'Lato',sans-serif; font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:#C8A96E; display:block; margin-bottom:10px; }
-        .add-btn {
-          width: 100%; padding: 14px; border: none; border-radius: 4px;
-          font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.12em;
-          text-transform: uppercase; cursor: pointer; transition: all 0.2s;
-          font-weight: 700;
-        }
+        .add-btn { width: 100%; padding: 14px; border: none; border-radius: 4px; font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; font-weight: 700; }
         .add-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(44,26,14,0.15); }
-        .product-card {
-          background: #fff; border: 1px solid #E8DFD0; border-radius: 10px;
-          overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;
-        }
+        .add-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .product-card { background: #fff; border: 1px solid #E8DFD0; border-radius: 10px; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
         .product-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(44,26,14,0.10); }
-        .pack-card {
-          background: #fff; border: 1px solid #E8DFD0; border-radius: 10px;
-          padding: 32px 28px; transition: transform 0.2s, box-shadow 0.2s; position: relative;
-        }
+        .pack-card { background: #fff; border: 1px solid #E8DFD0; border-radius: 10px; padding: 32px 28px; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
         .pack-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(44,26,14,0.10); }
-        .qty-btn {
-          width: 28px; height: 28px; border-radius: 50%; border: 1px solid #E8DFD0;
-          background: #FDFAF5; cursor: pointer; font-size: 16px; display: flex;
-          align-items: center; justify-content: center; transition: background 0.15s;
-        }
+        .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #E8DFD0; background: #FDFAF5; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
         .qty-btn:hover { background: #E8DFD0; }
-        .cart-overlay {
-          position: fixed; inset: 0; background: rgba(44,26,14,0.4); z-index: 200;
-          display: flex; justify-content: flex-end;
-        }
-        .cart-drawer {
-          width: 420px; max-width: 100vw; background: #FDFAF5;
-          height: 100vh; overflow-y: auto; padding: 32px 28px;
-          box-shadow: -8px 0 48px rgba(44,26,14,0.15);
-        }
-        .checkout-btn {
-          width: 100%; padding: 16px; background: #C8A96E; color: #fff;
-          border: none; border-radius: 4px; font-family: 'Lato', sans-serif;
-          font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase;
-          cursor: pointer; font-weight: 700; transition: background 0.2s;
-          margin-top: 16px;
-        }
+        .cart-overlay { position: fixed; inset: 0; background: rgba(44,26,14,0.4); z-index: 200; display: flex; justify-content: flex-end; }
+        .cart-drawer { width: 420px; max-width: 100vw; background: #FDFAF5; height: 100vh; overflow-y: auto; padding: 32px 28px; box-shadow: -8px 0 48px rgba(44,26,14,0.15); }
+        .checkout-btn { width: 100%; padding: 16px; background: #C8A96E; color: #fff; border: none; border-radius: 4px; font-family: 'Lato', sans-serif; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; font-weight: 700; transition: background 0.2s; margin-top: 16px; }
         .checkout-btn:hover { background: #B8944A; }
         .checkout-btn:disabled { background: #C8B49A; cursor: not-allowed; }
-        .size-btn {
-          flex: 1; padding: 9px 0; border-radius: 4px; cursor: pointer;
-          font-family: 'Lato', sans-serif; font-size: 12px; transition: all 0.15s;
-        }
-        .toast {
-          position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
-          background: #2C1A0E; color: #FDFAF5; padding: 12px 28px; border-radius: 40px;
-          font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.08em;
-          z-index: 999; pointer-events: none;
-          animation: fadeInUp 0.3s ease;
-        }
+        .size-btn { flex: 1; padding: 9px 0; border-radius: 4px; cursor: pointer; font-family: 'Lato', sans-serif; font-size: 12px; transition: all 0.15s; }
+        .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #2C1A0E; color: #FDFAF5; padding: 12px 28px; border-radius: 40px; font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.08em; z-index: 999; pointer-events: none; animation: fadeInUp 0.3s ease; }
         @keyframes fadeInUp { from { opacity:0; transform:translateX(-50%) translateY(12px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
-        input, textarea, select {
-          width: 100%; padding: 10px 14px; border: 1px solid #E8DFD0; border-radius: 4px;
-          background: #FDFAF5; font-family: 'Lato', sans-serif; font-size: 14px;
-          color: #2C1A0E; outline: none; transition: border-color 0.2s;
-        }
+        input, textarea, select { width: 100%; padding: 10px 14px; border: 1px solid #E8DFD0; border-radius: 4px; background: #FDFAF5; font-family: 'Lato', sans-serif; font-size: 14px; color: #2C1A0E; outline: none; transition: border-color 0.2s; }
         input:focus, textarea:focus, select:focus { border-color: #C8A96E; }
         textarea { resize: vertical; min-height: 72px; }
-        @media (max-width: 768px) {
-          .products-grid { grid-template-columns: 1fr !important; }
-          .packs-grid { grid-template-columns: 1fr !important; }
-          .cart-drawer { width: 100vw; }
-        }
-        @media (max-width: 600px) {
-          /* Keep only the logo + cart so nothing runs off the edge. */
-          .nav-extra { display: none !important; }
-          .store-nav { padding: 0 16px !important; }
-        }
+        @media (max-width: 768px) { .products-grid { grid-template-columns: 1fr !important; } .packs-grid { grid-template-columns: 1fr !important; } .cart-drawer { width: 100vw; } }
+        @media (max-width: 600px) { .nav-extra { display: none !important; } .store-nav { padding: 0 16px !important; } }
       `}</style>
 
-      {/* TOAST */}
       {toast && <div className="toast">✝ {toast}</div>}
 
-      {/* Replacement banner */}
       {replaces && (
         <div style={{ background: "#2C1A0E", color: "#F5EFE4", textAlign: "center", padding: "10px 20px", fontFamily: "'Lato', sans-serif", fontSize: 13, letterSpacing: "0.03em" }}>
           ✝ Replacing band <strong style={{ color: "#E2C98A" }}>{replaces}</strong> — its prayer journey will move to your new band once it ships.
@@ -317,15 +220,10 @@ export default function StorePage() {
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
             <a href="/" className="lato nav-extra" style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "#9B7B62", textDecoration: "none" }}>← Back to Home</a>
             <a href="/subscribe" className="lato nav-extra" style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C8A96E", textDecoration: "none", fontWeight: 700 }}>Subscribe</a>
-            <button
-              onClick={() => setCartOpen(true)}
-              style={{ position: "relative", background: "#2C1A0E", border: "none", borderRadius: 4, padding: "9px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
-            >
+            <button onClick={() => setCartOpen(true)} style={{ position: "relative", background: "#2C1A0E", border: "none", borderRadius: 4, padding: "9px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
               <Icon name="shop-bag" size={16} color="#FDFAF5" bg="#2C1A0E" />
               <span className="lato" style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: "#FDFAF5", fontWeight: 700 }}>Cart</span>
-              {totalItems > 0 && (
-                <span style={{ position: "absolute", top: -8, right: -8, width: 20, height: 20, borderRadius: "50%", background: "#C8A96E", color: "#fff", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Lato, sans-serif", fontWeight: 700 }}>{totalItems}</span>
-              )}
+              {totalItems > 0 && <span style={{ position: "absolute", top: -8, right: -8, width: 20, height: 20, borderRadius: "50%", background: "#C8A96E", color: "#fff", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Lato, sans-serif", fontWeight: 700 }}>{totalItems}</span>}
             </button>
           </div>
         </div>
@@ -334,19 +232,14 @@ export default function StorePage() {
       {/* HERO */}
       <section style={{ padding: "72px 32px 56px", textAlign: "center", background: "linear-gradient(180deg, #F5EFE4 0%, #FDFAF5 100%)", borderBottom: "1px solid #E8DFD0" }}>
         <span className="section-label">The Store</span>
-        <h1 className="playfair" style={{ fontSize: "clamp(36px, 5vw, 60px)", fontWeight: 700, lineHeight: 1.15, marginBottom: 16 }}>
-          Send a Prayer Into<br />
-          <em style={{ color: "#C8A96E" }}>the World</em>
-        </h1>
+        <h1 className="playfair" style={{ fontSize: "clamp(36px, 5vw, 60px)", fontWeight: 700, lineHeight: 1.15, marginBottom: 16 }}>Send a Prayer Into<br /><em style={{ color: "#C8A96E" }}>the World</em></h1>
         <div style={{ width: 48, height: 2, background: "#C8A96E", margin: "0 auto 20px" }} />
-        <p className="lato" style={{ fontSize: 16, color: "#6B4C35", maxWidth: 480, margin: "0 auto", lineHeight: 1.8, fontWeight: 300 }}>
-          Every band ships NFC-enabled and laser-engraved with a unique ID. One tap opens its digital journey.
-        </p>
+        <p className="lato" style={{ fontSize: 16, color: "#6B4C35", maxWidth: 480, margin: "0 auto", lineHeight: 1.8, fontWeight: 300 }}>Every band ships NFC-enabled and laser-engraved with a unique ID. One tap opens its digital journey.</p>
       </section>
 
       <div style={{ maxWidth: 1160, margin: "0 auto", padding: "64px 32px" }}>
 
-        {/* ── AUTO-DISCOUNT BANNER ── */}
+        {/* AUTO-DISCOUNT BANNER */}
         <div style={{ background: "#2C1A0E", color: "#F5EFE4", borderRadius: 12, padding: "16px 24px", marginBottom: 32, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap", textAlign: "center" }}>
           <span style={{ fontSize: 22 }}>🎉</span>
           <span className="lato" style={{ fontSize: 14, letterSpacing: "0.02em", lineHeight: 1.6 }}>
@@ -354,7 +247,7 @@ export default function StorePage() {
           </span>
         </div>
 
-        {/* ── INDIVIDUAL BANDS ── */}
+        {/* INDIVIDUAL BANDS */}
         <div style={{ marginBottom: 80 }}>
           <div style={{ marginBottom: 40 }}>
             <span className="section-label">Individual Bands</span>
@@ -362,23 +255,23 @@ export default function StorePage() {
           </div>
 
           <div className="products-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>
-            {INDIVIDUAL.map(product => {
-              const price = priceFor(product.id, product.price);
-              const size = sizes[product.id] || "M";
+            {bandProducts.map(product => {
+              const price = product.price;
+              const size = sizes[product.slug] || (product.sizes[0] || "M");
               const sizeLabel = SIZES.find(s => s.id === size)?.label || size;
+              const avail = availabilityOf(product, size);
+              const isCustom = product.slug === "custom";
               return (
-              <div key={product.id} className="product-card">
-                {/* Image carousel (falls back to the band illustration) */}
-                <BandCarousel images={PRODUCT_IMAGES[product.id] || []} color={product.color} icon={product.icon} tag={product.tag} />
-
+              <div key={product.slug} className="product-card">
+                <BandCarousel images={product.images || []} color={product.color} icon={product.icon} tag={product.tag} />
                 <div style={{ padding: "28px 28px 32px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                     <h3 className="playfair" style={{ fontSize: 24, fontWeight: 600 }}>{product.name}</h3>
                     <div className="playfair" style={{ fontSize: 28, fontWeight: 700, color: "#C8A96E" }}>${price}</div>
                   </div>
-                  <p className="lato" style={{ fontSize: 14, lineHeight: 1.75, color: "#6B4C35", fontWeight: 300, marginBottom: 20 }}>{product.desc}</p>
+                  <p className="lato" style={{ fontSize: 14, lineHeight: 1.75, color: "#6B4C35", fontWeight: 300, marginBottom: 20 }}>{product.description}</p>
 
-                  {product.id === "standard" && (
+                  {product.multiDiscount && (
                     <div className="lato" style={{ fontSize: 12, color: "#7BAE8E", fontWeight: 700, marginBottom: 18, letterSpacing: "0.02em" }}>
                       Buy 3+ for ${tier3.toFixed(2)} ea · 5+ for ${tier5.toFixed(2)} ea — applied automatically
                     </div>
@@ -392,64 +285,45 @@ export default function StorePage() {
                     ))}
                   </div>
 
-                  {/* Size selector */}
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                      <label className="lato" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#9B7B62" }}>Size</label>
-                      <button onClick={() => setShowSizeGuide(true)} className="lato" style={{ background: "none", border: "none", color: "#C8A96E", fontSize: 11, cursor: "pointer", textDecoration: "underline", letterSpacing: "0.05em", padding: 0 }}>Size guide</button>
-                    </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      {SIZES.map(s => {
-                        const sel = size === s.id;
-                        return (
-                          <button key={s.id} className="size-btn" onClick={() => setSizes(p => ({ ...p, [product.id]: s.id }))} style={{ border: `1px solid ${sel ? product.color : "#E8DFD0"}`, background: sel ? `${product.color}1f` : "#fff", color: sel ? "#2C1A0E" : "#9B7B62", fontWeight: sel ? 700 : 400 }}>{s.label}</button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Custom options */}
-                  {product.type === "custom" && (
-                    <div style={{ marginBottom: 20, display: "grid", gap: 12 }}>
-                      <div>
-                        <label className="lato" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#9B7B62", display: "block", marginBottom: 6 }}>Band Color</label>
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                          {COLORS.map(c => (
-                            <button
-                              key={c.name}
-                              title={c.name}
-                              onClick={() => setCustomColor(c.name)}
-                              style={{ width: 28, height: 28, borderRadius: "50%", background: c.hex, border: customColor === c.name ? "3px solid #2C1A0E" : "2px solid #E8DFD0", cursor: "pointer", transition: "transform 0.15s" }}
-                            />
-                          ))}
-                        </div>
+                  {product.hasSizes && (
+                    <div style={{ marginBottom: 20 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <label className="lato" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#9B7B62" }}>Size</label>
+                        <button onClick={() => setShowSizeGuide(true)} className="lato" style={{ background: "none", border: "none", color: "#C8A96E", fontSize: 11, cursor: "pointer", textDecoration: "underline", letterSpacing: "0.05em", padding: 0 }}>Size guide</button>
                       </div>
-                      <div>
-                        <label className="lato" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#9B7B62", display: "block", marginBottom: 6 }}>Scripture Verse (optional)</label>
-                        <input placeholder="e.g. John 3:16" value={customVerse} onChange={e => setCustomVerse(e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="lato" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#9B7B62", display: "block", marginBottom: 6 }}>Personal Message (optional)</label>
-                        <textarea placeholder="A short message for the recipient..." value={customMsg} onChange={e => setCustomMsg(e.target.value)} />
+                      <div style={{ display: "flex", gap: 8 }}>
+                        {product.sizes.map(sid => {
+                          const sel = size === sid;
+                          const label = SIZES.find(s => s.id === sid)?.label || sid;
+                          return <button key={sid} className="size-btn" onClick={() => setSizes(p => ({ ...p, [product.slug]: sid }))} style={{ border: `1px solid ${sel ? product.color : "#E8DFD0"}`, background: sel ? `${product.color}1f` : "#fff", color: sel ? "#2C1A0E" : "#9B7B62", fontWeight: sel ? 700 : 400 }}>{label}</button>;
+                        })}
                       </div>
                     </div>
                   )}
 
-                  <button
-                    className="add-btn"
-                    style={{ background: product.color, color: "#fff" }}
+                  {isCustom && (
+                    <div style={{ marginBottom: 20, display: "grid", gap: 12 }}>
+                      <div>
+                        <label className="lato" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#9B7B62", display: "block", marginBottom: 6 }}>Band Color</label>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          {COLORS.map(c => <button key={c.name} title={c.name} onClick={() => setCustomColor(c.name)} style={{ width: 28, height: 28, borderRadius: "50%", background: c.hex, border: customColor === c.name ? "3px solid #2C1A0E" : "2px solid #E8DFD0", cursor: "pointer" }} />)}
+                        </div>
+                      </div>
+                      <div><label className="lato" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#9B7B62", display: "block", marginBottom: 6 }}>Scripture Verse (optional)</label><input placeholder="e.g. John 3:16" value={customVerse} onChange={e => setCustomVerse(e.target.value)} /></div>
+                      <div><label className="lato" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#9B7B62", display: "block", marginBottom: 6 }}>Personal Message (optional)</label><textarea placeholder="A short message for the recipient..." value={customMsg} onChange={e => setCustomMsg(e.target.value)} /></div>
+                    </div>
+                  )}
+
+                  {avail === "backorder" && <div className="lato" style={{ fontSize: 12, color: "#B8860B", marginBottom: 10, fontWeight: 700 }}>On backorder — ships when restocked.</div>}
+                  {avail === "out" && <div className="lato" style={{ fontSize: 12, color: "#9B7B62", marginBottom: 10, fontWeight: 700 }}>Out of stock</div>}
+
+                  <button className="add-btn" disabled={avail === "out"} style={{ background: product.color, color: "#fff" }}
                     onClick={() => addToCart({
-                      id: product.id,
-                      name: product.name,
-                      price: price,
-                      type: product.type,
-                      size,
-                      detail: product.type === "custom"
-                        ? `${sizeLabel} · ${customColor}${customVerse ? ` · ${customVerse}` : ""}`
-                        : `Size: ${sizeLabel}`,
-                    })}
-                  >
-                    Add to Cart — ${price}
+                      id: product.slug, name: product.name, price, type: product.category, size,
+                      multiDiscount: product.multiDiscount,
+                      detail: isCustom ? `${sizeLabel} · ${customColor}${customVerse ? ` · ${customVerse}` : ""}` : `Size: ${sizeLabel}`,
+                    })}>
+                    {avail === "out" ? "Out of Stock" : avail === "backorder" ? `Backorder — $${price}` : `Add to Cart — $${price}`}
                   </button>
                 </div>
               </div>
@@ -458,76 +332,60 @@ export default function StorePage() {
           </div>
         </div>
 
-        {/* ── SUBSCRIPTION ── */}
+        {/* SUBSCRIPTION */}
         <a href="/subscribe" style={{ textDecoration: "none", color: "inherit" }}>
-          <div style={{ marginBottom: 80, background: "linear-gradient(135deg, #7B8FAE 0%, #566f92 100%)", border: "none", borderRadius: 12, padding: "40px 48px", display: "flex", alignItems: "center", gap: 40, flexWrap: "wrap", cursor: "pointer", transition: "box-shadow 0.2s", boxShadow: "0 8px 28px rgba(86,111,146,0.28)" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 16px 48px rgba(86,111,146,0.42)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 28px rgba(86,111,146,0.28)"; }}
-          >
+          <div style={{ marginBottom: 80, background: "linear-gradient(135deg, #7B8FAE 0%, #566f92 100%)", border: "none", borderRadius: 12, padding: "40px 48px", display: "flex", alignItems: "center", gap: 40, flexWrap: "wrap", cursor: "pointer", boxShadow: "0 8px 28px rgba(86,111,146,0.28)" }}>
             <div style={{ fontSize: 52 }}>🔁</div>
             <div style={{ flex: 1, minWidth: 260 }}>
               <span className="section-label" style={{ color: "#E3EAF2" }}>Subscribe & Save</span>
               <h3 className="playfair" style={{ fontSize: 30, fontWeight: 600, marginBottom: 10, color: "#fff" }}>A Band Delivered to Your Door, Every Month</h3>
               <p className="lato" style={{ fontSize: 15, color: "#DCE4EF", lineHeight: 1.8, fontWeight: 300 }}>Make intercession a rhythm. Subscribe and save up to 25% — bands ship automatically, ready to give away. Cancel anytime.</p>
             </div>
-            <button style={{ background: "#FFFDF7", border: "none", color: "#4f6d8f", padding: "14px 36px", borderRadius: 4, fontFamily: "Lato, sans-serif", fontSize: 13, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap" }}>
-              View Plans →
-            </button>
+            <button style={{ background: "#FFFDF7", border: "none", color: "#4f6d8f", padding: "14px 36px", borderRadius: 4, fontFamily: "Lato, sans-serif", fontSize: 13, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap" }}>View Plans →</button>
           </div>
         </a>
 
-        {/* ── CHURCH PACKS ── */}
+        {/* CHURCH PACKS */}
+        {packProducts.length > 0 && (
         <div id="packs" style={{ marginBottom: 80, scrollMarginTop: 80 }}>
           <div style={{ marginBottom: 40 }}>
             <span className="section-label">Church & Ministry Packs</span>
             <h2 className="playfair" style={{ fontSize: 36, fontWeight: 600 }}>For Communities</h2>
             <p className="lato" style={{ fontSize: 15, color: "#9B7B62", marginTop: 10, fontWeight: 300 }}>Bulk pricing with a custom ministry prefix (e.g. FBC-XXXXX) and dashboard access.</p>
           </div>
-
           <div className="packs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
-            {PACKS.map(pack => {
-              const price = priceFor(pack.id, pack.price);
-              const perBand = price / pack.bands;
+            {packProducts.map(pack => {
+              const price = pack.price;
+              const perBand = price / (pack.bandsPerUnit || 1);
+              const avail = availabilityOf(pack, "");
               return (
-              <div key={pack.id} className="pack-card" style={{ borderTop: `4px solid ${pack.color}` }}>
-                {pack.popular && (
-                  <div className="lato" style={{ position: "absolute", top: -1, left: "50%", transform: "translateX(-50%)", background: pack.color, color: "#fff", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", padding: "3px 14px", borderRadius: "0 0 8px 8px", fontWeight: 700, whiteSpace: "nowrap" }}>Most Popular</div>
-                )}
+              <div key={pack.slug} className="pack-card" style={{ borderTop: `4px solid ${pack.color}` }}>
+                {pack.tag && <div className="lato" style={{ position: "absolute", top: -1, left: "50%", transform: "translateX(-50%)", background: pack.color, color: "#fff", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", padding: "3px 14px", borderRadius: "0 0 8px 8px", fontWeight: 700, whiteSpace: "nowrap" }}>{pack.tag}</div>}
                 <div style={{ marginBottom: 20 }}>
                   <h3 className="playfair" style={{ fontSize: 22, fontWeight: 600, marginBottom: 6 }}>{pack.name}</h3>
-                  <p className="lato" style={{ fontSize: 13, color: "#9B7B62", lineHeight: 1.7, fontWeight: 300 }}>{pack.desc}</p>
+                  <p className="lato" style={{ fontSize: 13, color: "#9B7B62", lineHeight: 1.7, fontWeight: 300 }}>{pack.description}</p>
                 </div>
-
                 <div style={{ marginBottom: 24 }}>
                   <div className="playfair" style={{ fontSize: 38, fontWeight: 700, color: pack.color, lineHeight: 1 }}>${price.toFixed(2)}</div>
-                  <div className="lato" style={{ fontSize: 12, color: "#9B7B62", marginTop: 4 }}>
-                    ${perBand.toFixed(2)}/band · {pack.bands} bands
-                  </div>
-                  <div className="lato" style={{ fontSize: 11, color: pack.color, fontWeight: 700, marginTop: 4, letterSpacing: "0.08em" }}>{pack.savings} vs individual</div>
+                  <div className="lato" style={{ fontSize: 12, color: "#9B7B62", marginTop: 4 }}>${perBand.toFixed(2)}/band · {pack.bandsPerUnit} bands</div>
                 </div>
-
                 <div style={{ marginBottom: 24 }}>
-                  {["Custom ministry prefix", "Ministry dashboard", "NFC + laser-engraved", "Journey tracking", "Bulk reorder pricing"].map(f => (
-                    <div key={f} className="lato" style={{ fontSize: 13, color: "#6B4C35", padding: "5px 0", borderBottom: "1px solid #F5EFE4", display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: pack.color, fontSize: 10 }}>✦</span> {f}
-                    </div>
-                  ))}
+                  {pack.features.map(f => <div key={f} className="lato" style={{ fontSize: 13, color: "#6B4C35", padding: "5px 0", borderBottom: "1px solid #F5EFE4", display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: pack.color, fontSize: 10 }}>✦</span> {f}</div>)}
                 </div>
-
-                <button
-                  className="add-btn"
-                  style={{ background: pack.color, color: "#fff" }}
-                  onClick={() => addToCart({ id: pack.id, name: `${pack.name} (${pack.bands} bands)`, price: price, type: "pack" })}
-                >
-                  Add to Cart — ${price.toFixed(2)}
+                {avail === "backorder" && <div className="lato" style={{ fontSize: 12, color: "#B8860B", marginBottom: 10, fontWeight: 700 }}>On backorder — ships when restocked.</div>}
+                {avail === "out" && <div className="lato" style={{ fontSize: 12, color: "#9B7B62", marginBottom: 10, fontWeight: 700 }}>Out of stock</div>}
+                <button className="add-btn" disabled={avail === "out"} style={{ background: pack.color, color: "#fff" }}
+                  onClick={() => addToCart({ id: pack.slug, name: `${pack.name} (${pack.bandsPerUnit} bands)`, price, type: "pack" })}>
+                  {avail === "out" ? "Out of Stock" : `Add to Cart — $${price.toFixed(2)}`}
                 </button>
               </div>
               );
             })}
           </div>
         </div>
+        )}
 
-        {/* ── CUSTOM / LARGE ORDERS ── */}
+        {/* LARGE ORDERS */}
         <div style={{ background: "#2C1A0E", borderRadius: 12, padding: "48px 56px", display: "flex", alignItems: "center", gap: 48, flexWrap: "wrap" }}>
           <div style={{ fontSize: 56 }}>🕊️</div>
           <div style={{ flex: 1, minWidth: 240 }}>
@@ -535,40 +393,26 @@ export default function StorePage() {
             <h3 className="playfair" style={{ fontSize: 28, color: "#FDFAF5", marginBottom: 12 }}>Need 500+ Bands?</h3>
             <p className="lato" style={{ fontSize: 15, color: "#C8B49A", lineHeight: 1.8, fontWeight: 300 }}>We work with denominations, mission organizations, and large congregations for custom quantities and pricing.</p>
           </div>
-          <a href="/contact" style={{ textDecoration: "none" }}>
-            <button style={{ background: "transparent", border: "1.5px solid #C8A96E", color: "#C8A96E", padding: "14px 36px", borderRadius: 4, fontFamily: "Lato, sans-serif", fontSize: 13, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap", transition: "all 0.2s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#C8A96E"; (e.currentTarget as HTMLButtonElement).style.color = "#fff"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "#C8A96E"; }}
-            >
-              Contact Us
-            </button>
-          </a>
+          <a href="/contact" style={{ textDecoration: "none" }}><button style={{ background: "transparent", border: "1.5px solid #C8A96E", color: "#C8A96E", padding: "14px 36px", borderRadius: 4, fontFamily: "Lato, sans-serif", fontSize: 13, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap" }}>Contact Us</button></a>
         </div>
       </div>
 
-      {/* ── SIZE GUIDE MODAL ── */}
+      {/* SIZE GUIDE MODAL */}
       {showSizeGuide && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(44,26,14,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={e => { if (e.target === e.currentTarget) setShowSizeGuide(false); }}>
           <div style={{ background: "#FDFAF5", borderRadius: 12, padding: "32px 28px", maxWidth: 440, width: "100%", boxShadow: "0 24px 80px rgba(44,26,14,0.25)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-              <div>
-                <span className="section-label">Find your fit</span>
-                <h2 className="playfair" style={{ fontSize: 24, fontWeight: 600 }}>Band Size Guide</h2>
-              </div>
+              <div><span className="section-label">Find your fit</span><h2 className="playfair" style={{ fontSize: 24, fontWeight: 600 }}>Band Size Guide</h2></div>
               <button onClick={() => setShowSizeGuide(false)} style={{ background: "none", border: "none", fontSize: 24, cursor: "pointer", color: "#9B7B62", lineHeight: 1 }}>×</button>
             </div>
             <p className="lato" style={{ fontSize: 13, color: "#6B4C35", lineHeight: 1.7, marginBottom: 20, fontWeight: 300 }}>Measure around your wrist with a soft tape or a strip of paper, then match it below.</p>
             <div style={{ border: "1px solid #E8DFD0", borderRadius: 8, overflow: "hidden" }}>
               <div className="lato" style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", background: "#2C1A0E", color: "#F5EFE4", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>
-                <div style={{ padding: "10px 12px" }}>Size</div>
-                <div style={{ padding: "10px 12px" }}>Wrist</div>
-                <div style={{ padding: "10px 12px" }}>Best for</div>
+                <div style={{ padding: "10px 12px" }}>Size</div><div style={{ padding: "10px 12px" }}>Wrist</div><div style={{ padding: "10px 12px" }}>Best for</div>
               </div>
               {SIZE_CHART.map((row, i) => (
                 <div key={row.size} className="lato" style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", fontSize: 13, color: "#2C1A0E", background: i % 2 ? "#F5EFE4" : "#fff" }}>
-                  <div style={{ padding: "12px", fontWeight: 700 }}>{row.size}</div>
-                  <div style={{ padding: "12px", color: "#6B4C35" }}>{row.wrist}</div>
-                  <div style={{ padding: "12px", color: "#9B7B62" }}>{row.fit}</div>
+                  <div style={{ padding: "12px", fontWeight: 700 }}>{row.size}</div><div style={{ padding: "12px", color: "#6B4C35" }}>{row.wrist}</div><div style={{ padding: "12px", color: "#9B7B62" }}>{row.fit}</div>
                 </div>
               ))}
             </div>
@@ -577,7 +421,7 @@ export default function StorePage() {
         </div>
       )}
 
-      {/* ── CART DRAWER ── */}
+      {/* CART DRAWER */}
       {cartOpen && (
         <div className="cart-overlay" onClick={e => { if (e.target === e.currentTarget) setCartOpen(false); }}>
           <div className="cart-drawer">
@@ -585,7 +429,6 @@ export default function StorePage() {
               <h2 className="playfair" style={{ fontSize: 26, fontWeight: 600 }}>Your Cart</h2>
               <button onClick={() => setCartOpen(false)} style={{ background: "none", border: "none", fontSize: 24, cursor: "pointer", color: "#9B7B62" }}>×</button>
             </div>
-
             {cart.length === 0 ? (
               <div style={{ textAlign: "center", padding: "60px 0" }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🙏</div>
@@ -617,59 +460,25 @@ export default function StorePage() {
                   })}
                 </div>
 
-                {stdSavings > 0.001 && (
-                  <div className="lato" style={{ background: "#EAF4EE", color: "#1a4a3a", borderRadius: 8, padding: "10px 14px", fontSize: 13, marginBottom: 12, textAlign: "center", fontWeight: 700 }}>
-                    ✓ Multi-band pricing saved you ${stdSavings.toFixed(2)}
-                  </div>
-                )}
+                {stdSavings > 0.001 && <div className="lato" style={{ background: "#EAF4EE", color: "#1a4a3a", borderRadius: 8, padding: "10px 14px", fontSize: 13, marginBottom: 12, textAlign: "center", fontWeight: 700 }}>✓ Multi-band pricing saved you ${stdSavings.toFixed(2)}</div>}
 
-                {/* Order summary */}
                 <div style={{ background: "#F5EFE4", borderRadius: 8, padding: "20px 20px", marginBottom: 8 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span className="lato" style={{ fontSize: 13, color: "#9B7B62" }}>Subtotal</span>
-                    <span className="lato" style={{ fontSize: 13, color: "#2C1A0E", fontWeight: 700 }}>${subtotal.toFixed(2)}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span className="lato" style={{ fontSize: 13, color: "#9B7B62" }}>Shipping</span>
-                    <span className="lato" style={{ fontSize: 13, color: "#9B7B62" }}>${shipping.toFixed(2)}</span>
-                  </div>
-                  <div style={{ borderTop: "1px solid #E8DFD0", paddingTop: 12, marginTop: 8, display: "flex", justifyContent: "space-between" }}>
-                    <span className="playfair" style={{ fontSize: 18, fontWeight: 600 }}>Total</span>
-                    <span className="playfair" style={{ fontSize: 22, fontWeight: 700, color: "#C8A96E" }}>${total.toFixed(2)}</span>
-                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span className="lato" style={{ fontSize: 13, color: "#9B7B62" }}>Subtotal</span><span className="lato" style={{ fontSize: 13, color: "#2C1A0E", fontWeight: 700 }}>${subtotal.toFixed(2)}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span className="lato" style={{ fontSize: 13, color: "#9B7B62" }}>Shipping</span><span className="lato" style={{ fontSize: 13, color: "#9B7B62" }}>${shipping.toFixed(2)}</span></div>
+                  <div style={{ borderTop: "1px solid #E8DFD0", paddingTop: 12, marginTop: 8, display: "flex", justifyContent: "space-between" }}><span className="playfair" style={{ fontSize: 18, fontWeight: 600 }}>Total</span><span className="playfair" style={{ fontSize: 22, fontWeight: 700, color: "#C8A96E" }}>${total.toFixed(2)}</span></div>
                 </div>
 
                 <button className="checkout-btn" disabled={checkoutLoading || cart.length === 0} onClick={async () => {
                   setCheckoutLoading(true)
-                  track('begin_checkout', {
-                    currency: 'USD',
-                    value: subtotal,
-                    items: cart.map(c => ({ item_id: c.id, item_name: c.name, quantity: c.qty, price: lineUnit(c) })),
-                  })
+                  track('begin_checkout', { currency: 'USD', value: subtotal, items: cart.map(c => ({ item_id: c.id, item_name: c.name, quantity: c.qty, price: lineUnit(c) })) })
                   const res = await fetch('/api/create-checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      items: cart.map(c => ({ id: c.id, qty: c.qty, size: c.size })),
-                      customMessage: customMsg || '',
-                      verse: customVerse || '',
-                      color: customColor || 'Amber Gold',
-                      replaces: replaces || '',
-                    })
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: cart.map(c => ({ id: c.id, qty: c.qty, size: c.size })), customMessage: customMsg || '', verse: customVerse || '', color: customColor || 'Amber Gold', replaces: replaces || '' })
                   })
                   const data = await res.json()
-                  if (data.url) {
-                    window.location.href = data.url
-                  } else {
-                    showToast('Something went wrong — please try again')
-                    setCheckoutLoading(false)
-                  }
-                }}>
-                  {checkoutLoading ? 'Redirecting...' : `Proceed to Checkout — $${total.toFixed(2)}`}
-                </button>
-                <p className="lato" style={{ fontSize: 11, textAlign: "center", color: "#C8B49A", marginTop: 12, letterSpacing: "0.05em" }}>
-                  Secure checkout via Stripe · Ships in 3-5 days
-                </p>
+                  if (data.url) { window.location.href = data.url } else { showToast('Something went wrong — please try again'); setCheckoutLoading(false) }
+                }}>{checkoutLoading ? 'Redirecting...' : `Proceed to Checkout — $${total.toFixed(2)}`}</button>
+                <p className="lato" style={{ fontSize: 11, textAlign: "center", color: "#C8B49A", marginTop: 12, letterSpacing: "0.05em" }}>Secure checkout via Stripe · Ships in 3-5 days</p>
               </>
             )}
           </div>
