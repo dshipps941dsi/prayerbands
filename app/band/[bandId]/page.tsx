@@ -57,8 +57,13 @@ function Avatar({ letter, color, size = 44 }: { letter: string; color: string; s
   )
 }
 
-const AVATAR_COLORS = [GOLD, GREEN, NAVY, '#5B4FCF', '#C0392B', '#2E7D6B', '#8B4513']
-function avatarColor(i: number) { return AVATAR_COLORS[i % AVATAR_COLORS.length] }
+// Prayer-chain avatars follow the band theme by role:
+// origin -> tab bar, current holder -> primary, past holders -> avatar-past.
+function avatarColor(i: number, total: number): string {
+  if (i === 0) return 'var(--pb-tab-bar, #1a2a4a)'
+  if (i === total - 1) return 'var(--pb-primary, #B8860B)'
+  return 'var(--pb-avatar-past, #9BB5A0)'
+}
 
 function ClaimForm({ onSubmit, onBack, title, subtitle, submitLabel, claimName, setClaimName, claimPrayer, setClaimPrayer, claimCity, setClaimCity, claimState, setClaimState, claimCountry, setClaimCountry, submitting }: {
   onSubmit: () => void
@@ -345,7 +350,7 @@ export default function BandPage() {
           <div style={{ position: 'absolute', left: 22, top: 8, bottom: 8, width: 1, background: 'rgba(44,24,16,0.1)' }} />
           {regs.map((reg, i) => (
             <div key={reg.id} style={{ display: 'flex', gap: 16, marginBottom: 24, position: 'relative' }}>
-              <Avatar letter={reg.user_name?.[0]?.toUpperCase() ?? '?'} color={avatarColor(i)} />
+              <Avatar letter={reg.user_name?.[0]?.toUpperCase() ?? '?'} color={avatarColor(i, regs.length)} />
               <div style={{ flex: 1, paddingTop: 4 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 }}>
                   <span style={{ fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK }}>
