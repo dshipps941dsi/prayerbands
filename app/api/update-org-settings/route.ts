@@ -1,48 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { getSessionOrg, serviceClient } from '@/lib/org-auth'
 
 // Lets a ministry edit its own profile (name, location, website) and theme
-// color from the dashboard Settings tab. Only the org's admin may edit.
+// color from the dashboard Settings tab. Any member of the org may edit.
 export async function POST(req: NextRequest) {
-  // Identify the requester from their session cookie.
-  const cookieStore = await cookies()
-  const authed = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll() {},
-      },
-    }
-  )
-
-  const { data: { user } } = await authed.auth.getUser()
-  if (!user) {
+  // Identify the requester and the org they belong to (by membership, so any
+  // invited team member can manage — not just the original owner).
+  const { userId, orgId } = await getSessionOrg()
+  if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  }
+  if (!orgId) {
+    return NextResponse.json({ error: 'You are not part of an organization.' }, { status: 403 })
   }
 
   const body = await req.json().catch(() => ({}))
 
   // Service-key client: the update bypasses owner-only RLS, but we scope it to
-  // the org this user actually administers, so they can only edit their own.
-  const admin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_KEY!
-  )
-
-  const { data: org } = await admin
-    .from('organizations')
-    .select('id')
-    .eq('admin_id', user.id)
-    .maybeSingle()
-  if (!org) {
-    return NextResponse.json({ error: 'You do not manage an organization.' }, { status: 403 })
-  }
+  // the org this user belongs to, so they can only edit their own.
+  const admin = serviceClient()
+  const org = { id: orgId }
 
   // Build the update from only the fields we allow ministries to change.
   const updates: Record<string, string | null> = {}

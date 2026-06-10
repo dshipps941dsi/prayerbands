@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { getSessionOrg, serviceClient } from '@/lib/org-auth'
 
 const BUCKET = 'org-logos'
 const MAX_BYTES = 2 * 1024 * 1024 // 2MB
@@ -13,33 +11,18 @@ const ALLOWED: Record<string, string> = {
 }
 
 // Upload a ministry logo to Supabase Storage and save its URL on the org.
-// Only the org's admin may upload.
+// Any member of the org may upload.
 export async function POST(req: NextRequest) {
-  const cookieStore = await cookies()
-  const authed = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll() { return cookieStore.getAll() }, setAll() {} } }
-  )
-
-  const { data: { user } } = await authed.auth.getUser()
-  if (!user) {
+  const { userId, orgId } = await getSessionOrg()
+  if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
-
-  const admin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_KEY!
-  )
-
-  const { data: org } = await admin
-    .from('organizations')
-    .select('id')
-    .eq('admin_id', user.id)
-    .maybeSingle()
-  if (!org) {
-    return NextResponse.json({ error: 'You do not manage an organization.' }, { status: 403 })
+  if (!orgId) {
+    return NextResponse.json({ error: 'You are not part of an organization.' }, { status: 403 })
   }
+
+  const admin = serviceClient()
+  const org = { id: orgId }
 
   const form = await req.formData().catch(() => null)
   const file = form?.get('file')

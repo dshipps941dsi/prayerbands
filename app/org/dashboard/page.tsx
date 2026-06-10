@@ -187,6 +187,13 @@ function OrgDashboardInner() {
   const [settingsSaving, setSettingsSaving] = useState(false)
   const [settingsMsg, setSettingsMsg] = useState('')
   const [logoUploading, setLogoUploading] = useState(false)
+  const [members, setMembers] = useState<any[]>([])
+  const [invites, setInvites] = useState<any[]>([])
+  const [teamLoading, setTeamLoading] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteName, setInviteName] = useState('')
+  const [inviteSending, setInviteSending] = useState(false)
+  const [inviteMsg, setInviteMsg] = useState('')
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700)
@@ -240,6 +247,49 @@ function OrgDashboardInner() {
   useEffect(() => {
     if (org) setSettings({ name: org.name || '', location: org.location || '', website: org.website || '', color: org.color || '#1a6b4a' })
   }, [org])
+
+  // ── Team members (multi-user orgs) ──
+  const loadTeam = async () => {
+    setTeamLoading(true)
+    try {
+      const res = await fetch('/api/org-members')
+      const data = await res.json()
+      if (res.ok) { setMembers(data.members || []); setInvites(data.invites || []) }
+    } catch { /* ignore */ } finally { setTeamLoading(false) }
+  }
+
+  // Load the team roster the first time the Settings tab is opened.
+  useEffect(() => {
+    if (tab === 'Settings' && orgId && members.length === 0) loadTeam()
+  }, [tab, orgId])
+
+  const sendInvite = async () => {
+    setInviteSending(true); setInviteMsg('')
+    try {
+      const res = await fetch('/api/org-invite', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail, display_name: inviteName }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setInviteEmail(''); setInviteName(''); setInviteMsg('sent')
+        setInvites(prev => [data.invite, ...prev.filter(i => i.id !== data.invite.id)])
+      } else {
+        setInviteMsg(data.error || 'Could not send the invite.')
+      }
+    } catch {
+      setInviteMsg('Network error. Please try again.')
+    } finally {
+      setInviteSending(false)
+    }
+  }
+
+  const revokeInvite = async (id: string) => {
+    setInvites(prev => prev.filter(i => i.id !== id))
+    try {
+      await fetch('/api/org-invite?id=' + encodeURIComponent(id), { method: 'DELETE' })
+    } catch { /* optimistic; ignore */ }
+  }
 
   const green = org?.color || '#1a6b4a'
 
@@ -586,6 +636,63 @@ function OrgDashboardInner() {
               : settingsMsg && <span style={{ color: '#c0392b', fontSize: 13, fontFamily: 'Inter, sans-serif' }}>{settingsMsg}</span>}
           </div>
           <div style={{ fontSize: 12, color: SECONDARY_TEXT, marginTop: 16, fontFamily: 'Inter, sans-serif' }}>To change your band prefix or subdomain, contact support@prayerbands.com</div>
+        </div>
+
+        {/* Team Members */}
+        <div style={{ background: CARD_BG, border: `1px solid ${NAVY_BORDER}`, borderRadius: 12, padding: isMobile ? '16px 14px' : '28px', maxWidth: isMobile ? '100%' : 520, marginTop: 20, boxShadow: '0 1px 6px rgba(10,22,40,0.06)' }}>
+          <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 4, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Team Members</h2>
+          <p style={{ color: SECONDARY_TEXT, fontSize: 13, marginBottom: 18, fontFamily: 'Inter, sans-serif' }}>Invite others from your church to share this dashboard. Everyone you add has the same access.</p>
+
+          {/* Current members */}
+          {teamLoading && members.length === 0 ? (
+            <div style={{ color: SECONDARY_TEXT, fontSize: 13, padding: '8px 0', fontFamily: 'Inter, sans-serif' }}>Loading team…</div>
+          ) : (
+            <div style={{ marginBottom: 18 }}>
+              {members.map(m => (
+                <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: `1px solid ${SILVER_BORDER}` }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: `${GOLD}1f`, color: GOLD_TEXT, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{(m.display_name || m.email || '?').trim().charAt(0).toUpperCase()}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: NAVY_HEADING, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Inter, sans-serif' }}>
+                      {m.display_name || '—'}
+                      {m.is_you && <span style={{ fontSize: 11, color: SECONDARY_TEXT, fontWeight: 400 }}> (you)</span>}
+                    </div>
+                    <div style={{ fontSize: 12, color: SECONDARY_TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Inter, sans-serif' }}>{m.email}</div>
+                  </div>
+                  {m.is_owner && <span style={{ fontSize: 11, background: `${GOLD}1f`, color: GOLD_TEXT, padding: '2px 8px', borderRadius: 10, flexShrink: 0, border: `1px solid ${GOLD}44`, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>Owner</span>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Pending invites */}
+          {invites.length > 0 && (
+            <div style={{ marginBottom: 18 }}>
+              <label style={labelStyle}>PENDING INVITES</label>
+              {invites.map(inv => (
+                <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', border: `1px dashed ${SILVER_BORDER}`, color: SECONDARY_TEXT, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>✉</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, color: NAVY_HEADING, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Inter, sans-serif' }}>{inv.email}</div>
+                    <div style={{ fontSize: 12, color: '#c17f2a', fontFamily: 'Inter, sans-serif' }}>Invite pending</div>
+                  </div>
+                  <button onClick={() => revokeInvite(inv.id)} style={{ background: 'none', border: 'none', color: '#c0392b', fontSize: 13, cursor: 'pointer', fontFamily: 'Inter, sans-serif', flexShrink: 0 }}>Cancel</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Invite form */}
+          <div style={{ borderTop: `1px solid ${SILVER_BORDER}`, paddingTop: 18 }}>
+            <label style={labelStyle}>INVITE A NEW MEMBER</label>
+            <input value={inviteName} onChange={e => setInviteName(e.target.value)} placeholder="Name (optional)" style={{ ...settingInput, marginBottom: 10 }} />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+              <input value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="their@email.com" type="email" onKeyDown={e => { if (e.key === 'Enter' && inviteEmail && !inviteSending) sendInvite() }} style={{ ...settingInput, flex: 1, minWidth: 180, width: 'auto' }} />
+              <button onClick={sendInvite} disabled={inviteSending || !inviteEmail} style={{ background: (inviteSending || !inviteEmail) ? '#C9CFD6' : GOLD, color: (inviteSending || !inviteEmail) ? '#fff' : NAVY, border: 'none', borderRadius: 8, padding: '0 20px', fontSize: 11, fontWeight: 700, cursor: (inviteSending || !inviteEmail) ? 'default' : 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{inviteSending ? 'Sending…' : 'Send Invite'}</button>
+            </div>
+            {inviteMsg === 'sent'
+              ? <div style={{ color: GOLD_TEXT, fontSize: 13, fontWeight: 600, marginTop: 10, fontFamily: 'Inter, sans-serif' }}>Invitation sent ✓</div>
+              : inviteMsg && <div style={{ color: '#c0392b', fontSize: 13, marginTop: 10, fontFamily: 'Inter, sans-serif' }}>{inviteMsg}</div>}
+          </div>
         </div>
       </div>
     )
