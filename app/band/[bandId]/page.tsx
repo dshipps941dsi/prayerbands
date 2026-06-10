@@ -44,6 +44,9 @@ const NAVY_LT = 'color-mix(in srgb, var(--pb-tab-bar, #1a2a4a) 80%, #ffffff)'
 const DARK  = 'var(--pb-text, #2C1810)'
 const CREAM = 'var(--pb-background, #FAF6EF)'
 const GRAY  = 'var(--pb-text-muted, #7A6A5A)'
+// Text on primary/gold buttons — dark on the gold default theme, white on the
+// dark-primary themes (beach/mountain/military), via the theme token.
+const INK   = 'var(--pb-text-on-primary, #0f0d09)'
 // Full-screen page background — theme color, or a subtle themed image when set.
 const PAGEBG = 'var(--pb-page, #FAF6EF)'
 const serif = "'Playfair Display', Georgia, serif"
@@ -106,7 +109,7 @@ function ClaimForm({ onSubmit, onBack, title, subtitle, submitLabel, claimName, 
       <input value={claimCountry} onChange={e => setClaimCountry(e.target.value)} placeholder="Country" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', boxSizing: 'border-box' }} />
       <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your prayer (optional)</label>
       <textarea value={claimPrayer} onChange={e => setClaimPrayer(e.target.value)} placeholder="A prayer, a verse, or what this moment means to you..." rows={4} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 20, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
-      <button onClick={onSubmit} disabled={submitting || !claimName.trim() || !claimCity.trim() || !claimCountry.trim()} style={{ display: 'block', width: '100%', padding: 15, background: claimName.trim() ? GOLD : '#ccc', color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: claimName.trim() ? 'pointer' : 'not-allowed' }}>
+      <button onClick={onSubmit} disabled={submitting || !claimName.trim() || !claimCity.trim() || !claimCountry.trim()} style={{ display: 'block', width: '100%', padding: 15, background: claimName.trim() ? GOLD : '#ccc', color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: claimName.trim() ? 'pointer' : 'not-allowed' }}>
         {submitting ? 'Saving...' : submitLabel}
       </button>
     </div>
@@ -337,7 +340,7 @@ export default function BandPage() {
         </div>
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginTop: 12, paddingBottom: 2, scrollbarWidth: 'none' }}>
           {CATEGORIES.map(cat => (
-            <button key={cat.id} onClick={() => setVerseCategory(cat.id)} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontFamily: body, fontSize: 12, fontWeight: 600, background: verseCategory === cat.id ? GOLD : 'white', color: verseCategory === cat.id ? '#0f0d09' : GRAY, boxShadow: '0 1px 4px rgba(44,24,16,0.1)', transition: 'all 0.2s' }}>
+            <button key={cat.id} onClick={() => setVerseCategory(cat.id)} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontFamily: body, fontSize: 12, fontWeight: 600, background: verseCategory === cat.id ? GOLD : 'white', color: verseCategory === cat.id ? INK : GRAY, boxShadow: '0 1px 4px rgba(44,24,16,0.1)', transition: 'all 0.2s' }}>
               {cat.icon} {cat.label}
             </button>
           ))}
@@ -473,7 +476,7 @@ export default function BandPage() {
                 {authError && <div style={{ fontFamily: body, fontSize: 13, color: '#C0392B', marginBottom: 12 }}>{authError}</div>}
                 <div style={{ fontFamily: body, fontSize: 12, color: GRAY, marginBottom: 16 }}>Already have an account? <a href="/signin" style={{ color: GOLD }}>Sign in</a></div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={handleEmailSignUp} disabled={authSubmitting || !email.trim() || !password.trim()} style={{ flex: 1, padding: '13px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>{authSubmitting ? 'Creating...' : 'Create Account ✝'}</button>
+                  <button onClick={handleEmailSignUp} disabled={authSubmitting || !email.trim() || !password.trim()} style={{ flex: 1, padding: '13px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>{authSubmitting ? 'Creating...' : 'Create Account ✝'}</button>
                   <button onClick={() => setAuthMode(null)} style={{ padding: '13px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Back</button>
                 </div>
               </div>
@@ -570,7 +573,7 @@ export default function BandPage() {
                 <div style={{ fontSize: 48, marginBottom: 12 }}>🙏</div>
                 <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Band transferred</div>
                 <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20 }}>Your band is now in new hands. The prayer chain continues. ✝</div>
-                <a href="/dashboard" style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Go to Dashboard</a>
+                <a href="/dashboard" style={{ display: 'inline-block', background: GOLD, color: INK, padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Go to Dashboard</a>
               </div>
             )}
             <div style={{ padding: '24px 20px 0' }}>
@@ -583,7 +586,7 @@ export default function BandPage() {
                   <button onClick={() => {
                     const accountless = !userId && localStorage.getItem(`holder_${bandId}`) === 'true'
                     setTransferStep(accountless ? 'save_prompt' : 'sheet')
-                  }} style={{ display: 'flex', alignItems: 'center', gap: 8, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, padding: '10px 18px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Transfer Band</button>
+                  }} style={{ display: 'flex', alignItems: 'center', gap: 8, background: GOLD, color: INK, border: 'none', borderRadius: 10, padding: '10px 18px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Transfer Band</button>
                 )}
               </div>
             </div>
@@ -591,13 +594,13 @@ export default function BandPage() {
             <div style={{ padding: '20px 20px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid rgba(44,24,16,0.08)' }}>
                 <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700 }}>Prayer Journal</div>
-                {prayerStep === 'list' && userId && <button onClick={() => setPrayerStep('form')} style={{ background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, padding: '6px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>}
+                {prayerStep === 'list' && userId && <button onClick={() => setPrayerStep('form')} style={{ background: GOLD, color: INK, border: 'none', borderRadius: 8, padding: '6px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>}
               </div>
               {!userId && (
                 <div style={{ background: 'white', borderRadius: 10, padding: '16px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
                   <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Track your prayers</div>
                   <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14, lineHeight: 1.5 }}>Create a free account to keep a prayer journal on this band.</div>
-                  <button onClick={() => setShowSignup(true)} style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '10px 24px', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Create Account ✝</button>
+                  <button onClick={() => setShowSignup(true)} style={{ display: 'inline-block', background: GOLD, color: INK, padding: '10px 24px', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Create Account ✝</button>
                 </div>
               )}
               {userId && prayerStep === 'form' && (
@@ -614,7 +617,7 @@ export default function BandPage() {
                       const { data } = await supabase.from('prayer_requests').insert({ user_id: userId, band_id: bandId, title: prayerTitle, body: prayerBody, status: 'active', visibility: 'private' }).select().single()
                       if (data) setPrayers(prev => [data, ...prev])
                       setPrayerTitle(''); setPrayerBody(''); setPrayerStep('list'); setPrayerSubmitting(false)
-                    }} disabled={prayerSubmitting || !prayerTitle.trim()} style={{ flex: 1, padding: '10px', background: prayerTitle.trim() ? GOLD : '#ccc', color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: prayerTitle.trim() ? 'pointer' : 'not-allowed' }}>
+                    }} disabled={prayerSubmitting || !prayerTitle.trim()} style={{ flex: 1, padding: '10px', background: prayerTitle.trim() ? GOLD : '#ccc', color: INK, border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: prayerTitle.trim() ? 'pointer' : 'not-allowed' }}>
                       {prayerSubmitting ? 'Saving...' : 'Add Prayer ✝'}
                     </button>
                     <button onClick={() => setPrayerStep('list')} style={{ padding: '10px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
@@ -633,7 +636,7 @@ export default function BandPage() {
                       await supabase.from('prayer_requests').update({ status: 'answered', answered_testimony: testimony, answered_at: new Date().toISOString() }).eq('id', answeringId)
                       setPrayers(prev => prev.map(p => p.id === answeringId ? { ...p, status: 'answered', answered_testimony: testimony } : p))
                       setAnsweringId(null); setTestimony(''); setPrayerStep('list'); setPrayerSubmitting(false)
-                    }} disabled={prayerSubmitting} style={{ flex: 1, padding: '10px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                    }} disabled={prayerSubmitting} style={{ flex: 1, padding: '10px', background: GOLD, color: INK, border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                       {prayerSubmitting ? 'Saving...' : 'Mark Answered ✝'}
                     </button>
                     <button onClick={() => { setPrayerStep('list'); setAnsweringId(null) }} style={{ padding: '10px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
@@ -671,7 +674,7 @@ export default function BandPage() {
                 <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 16, lineHeight: 1.5 }}>
                   Connect with others in prayer, share requests, and join circles.
                 </div>
-                <a href="/signin" style={{ display: 'inline-block', background: GOLD, color: '#0f0d09', padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Sign In ✝</a>
+                <a href="/signin" style={{ display: 'inline-block', background: GOLD, color: INK, padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Sign In ✝</a>
               </div>
             )}
           </div>
@@ -710,7 +713,7 @@ export default function BandPage() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 8, lineHeight: 1.5 }}>Sign in to access your full account, prayer network, and all your bands.</div>
-                <a href="/signin" style={{ display: 'block', textAlign: 'center', background: GOLD, color: '#0f0d09', borderRadius: 12, padding: '16px 20px', fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Sign In ✝</a>
+                <a href="/signin" style={{ display: 'block', textAlign: 'center', background: GOLD, color: INK, borderRadius: 12, padding: '16px 20px', fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Sign In ✝</a>
                 <a href="/store" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}><Icon name="shop-bag" size={18} color={DARK} bg="white" /> Purchase Bands</a>
               </div>
             )}
@@ -737,7 +740,7 @@ export default function BandPage() {
                 localStorage.setItem(`pendingTransfer_${bandId}`, 'true')
                 setTransferStep('idle')
                 setShowSignup(true)
-              }} style={{ display: 'block', width: '100%', padding: 15, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}>Create Free Account</button>
+              }} style={{ display: 'block', width: '100%', padding: 15, background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}>Create Free Account</button>
               <button onClick={() => setTransferStep('sheet')} style={{ display: 'block', width: '100%', padding: 10, background: 'transparent', color: GRAY, border: 'none', fontFamily: body, fontSize: 13, cursor: 'pointer' }}>Continue Without Saving</button>
             </div>
           </div>
@@ -751,7 +754,7 @@ export default function BandPage() {
               <div style={{ fontFamily: body, fontSize: 14, color: GRAY, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>Write a prayer or note for the person you're giving this to.</div>
               <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your prayer for them (optional)</label>
               <textarea value={transferNote} onChange={e => setTransferNote(e.target.value)} placeholder="e.g. I'm giving you this band because I've been praying for you..." rows={3} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: 'white', resize: 'none', marginBottom: 16, outline: 'none', lineHeight: 1.5, boxSizing: 'border-box' }} />
-              <button onClick={handleInitiateTransfer} disabled={submitting} style={{ display: 'block', width: '100%', padding: 15, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>{submitting ? 'Setting up...' : 'Ready to hand it off →'}</button>
+              <button onClick={handleInitiateTransfer} disabled={submitting} style={{ display: 'block', width: '100%', padding: 15, background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>{submitting ? 'Setting up...' : 'Ready to hand it off →'}</button>
               <button onClick={() => setTransferStep('idle')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
             </div>
           </div>
@@ -773,7 +776,7 @@ export default function BandPage() {
             <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, marginBottom: 6 }}>{status.senderName ? `${status.senderName} is passing this band to you` : 'Someone is passing this band to you'}</div>
             <div style={{ fontFamily: body, fontSize: 14, opacity: 0.8, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>This band has traveled through {regs.length} {regs.length === 1 ? 'person' : 'people'}. Now it's being offered to you.</div>
             {status.transfer?.note && <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: '14px 16px', fontFamily: body, fontSize: 14, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20, textAlign: 'left' }}>"{status.transfer.note}"</div>}
-            <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 16, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>Accept this band →</button>
+            <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 16, background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>Accept this band →</button>
             <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Just view the journey</button>
           </div>
         )}
@@ -795,7 +798,7 @@ export default function BandPage() {
             <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, marginBottom: 6 }}>{status.dedicatorName ? `${status.dedicatorName} is praying for you` : 'Someone is praying for you'}</div>
             <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>This band was sent to you as an act of prayer. You are not forgotten.</div>
             {status.band?.dedication_note && <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '14px 16px', fontFamily: body, fontSize: 14, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20, textAlign: 'left' }}>"{status.band.dedication_note}"</div>}
-            <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 16, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>This band is mine now →</button>
+            <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 16, background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>This band is mine now →</button>
             <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Just add a prayer</button>
           </div>
         )}
@@ -822,7 +825,7 @@ export default function BandPage() {
           <div style={{ margin: '20px 20px 0', background: 'white', borderRadius: 14, padding: '18px 20px', border: `1px solid ${GOLD}`, textAlign: 'center' }}>
             <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Do you now have this band?</div>
             <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14 }}>If this band was passed to you, join the chain.</div>
-            <button onClick={() => setClaimStep('form')} style={{ padding: '10px 24px', background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>I now have this band →</button>
+            <button onClick={() => setClaimStep('form')} style={{ padding: '10px 24px', background: GOLD, color: INK, border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>I now have this band →</button>
           </div>
         )}
         {claimStep === 'form' && <ClaimForm title="Join the Chain" subtitle="Add your name and prayer to continue this band's journey." submitLabel="Join the chain ✝" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
@@ -866,7 +869,7 @@ export default function BandPage() {
           <button
             onClick={() => setClaimStep('form')}
             style={{
-              padding: '16px 40px', background: GOLD, color: '#0f0d09',
+              padding: '16px 40px', background: GOLD, color: INK,
               border: 'none', borderRadius: 12, fontFamily: serif,
               fontSize: 17, fontWeight: 700, cursor: 'pointer',
               boxShadow: '0 8px 32px rgba(184,134,11,0.3)',

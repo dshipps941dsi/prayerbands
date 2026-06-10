@@ -90,7 +90,7 @@ export const themes: Record<ThemeKey, BandTheme> = {
 
     text:          '#2C1A0E',  // espresso
     textMuted:     '#7A5C3A',  // warm brown
-    textOnPrimary: '#FFFFFF',  // white on gold/dark buttons
+    textOnPrimary: '#0F0D09',  // dark text — the default primary is light gold
 
     accent:        '#C8A96E',  // gold
     accentAlt:     '#7BAE8E',  // sage green
