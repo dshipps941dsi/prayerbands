@@ -51,22 +51,14 @@ export default function CirclesSection({ userId }: { userId: string }) {
   return (
     <div style={{ marginBottom: '32px' }}>
 
-      {/* Section header */}
+      {/* Action buttons — the "Prayer Circles" title is provided by the parent
+          PrayerTabs section header, so we don't repeat it here. */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         marginBottom: '14px'
       }}>
-        <h3 style={{
-          fontFamily: 'Playfair Display, Georgia, serif',
-          fontSize: '17px',
-          fontWeight: '700',
-          color: 'var(--pb-text, #2C1810)',
-          margin: 0
-        }}>
-          Prayer Circles
-        </h3>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
             onClick={() => router.push('/circles')}

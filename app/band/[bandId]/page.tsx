@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
@@ -19,6 +19,8 @@ type Registration = {
   registered_at: string
   prayer: string
   user_id: string | null
+  latitude?: number | null
+  longitude?: number | null
 }
 
 type BandStatus = {
@@ -349,21 +351,77 @@ export default function BandPage() {
     )
   }
 
+  // Leaflet map of the band's journey — markers for each location, connected in
+  // chronological order. Marker/line color follow the band's theme.
+  function JourneyMap({ regs }: { regs: Registration[] }) {
+    const mapRef = useRef<HTMLDivElement>(null)
+    const mapInstanceRef = useRef<any>(null)
+    const points = regs.filter(r => r.latitude != null && r.longitude != null)
+
+    useEffect(() => {
+      if (!mapRef.current || typeof window === 'undefined' || !points.length) return
+      const gold = (getComputedStyle(document.documentElement).getPropertyValue('--pb-primary') || '').trim() || '#C8A96E'
+      const render = () => {
+        const L = (window as any).L
+        if (!L || !mapRef.current) return
+        if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null }
+        const valid = regs.filter(p => p.latitude != null && p.longitude != null)
+        if (!valid.length) return
+        const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false, scrollWheelZoom: false })
+        mapInstanceRef.current = map
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map)
+        const latlngs: any[] = []
+        const markers: any[] = []
+        valid.forEach(p => {
+          const ll = [p.latitude as number, p.longitude as number]
+          latlngs.push(ll)
+          const dot = L.divIcon({ className: '', html: `<div style="width:12px;height:12px;background:${gold};border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,0.3)"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] })
+          const m = L.marker(ll, { icon: dot }).addTo(map)
+          m.bindPopup(`<div style="font-family:Georgia,serif;font-size:13px"><strong>${p.user_name || 'Someone'}</strong>${(p.city || p.country) ? `<br/><span style="color:#5C6573">${[p.city, p.country].filter(Boolean).join(', ')}</span>` : ''}</div>`)
+          markers.push(m)
+        })
+        if (latlngs.length > 1) L.polyline(latlngs, { color: gold, weight: 2, opacity: 0.65, dashArray: '4 6' }).addTo(map)
+        if (markers.length === 1) map.setView(latlngs[0], 6)
+        else map.fitBounds(L.featureGroup(markers).getBounds().pad(0.25))
+      }
+      if ((window as any).L) { render(); return () => { if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null } } }
+      if (!document.getElementById('leaflet-css')) {
+        const link = document.createElement('link'); link.id = 'leaflet-css'; link.rel = 'stylesheet'; link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(link)
+      }
+      let script = document.getElementById('leaflet-js') as HTMLScriptElement | null
+      if (!script) { script = document.createElement('script'); script.id = 'leaflet-js'; script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; document.head.appendChild(script) }
+      script.addEventListener('load', render, { once: true })
+      return () => { if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null } }
+    }, [regs])
+
+    if (!points.length) return null
+    return (
+      <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(44,24,16,0.12)', marginBottom: 20, boxShadow: '0 1px 6px rgba(44,24,16,0.06)' }}>
+        <div ref={mapRef} style={{ height: 240, width: '100%' }} />
+      </div>
+    )
+  }
+
   function PrayerChain({ regs }: { regs: Registration[] }) {
     return (
       <div style={{ padding: '24px 20px' }}>
+        <JourneyMap regs={regs} />
         <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK, marginBottom: 20, paddingBottom: 10, borderBottom: '1px solid rgba(44,24,16,0.08)' }}>Prayer Chain</div>
         <div style={{ position: 'relative' }}>
           <div style={{ position: 'absolute', left: 22, top: 8, bottom: 8, width: 1, background: 'rgba(44,24,16,0.1)' }} />
-          {regs.map((reg, i) => (
+          {[...regs].reverse().map((reg, i) => {
+            const orig = regs.length - 1 - i
+            const isOrigin = orig === 0
+            const isCurrent = orig === regs.length - 1 && regs.length > 1
+            return (
             <div key={reg.id} style={{ display: 'flex', gap: 16, marginBottom: 24, position: 'relative' }}>
-              <Avatar letter={reg.user_name?.[0]?.toUpperCase() ?? '?'} color={avatarColor(i, regs.length)} />
+              <Avatar letter={reg.user_name?.[0]?.toUpperCase() ?? '?'} color={avatarColor(orig, regs.length)} />
               <div style={{ flex: 1, paddingTop: 4 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 }}>
                   <span style={{ fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK }}>
                     {reg.user_name}
-                    {i === 0 && <span style={{ display: 'inline-block', fontSize: 10, fontFamily: body, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, marginLeft: 6, background: 'rgba(184,134,11,0.12)', color: GOLD }}>Origin</span>}
-                    {i === regs.length - 1 && i > 0 && <span style={{ display: 'inline-block', fontSize: 10, fontFamily: body, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, marginLeft: 6, background: 'rgba(44,24,16,0.08)', color: GRAY }}>Current</span>}
+                    {isOrigin && <span style={{ display: 'inline-block', fontSize: 10, fontFamily: body, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, marginLeft: 6, background: 'rgba(184,134,11,0.12)', color: GOLD }}>Origin</span>}
+                    {isCurrent && <span style={{ display: 'inline-block', fontSize: 10, fontFamily: body, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, marginLeft: 6, background: 'rgba(44,24,16,0.08)', color: GRAY }}>Current</span>}
                   </span>
                   <span style={{ fontFamily: body, fontSize: 11, color: '#9A8A7A' }}>{new Date(reg.registered_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                 </div>
@@ -378,7 +436,8 @@ export default function BandPage() {
                 )}
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     )
