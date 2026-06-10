@@ -260,8 +260,6 @@ function StorePageInner() {
             <span className="playfair" style={{ fontSize: 20, fontWeight: 600, color: "#15223B" }}>PrayerBands</span>
           </a>
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-            <a href="/" className="lato nav-extra" style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "#5C6573", textDecoration: "none" }}>← Back to Home</a>
-            <a href="/subscribe" className="lato nav-extra" style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "#9A7A35", textDecoration: "none", fontWeight: 600 }}>Subscribe</a>
             <button onClick={() => setCartOpen(true)} style={{ position: "relative", background: "#0A1628", border: "none", borderRadius: 4, padding: "9px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
               <Icon name="shop-bag" size={16} color="#F6F1E4" bg="#0A1628" />
               <span style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#F6F1E4", fontWeight: 600 }}>Cart</span>
@@ -279,11 +277,11 @@ function StorePageInner() {
       )}
 
       {/* HERO */}
-      <section style={{ padding: "72px 32px 56px", textAlign: "center", background: "radial-gradient(ellipse at 60% 0%, rgba(200,169,110,0.13) 0%, transparent 60%), radial-gradient(ellipse at 20% 100%, rgba(201,207,214,0.18) 0%, transparent 55%), #F6F1E4", borderBottom: "1px solid rgba(10,22,40,0.12)" }}>
-        <span className="section-label">The Store</span>
-        <h1 className="playfair" style={{ fontSize: "clamp(36px, 5vw, 60px)", fontWeight: 700, lineHeight: 1.15, marginBottom: 16, color: "#15223B" }}>Send a Prayer Into<br /><em style={{ color: "#C8A96E" }}>the World</em></h1>
-        <div style={{ width: 48, height: 2, background: "linear-gradient(90deg, #C8A96E, #C9CFD6)", margin: "0 auto 20px" }} />
-        <p className="lato" style={{ fontSize: 16, color: "#5C6573", maxWidth: 480, margin: "0 auto", lineHeight: 1.8, fontWeight: 300 }}>Every band ships NFC-enabled and laser-engraved with a unique ID. One tap opens its digital journey.</p>
+      <section style={{ padding: "72px 32px 56px", textAlign: "center", background: "radial-gradient(ellipse 70% 80% at 50% 0%, rgba(200,169,110,0.16) 0%, transparent 60%), linear-gradient(180deg, #0A1628 0%, #0E1E38 55%, #0A1628 100%)", borderBottom: "1px solid rgba(200,169,110,0.34)" }}>
+        <span className="section-label" style={{ color: "#C8A96E" }}>The Store</span>
+        <h1 className="playfair" style={{ fontSize: "clamp(36px, 5vw, 60px)", fontWeight: 700, lineHeight: 1.15, marginBottom: 16, color: "#F5EDD8" }}>Send a Prayer Into<br /><em style={{ color: "#C8A96E" }}>the World</em></h1>
+        <div style={{ width: 48, height: 2, background: "linear-gradient(90deg, #C8A96E, #E2C98A)", margin: "0 auto 20px" }} />
+        <p className="lato" style={{ fontSize: 16, color: "rgba(245,237,216,0.78)", maxWidth: 480, margin: "0 auto", lineHeight: 1.8, fontWeight: 300 }}>Every band ships NFC-enabled and laser-engraved with a unique ID. One tap opens its digital journey.</p>
       </section>
 
       <div style={{ maxWidth: 1160, margin: "0 auto", padding: "64px 32px" }}>
