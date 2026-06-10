@@ -8,9 +8,10 @@ import { track } from "@/lib/analytics";
 type CartItem = {
   id: string;
   name: string;
-  price: number;
+  price: number;       // base unit price (standard recalculates by tier in cart)
   qty: number;
   type: "standard" | "custom" | "pack";
+  size?: string;       // S | M | L (individual bands only)
   detail?: string;
 };
 
@@ -26,28 +27,6 @@ const INDIVIDUAL = [
     tag: "Most Popular",
     desc: "A wristband laser-engraved with a unique PB-XXXXX ID and NFC chip. Ready to carry a prayer.",
     features: ["Unique PB-XXXXX ID", "NFC chip enabled", "Laser-engraved", "Full journey tracking"],
-  },
-  {
-    id: "pack-3",
-    type: "pack" as const,
-    name: "3-Pack",
-    price: 39.99,
-    color: "#7B8FAE",
-    icon: "✝",
-    tag: "Save 11%",
-    desc: "Three NFC bands to keep on hand — give one, gift one, send one on its way.",
-    features: ["3 standard bands", "Unique PB-XXXXX IDs", "NFC chip enabled", "Full journey tracking"],
-  },
-  {
-    id: "pack-5",
-    type: "pack" as const,
-    name: "5-Pack",
-    price: 59.99,
-    color: "#AE7B7B",
-    icon: "✝",
-    tag: "Save 20%",
-    desc: "Five bands for the giver who's always ready with a prayer to pass along.",
-    features: ["5 standard bands", "Unique PB-XXXXX IDs", "NFC chip enabled", "Full journey tracking"],
   },
   {
     id: "custom",
@@ -108,16 +87,72 @@ const COLORS = [
   { name: "Ivory", hex: "#F5EFE4" },
 ];
 
+const SIZES = [
+  { id: "S", label: "Small" },
+  { id: "M", label: "Medium" },
+  { id: "L", label: "Large" },
+];
+
+// Placeholder measurements — edit to your real band sizing.
+const SIZE_CHART = [
+  { size: "Small", wrist: "14–16 cm (5.5–6.3 in)", fit: "Youth / smaller wrists" },
+  { size: "Medium", wrist: "16–18 cm (6.3–7.1 in)", fit: "Most adults" },
+  { size: "Large", wrist: "18–20 cm (7.1–7.9 in)", fit: "Larger wrists" },
+];
+
+// Up to 3 images per product. Drop files in /public/products/.
+// Until they exist, the card gracefully shows the band illustration.
+const PRODUCT_IMAGES: Record<string, string[]> = {
+  standard: ["/products/standard-1.jpg", "/products/standard-2.jpg", "/products/standard-3.jpg"],
+  custom: ["/products/custom-1.jpg", "/products/custom-2.jpg", "/products/custom-3.jpg"],
+};
+
 // Cart product id → site_config price key (cents). Prices are admin-editable.
 const PRICE_KEY: Record<string, string> = {
   standard: "band_price_single",
   custom: "band_price_custom",
-  "pack-3": "band_price_3pack",
-  "pack-5": "band_price_5pack",
   "pack-50": "pack_price_50",
   "pack-100": "pack_price_100",
   "pack-200": "pack_price_200",
 };
+
+// ─── Image carousel (falls back to the band illustration) ─────
+function BandCarousel({ images, color, icon, tag }: { images: string[]; color: string; icon: string; tag?: string }) {
+  const [broken, setBroken] = useState<Record<string, boolean>>({});
+  const [idx, setIdx] = useState(0);
+  const ok = images.filter(src => !broken[src]);
+  useEffect(() => {
+    if (ok.length <= 1) return;
+    const t = setInterval(() => setIdx(i => (i + 1) % ok.length), 4000);
+    return () => clearInterval(t);
+  }, [ok.length]);
+  const cur = ok.length ? idx % ok.length : 0;
+  return (
+    <div style={{ height: 200, position: "relative", background: `linear-gradient(135deg, ${color}22, ${color}44)`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+      {tag && <div className="lato" style={{ position: "absolute", top: 16, right: 16, zIndex: 3, background: color, color: "#fff", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", padding: "4px 12px", borderRadius: 20, fontWeight: 700 }}>{tag}</div>}
+      {images.map(src => broken[src] ? null : (
+        <img key={src} src={src} alt="" onError={() => setBroken(b => ({ ...b, [src]: true }))} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: ok[cur] === src ? 1 : 0, transition: "opacity 0.5s" }} />
+      ))}
+      {ok.length === 0 && (
+        <div style={{ position: "relative", width: 120, height: 120 }}>
+          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `18px solid ${color}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 28 }}>{icon}</div>
+              <div className="lato" style={{ fontSize: 9, letterSpacing: "0.15em", color, marginTop: 2 }}>PB-XXXXX</div>
+            </div>
+          </div>
+        </div>
+      )}
+      {ok.length > 1 && (
+        <div style={{ position: "absolute", bottom: 10, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6, zIndex: 3 }}>
+          {ok.map((src, i) => (
+            <button key={src} onClick={() => setIdx(i)} aria-label={`Image ${i + 1}`} style={{ width: 8, height: 8, borderRadius: "50%", border: "none", padding: 0, cursor: "pointer", background: i === cur ? "#fff" : "rgba(255,255,255,0.5)" }} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function StorePage() {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -129,6 +164,8 @@ export default function StorePage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [pricing, setPricing] = useState<Record<string, number>>({});
   const [replaces, setReplaces] = useState("");
+  const [sizes, setSizes] = useState<Record<string, string>>({});
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
   useEffect(() => {
     fetch("/api/pricing")
       .then(r => r.json())
@@ -145,23 +182,37 @@ export default function StorePage() {
     setTimeout(() => setToast(""), 2800);
   };
 
+  // ── Automatic multi-band pricing (standard bands) ──
+  const single = priceFor("standard", 5);
+  const tier3 = ((pricing["band_price_3pack"] ?? 3999) / 100) / 3;
+  const tier5 = ((pricing["band_price_5pack"] ?? 5999) / 100) / 5;
+  const standardUnitFor = (qty: number) => (qty >= 5 ? tier5 : qty >= 3 ? tier3 : single);
+
   const addToCart = (item: Omit<CartItem, "qty">) => {
     setCart(prev => {
-      const existing = prev.find(c => c.id === item.id);
-      if (existing) return prev.map(c => c.id === item.id ? { ...c, qty: c.qty + 1 } : c);
+      const i = prev.findIndex(c => c.id === item.id && c.size === item.size);
+      if (i >= 0) {
+        const copy = [...prev];
+        copy[i] = { ...copy[i], qty: copy[i].qty + 1 };
+        return copy;
+      }
       return [...prev, { ...item, qty: 1 }];
     });
     showToast(`${item.name} added to cart`);
   };
 
-  const updateQty = (id: string, delta: number) => {
+  const updateQty = (id: string, size: string | undefined, delta: number) => {
     setCart(prev => prev
-      .map(c => c.id === id ? { ...c, qty: c.qty + delta } : c)
+      .map(c => (c.id === id && c.size === size) ? { ...c, qty: c.qty + delta } : c)
       .filter(c => c.qty > 0)
     );
   };
 
-  const subtotal = cart.reduce((sum, c) => sum + c.price * c.qty, 0);
+  const standardQty = cart.filter(c => c.id === "standard").reduce((s, c) => s + c.qty, 0);
+  const stdUnit = standardUnitFor(standardQty);
+  const lineUnit = (c: CartItem) => (c.id === "standard" ? stdUnit : c.price);
+  const subtotal = cart.reduce((sum, c) => sum + lineUnit(c) * c.qty, 0);
+  const stdSavings = (single - stdUnit) * standardQty;
   const totalItems = cart.reduce((sum, c) => sum + c.qty, 0);
   const shipping = (pricing["shipping_cost_standard"] ?? 599) / 100;
   const total = subtotal + shipping;
@@ -215,6 +266,10 @@ export default function StorePage() {
         }
         .checkout-btn:hover { background: #B8944A; }
         .checkout-btn:disabled { background: #C8B49A; cursor: not-allowed; }
+        .size-btn {
+          flex: 1; padding: 9px 0; border-radius: 4px; cursor: pointer;
+          font-family: 'Lato', sans-serif; font-size: 12px; transition: all 0.15s;
+        }
         .toast {
           position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
           background: #2C1A0E; color: #FDFAF5; padding: 12px 28px; border-radius: 40px;
@@ -291,6 +346,14 @@ export default function StorePage() {
 
       <div style={{ maxWidth: 1160, margin: "0 auto", padding: "64px 32px" }}>
 
+        {/* ── AUTO-DISCOUNT BANNER ── */}
+        <div style={{ background: "#2C1A0E", color: "#F5EFE4", borderRadius: 12, padding: "16px 24px", marginBottom: 32, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap", textAlign: "center" }}>
+          <span style={{ fontSize: 22 }}>🎉</span>
+          <span className="lato" style={{ fontSize: 14, letterSpacing: "0.02em", lineHeight: 1.6 }}>
+            Buy more, save automatically — <strong style={{ color: "#E2C98A" }}>3+ bands ${tier3.toFixed(2)}/ea</strong> · <strong style={{ color: "#E2C98A" }}>5+ bands ${tier5.toFixed(2)}/ea</strong>. The discount applies right in your cart.
+          </span>
+        </div>
+
         {/* ── INDIVIDUAL BANDS ── */}
         <div style={{ marginBottom: 80 }}>
           <div style={{ marginBottom: 40 }}>
@@ -301,23 +364,12 @@ export default function StorePage() {
           <div className="products-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>
             {INDIVIDUAL.map(product => {
               const price = priceFor(product.id, product.price);
+              const size = sizes[product.id] || "M";
+              const sizeLabel = SIZES.find(s => s.id === size)?.label || size;
               return (
               <div key={product.id} className="product-card">
-                {/* Band visual */}
-                <div style={{ height: 200, background: `linear-gradient(135deg, ${product.color}22, ${product.color}44)`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                  {product.tag && (
-                    <div className="lato" style={{ position: "absolute", top: 16, right: 16, background: product.color, color: "#fff", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", padding: "4px 12px", borderRadius: 20, fontWeight: 700 }}>{product.tag}</div>
-                  )}
-                  {/* Band ring illustration */}
-                  <div style={{ position: "relative", width: 120, height: 120 }}>
-                    <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `18px solid ${product.color}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 28 }}>{product.icon}</div>
-                        <div className="lato" style={{ fontSize: 9, letterSpacing: "0.15em", color: product.color, marginTop: 2 }}>PB-XXXXX</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                {/* Image carousel (falls back to the band illustration) */}
+                <BandCarousel images={PRODUCT_IMAGES[product.id] || []} color={product.color} icon={product.icon} tag={product.tag} />
 
                 <div style={{ padding: "28px 28px 32px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
@@ -326,12 +378,34 @@ export default function StorePage() {
                   </div>
                   <p className="lato" style={{ fontSize: 14, lineHeight: 1.75, color: "#6B4C35", fontWeight: 300, marginBottom: 20 }}>{product.desc}</p>
 
-                  <div style={{ marginBottom: 24 }}>
+                  {product.id === "standard" && (
+                    <div className="lato" style={{ fontSize: 12, color: "#7BAE8E", fontWeight: 700, marginBottom: 18, letterSpacing: "0.02em" }}>
+                      Buy 3+ for ${tier3.toFixed(2)} ea · 5+ for ${tier5.toFixed(2)} ea — applied automatically
+                    </div>
+                  )}
+
+                  <div style={{ marginBottom: 20 }}>
                     {product.features.map(f => (
                       <div key={f} className="lato" style={{ fontSize: 13, color: "#9B7B62", padding: "5px 0", borderBottom: "1px solid #F5EFE4", display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ color: product.color, fontSize: 10 }}>✦</span> {f}
                       </div>
                     ))}
+                  </div>
+
+                  {/* Size selector */}
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                      <label className="lato" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#9B7B62" }}>Size</label>
+                      <button onClick={() => setShowSizeGuide(true)} className="lato" style={{ background: "none", border: "none", color: "#C8A96E", fontSize: 11, cursor: "pointer", textDecoration: "underline", letterSpacing: "0.05em", padding: 0 }}>Size guide</button>
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {SIZES.map(s => {
+                        const sel = size === s.id;
+                        return (
+                          <button key={s.id} className="size-btn" onClick={() => setSizes(p => ({ ...p, [product.id]: s.id }))} style={{ border: `1px solid ${sel ? product.color : "#E8DFD0"}`, background: sel ? `${product.color}1f` : "#fff", color: sel ? "#2C1A0E" : "#9B7B62", fontWeight: sel ? 700 : 400 }}>{s.label}</button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Custom options */}
@@ -369,7 +443,10 @@ export default function StorePage() {
                       name: product.name,
                       price: price,
                       type: product.type,
-                      detail: product.type === "custom" ? `${customColor}${customVerse ? ` · ${customVerse}` : ""}` : undefined,
+                      size,
+                      detail: product.type === "custom"
+                        ? `${sizeLabel} · ${customColor}${customVerse ? ` · ${customVerse}` : ""}`
+                        : `Size: ${sizeLabel}`,
                     })}
                   >
                     Add to Cart — ${price}
@@ -469,6 +546,37 @@ export default function StorePage() {
         </div>
       </div>
 
+      {/* ── SIZE GUIDE MODAL ── */}
+      {showSizeGuide && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(44,26,14,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={e => { if (e.target === e.currentTarget) setShowSizeGuide(false); }}>
+          <div style={{ background: "#FDFAF5", borderRadius: 12, padding: "32px 28px", maxWidth: 440, width: "100%", boxShadow: "0 24px 80px rgba(44,26,14,0.25)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <div>
+                <span className="section-label">Find your fit</span>
+                <h2 className="playfair" style={{ fontSize: 24, fontWeight: 600 }}>Band Size Guide</h2>
+              </div>
+              <button onClick={() => setShowSizeGuide(false)} style={{ background: "none", border: "none", fontSize: 24, cursor: "pointer", color: "#9B7B62", lineHeight: 1 }}>×</button>
+            </div>
+            <p className="lato" style={{ fontSize: 13, color: "#6B4C35", lineHeight: 1.7, marginBottom: 20, fontWeight: 300 }}>Measure around your wrist with a soft tape or a strip of paper, then match it below.</p>
+            <div style={{ border: "1px solid #E8DFD0", borderRadius: 8, overflow: "hidden" }}>
+              <div className="lato" style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", background: "#2C1A0E", color: "#F5EFE4", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>
+                <div style={{ padding: "10px 12px" }}>Size</div>
+                <div style={{ padding: "10px 12px" }}>Wrist</div>
+                <div style={{ padding: "10px 12px" }}>Best for</div>
+              </div>
+              {SIZE_CHART.map((row, i) => (
+                <div key={row.size} className="lato" style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", fontSize: 13, color: "#2C1A0E", background: i % 2 ? "#F5EFE4" : "#fff" }}>
+                  <div style={{ padding: "12px", fontWeight: 700 }}>{row.size}</div>
+                  <div style={{ padding: "12px", color: "#6B4C35" }}>{row.wrist}</div>
+                  <div style={{ padding: "12px", color: "#9B7B62" }}>{row.fit}</div>
+                </div>
+              ))}
+            </div>
+            <button className="add-btn" style={{ background: "#C8A96E", color: "#fff", marginTop: 20 }} onClick={() => setShowSizeGuide(false)}>Got it</button>
+          </div>
+        </div>
+      )}
+
       {/* ── CART DRAWER ── */}
       {cartOpen && (
         <div className="cart-overlay" onClick={e => { if (e.target === e.currentTarget) setCartOpen(false); }}>
@@ -486,25 +594,34 @@ export default function StorePage() {
               </div>
             ) : (
               <>
-                <div style={{ display: "grid", gap: 16, marginBottom: 32 }}>
-                  {cart.map(item => (
-                    <div key={item.id} style={{ background: "#fff", border: "1px solid #E8DFD0", borderRadius: 8, padding: "16px 18px" }}>
+                <div style={{ display: "grid", gap: 16, marginBottom: 24 }}>
+                  {cart.map(item => {
+                    const unit = lineUnit(item);
+                    return (
+                    <div key={`${item.id}-${item.size || ""}`} style={{ background: "#fff", border: "1px solid #E8DFD0", borderRadius: 8, padding: "16px 18px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                         <div>
                           <div className="playfair" style={{ fontSize: 16, fontWeight: 600 }}>{item.name}</div>
                           {item.detail && <div className="lato" style={{ fontSize: 12, color: "#9B7B62", marginTop: 2 }}>{item.detail}</div>}
                         </div>
-                        <div className="playfair" style={{ fontSize: 16, fontWeight: 600, color: "#C8A96E" }}>${(item.price * item.qty).toFixed(2)}</div>
+                        <div className="playfair" style={{ fontSize: 16, fontWeight: 600, color: "#C8A96E" }}>${(unit * item.qty).toFixed(2)}</div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <button className="qty-btn" onClick={() => updateQty(item.id, -1)}>−</button>
+                        <button className="qty-btn" onClick={() => updateQty(item.id, item.size, -1)}>−</button>
                         <span className="lato" style={{ fontSize: 15, fontWeight: 700, minWidth: 20, textAlign: "center" }}>{item.qty}</span>
-                        <button className="qty-btn" onClick={() => updateQty(item.id, 1)}>+</button>
-                        <span className="lato" style={{ fontSize: 12, color: "#C8B49A", marginLeft: 4 }}>${item.price} each</span>
+                        <button className="qty-btn" onClick={() => updateQty(item.id, item.size, 1)}>+</button>
+                        <span className="lato" style={{ fontSize: 12, color: "#C8B49A", marginLeft: 4 }}>${unit.toFixed(2)} each</span>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
+
+                {stdSavings > 0.001 && (
+                  <div className="lato" style={{ background: "#EAF4EE", color: "#1a4a3a", borderRadius: 8, padding: "10px 14px", fontSize: 13, marginBottom: 12, textAlign: "center", fontWeight: 700 }}>
+                    ✓ Multi-band pricing saved you ${stdSavings.toFixed(2)}
+                  </div>
+                )}
 
                 {/* Order summary */}
                 <div style={{ background: "#F5EFE4", borderRadius: 8, padding: "20px 20px", marginBottom: 8 }}>
@@ -523,36 +640,36 @@ export default function StorePage() {
                 </div>
 
                 <button className="checkout-btn" disabled={checkoutLoading || cart.length === 0} onClick={async () => {
-  setCheckoutLoading(true)
-  track('begin_checkout', {
-    currency: 'USD',
-    value: subtotal,
-    items: cart.map(c => ({ item_id: c.id, item_name: c.name, quantity: c.qty, price: c.price })),
-  })
-  const res = await fetch('/api/create-checkout', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      items: cart.map(c => ({ id: c.id, qty: c.qty })),
-      customMessage: customMsg || '',
-      verse: customVerse || '',
-      color: customColor || 'Amber Gold',
-      replaces: replaces || '',
-    })
-  })
-  const data = await res.json()
-  if (data.url) {
-    window.location.href = data.url
-  } else {
-    showToast('Something went wrong — please try again')
-    setCheckoutLoading(false)
-  }
-}}>
-  {checkoutLoading ? 'Redirecting...' : `Proceed to Checkout — $${total.toFixed(2)}`}
-</button>
-<p className="lato" style={{ fontSize: 11, textAlign: "center", color: "#C8B49A", marginTop: 12, letterSpacing: "0.05em" }}>
-  Secure checkout via Stripe · Ships in 3-5 days
-</p>
+                  setCheckoutLoading(true)
+                  track('begin_checkout', {
+                    currency: 'USD',
+                    value: subtotal,
+                    items: cart.map(c => ({ item_id: c.id, item_name: c.name, quantity: c.qty, price: lineUnit(c) })),
+                  })
+                  const res = await fetch('/api/create-checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      items: cart.map(c => ({ id: c.id, qty: c.qty, size: c.size })),
+                      customMessage: customMsg || '',
+                      verse: customVerse || '',
+                      color: customColor || 'Amber Gold',
+                      replaces: replaces || '',
+                    })
+                  })
+                  const data = await res.json()
+                  if (data.url) {
+                    window.location.href = data.url
+                  } else {
+                    showToast('Something went wrong — please try again')
+                    setCheckoutLoading(false)
+                  }
+                }}>
+                  {checkoutLoading ? 'Redirecting...' : `Proceed to Checkout — $${total.toFixed(2)}`}
+                </button>
+                <p className="lato" style={{ fontSize: 11, textAlign: "center", color: "#C8B49A", marginTop: 12, letterSpacing: "0.05em" }}>
+                  Secure checkout via Stripe · Ships in 3-5 days
+                </p>
               </>
             )}
           </div>
