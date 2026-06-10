@@ -37,6 +37,10 @@ type BandStatus = {
 const GOLD  = 'var(--pb-primary, #B8860B)'
 const GREEN = 'var(--pb-accent-alt, #1a4a3a)'
 const NAVY  = 'var(--pb-tab-bar, #1a2a4a)'
+// Lighter tint of the themed dark color — used as the second stop on dark
+// gradients (verse card, transfer banner) so they stay on-theme instead of
+// fading to a hardcoded blue. Falls back to the original navy-blue when unset.
+const NAVY_LT = 'color-mix(in srgb, var(--pb-tab-bar, #1a2a4a) 80%, #ffffff)'
 const DARK  = 'var(--pb-text, #2C1810)'
 const CREAM = 'var(--pb-background, #FAF6EF)'
 const GRAY  = 'var(--pb-text-muted, #7A6A5A)'
@@ -315,7 +319,7 @@ export default function BandPage() {
     const verse = getVerseForCategory(verseCategory)
     return (
       <div style={{ margin: '20px 20px 0' }}>
-        <div style={{ background: `linear-gradient(135deg, ${NAVY}, #2c4a8a)`, borderRadius: 14, padding: '24px 20px', color: 'white', textAlign: 'center' }}>
+        <div style={{ background: `linear-gradient(135deg, ${NAVY}, ${NAVY_LT})`, borderRadius: 14, padding: '24px 20px', color: 'white', textAlign: 'center' }}>
           <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.6, marginBottom: 12 }}>
             {verseCategory === 'all' ? "Today's Verse" : CATEGORIES.find(c => c.id === verseCategory)?.label}
           </div>
@@ -755,7 +759,7 @@ export default function BandPage() {
         <Nav />
         <StatsStrip regs={regs} />
         {claimStep === 'prompt' && (
-          <div style={{ margin: '24px 20px', background: `linear-gradient(160deg, ${NAVY}, #2c4a8a)`, borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
+          <div style={{ margin: '24px 20px', background: `linear-gradient(160deg, ${NAVY}, ${NAVY_LT})`, borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🙏</div>
             <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, marginBottom: 6 }}>{status.senderName ? `${status.senderName} is passing this band to you` : 'Someone is passing this band to you'}</div>
             <div style={{ fontFamily: body, fontSize: 14, opacity: 0.8, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>This band has traveled through {regs.length} {regs.length === 1 ? 'person' : 'people'}. Now it's being offered to you.</div>
