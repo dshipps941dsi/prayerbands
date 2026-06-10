@@ -585,17 +585,17 @@ export default function Dashboard() {
             <p style={{ fontSize: 14, color: SECONDARY_TEXT, margin: 0, fontFamily: 'Inter, sans-serif' }}>Here's how far your prayers have traveled.</p>
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <a href="/store" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: '10px 16px', fontSize: 12, textDecoration: 'none', color: BODY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', fontWeight: 600, boxShadow: '0 1px 4px rgba(10,22,40,0.06)', whiteSpace: 'nowrap' }}>
-              📦 Order Bands
-            </a>
-            <a href="/subscribe" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: GOLD, border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 12, textDecoration: 'none', color: NAVY, fontFamily: 'Cinzel, serif', fontWeight: 700, letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
-              🔁 Subscribe
-            </a>
             {!isViewingAs && (
-              <button onClick={() => setShowPrayerModal(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: GOLD, color: NAVY, border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 12, cursor: 'pointer', fontFamily: 'Cinzel, serif', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+              <button onClick={() => setShowPrayerModal(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: NAVY, color: '#F5EDD8', border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 12, cursor: 'pointer', fontFamily: 'Cinzel, serif', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(10,22,40,0.25)' }}>
                 🙏 Send Prayer Request
               </button>
             )}
+            <a href="/store" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: '10px 16px', fontSize: 12, textDecoration: 'none', color: BODY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', fontWeight: 600, boxShadow: '0 1px 4px rgba(10,22,40,0.06)', whiteSpace: 'nowrap' }}>
+              📦 Order Bands
+            </a>
+            <a href="/subscribe" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: '10px 16px', fontSize: 12, textDecoration: 'none', color: BODY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', fontWeight: 600, boxShadow: '0 1px 4px rgba(10,22,40,0.06)', whiteSpace: 'nowrap' }}>
+              🔁 Subscribe
+            </a>
           </div>
         </div>
 
