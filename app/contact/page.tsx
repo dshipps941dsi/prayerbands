@@ -112,6 +112,7 @@ export default function ContactPage() {
   const lookupFaq = useCallback(async (query: string) => {
     if (query.length < 20 || query === lastQuery.current) return;
     lastQuery.current = query;
+    setFaqDismissed(false);
     setFaqLoading(true);
     // Keep the dismissed state and any already-shown results as-is while the
     // next search runs, so the panel doesn't reset on every keystroke.
@@ -330,6 +331,45 @@ export default function ContactPage() {
                   </div>
                 </div>
 
+                {/* Inline AI suggestions — slide in between the message and Submit */}
+                {!faqDismissed && (faqLoading || faqMatches.length > 0) && (
+                  <div className={`inline-suggestions ${hasHighConfidenceMatch ? "inline-suggestions--high" : ""}`}>
+                    {faqLoading && faqMatches.length === 0 ? (
+                      <div className="suggestions-loading">
+                        <span className="pulse-dot" />
+                        <span className="pulse-dot" />
+                        <span className="pulse-dot" />
+                        <span>Looking for answers…</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="suggestions-header">
+                          <span className="suggestions-icon">✦</span>
+                          <span className="suggestions-title">
+                            {hasHighConfidenceMatch ? "We may already have an answer for you" : "Related help topics"}
+                          </span>
+                          <button className="suggestions-dismiss" onClick={() => setFaqDismissed(true)} aria-label="Dismiss suggestions">
+                            ×
+                          </button>
+                        </div>
+                        <div className="suggestions-list">
+                          {faqMatches.map((match, i) => (
+                            <details key={i} className={`suggestion-item suggestion-item--${match.confidence}`}>
+                              <summary className="suggestion-question">{match.question}</summary>
+                              <div className="suggestion-answer">{match.answer}</div>
+                            </details>
+                          ))}
+                        </div>
+                        {hasHighConfidenceMatch && (
+                          <p className="suggestions-footer">
+                            Does this answer your question? If not, finish the form below and we&rsquo;ll get back to you.
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
                 {errorMessage && (
                   <div className="error-banner">
                     <span>⚠</span> {errorMessage}
@@ -362,39 +402,6 @@ export default function ContactPage() {
                   .
                 </p>
               </div>
-            </div>
-
-            {/* Right: FAQ Deflection + Info */}
-            <div className="side-section">
-              {/* AI FAQ Panel — only shown once there are real answers, never
-                  just because a search is running (which made it flash). */}
-              {faqMatches.length > 0 && !faqDismissed && (
-                <div className={`faq-panel ${hasHighConfidenceMatch ? "faq-panel--highlight" : ""}`}>
-                  <div className="faq-panel-header">
-                    <div className="faq-icon">✦</div>
-                    <div>
-                      <h3>We may already have an answer</h3>
-                      <p>Based on what you&rsquo;re typing…</p>
-                    </div>
-                    <button className="faq-dismiss" onClick={() => setFaqDismissed(true)}>
-                      ×
-                    </button>
-                  </div>
-
-                  {faqMatches.map((match, i) => (
-                    <FaqMatchCard key={i} match={match} />
-                  ))}
-
-                  {faqLoading && (
-                    <div className="faq-searching">
-                      <span className="pulse-dot" />
-                      <span className="pulse-dot" />
-                      <span className="pulse-dot" />
-                      <span>Checking for more…</span>
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* Contact info cards */}
               <div className="info-cards">
@@ -459,23 +466,6 @@ function FaqSection() {
         })}
       </div>
     </section>
-  );
-}
-
-function FaqMatchCard({ match }: { match: FaqMatch }) {
-  const [expanded, setExpanded] = useState(match.confidence === "high");
-
-  return (
-    <div className={`faq-match faq-match--${match.confidence}`}>
-      <button className="faq-match-q" onClick={() => setExpanded((v) => !v)}>
-        <span className="faq-confidence-dot" />
-        <span>{match.question}</span>
-        <span className="faq-chevron">{expanded ? "▲" : "▼"}</span>
-      </button>
-      {expanded && (
-        <div className="faq-match-a">{match.answer}</div>
-      )}
-    </div>
   );
 }
 
@@ -597,21 +587,10 @@ const styles = `
     font-style: italic;
   }
 
-  /* Layout */
+  /* Layout — single centered column (better on mobile, suggestions in context) */
   .contact-layout {
-    display: grid;
-    grid-template-columns: 1fr 380px;
-    gap: 32px;
-    align-items: start;
-  }
-
-  @media (max-width: 860px) {
-    .contact-layout {
-      grid-template-columns: 1fr;
-    }
-    .side-section {
-      order: -1;
-    }
+    max-width: 680px;
+    margin: 0 auto;
   }
 
   /* Main form card */
@@ -729,6 +708,114 @@ const styles = `
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+
+  /* Inline AI suggestions (between the message field and Submit) */
+  .inline-suggestions {
+    background: linear-gradient(135deg, rgba(200,169,110,0.10), rgba(236,238,241,0.45));
+    border: 1.5px solid rgba(200,169,110,0.34);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    animation: fadeSlideIn 0.25s ease;
+  }
+
+  .inline-suggestions--high {
+    border-color: rgba(200,169,110,0.65);
+    background: linear-gradient(135deg, rgba(200,169,110,0.16), rgba(255,253,248,0.6));
+  }
+
+  .suggestions-loading {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #5C6573;
+    font-style: italic;
+  }
+
+  .suggestions-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .suggestions-icon { color: #9A7A35; font-size: 0.9rem; flex-shrink: 0; }
+
+  .suggestions-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.02rem;
+    font-weight: 600;
+    color: #15223B;
+    flex: 1;
+  }
+
+  .suggestions-dismiss {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #5C6573;
+    font-size: 1.25rem;
+    line-height: 1;
+    padding: 0 2px;
+    flex-shrink: 0;
+    transition: color 0.15s;
+  }
+
+  .suggestions-dismiss:hover { color: #15223B; }
+
+  .suggestions-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .suggestion-item {
+    border: 1px solid rgba(200,169,110,0.20);
+    border-radius: 7px;
+    overflow: hidden;
+    background: rgba(255,253,248,0.7);
+  }
+
+  .suggestion-item.suggestion-item--high { border-color: rgba(200,169,110,0.45); }
+
+  .suggestion-question {
+    cursor: pointer;
+    padding: 10px 14px;
+    list-style: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #2A3344;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+  }
+
+  .suggestion-question::-webkit-details-marker { display: none; }
+
+  .suggestion-question::after {
+    content: '+';
+    color: #9A7A35;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+  }
+
+  details[open] .suggestion-question::after { content: '−'; }
+
+  .suggestion-answer {
+    padding: 0 14px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: #2A3344;
+    line-height: 1.65;
+  }
+
+  .suggestions-footer {
+    margin: 10px 0 0;
+    font-size: 0.8rem;
+    color: #5C6573;
+    font-style: italic;
+    text-align: center;
   }
 
   /* Submit button */
@@ -957,11 +1044,16 @@ const styles = `
     to   { opacity: 1; }
   }
 
-  /* Info cards */
+  /* Info cards — sit in a row beneath the form card */
   .info-cards {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
+    margin-top: 20px;
+  }
+
+  @media (max-width: 600px) {
+    .info-cards { grid-template-columns: 1fr; }
   }
 
   .info-card {
