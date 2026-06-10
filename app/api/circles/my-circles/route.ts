@@ -21,8 +21,10 @@ export async function GET(req: NextRequest) {
 
     const isBandHolder = !!band
 
-    // Get all circles this user belongs to
-    const { data: memberships } = await supabase
+    // Get all circles this user belongs to. Use the service client: these
+    // tables have recursive RLS policies (the create/join routes bypass them
+    // the same way), so the RLS client returns nothing here.
+    const { data: memberships } = await admin
       .from('circle_members')
       .select('circle_id, role')
       .eq('user_id', user.id)
@@ -36,7 +38,7 @@ export async function GET(req: NextRequest) {
     const circleIds = [...new Set(memberships.map(m => m.circle_id))]
 
     // Get circle details
-    const { data: circles } = await supabase
+    const { data: circles } = await admin
       .from('prayer_circles')
       .select('id, name, join_code, is_closed')
       .in('id', circleIds)
@@ -48,13 +50,13 @@ export async function GET(req: NextRequest) {
     }
 
     // Get member counts per circle
-    const { data: memberCounts } = await supabase
+    const { data: memberCounts } = await admin
       .from('circle_members')
       .select('circle_id')
       .in('circle_id', circleIds)
 
     // Get open request counts per circle
-    const { data: requestCounts } = await supabase
+    const { data: requestCounts } = await admin
       .from('circle_prayer_requests')
       .select('circle_id')
       .in('circle_id', circleIds)
