@@ -110,18 +110,6 @@ function TopBar({ org, green }: { org: any, green: string }) {
     <div style={{ background: NAVY, color: '#fff', display: 'flex', alignItems: 'center', padding: '0 16px', height: 56, gap: 12, boxShadow: '0 2px 12px rgba(10,22,40,0.25)', flexShrink: 0, position: 'sticky', top: 0, zIndex: 100 }}>
       <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', whiteSpace: 'nowrap', color: GOLD, textDecoration: 'none', cursor: 'pointer', fontFamily: 'Cinzel, serif' }}><Logo size={26} color={GOLD} />PrayerBands</a>
       <span style={{ background: 'rgba(200,169,110,0.12)', border: `1px solid rgba(200,169,110,0.25)`, borderRadius: 4, padding: '2px 8px', fontSize: 11, letterSpacing: 0.5, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180, color: GOLD }}>{org?.subdomain}.prayerbands.com</span>
-      {org?.website && (
-        <a
-          href={/^https?:\/\//i.test(org.website) ? org.website : `https://${org.website}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={org.website}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(200,169,110,0.12)', border: `1px solid rgba(200,169,110,0.25)`, borderRadius: 4, padding: '2px 8px', fontSize: 11, letterSpacing: 0.3, fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200, color: GOLD, textDecoration: 'none' }}
-        >
-          <span style={{ fontSize: 12, lineHeight: 1 }}>🌐</span>
-          {org.website.replace(/^https?:\/\//i, '').replace(/\/$/, '')}
-        </a>
-      )}
       <div style={{ flex: 1 }} />
       <button onClick={async () => { const s = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); await s.auth.signOut(); window.location.href = '/signin' }} style={{ background: 'rgba(200,169,110,0.12)', border: `1px solid rgba(200,169,110,0.25)`, color: GOLD, padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>Sign out</button>
     </div>
@@ -147,6 +135,18 @@ function Sidebar({ org, tab, setTab, green }: { org: any, tab: string, setTab: (
         <div style={{ fontWeight: 700, marginBottom: 2, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em', color: GOLD, fontSize: 11 }}>{org?.plan || 'Ministry'} Plan</div>
         <div style={{ opacity: 0.7, fontFamily: 'Inter, sans-serif', fontSize: 11 }}>{org?.created_at ? 'Since ' + new Date(org.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''}</div>
       </div>
+      {org?.website && (
+        <a
+          href={/^https?:\/\//i.test(org.website) ? org.website : `https://${org.website}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={org.website}
+          style={{ display: 'flex', alignItems: 'center', gap: 7, margin: '0 16px 16px', padding: '9px 12px', fontSize: 12, color: GOLD_TEXT, textDecoration: 'none', fontFamily: 'Inter, sans-serif', background: SILVER_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 8 }}
+        >
+          <span style={{ fontSize: 13, lineHeight: 1, flexShrink: 0 }}>🌐</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{org.website.replace(/^https?:\/\//i, '').replace(/\/$/, '')}</span>
+        </a>
+      )}
     </div>
   )
 }
