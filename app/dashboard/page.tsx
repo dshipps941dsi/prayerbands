@@ -452,6 +452,7 @@ export default function Dashboard() {
   const [showPrayerModal, setShowPrayerModal] = useState(false)
   const [shareUrl, setShareUrl] = useState('')
   const [copied, setCopied] = useState(false)
+  const [hoveredKpi, setHoveredKpi] = useState<string | null>(null)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700)
@@ -620,10 +621,22 @@ export default function Dashboard() {
             { label: 'Prayers', value: stats.prayers, icon: '🙏', desc: 'Prayers left by people when they registered your bands.' },
             { label: 'Countries', value: stats.countries, icon: '🌍', desc: 'Distinct countries your bands have reached so far.' },
           ].map(s => (
-            <div key={s.label} title={s.desc} style={{ background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: '14px 16px', boxShadow: '0 1px 4px rgba(10,22,40,0.06)', cursor: 'help' }}>
+            <div
+              key={s.label}
+              onMouseEnter={() => setHoveredKpi(s.label)}
+              onMouseLeave={() => setHoveredKpi(h => h === s.label ? null : h)}
+              onClick={() => setHoveredKpi(h => h === s.label ? null : s.label)}
+              style={{ position: 'relative', background: CARD_BG, border: `1px solid ${hoveredKpi === s.label ? GOLD_BORDER : SILVER_BORDER}`, borderRadius: 10, padding: '14px 16px', boxShadow: '0 1px 4px rgba(10,22,40,0.06)', cursor: 'help' }}
+            >
               <div style={{ fontSize: 20, marginBottom: 4, color: GOLD_TEXT }}>{s.icon}</div>
               <div style={{ fontSize: 28, fontWeight: 700, color: NAVY_HEADING, lineHeight: 1, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{s.value}</div>
               <div style={{ fontSize: 11, color: SECONDARY_TEXT, marginTop: 4, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}>{s.label}<span style={{ fontSize: 10, opacity: 0.7 }}>ⓘ</span></div>
+              {hoveredKpi === s.label && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, zIndex: 30, background: NAVY, color: '#F5EDD8', borderRadius: 8, padding: '10px 12px', fontSize: 12, lineHeight: 1.55, fontFamily: 'Inter, sans-serif', boxShadow: '0 8px 24px rgba(10,22,40,0.30)', border: `1px solid ${GOLD}44` }}>
+                  {s.desc}
+                  <span style={{ position: 'absolute', bottom: '100%', left: 22, width: 0, height: 0, borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderBottom: `6px solid ${NAVY}` }} />
+                </div>
+              )}
             </div>
           ))}
         </div>
