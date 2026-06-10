@@ -119,6 +119,30 @@ export default function AdminProducts() {
     else setMsg('❌ ' + (d.error || 'Create failed.'))
   }
 
+  // Clone a product (everything but the unique slug) so you can just swap the
+  // name + image and go. The copy is created inactive with a unique slug.
+  async function duplicate(p: P) {
+    const base = p.slug.replace(/-copy(-\d+)?$/, '')
+    const taken = new Set(products.map(x => x.slug))
+    let slug = `${base}-copy`
+    for (let n = 2; taken.has(slug); n++) slug = `${base}-copy-${n}`
+    const res = await fetch('/api/admin/products', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug, name: `${p.name} (Copy)`,
+        description: p.description, category: p.category, theme: p.theme,
+        color: p.color, icon: p.icon, tag: p.tag,
+        price_cents: p.price_cents, bands_per_unit: p.bands_per_unit,
+        features: p.features, sizes: p.sizes, has_sizes: p.has_sizes,
+        multi_discount: p.multi_discount, discount_tiers: p.discount_tiers,
+        image_urls: p.image_urls, active: false, sort_order: p.sort_order + 1,
+      }),
+    })
+    const d = await res.json()
+    if (res.ok) { setMsg(`✅ Duplicated ${p.name} → /${slug} (inactive — rename, swap image, then activate).`); load() }
+    else setMsg('❌ ' + (d.error || 'Duplicate failed.'))
+  }
+
   async function remove(p: P) {
     if (!confirm(`Delete ${p.name}? This cannot be undone.`)) return
     const res = await fetch(`/api/admin/products?id=${p.id}`, { method: 'DELETE' })
@@ -228,6 +252,7 @@ export default function AdminProducts() {
 
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => save(p)} disabled={savingId === p.id} style={{ background: savingId === p.id ? C.silver : C.gold, color: savingId === p.id ? '#fff' : C.navy, border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{savingId === p.id ? 'Saving…' : 'Save'}</button>
+              <button onClick={() => duplicate(p)} style={{ background: 'transparent', border: `1px solid ${C.borderNavy}`, color: C.body, borderRadius: 8, padding: '10px 16px', fontSize: 11, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Duplicate</button>
               <button onClick={() => remove(p)} style={{ background: 'transparent', border: `1px solid rgba(192,57,43,0.35)`, color: C.red, borderRadius: 8, padding: '10px 16px', fontSize: 11, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Delete</button>
             </div>
           </div>
