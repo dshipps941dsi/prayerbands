@@ -450,6 +450,8 @@ export default function Dashboard() {
   const [replaceMsg, setReplaceMsg] = useState('')
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700)
   const [showPrayerModal, setShowPrayerModal] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700)
@@ -457,6 +459,18 @@ export default function Dashboard() {
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  // Build the shareable referral link once the profile (with its code) loads.
+  useEffect(() => {
+    if (profile?.referral_code) setShareUrl(`${window.location.origin}/store?ref=${profile.referral_code}`)
+  }, [profile?.referral_code])
+
+  const copyReferral = async () => {
+    if (!shareUrl) return
+    try { await navigator.clipboard.writeText(shareUrl) } catch { /* clipboard blocked */ }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   useEffect(() => {
     const supabase = createBrowserClient(
@@ -601,18 +615,32 @@ export default function Dashboard() {
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
           {[
-            { label: 'My Bands', value: stats.bands, icon: '⟳' },
-            { label: 'People Reached', value: stats.registrations, icon: '✦' },
-            { label: 'Prayers', value: stats.prayers, icon: '🙏' },
-            { label: 'Countries', value: stats.countries, icon: '🌍' },
+            { label: 'My Bands', value: stats.bands, icon: '⟳', desc: 'Bands you own — each one you’ve ordered or claimed to your account.' },
+            { label: 'People Reached', value: stats.registrations, icon: '✦', desc: 'Everyone who has registered one of your bands as it travels from person to person.' },
+            { label: 'Prayers', value: stats.prayers, icon: '🙏', desc: 'Prayers left by people when they registered your bands.' },
+            { label: 'Countries', value: stats.countries, icon: '🌍', desc: 'Distinct countries your bands have reached so far.' },
           ].map(s => (
-            <div key={s.label} style={{ background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: '14px 16px', boxShadow: '0 1px 4px rgba(10,22,40,0.06)' }}>
+            <div key={s.label} title={s.desc} style={{ background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: '14px 16px', boxShadow: '0 1px 4px rgba(10,22,40,0.06)', cursor: 'help' }}>
               <div style={{ fontSize: 20, marginBottom: 4, color: GOLD_TEXT }}>{s.icon}</div>
               <div style={{ fontSize: 28, fontWeight: 700, color: NAVY_HEADING, lineHeight: 1, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{s.value}</div>
-              <div style={{ fontSize: 11, color: SECONDARY_TEXT, marginTop: 4, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{s.label}</div>
+              <div style={{ fontSize: 11, color: SECONDARY_TEXT, marginTop: 4, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}>{s.label}<span style={{ fontSize: 10, opacity: 0.7 }}>ⓘ</span></div>
             </div>
           ))}
         </div>
+
+        {!isViewingAs && profile?.referral_code && (
+          <div style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #132544 100%)`, border: `1px solid ${GOLD}55`, borderRadius: 10, padding: isMobile ? '16px 16px' : '18px 22px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', boxShadow: '0 4px 18px rgba(10,22,40,0.18)' }}>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <div style={{ fontFamily: 'Cinzel, serif', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: GOLD, marginBottom: 4 }}>🎁 Share PrayerBands</div>
+              <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 700, color: '#F5EDD8', marginBottom: 6 }}>Give friends 5% off — using your link</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <code style={{ fontFamily: 'monospace', fontSize: 13, color: '#F5EDD8', background: 'rgba(255,255,255,0.08)', border: `1px solid ${GOLD}44`, borderRadius: 6, padding: '6px 10px', wordBreak: 'break-all' }}>{shareUrl || `…/store?ref=${profile.referral_code}`}</code>
+                <span style={{ fontFamily: 'monospace', fontSize: 12, color: GOLD }}>code: {profile.referral_code}</span>
+              </div>
+            </div>
+            <button onClick={copyReferral} style={{ background: GOLD, color: NAVY, border: 'none', borderRadius: 8, padding: '11px 22px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0 }}>{copied ? '✓ Copied' : 'Copy Link'}</button>
+          </div>
+        )}
 
         {subscription && (() => {
           const plan = subscription.subscription_plans || {}
