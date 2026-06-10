@@ -4,13 +4,14 @@ import { useState } from 'react'
 import NetworkSection from './NetworkSection'
 import CirclesSection from './CirclesSection'
 
-// Brand palette (navy + gold + silver/gray)
-const GOLD = '#C8A96E'
-const GOLD_TEXT = '#9A7A35'
-const NAVY = '#15223B'
-const SLATE = '#5C6573'
-const BORDER = 'rgba(92,101,115,0.20)'
-const CARD = '#FFFDF8'
+// Colors follow the band's theme via --pb-* tokens (fallbacks = brand palette).
+const GOLD = 'var(--pb-primary, #C8A96E)'
+const GOLD_TEXT = 'var(--pb-accent, #9A7A35)'
+const NAVY = 'var(--pb-text, #15223B)'
+const SLATE = 'var(--pb-text-muted, #5C6573)'
+const BORDER = 'var(--pb-border, rgba(92,101,115,0.20))'
+const CARD = 'var(--pb-surface, #FFFDF8)'
+const INK_ON_PRIMARY = 'var(--pb-text-on-primary, #0A1628)'
 
 type Sub = 'requests' | 'partners' | 'circles'
 const SUBTABS: { id: Sub; label: string }[] = [
@@ -53,7 +54,7 @@ export default function PrayerTabs({ userId }: { userId: string }) {
             <button
               key={t.id}
               onClick={() => setSub(t.id)}
-              style={{ flex: 1, padding: '9px 4px', border: 'none', borderRadius: 9, background: active ? GOLD : 'transparent', color: active ? '#0A1628' : SLATE, fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "'Cinzel', Georgia, serif", letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}
+              style={{ flex: 1, padding: '9px 4px', border: 'none', borderRadius: 9, background: active ? GOLD : 'transparent', color: active ? INK_ON_PRIMARY : SLATE, fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "'Cinzel', Georgia, serif", letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}
             >
               {t.label}
             </button>
@@ -77,7 +78,7 @@ export default function PrayerTabs({ userId }: { userId: string }) {
 
       {showInfo && (
         <div style={{ background: CARD, border: `1px solid rgba(200,169,110,0.34)`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '14px 16px', marginBottom: 18, boxShadow: '0 2px 12px rgba(10,22,40,0.06)' }}>
-          <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, lineHeight: 1.65, color: '#2A3344' }}>{info.body}</div>
+          <div style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, lineHeight: 1.65, color: NAVY }}>{info.body}</div>
         </div>
       )}
 

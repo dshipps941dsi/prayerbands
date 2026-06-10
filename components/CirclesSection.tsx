@@ -34,7 +34,7 @@ export default function CirclesSection({ userId }: { userId: string }) {
 
   if (loading) {
     return (
-      <div style={{ padding: '20px 0', color: '#8B7355', fontSize: '14px', textAlign: 'center' }}>
+      <div style={{ padding: '20px 0', color: 'var(--pb-text-muted, #8B7355)', fontSize: '14px', textAlign: 'center' }}>
         Loading circles...
       </div>
     )
@@ -54,7 +54,7 @@ export default function CirclesSection({ userId }: { userId: string }) {
           fontFamily: 'Playfair Display, Georgia, serif',
           fontSize: '17px',
           fontWeight: '700',
-          color: '#2C1810',
+          color: 'var(--pb-text, #2C1810)',
           margin: 0
         }}>
           Prayer Circles
@@ -64,12 +64,12 @@ export default function CirclesSection({ userId }: { userId: string }) {
             onClick={() => router.push('/circles')}
             style={{
               backgroundColor: 'transparent',
-              border: '1px solid #D4C5B0',
+              border: '1px solid var(--pb-border, #D4C5B0)',
               borderRadius: '16px',
               padding: '5px 12px',
               fontSize: '12px',
               fontFamily: 'Georgia, serif',
-              color: '#8B7355',
+              color: 'var(--pb-text-muted, #8B7355)',
               cursor: 'pointer'
             }}
           >
@@ -79,7 +79,7 @@ export default function CirclesSection({ userId }: { userId: string }) {
             <button
               onClick={() => router.push('/circles/new')}
               style={{
-                backgroundColor: '#B8860B',
+                backgroundColor: 'var(--pb-primary, #B8860B)',
                 border: 'none',
                 borderRadius: '16px',
                 padding: '5px 12px',
@@ -100,13 +100,13 @@ export default function CirclesSection({ userId }: { userId: string }) {
       {circles.length === 0 && (
         <div style={{
           backgroundColor: '#fff',
-          border: '1px dashed #D4C5B0',
+          border: '1px dashed var(--pb-border, #D4C5B0)',
           borderRadius: '12px',
           padding: '24px',
           textAlign: 'center'
         }}>
           <p style={{ fontSize: '24px', margin: '0 0 8px 0' }}>🙏</p>
-          <p style={{ fontSize: '14px', color: '#8B7355', margin: '0 0 14px 0', lineHeight: '1.5' }}>
+          <p style={{ fontSize: '14px', color: 'var(--pb-text-muted, #8B7355)', margin: '0 0 14px 0', lineHeight: '1.5' }}>
             You're not in any Prayer Circles yet.
             {isBandHolder
               ? ' Create one for someone who needs prayer, or join one with a code.'
@@ -115,7 +115,7 @@ export default function CirclesSection({ userId }: { userId: string }) {
           <button
             onClick={() => router.push('/circles')}
             style={{
-              backgroundColor: '#B8860B',
+              backgroundColor: 'var(--pb-primary, #B8860B)',
               border: 'none',
               borderRadius: '8px',
               padding: '9px 20px',
@@ -138,7 +138,7 @@ export default function CirclesSection({ userId }: { userId: string }) {
           onClick={() => router.push(`/circles/${circle.id}`)}
           style={{
             backgroundColor: '#fff',
-            border: '1px solid #E8DCC8',
+            border: '1px solid var(--pb-border, #E8DCC8)',
             borderRadius: '10px',
             padding: '14px 16px',
             marginBottom: '10px',
@@ -155,7 +155,7 @@ export default function CirclesSection({ userId }: { userId: string }) {
                 fontFamily: 'Playfair Display, Georgia, serif',
                 fontSize: '15px',
                 fontWeight: '700',
-                color: '#2C1810',
+                color: 'var(--pb-text, #2C1810)',
                 margin: 0,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -167,7 +167,7 @@ export default function CirclesSection({ userId }: { userId: string }) {
                 <span style={{
                   fontSize: '10px',
                   fontWeight: '600',
-                  color: '#B8860B',
+                  color: 'var(--pb-primary, #B8860B)',
                   backgroundColor: '#FFF8E7',
                   border: '1px solid #F0D080',
                   borderRadius: '10px',
@@ -178,10 +178,10 @@ export default function CirclesSection({ userId }: { userId: string }) {
                 </span>
               )}
             </div>
-            <p style={{ fontSize: '12px', color: '#8B7355', margin: 0 }}>
+            <p style={{ fontSize: '12px', color: 'var(--pb-text-muted, #8B7355)', margin: 0 }}>
               {circle.member_count} {circle.member_count === 1 ? 'person' : 'people'} praying
               {circle.open_request_count > 0 && (
-                <span style={{ color: '#B8860B', fontWeight: '600' }}>
+                <span style={{ color: 'var(--pb-primary, #B8860B)', fontWeight: '600' }}>
                   {' · '}{circle.open_request_count} open {circle.open_request_count === 1 ? 'request' : 'requests'}
                 </span>
               )}
@@ -191,12 +191,12 @@ export default function CirclesSection({ userId }: { userId: string }) {
             fontSize: '11px',
             fontWeight: '700',
             letterSpacing: '0.12em',
-            color: '#D4C5B0',
+            color: 'var(--pb-border, #D4C5B0)',
             marginLeft: '12px'
           }}>
             {circle.join_code}
           </div>
-          <span style={{ marginLeft: '8px', color: '#D4C5B0', fontSize: '16px' }}>›</span>
+          <span style={{ marginLeft: '8px', color: 'var(--pb-border, #D4C5B0)', fontSize: '16px' }}>›</span>
         </div>
       ))}
 

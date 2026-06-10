@@ -1,23 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // Inline purchase experience for the band page (no navigation away). Single-band
 // gift checkout + monthly giving subscription, both wired to the existing Stripe
-// checkout routes.
+// checkout routes. Colors follow the band's theme via the --pb-* tokens, and
+// prices are pulled from the catalog (products) / plans so they match admin.
 
-const GOLD = '#B8860B'
-const DARK = '#2C1810'
-const GRAY = '#8B7355'
-const BORDER = '#E8DCC8'
-const CREAM = '#FAF6EF'
+const GOLD = 'var(--pb-primary, #B8860B)'
+const DARK = 'var(--pb-text, #2C1810)'
+const GRAY = 'var(--pb-text-muted, #8B7355)'
+const BORDER = 'var(--pb-border, #E8DCC8)'
+const CREAM = 'var(--pb-background, #FAF6EF)'
+const SURFACE = 'var(--pb-surface, #ffffff)'
+const INK = 'var(--pb-text-on-primary, #0f0d09)'
 const serif = 'Playfair Display, Georgia, serif'
-
-// Displayed prices mirror the existing store ($5 single band) and the "monthly"
-// subscription plan (Monthly Sender, $6.99/mo). Stripe is the source of truth for
-// the actual charge.
-const SINGLE_PRICE = '$5'
-const SUB_PRICE = '$6.99'
 
 export default function PurchaseTab({ bandId }: { bandId: string }) {
   const [showDedication, setShowDedication] = useState(false)
@@ -26,6 +23,22 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
   const [loadingSingle, setLoadingSingle] = useState(false)
   const [loadingSub, setLoadingSub] = useState(false)
   const [error, setError] = useState('')
+  const [singlePrice, setSinglePrice] = useState('')
+  const [subPrice, setSubPrice] = useState('')
+
+  // Pull real prices: single band from the catalog (admin-managed products),
+  // monthly from the active subscription plan.
+  useEffect(() => {
+    fetch('/api/products').then(r => r.json()).then(d => {
+      const list = Array.isArray(d.products) ? d.products : []
+      const std = list.find((p: any) => p.slug === 'standard') || list.find((p: any) => p.category === 'band')
+      if (std) setSinglePrice(`$${Number(std.price).toFixed(2)}`)
+    }).catch(() => {})
+    fetch('/api/plans').then(r => r.json()).then(d => {
+      const m = (d.plans || []).find((p: any) => p.id === 'monthly')
+      if (m) setSubPrice(`$${Number(m.total_price).toFixed(2)}`)
+    }).catch(() => {})
+  }, [])
 
   async function sendBand() {
     setLoadingSingle(true)
@@ -89,13 +102,13 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
       </div>
 
       {/* Card 1 — Single Band */}
-      <div style={{ backgroundColor: '#fff', border: `1px solid ${GOLD}`, borderRadius: 14, padding: 20, marginBottom: 16 }}>
+      <div style={{ backgroundColor: SURFACE, border: `1px solid ${GOLD}`, borderRadius: 14, padding: 20, marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div>
             <div style={{ fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK, marginBottom: 4 }}>Send a Band to Someone</div>
             <div style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', lineHeight: 1.5 }}>A physical act of prayer, sent to someone on your heart.</div>
           </div>
-          <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, color: GOLD, whiteSpace: 'nowrap' }}>{SINGLE_PRICE}</div>
+          <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, color: GOLD, whiteSpace: 'nowrap' }}>{singlePrice}</div>
         </div>
 
         {!showDedication && (
@@ -114,20 +127,20 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
           </div>
         )}
 
-        <button onClick={sendBand} disabled={loadingSingle} style={{ width: '100%', marginTop: 16, backgroundColor: GOLD, color: '#0f0d09', border: 'none', borderRadius: 10, padding: 14, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: loadingSingle ? 'default' : 'pointer', opacity: loadingSingle ? 0.7 : 1 }}>
+        <button onClick={sendBand} disabled={loadingSingle} style={{ width: '100%', marginTop: 16, backgroundColor: GOLD, color: INK, border: 'none', borderRadius: 10, padding: 14, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: loadingSingle ? 'default' : 'pointer', opacity: loadingSingle ? 0.7 : 1 }}>
           {loadingSingle ? 'Starting checkout...' : 'Send This Band →'}
         </button>
       </div>
 
       {/* Card 2 — Monthly Giving Subscription */}
-      <div style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 14, padding: 20 }}>
+      <div style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div>
             <div style={{ fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK, marginBottom: 4 }}>Become a Monthly Sender</div>
             <div style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', lineHeight: 1.5 }}>Receive a new band each month to give away.</div>
           </div>
           <div style={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
-            <span style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, color: DARK }}>{SUB_PRICE}</span>
+            <span style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, color: DARK }}>{subPrice}</span>
             <span style={{ fontSize: 12, color: GRAY }}>/mo</span>
           </div>
         </div>

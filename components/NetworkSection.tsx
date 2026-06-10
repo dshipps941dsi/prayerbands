@@ -29,11 +29,11 @@ interface PendingRequest {
   created_at: string
 }
 
-const GOLD = '#B8860B'
-const DARK = '#2C1810'
-const GRAY = '#8B7355'
-const BORDER = '#E8DCC8'
-const CREAM = '#FAF6EF'
+const GOLD = 'var(--pb-primary, #B8860B)'
+const DARK = 'var(--pb-text, #2C1810)'
+const GRAY = 'var(--pb-text-muted, #8B7355)'
+const BORDER = 'var(--pb-border, #E8DCC8)'
+const CREAM = 'var(--pb-background, #FAF6EF)'
 const serif = 'Playfair Display, Georgia, serif'
 
 export default function NetworkSection({ userId, section = 'all' }: { userId: string; section?: 'all' | 'partners' | 'requests' }) {
@@ -154,7 +154,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
           <p style={{ fontSize: 14, color: DARK, margin: '0 0 10px 0' }}><strong>{p.name}</strong> wants to connect with you in prayer.</p>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => respond(p.connection_id, 'accepted')} disabled={busy === p.connection_id} style={{ flex: 1, backgroundColor: GOLD, color: '#fff', border: 'none', borderRadius: 8, padding: '9px', fontSize: 13, fontFamily: 'Georgia, serif', fontWeight: 600, cursor: 'pointer' }}>{busy === p.connection_id ? '...' : 'Accept'}</button>
-            <button onClick={() => respond(p.connection_id, 'declined')} disabled={busy === p.connection_id} style={{ flex: 1, backgroundColor: 'transparent', color: GRAY, border: `1px solid #D4C5B0`, borderRadius: 8, padding: '9px', fontSize: 13, fontFamily: 'Georgia, serif', cursor: 'pointer' }}>Decline</button>
+            <button onClick={() => respond(p.connection_id, 'declined')} disabled={busy === p.connection_id} style={{ flex: 1, backgroundColor: 'transparent', color: GRAY, border: `1px solid var(--pb-border, #D4C5B0)`, borderRadius: 8, padding: '9px', fontSize: 13, fontFamily: 'Georgia, serif', cursor: 'pointer' }}>Decline</button>
           </div>
         </div>
       ))}
@@ -183,7 +183,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
 
       {/* Empty state */}
       {connections.length === 0 && pending.length === 0 && (
-        <div style={{ backgroundColor: '#fff', border: `1px dashed #D4C5B0`, borderRadius: 12, padding: '20px', textAlign: 'center', marginBottom: 16 }}>
+        <div style={{ backgroundColor: '#fff', border: `1px dashed var(--pb-border, #D4C5B0)`, borderRadius: 12, padding: '20px', textAlign: 'center', marginBottom: 16 }}>
           <p style={{ fontSize: 24, margin: '0 0 8px 0' }}>🙏</p>
           <p style={{ fontSize: 14, color: GRAY, margin: 0, lineHeight: 1.5 }}>Tap your band to someone else&rsquo;s phone to connect in prayer.</p>
         </div>
@@ -221,8 +221,8 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             )}
 
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button onClick={() => { setShowForm(false); setText(''); setVisibility('private'); setAnonymity('first_initial') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid #D4C5B0`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={shareRequest} disabled={!text.trim() || submitting} style={{ flex: 2, backgroundColor: text.trim() ? GOLD : '#D4C5B0', border: 'none', borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: text.trim() ? 'pointer' : 'default' }}>{submitting ? 'Sharing...' : 'Share Request'}</button>
+              <button onClick={() => { setShowForm(false); setText(''); setVisibility('private'); setAnonymity('first_initial') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid var(--pb-border, #D4C5B0)`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={shareRequest} disabled={!text.trim() || submitting} style={{ flex: 2, backgroundColor: text.trim() ? GOLD : 'var(--pb-border, #D4C5B0)', border: 'none', borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: text.trim() ? 'pointer' : 'default' }}>{submitting ? 'Sharing...' : 'Share Request'}</button>
             </div>
           </div>
         )}
