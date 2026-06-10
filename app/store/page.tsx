@@ -35,6 +35,7 @@ type Product = {
   sizes: string[];
   hasSizes: boolean;
   multiDiscount: boolean;
+  discountTiers?: { min_qty: number; percent: number }[];
   images: string[];
   variants: Variant[];
 };
@@ -166,12 +167,14 @@ function StorePageInner() {
   const bandProducts = products.filter(p => p.category === "band");
   const packProducts = products.filter(p => p.category === "pack");
 
-  // ── Automatic multi-band discount (products flagged multiDiscount) ──
+  // ── Automatic multi-band discount — percent tiers live on the product, so
+  // they track the base price and never drift from a separate pricing table. ──
   const discountBase = bandProducts.find(p => p.multiDiscount);
   const single = discountBase?.price ?? ((pricing["band_price_single"] ?? 1499) / 100);
-  const tier3 = ((pricing["band_price_3pack"] ?? 3999) / 100) / 3;
-  const tier5 = ((pricing["band_price_5pack"] ?? 5999) / 100) / 5;
-  const standardUnitFor = (qty: number) => (qty >= 5 ? tier5 : qty >= 3 ? tier3 : single);
+  const tierPct = (qty: number) => (discountBase?.discountTiers ?? []).filter(t => qty >= t.min_qty).reduce((m, t) => Math.max(m, t.percent), 0);
+  const standardUnitFor = (qty: number) => single * (1 - tierPct(qty) / 100);
+  const tier3 = standardUnitFor(3);
+  const tier5 = standardUnitFor(5);
 
   // ── Availability ──
   const variantFor = (p: Product, size: string): Variant => {

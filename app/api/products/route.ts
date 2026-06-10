@@ -39,6 +39,7 @@ export async function GET() {
     sizes: Array.isArray(p.sizes) ? p.sizes : [],
     hasSizes: p.has_sizes,
     multiDiscount: p.multi_discount,
+    discountTiers: Array.isArray(p.discount_tiers) ? p.discount_tiers : [],
     images: Array.isArray(p.image_urls) ? p.image_urls : [],
     variants: variants
       .filter((v) => v.product_id === p.id)

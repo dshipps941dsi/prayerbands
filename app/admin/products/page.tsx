@@ -31,8 +31,16 @@ type P = {
   theme: string; color: string; icon: string; tag: string | null;
   price_cents: number; bands_per_unit: number;
   features: string[]; sizes: string[]; has_sizes: boolean; multi_discount: boolean;
+  discount_tiers: { min_qty: number; percent: number }[];
   image_urls: string[]; active: boolean; sort_order: number;
   variants: Variant[];
+}
+
+// Set the percent for a given quantity tier, returning the full tiers array.
+function mergeTier(tiers: { min_qty: number; percent: number }[], minQty: number, raw: string) {
+  const pct = Math.max(0, Math.min(90, Math.round(parseFloat(raw) || 0)))
+  const others = (tiers || []).filter(t => t.min_qty !== minQty)
+  return [...others, { min_qty: minQty, percent: pct }].sort((a, b) => a.min_qty - b.min_qty)
 }
 
 export default function AdminProducts() {
@@ -51,6 +59,7 @@ export default function AdminProducts() {
         ...p,
         features: Array.isArray(p.features) ? p.features : [],
         sizes: Array.isArray(p.sizes) ? p.sizes : [],
+        discount_tiers: Array.isArray(p.discount_tiers) ? p.discount_tiers : [],
         image_urls: Array.isArray(p.image_urls) ? p.image_urls : [],
         variants: (d.variants || []).filter((v: any) => v.product_id === p.id).map((v: any) => ({ size: v.size, stock: v.stock, backorder: v.backorder })),
       }))
@@ -88,6 +97,7 @@ export default function AdminProducts() {
         theme: p.theme, color: p.color, icon: p.icon, tag: p.tag,
         price_cents: p.price_cents, bands_per_unit: p.bands_per_unit,
         features: p.features, sizes: p.sizes, has_sizes: p.has_sizes, multi_discount: p.multi_discount,
+        discount_tiers: p.discount_tiers,
         image_urls: p.image_urls, active: p.active, sort_order: p.sort_order,
         variants: p.variants,
       }),
@@ -175,6 +185,16 @@ export default function AdminProducts() {
               <label style={{ fontSize: 13, color: C.body, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <input type="checkbox" checked={p.multi_discount} onChange={e => edit(p.id, { multi_discount: e.target.checked })} style={{ width: 'auto' }} /> Auto 3+/5+ discount
               </label>
+              {p.multi_discount && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 13, color: C.body }}>3+ off</span>
+                  <input style={{ ...input, width: 64 }} type="number" min={0} max={90} value={String(p.discount_tiers?.find(t => t.min_qty === 3)?.percent ?? 0)} onChange={e => edit(p.id, { discount_tiers: mergeTier(p.discount_tiers, 3, e.target.value) })} />
+                  <span style={{ fontSize: 13, color: C.body }}>%</span>
+                  <span style={{ fontSize: 13, color: C.body, marginLeft: 6 }}>5+ off</span>
+                  <input style={{ ...input, width: 64 }} type="number" min={0} max={90} value={String(p.discount_tiers?.find(t => t.min_qty === 5)?.percent ?? 0)} onChange={e => edit(p.id, { discount_tiers: mergeTier(p.discount_tiers, 5, e.target.value) })} />
+                  <span style={{ fontSize: 13, color: C.body }}>%</span>
+                </div>
+              )}
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 13, color: C.body }}>Sizes:</span>
                 {['S', 'M', 'L'].map(s => (

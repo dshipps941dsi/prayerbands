@@ -31,6 +31,13 @@ function productFields(b: any) {
   if (b.sizes !== undefined) f.sizes = Array.isArray(b.sizes) ? b.sizes : []
   if (b.has_sizes !== undefined) f.has_sizes = !!b.has_sizes
   if (b.multi_discount !== undefined) f.multi_discount = !!b.multi_discount
+  if (b.discount_tiers !== undefined) {
+    f.discount_tiers = Array.isArray(b.discount_tiers)
+      ? b.discount_tiers
+          .filter((t: any) => t && Number(t.min_qty) > 0)
+          .map((t: any) => ({ min_qty: Math.round(Number(t.min_qty)), percent: Math.max(0, Math.min(90, Math.round(Number(t.percent) || 0))) }))
+      : []
+  }
   if (b.image_urls !== undefined) f.image_urls = Array.isArray(b.image_urls) ? b.image_urls : []
   if (b.active !== undefined) f.active = !!b.active
   if (b.sort_order !== undefined) f.sort_order = Math.round(Number(b.sort_order) || 0)

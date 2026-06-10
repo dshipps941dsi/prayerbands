@@ -13,7 +13,7 @@ const FALLBACK: Record<string, { key: string; name: string; bands: number; multi
   'pack-200': { key: 'pack_price_200', name: 'Mission Pack — 200 Bands', bands: 200, multi: false },
 }
 
-type Resolved = { priceCents: number; name: string; bands: number; multi: boolean }
+type Resolved = { priceCents: number; name: string; bands: number; multi: boolean; tiers: { min_qty: number; percent: number }[] }
 
 export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     const slugs = [...new Set(items.map(i => i.id))]
     const { data: dbProducts } = await admin
       .from('products')
-      .select('slug, name, price_cents, bands_per_unit, multi_discount, active')
+      .select('slug, name, price_cents, bands_per_unit, multi_discount, discount_tiers, active')
       .in('slug', slugs)
     const dbMap = new Map((dbProducts ?? []).map((p: any) => [p.slug, p]))
 
@@ -46,9 +46,9 @@ export async function POST(req: NextRequest) {
     for (const slug of slugs) {
       const p = dbMap.get(slug)
       if (p && p.active !== false) {
-        resolved[slug] = { priceCents: p.price_cents, name: p.name, bands: p.bands_per_unit || 1, multi: !!p.multi_discount }
+        resolved[slug] = { priceCents: p.price_cents, name: p.name, bands: p.bands_per_unit || 1, multi: !!p.multi_discount, tiers: Array.isArray(p.discount_tiers) ? p.discount_tiers : [] }
       } else if (FALLBACK[slug]) {
-        resolved[slug] = { priceCents: await getSiteConfig(FALLBACK[slug].key), name: FALLBACK[slug].name, bands: FALLBACK[slug].bands, multi: FALLBACK[slug].multi }
+        resolved[slug] = { priceCents: await getSiteConfig(FALLBACK[slug].key), name: FALLBACK[slug].name, bands: FALLBACK[slug].bands, multi: FALLBACK[slug].multi, tiers: [] }
       }
     }
     items = items.filter(i => resolved[i.id])
@@ -56,17 +56,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 })
     }
 
-    // Automatic multi-band discount: tier per-band price from site_config.
+    // Automatic multi-band discount: percent tiers stored on each product
+    // (applied to its own base price), keyed on the combined multi-eligible qty.
     const discountQty = items.filter(i => resolved[i.id].multi).reduce((s, i) => s + i.qty, 0)
-    let tier3 = 0, tier5 = 0
-    if (discountQty >= 3) tier3 = Math.round((await getSiteConfig('band_price_3pack')) / 3)
-    if (discountQty >= 5) tier5 = Math.round((await getSiteConfig('band_price_5pack')) / 5)
+    const tierPercent = (qty: number, tiers: { min_qty: number; percent: number }[]) =>
+      (tiers || []).filter(t => qty >= Number(t.min_qty)).reduce((m, t) => Math.max(m, Number(t.percent) || 0), 0)
     const unitFor = (slug: string): number => {
       const r = resolved[slug]
       if (!r.multi) return r.priceCents
-      if (discountQty >= 5) return tier5
-      if (discountQty >= 3) return tier3
-      return r.priceCents
+      const pct = tierPercent(discountQty, r.tiers)
+      return pct > 0 ? Math.round(r.priceCents * (1 - pct / 100)) : r.priceCents
     }
 
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(i => {
