@@ -102,6 +102,7 @@ function BandCarousel({ images, color, icon, tag }: { images: string[]; color: s
 function StorePageInner() {
   const searchParams = useSearchParams();
   const [referral, setReferral] = useState<PendingReferral | null>(null);
+  const [storeTab, setStoreTab] = useState<'buy' | 'subscribe' | 'community'>('buy');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [customColor, setCustomColor] = useState(COLORS[0].name);
@@ -120,6 +121,7 @@ function StorePageInner() {
     fetch("/api/products").then(r => r.json()).then(d => { if (Array.isArray(d.products) && d.products.length) setCatalog(d.products); }).catch(() => {});
     const r = new URLSearchParams(window.location.search).get("replaces");
     if (r) setReplaces(r.trim().toUpperCase());
+    if (window.location.hash === "#packs") setStoreTab("community");
   }, []);
 
   // Referral: if ?ref= is present, validate it and remember it; otherwise show
@@ -230,6 +232,11 @@ function StorePageInner() {
         input, textarea, select { width: 100%; padding: 10px 14px; border: 1px solid rgba(92,101,115,0.30); border-radius: 4px; background: #FFFDF8; font-family: 'Inter', sans-serif; font-size: 14px; color: #15223B; outline: none; transition: border-color 0.2s; }
         input:focus, textarea:focus, select:focus { border-color: #C8A96E; }
         textarea { resize: vertical; min-height: 72px; }
+        .store-tabs { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin-bottom: 48px; border-bottom: 1px solid rgba(10,22,40,0.12); }
+        .store-tab { background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 13px 22px; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #5C6573; cursor: pointer; font-weight: 600; transition: color 0.15s, border-color 0.15s; }
+        .store-tab:hover { color: #9A7A35; }
+        .store-tab--active { color: #15223B; border-bottom-color: #C8A96E; }
+        @media (max-width: 600px) { .store-tab { padding: 11px 13px; font-size: 11px; letter-spacing: 0.05em; } }
         @media (max-width: 768px) { .products-grid { grid-template-columns: 1fr !important; } .packs-grid { grid-template-columns: 1fr !important; } .cart-drawer { width: 100vw; } }
         @media (max-width: 600px) { .nav-extra { display: none !important; } .store-nav { padding: 0 16px !important; } }
       `}</style>
@@ -278,6 +285,18 @@ function StorePageInner() {
 
       <div style={{ maxWidth: 1160, margin: "0 auto", padding: "64px 32px" }}>
 
+        {/* STORE TABS */}
+        <div className="store-tabs">
+          {([
+            { id: "buy", label: "Buy a Band" },
+            { id: "subscribe", label: "Subscribe to Bands" },
+            { id: "community", label: "Bands for Communities" },
+          ] as const).map(t => (
+            <button key={t.id} onClick={() => setStoreTab(t.id)} className={`store-tab ${storeTab === t.id ? "store-tab--active" : ""}`}>{t.label}</button>
+          ))}
+        </div>
+
+        {storeTab === "buy" && (<>
         {/* AUTO-DISCOUNT BANNER */}
         <div style={{ background: "#0E1E38", color: "#F6F1E4", borderRadius: 12, padding: "16px 24px", marginBottom: 32, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap", textAlign: "center", border: "1px solid rgba(200,169,110,0.25)" }}>
           <span style={{ fontSize: 22 }}>🎉</span>
@@ -371,8 +390,10 @@ function StorePageInner() {
             })}
           </div>
         </div>
+        </>)}
 
         {/* SUBSCRIPTION */}
+        {storeTab === "subscribe" && (
         <a href="/subscribe" style={{ textDecoration: "none", color: "inherit" }}>
           <div style={{ marginBottom: 80, background: "linear-gradient(135deg, #132544 0%, #0E1E38 100%)", border: "1px solid rgba(200,169,110,0.30)", borderRadius: 12, padding: "40px 48px", display: "flex", alignItems: "center", gap: 40, flexWrap: "wrap", cursor: "pointer", boxShadow: "0 8px 28px rgba(10,22,40,0.22)" }}>
             <div style={{ fontSize: 52 }}>🔁</div>
@@ -384,7 +405,9 @@ function StorePageInner() {
             <button style={{ background: "#C8A96E", border: "none", color: "#0A1628", padding: "14px 36px", borderRadius: 4, fontFamily: "'Cinzel', serif", fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>View Plans →</button>
           </div>
         </a>
+        )}
 
+        {storeTab === "community" && (<>
         {/* CHURCH PACKS */}
         {packProducts.length > 0 && (
         <div id="packs" style={{ marginBottom: 80, scrollMarginTop: 80 }}>
@@ -436,6 +459,7 @@ function StorePageInner() {
           </div>
           <a href="/contact" style={{ textDecoration: "none" }}><button style={{ background: "transparent", border: "1.5px solid #C8A96E", color: "#C8A96E", padding: "14px 36px", borderRadius: 4, fontFamily: "'Cinzel', serif", fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>Contact Us</button></a>
         </div>
+        </>)}
       </div>
 
       {/* SIZE GUIDE MODAL */}
