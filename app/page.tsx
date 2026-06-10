@@ -518,45 +518,46 @@ export default function HomePage() {
         @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
         .live-label {
           font-family: 'Cinzel', serif;
-          font-size: 0.65rem; letter-spacing: 0.2em;
-          color: rgba(245,237,216,0.6);
+          font-size: 0.68rem; letter-spacing: 0.2em;
+          color: rgba(245,237,216,0.8);
           text-transform: uppercase;
         }
         .prayer-item {
-          padding: 24px 28px;
-          border-bottom: 1px solid var(--border);
-          transition: opacity 0.5s, transform 0.5s;
+          padding: 22px 26px;
+          border-bottom: 1px solid rgba(200,169,110,0.16);
+          transition: background 0.4s, border-color 0.4s;
         }
         .prayer-item:last-child { border-bottom: none; }
         .prayer-meta {
-          display: flex; align-items: center; gap: 10px;
-          margin-bottom: 10px;
+          display: flex; align-items: center; gap: 11px;
+          margin-bottom: 12px;
         }
         .prayer-avatar {
-          width: 32px; height: 32px; border-radius: 50%;
-          background: linear-gradient(135deg, var(--gold), var(--navy3));
+          width: 38px; height: 38px; border-radius: 50%;
+          background: linear-gradient(135deg, var(--gold2), var(--gold));
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Cinzel', serif; font-size: 0.6rem; font-weight: 600;
+          font-family: 'Cinzel', serif; font-size: 0.72rem; font-weight: 700;
           color: var(--navy); flex-shrink: 0;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.25);
         }
         .prayer-who {
-          font-size: 0.78rem; font-weight: 500;
-          color: var(--cream);
+          font-size: 0.92rem; font-weight: 600;
+          color: #FFFFFF;
         }
         .prayer-where {
-          font-size: 0.72rem; color: rgba(245,237,216,0.45);
+          font-size: 0.78rem; color: rgba(245,237,216,0.7);
         }
         .prayer-text {
           font-family: 'Cormorant Garamond', serif;
-          font-size: 1rem; font-style: italic;
-          color: rgba(245,237,216,0.92);
-          line-height: 1.7;
+          font-size: 1.18rem; font-style: italic;
+          color: #F5EDD8;
+          line-height: 1.6;
         }
         .prayer-band {
-          margin-top: 8px;
+          margin-top: 10px;
           font-family: 'Cinzel', serif;
-          font-size: 0.6rem; letter-spacing: 0.2em;
-          color: var(--gold); opacity: 0.7;
+          font-size: 0.66rem; letter-spacing: 0.16em;
+          color: var(--gold2);
         }
         .wall-cta {
           margin-top: 16px; padding: 16px 28px;
@@ -945,8 +946,8 @@ export default function HomePage() {
                     key={p.band}
                     className="prayer-item"
                     style={{
-                      opacity: i === activePrayer ? 1 : i === (activePrayer + 1) % PRAYERS.length || i === (activePrayer - 1 + PRAYERS.length) % PRAYERS.length ? 0.78 : 0.55,
-                      background: i === activePrayer ? "rgba(200,169,110,0.12)" : "transparent",
+                      background: i === activePrayer ? "rgba(200,169,110,0.10)" : "transparent",
+                      borderLeft: i === activePrayer ? "3px solid var(--gold)" : "3px solid transparent",
                     }}
                   >
                     <div className="prayer-meta">
