@@ -47,7 +47,9 @@ const GRAY  = 'var(--pb-text-muted, #7A6A5A)'
 // Full-screen page background — theme color, or a subtle themed image when set.
 const PAGEBG = 'var(--pb-page, #FAF6EF)'
 const serif = "'Playfair Display', Georgia, serif"
-const body  = "'Lora', Georgia, serif"
+// Body/UI text uses a sans stack — serif (above) is reserved for large
+// headings/verses; small serif body text was hard to read.
+const body  = "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
 
 function Avatar({ letter, color, size = 44 }: { letter: string; color: string; size?: number }) {
   return (
@@ -283,7 +285,9 @@ export default function BandPage() {
     const currentHolder = status.registrations?.[status.registrations.length - 1]
     return (
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <Logo size={28} withName nameColor={DARK} nameSize={18} />
+        <a href="/" aria-label="PrayerBands home" style={{ display: 'inline-flex', textDecoration: 'none' }}>
+          <Logo size={28} withName nameColor={DARK} nameSize={18} />
+        </a>
         <div style={{ textAlign: 'right' }}>
           {status.screen === 'personal_space' && currentHolder?.user_name && (
             <div style={{ fontFamily: serif, fontSize: 13, fontWeight: 600, color: DARK }}>{currentHolder.user_name}</div>
