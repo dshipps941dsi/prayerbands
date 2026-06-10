@@ -33,6 +33,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
+    // Idempotency: if this session is already recorded, stop — avoids duplicate
+    // emails AND double stock decrement when Stripe retries the webhook.
+    const { data: existingOrder } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('stripe_session_id', session.id)
+      .maybeSingle()
+    if (existingOrder) {
+      return NextResponse.json({ received: true })
+    }
+
     try {
       await supabase.from('orders').insert({
         stripe_session_id: session.id,
@@ -46,6 +57,9 @@ export async function POST(req: NextRequest) {
         order_metadata: session.metadata,
         org_id: session.metadata?.org_id || null,
       })
+
+      // Decrement catalog stock and flag any backordered lines.
+      await applyInventory(supabase, session)
 
       const { Resend } = await import('resend')
       const resend = new Resend(process.env.RESEND_API_KEY)
@@ -128,6 +142,49 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ received: true })
+}
+
+// Decrement product_variants stock for a completed order and flag backordered
+// lines (ordered qty exceeded stock). Safe no-op if the catalog isn't in use.
+async function applyInventory(supabase: any, session: Stripe.Checkout.Session) {
+  try {
+    const raw = session.metadata?.items
+    if (!raw) return
+    let items: { id: string; qty: number; size?: string }[] = []
+    try { items = JSON.parse(raw) } catch { return }
+    if (!Array.isArray(items) || items.length === 0) return
+
+    const slugs = [...new Set(items.map(i => i.id))]
+    const { data: products } = await supabase.from('products').select('id, slug').in('slug', slugs)
+    const idBySlug = new Map((products ?? []).map((p: any) => [p.slug, p.id]))
+    if (idBySlug.size === 0) return // catalog not seeded — nothing to track
+
+    const backorderItems: { slug: string; size: string; ordered: number; available: number }[] = []
+    for (const it of items) {
+      const productId = idBySlug.get(it.id)
+      if (!productId) continue
+      const size = it.size ? String(it.size).toUpperCase().slice(0, 2) : ''
+      const qty = Number(it.qty) || 0
+      const { data: variant } = await supabase
+        .from('product_variants')
+        .select('id, stock')
+        .eq('product_id', productId)
+        .eq('size', size)
+        .maybeSingle()
+      if (!variant) continue
+      if (variant.stock < qty) backorderItems.push({ slug: it.id, size, ordered: qty, available: variant.stock })
+      await supabase.from('product_variants').update({ stock: Math.max(0, variant.stock - qty) }).eq('id', variant.id)
+    }
+
+    if (backorderItems.length > 0) {
+      await supabase
+        .from('orders')
+        .update({ order_metadata: { ...(session.metadata || {}), backordered: true, backorder_items: backorderItems } })
+        .eq('stripe_session_id', session.id)
+    }
+  } catch (e) {
+    console.error('Inventory update error:', e)
+  }
 }
 
 const toISO = (unixSeconds: number | null | undefined) =>

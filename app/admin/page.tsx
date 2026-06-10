@@ -376,6 +376,9 @@ export default function AdminPage() {
                           <div style={{ fontSize: '12px', color: '#AAA', marginTop: '2px' }}>
                             {new Date(order.created_at).toLocaleDateString()} &middot; Order #{order.id}
                           </div>
+                          {order.order_metadata?.backordered && (
+                            <div style={{ display: 'inline-block', marginTop: 6, background: '#B8860B', color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: 10 }}>⚑ Backorder</div>
+                          )}
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2C1A0E' }}>
