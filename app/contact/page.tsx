@@ -218,17 +218,21 @@ export default function ContactPage() {
 
       <SiteHeader />
 
+      {/* Navy + gold hero band — carries the home-page identity onto this page */}
+      <div className="contact-hero">
+        <div className="contact-hero-grid" />
+        <div className="contact-hero-inner">
+          <div className="cross-ornament"><Icon name="mail" size={34} color="#C8A96E" /></div>
+          <h1>Get in Touch</h1>
+          <div className="contact-hero-rule" />
+          <p className="contact-subtitle">
+            We&rsquo;re here to help you on your prayer journey. Expect a reply within 1–2 business days.
+          </p>
+        </div>
+      </div>
+
       <div className="contact-page">
         <div className="contact-inner">
-          {/* Header */}
-          <div className="contact-header">
-            <div className="cross-ornament"><Icon name="mail" size={34} color="#9A7A35" /></div>
-            <h1>Get in Touch</h1>
-            <p className="contact-subtitle">
-              We&rsquo;re here to help you on your prayer journey. Expect a reply within 1–2 business days.
-            </p>
-          </div>
-
           <div className="contact-layout">
             {/* Left: Form */}
             <div className="form-section">
@@ -518,7 +522,7 @@ const styles = `
     background-image:
       radial-gradient(ellipse at 20% 20%, rgba(200,169,110,0.09) 0%, transparent 60%),
       radial-gradient(ellipse at 80% 80%, rgba(201,207,214,0.10) 0%, transparent 60%);
-    padding: 60px 24px 80px;
+    padding: 48px 24px 80px;
     font-family: 'Inter', system-ui, sans-serif;
     color: #2A3344;
   }
@@ -528,33 +532,65 @@ const styles = `
     margin: 0 auto;
   }
 
-  /* Header */
-  .contact-header {
+  /* Navy + gold hero band */
+  .contact-hero {
+    position: relative;
+    overflow: hidden;
     text-align: center;
-    margin-bottom: 52px;
+    padding: 56px 24px 48px;
+    background:
+      radial-gradient(ellipse 70% 80% at 50% 0%, rgba(200,169,110,0.14) 0%, transparent 60%),
+      linear-gradient(180deg, #0A1628 0%, #0E1E38 55%, #0A1628 100%);
+    border-bottom: 1px solid rgba(200,169,110,0.34);
+  }
+
+  .contact-hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,169,110,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,169,110,0.05) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse 60% 70% at 50% 30%, black 0%, transparent 80%);
+    mask-image: radial-gradient(ellipse 60% 70% at 50% 30%, black 0%, transparent 80%);
+    pointer-events: none;
+  }
+
+  .contact-hero-inner {
+    position: relative;
+    max-width: 1100px;
+    margin: 0 auto;
   }
 
   .cross-ornament {
     font-size: 28px;
     color: #9A7A35;
-    opacity: 0.8;
+    opacity: 0.85;
     margin-bottom: 12px;
     display: block;
     letter-spacing: 2px;
   }
 
-  .contact-header h1 {
+  .contact-hero h1 {
     font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: clamp(2rem, 5vw, 3rem);
     font-weight: 700;
-    color: #15223B;
+    color: #F5EDD8;
     margin: 0 0 14px;
     letter-spacing: -0.5px;
   }
 
+  .contact-hero-rule {
+    width: 56px;
+    height: 2px;
+    margin: 0 auto 16px;
+    background: linear-gradient(90deg, #C8A96E, #E2C98A);
+    border-radius: 2px;
+  }
+
   .contact-subtitle {
     font-size: 1.05rem;
-    color: #5C6573;
+    color: rgba(245,237,216,0.78);
     max-width: 480px;
     margin: 0 auto;
     line-height: 1.65;
