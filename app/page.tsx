@@ -793,6 +793,7 @@ export default function HomePage() {
             <Link href="#how" className="nav-link">How It Works</Link>
             <Link href="#wall" className="nav-link">Prayer Network</Link>
             <Link href="/store" className="nav-link">Store</Link>
+            <Link href="/contact" className="nav-link">Contact</Link>
             <Link href="/signin" className="nav-cta">Sign In</Link>
           </div>
           <button
@@ -810,6 +811,7 @@ export default function HomePage() {
             <Link href="#how" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>How It Works</Link>
             <Link href="#wall" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Prayer Network</Link>
             <Link href="/store" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Store</Link>
+            <Link href="/contact" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Contact</Link>
             <Link href="/signin" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Sign In</Link>
           </div>
         )}
