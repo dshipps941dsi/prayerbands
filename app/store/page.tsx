@@ -1,8 +1,11 @@
 'use client'
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Logo from "@/components/Logo";
 import Icon from "@/components/Icon";
 import { track } from "@/lib/analytics";
+
+type PendingReferral = { code: string; referrerUserId: string };
 
 // ─── Types ───────────────────────────────────────────────────
 type CartItem = {
@@ -96,7 +99,9 @@ function BandCarousel({ images, color, icon, tag }: { images: string[]; color: s
   );
 }
 
-export default function StorePage() {
+function StorePageInner() {
+  const searchParams = useSearchParams();
+  const [referral, setReferral] = useState<PendingReferral | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [customColor, setCustomColor] = useState(COLORS[0].name);
@@ -116,6 +121,33 @@ export default function StorePage() {
     const r = new URLSearchParams(window.location.search).get("replaces");
     if (r) setReplaces(r.trim().toUpperCase());
   }, []);
+
+  // Referral: if ?ref= is present, validate it and remember it; otherwise show
+  // any referral already saved this session so the discount banner persists.
+  useEffect(() => {
+    const ref = searchParams?.get("ref");
+    if (ref) {
+      fetch("/api/referral/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: ref }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data?.valid) {
+            const pending: PendingReferral = { code: ref.trim().toUpperCase(), referrerUserId: data.referrerUserId };
+            try { localStorage.setItem("pendingReferral", JSON.stringify(pending)); } catch {}
+            setReferral(pending);
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+    try {
+      const saved = localStorage.getItem("pendingReferral");
+      if (saved) setReferral(JSON.parse(saved) as PendingReferral);
+    } catch {}
+  }, [searchParams]);
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 2800); };
 
@@ -228,6 +260,13 @@ export default function StorePage() {
           </div>
         </div>
       </nav>
+
+      {/* Referral discount banner — only when a valid ?ref was applied */}
+      {referral && (
+        <div style={{ background: "#F5EFE4", borderBottom: "1px solid rgba(200,169,110,0.34)", textAlign: "center", padding: "11px 20px", fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: "#9A7A35", letterSpacing: "0.02em" }}>
+          You&rsquo;re getting <strong style={{ color: "#5A3E12" }}>5% off</strong> — a gift from someone in the PrayerBands community 🙏
+        </div>
+      )}
 
       {/* HERO */}
       <section style={{ padding: "72px 32px 56px", textAlign: "center", background: "radial-gradient(ellipse at 60% 0%, rgba(200,169,110,0.13) 0%, transparent 60%), radial-gradient(ellipse at 20% 100%, rgba(201,207,214,0.18) 0%, transparent 55%), #F6F1E4", borderBottom: "1px solid rgba(10,22,40,0.12)" }}>
@@ -475,7 +514,7 @@ export default function StorePage() {
                   track('begin_checkout', { currency: 'USD', value: subtotal, items: cart.map(c => ({ item_id: c.id, item_name: c.name, quantity: c.qty, price: lineUnit(c) })) })
                   const res = await fetch('/api/create-checkout', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ items: cart.map(c => ({ id: c.id, qty: c.qty, size: c.size })), customMessage: customMsg || '', verse: customVerse || '', color: customColor || 'Amber Gold', replaces: replaces || '' })
+                    body: JSON.stringify({ items: cart.map(c => ({ id: c.id, qty: c.qty, size: c.size })), customMessage: customMsg || '', verse: customVerse || '', color: customColor || 'Amber Gold', replaces: replaces || '', referralCode: referral?.code || '' })
                   })
                   const data = await res.json()
                   if (data.url) { window.location.href = data.url } else { showToast('Something went wrong — please try again'); setCheckoutLoading(false) }
@@ -487,5 +526,13 @@ export default function StorePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function StorePage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#F6F1E4" }} />}>
+      <StorePageInner />
+    </Suspense>
   );
 }

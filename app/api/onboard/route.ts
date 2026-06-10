@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { ensureReferralCode } from '@/lib/referral';
 
 export async function POST(req: Request) {
   const supabase = createClient(
@@ -51,6 +52,10 @@ export async function POST(req: Request) {
       display_name: pastor,
       email,
     });
+
+    // Give the new account a referral code (the DB trigger normally does this;
+    // this is a safe no-op if it already has one). Non-fatal.
+    await ensureReferralCode(supabase, userId);
 
     const { data: org, error: orgError } = await supabase
       .from('organizations')

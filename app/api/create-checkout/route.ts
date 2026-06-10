@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { customMessage, verse, color, email, replaces } = body
+    const referralCode = typeof body.referralCode === 'string' ? body.referralCode.trim().toUpperCase() : ''
 
     let items: { id: string; qty: number; size?: string }[] = Array.isArray(body.items) ? body.items : []
     if (items.length === 0 && body.type) {
@@ -85,11 +86,32 @@ export async function POST(req: NextRequest) {
     const hasCustom = items.some(i => i.id === 'custom')
     const totalBands = items.reduce((sum, i) => sum + i.qty * resolved[i.id].bands, 0)
 
+    // Referral: confirm the code maps to a real profile, then (if a promo code
+    // is configured) apply the discount. When a discount is set, Stripe forbids
+    // allow_promotion_codes, so we choose one or the other.
+    let referrerUserId: string | null = null
+    if (referralCode) {
+      const { data: refProfile } = await admin
+        .from('profiles')
+        .select('id')
+        .eq('referral_code', referralCode)
+        .maybeSingle()
+      if (refProfile) referrerUserId = refProfile.id as string
+    }
+    const promoId = process.env.STRIPE_REFERRAL_PROMO_CODE_ID
+    // Accept either a Promotion Code id (promo_...) or a Coupon id.
+    const referralDiscount: Stripe.Checkout.SessionCreateParams.Discount | null = promoId
+      ? (promoId.startsWith('promo_') ? { promotion_code: promoId } : { coupon: promoId })
+      : null
+    const applyReferralDiscount = !!(referrerUserId && referralDiscount)
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      allow_promotion_codes: true,
+      ...(applyReferralDiscount && referralDiscount
+        ? { discounts: [referralDiscount] }
+        : { allow_promotion_codes: true }),
       automatic_tax: { enabled: process.env.STRIPE_TAX_ENABLED === 'true' },
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/store`,
@@ -106,8 +128,18 @@ export async function POST(req: NextRequest) {
         color: color || 'blue',
         items: JSON.stringify(items),
         replaces: replaces ? String(replaces).trim().toUpperCase() : '',
+        referrer_user_id: referrerUserId || '',
+        referral_code: referrerUserId ? referralCode : '',
       },
     })
+
+    // Record the referred checkout (best-effort; never block the redirect).
+    if (referrerUserId) {
+      const { error: refErr } = await admin
+        .from('referrals')
+        .insert({ referrer_user_id: referrerUserId, stripe_session_id: session.id })
+      if (refErr) console.error('[create-checkout] referrals insert error:', refErr)
+    }
 
     return NextResponse.json({ url: session.url })
   } catch (err: any) {
