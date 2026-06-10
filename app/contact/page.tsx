@@ -24,6 +24,49 @@ const CATEGORIES = [
   { value: "other", label: "Other" },
 ];
 
+const FAQ_ITEMS: { q: string; a: string }[] = [
+  {
+    q: "What is a PrayerBand and how does it work?",
+    a: "A PrayerBand is a wristband with a tiny NFC chip and a unique ID. Tap it with your phone (or visit its link) to read the prayers attached to it and add your own. Each band builds a living chain of prayer as it passes from person to person.",
+  },
+  {
+    q: "Do I need an app to use my band?",
+    a: "No app required. Most modern phones read NFC tags automatically — just tap the band to the back of your phone and a link opens. You can also visit the band's page directly in any web browser.",
+  },
+  {
+    q: "How long does shipping take?",
+    a: "Orders typically ship within 3 business days. Domestic delivery usually arrives within 5–7 business days after shipping; international can take longer. If you have an urgent need, mention 'URGENT' in your message subject.",
+  },
+  {
+    q: "How do I track my order or fix a delivery problem?",
+    a: "Use the form above and choose 'Order & Shipping' as the topic, then enter your order number (it starts with PB-). We'll look into tracking, address corrections, or replacements right away.",
+  },
+  {
+    q: "What if I lose my band?",
+    a: "You can order a replacement band that we'll link back into your existing prayer journey, so the chain isn't broken. Reach out through the form and select 'Order & Shipping' if you need help with this.",
+  },
+  {
+    q: "Can I attach my band to my account if I have more than one?",
+    a: "Yes. When you tap a new band while signed in, you can claim it to your account. All of your bands then appear together in your dashboard, no matter how many you own.",
+  },
+  {
+    q: "How do subscriptions work?",
+    a: "Subscriptions ship new bands to you on a schedule — monthly, quarterly, or a monthly bundle — at a discount off retail. You can cancel anytime, with no cancellation fee.",
+  },
+  {
+    q: "Do you offer bulk pricing for churches and ministries?",
+    a: "We do. Bulk packs are available for congregations, youth groups, and mission organizations, with discounts on larger orders. Choose 'Partnership & Bulk Orders' above and tell us about your group.",
+  },
+  {
+    q: "Is my prayer private?",
+    a: "When you add a prayer you choose its visibility. Private prayers stay within the band's network; if you choose to share one publicly on the Prayer Wall, you can post anonymously or with just your first name and last initial.",
+  },
+  {
+    q: "How quickly will I hear back from you?",
+    a: "We reply to messages within 1–2 business days. Ministry and partnership questions are handled with special care, so those may take a little extra time to answer thoroughly.",
+  },
+];
+
 interface FaqMatch {
   question: string;
   answer: string;
@@ -363,11 +406,49 @@ export default function ContactPage() {
               </div>
             </div>
           </div>
+
+          {/* Static FAQ section */}
+          <FaqSection />
         </div>
       </div>
 
       <style>{styles}</style>
     </>
+  );
+}
+
+function FaqSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  return (
+    <section className="faq-section">
+      <div className="faq-section-head">
+        <div className="cross-ornament"><Icon name="bible" size={28} color="#b8964a" /></div>
+        <h2>Frequently Asked Questions</h2>
+        <p>Quick answers to the questions we hear most. Still stuck? Send us a note above.</p>
+      </div>
+
+      <div className="faq-list">
+        {FAQ_ITEMS.map((item, i) => {
+          const open = openIndex === i;
+          return (
+            <div key={i} className={`faq-item ${open ? "faq-item--open" : ""}`}>
+              <button
+                className="faq-q"
+                onClick={() => setOpenIndex(open ? null : i)}
+                aria-expanded={open}
+              >
+                <span>{item.q}</span>
+                <span className="faq-toggle">{open ? "–" : "+"}</span>
+              </button>
+              <div className="faq-a-wrap" style={{ maxHeight: open ? 400 : 0 }}>
+                <p className="faq-a">{item.a}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -971,6 +1052,102 @@ const styles = `
 
   .success-btn--ghost:hover {
     background: rgba(184,150,74,0.07);
+  }
+
+  /* ── FAQ section ── */
+  .faq-section {
+    margin-top: 64px;
+  }
+
+  .faq-section-head {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .faq-section-head h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-weight: 700;
+    color: #2a1f0e;
+    margin: 6px 0 10px;
+  }
+
+  .faq-section-head p {
+    font-size: 0.95rem;
+    color: #7a6a52;
+    font-style: italic;
+    max-width: 460px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .faq-list {
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .faq-item {
+    background: #fffdf7;
+    border: 1px solid rgba(184,150,74,0.25);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .faq-item--open {
+    border-color: rgba(184,150,74,0.55);
+    box-shadow: 0 4px 18px rgba(184,150,74,0.12);
+  }
+
+  .faq-q {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    padding: 18px 22px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #3a2f1e;
+    transition: color 0.15s;
+  }
+
+  .faq-q:hover { color: #9a7a35; }
+
+  .faq-toggle {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(184,150,74,0.12);
+    color: #b8964a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    line-height: 1;
+    font-weight: 400;
+  }
+
+  .faq-a-wrap {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .faq-a {
+    padding: 0 22px 20px;
+    margin: 0;
+    font-size: 0.92rem;
+    color: #5a4a30;
+    line-height: 1.7;
   }
 
   /* Hide reCAPTCHA badge (we show custom notice) */

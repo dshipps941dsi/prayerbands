@@ -23,16 +23,16 @@ const PRAYERS: Prayer[] = [
 ];
 
 const STEPS = [
-  { num: "01", title: "Get a Band", desc: "Order your NFC-enabled PrayerBand — a simple silicone wristband with a unique ID embedded in a tiny chip." },
+  { num: "01", title: "Get a Band", desc: "Order your NFC-enabled PrayerBand — a durable wristband with a unique ID embedded in a tiny chip." },
   { num: "02", title: "Dedicate It", desc: "Write a prayer for someone. Slip it on their wrist, drop it in the mail, or give it as a gift. The act itself is a blessing." },
   { num: "03", title: "Watch It Travel", desc: "Each time someone taps the band, a new prayer is added. The band builds a living chain — names, places, prayers." },
   { num: "04", title: "Pass It Forward", desc: "When you feel led, pass the band to the next person. Your prayer travels with it — forever woven into its story." },
 ];
 
 const PLANS = [
-  { name: "Monthly Grace", price: "$15", period: "/mo", desc: "A new band shipped to your door each month. Keep the prayer chain growing.", badge: null },
-  { name: "Quarterly Faith", price: "$40", period: "/quarter", desc: "Four bands per year — perfect for gifting to those on your heart.", badge: "Most Popular" },
-  { name: "Yearly Devotion", price: "$120", period: "/year", desc: "Best value. Exclusive edition bands, priority shipping, and a year of blessing.", badge: null },
+  { name: "Monthly Sender", price: "$6.99", period: "/mo", desc: "One band delivered every month — 20% off retail. A steady rhythm of prayer passed forward.", badge: "Most Popular" },
+  { name: "Quarterly Sender", price: "$7.49", period: "/quarter", desc: "One band every quarter — 10% off retail. A seasonal commitment to intentional giving.", badge: null },
+  { name: "Bundle Sender", price: "$14.24", period: "/mo", desc: "Three bands every month — 25% off retail. For those called to spread prayer widely.", badge: "Most Impact" },
 ];
 
 const STATS = [
@@ -487,20 +487,27 @@ export default function HomePage() {
         .step-card:hover .step-line { transform: scaleX(1); }
 
         /* ── Prayer Wall ── */
-        .wall { padding: 100px 0; background: var(--navy2); }
+        .wall {
+          padding: 100px 0;
+          background:
+            radial-gradient(ellipse 70% 60% at 80% 30%, rgba(200,169,110,0.10) 0%, transparent 70%),
+            linear-gradient(180deg, var(--navy3) 0%, var(--navy2) 100%);
+        }
         .wall-inner {
           display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start;
         }
         .prayer-ticker {
-          background: rgba(200,169,110,0.04);
-          border: 1px solid var(--border);
-          border-radius: 4px;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(200,169,110,0.32);
+          border-radius: 6px;
           overflow: hidden;
+          box-shadow: 0 12px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.06);
         }
         .prayer-ticker-header {
           padding: 20px 28px;
           border-bottom: 1px solid var(--border);
           display: flex; align-items: center; gap: 10px;
+          background: rgba(200,169,110,0.08);
         }
         .live-dot {
           width: 8px; height: 8px;
@@ -542,7 +549,7 @@ export default function HomePage() {
         .prayer-text {
           font-family: 'Cormorant Garamond', serif;
           font-size: 1rem; font-style: italic;
-          color: rgba(245,237,216,0.8);
+          color: rgba(245,237,216,0.92);
           line-height: 1.7;
         }
         .prayer-band {
@@ -742,9 +749,9 @@ export default function HomePage() {
         .section--gold .section-title em { color: #5A3E12; }
         .section--gold .section-body { color: rgba(10,22,40,0.72); }
         /* How It Works */
-        .section--gold .steps-grid { background: rgba(10,22,40,0.14); }
-        .section--gold .step-card { background: rgba(255,255,255,0.42); }
-        .section--gold .step-card:hover { background: rgba(255,255,255,0.62); }
+        .section--gold .steps-grid { background: rgba(10,22,40,0.18); }
+        .section--gold .step-card { background: rgba(255,255,255,0.82); }
+        .section--gold .step-card:hover { background: rgba(255,255,255,0.95); }
         .section--gold .step-num { color: #5A3E12; }
         .section--gold .step-title { color: var(--navy); }
         .section--gold .step-desc { color: rgba(10,22,40,0.72); }
@@ -936,8 +943,8 @@ export default function HomePage() {
                     key={p.band}
                     className="prayer-item"
                     style={{
-                      opacity: i === activePrayer ? 1 : i === (activePrayer + 1) % PRAYERS.length || i === (activePrayer - 1 + PRAYERS.length) % PRAYERS.length ? 0.6 : 0.35,
-                      background: i === activePrayer ? "rgba(200,169,110,0.06)" : "transparent",
+                      opacity: i === activePrayer ? 1 : i === (activePrayer + 1) % PRAYERS.length || i === (activePrayer - 1 + PRAYERS.length) % PRAYERS.length ? 0.78 : 0.55,
+                      background: i === activePrayer ? "rgba(200,169,110,0.12)" : "transparent",
                     }}
                   >
                     <div className="prayer-meta">
