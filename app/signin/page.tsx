@@ -18,6 +18,10 @@ const BRAND = {
   bodyText: '#2A3344',
   secondaryText: '#5C6573',
   mutedText: '#7A8494',
+  // Bold navy + gold page backdrop (the gold/cream cards sit on top of this)
+  splash: 'radial-gradient(ellipse 70% 80% at 50% 0%, rgba(200,169,110,0.16) 0%, transparent 60%), linear-gradient(180deg, #0A1628 0%, #0E1E38 55%, #0A1628 100%)',
+  cream: '#F5EDD8',
+  creamSoft: 'rgba(245,237,216,0.78)',
 }
 
 export default function SignInChooser() {
@@ -30,18 +34,17 @@ export default function SignInChooser() {
       <div style={{
         minHeight: '100vh', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        background: '#F6F1E4',
-        backgroundImage: 'radial-gradient(ellipse at 70% 20%, rgba(200,169,110,0.10) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(201,207,214,0.13) 0%, transparent 55%)',
+        background: BRAND.splash,
         fontFamily: "'Inter', sans-serif",
         padding: '24px 16px',
       }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Logo size={44} /></div>
-          <div style={{ fontSize: 13, letterSpacing: '0.14em', color: BRAND.goldText, fontFamily: "'Cinzel', serif", textTransform: 'uppercase', marginBottom: 10 }}>Welcome</div>
-          <h1 style={{ fontSize: 28, fontWeight: 600, color: BRAND.navyMid, margin: '0 0 8px', fontFamily: "'Cormorant Garamond', serif", lineHeight: 1.2 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Logo size={44} color={BRAND.gold} /></div>
+          <div style={{ fontSize: 13, letterSpacing: '0.14em', color: BRAND.gold, fontFamily: "'Cinzel', serif", textTransform: 'uppercase', marginBottom: 10 }}>Welcome</div>
+          <h1 style={{ fontSize: 28, fontWeight: 600, color: BRAND.cream, margin: '0 0 8px', fontFamily: "'Cormorant Garamond', serif", lineHeight: 1.2 }}>
             Welcome to PrayerBands
           </h1>
-          <p style={{ fontSize: 15, color: BRAND.secondaryText, margin: 0, fontFamily: "'Inter', sans-serif" }}>
+          <p style={{ fontSize: 15, color: BRAND.creamSoft, margin: 0, fontFamily: "'Inter', sans-serif" }}>
             How would you like to sign in?
           </p>
         </div>
@@ -93,9 +96,9 @@ export default function SignInChooser() {
           </a>
         </div>
 
-        <div style={{ marginTop: 32, fontSize: 13, color: BRAND.mutedText, textAlign: 'center', fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ marginTop: 32, fontSize: 13, color: BRAND.creamSoft, textAlign: 'center', fontFamily: "'Inter', sans-serif" }}>
           New church or ministry?{' '}
-          <a href="/onboard" style={{ color: BRAND.goldText, textDecoration: 'none', fontWeight: 600 }}>
+          <a href="/onboard" style={{ color: BRAND.gold, textDecoration: 'none', fontWeight: 600 }}>
             Set up your account →
           </a>
         </div>

@@ -19,6 +19,9 @@ const BRAND = {
   secondaryText: '#5C6573',
   mutedText: '#7A8494',
   inputBg: '#FFFDF8',
+  // Bold navy + gold page backdrop (the gold/cream card sits on top of this)
+  splash: 'radial-gradient(ellipse 70% 80% at 50% 0%, rgba(200,169,110,0.16) 0%, transparent 60%), linear-gradient(180deg, #0A1628 0%, #0E1E38 55%, #0A1628 100%)',
+  splashText: 'rgba(245,237,216,0.85)',
 }
 
 export default function SignInPersonal() {
@@ -81,10 +84,10 @@ export default function SignInPersonal() {
   if (status) return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');`}</style>
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F1E4', fontFamily: "'Inter', sans-serif", textAlign: 'center' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BRAND.splash, fontFamily: "'Inter', sans-serif", textAlign: 'center' }}>
         <div>
           <div style={{ fontSize: 48, color: BRAND.gold, marginBottom: 16 }}>✝</div>
-          <div style={{ fontSize: 16, color: BRAND.secondaryText }}>{status}</div>
+          <div style={{ fontSize: 16, color: BRAND.splashText }}>{status}</div>
           {error && <div style={{ color: '#c0392b', marginTop: 12, fontSize: 13 }}>{error}</div>}
         </div>
       </div>
@@ -98,7 +101,7 @@ export default function SignInPersonal() {
         .pb-input:focus { border-color: ${BRAND.gold} !important; box-shadow: 0 0 0 3px rgba(200,169,110,0.18) !important; }
         .pb-social-btn:hover { background: #F0F1F4 !important; }
       `}</style>
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F1E4', backgroundImage: 'radial-gradient(ellipse at 70% 20%, rgba(200,169,110,0.10) 0%, transparent 60%)', fontFamily: "'Inter', sans-serif", padding: '24px 16px' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BRAND.splash, fontFamily: "'Inter', sans-serif", padding: '24px 16px' }}>
         <div style={{ background: BRAND.cardBg, borderRadius: 16, padding: '40px 32px', maxWidth: 400, width: '100%', border: `1px solid ${BRAND.goldBorder}`, boxShadow: '0 4px 32px rgba(10,22,40,0.09)' }}>
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}><Logo size={40} /></div>
