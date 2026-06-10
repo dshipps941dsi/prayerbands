@@ -21,6 +21,8 @@ const CATEGORIES = [
   { value: "technical", label: "Technical Support" },
   { value: "partnership", label: "Partnership & Bulk Orders" },
   { value: "subscription", label: "Subscription Plans" },
+  { value: "bug", label: "Report a Bug" },
+  { value: "feature", label: "Request a Feature" },
   { value: "other", label: "Other" },
 ];
 
@@ -64,6 +66,10 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
   {
     q: "How quickly will I hear back from you?",
     a: "We reply to messages within 1–2 business days. Ministry and partnership questions are handled with special care, so those may take a little extra time to answer thoroughly.",
+  },
+  {
+    q: "How do I report a bug or suggest a feature?",
+    a: "Use the form above and choose 'Report a Bug' or 'Request a Feature' as the topic. For bugs, tell us what you were doing, what you expected, and what happened instead (and the band ID or page if relevant) — the more detail, the faster we can fix it. For feature ideas, describe what you'd love to see and why; we read every suggestion.",
   },
 ];
 
