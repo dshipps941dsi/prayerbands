@@ -24,7 +24,15 @@ export default function CirclesSection({ userId }: { userId: string }) {
       const res = await fetch('/api/circles/my-circles')
       if (res.ok) {
         const data = await res.json()
-        setCircles(data.circles ?? [])
+        // Dedupe by id so a circle can't appear twice (e.g. if the user has
+        // both a leader and member row for it).
+        const seen = new Set<string>()
+        const unique = ((data.circles ?? []) as CircleSummary[]).filter(c => {
+          if (seen.has(c.id)) return false
+          seen.add(c.id)
+          return true
+        })
+        setCircles(unique)
         setIsBandHolder(data.is_band_holder ?? false)
       }
       setLoading(false)

@@ -31,7 +31,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ circles: [], is_band_holder: isBandHolder })
     }
 
-    const circleIds = memberships.map(m => m.circle_id)
+    // A user can have more than one membership row for the same circle (e.g.
+    // leader + member), so dedupe to one id per circle.
+    const circleIds = [...new Set(memberships.map(m => m.circle_id))]
 
     // Get circle details
     const { data: circles } = await supabase
