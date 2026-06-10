@@ -5,7 +5,7 @@ const DARK = "#2C1810";
 const GOLD = "#B8860B";
 const GRAY = "#7A6A5A";
 const serif = "'Playfair Display', Georgia, serif";
-const body = "'Lora', Georgia, serif";
+const body = "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 
 const QUICK_LINKS = [
   { label: "Shop", href: "/store" },

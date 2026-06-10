@@ -65,7 +65,7 @@ export default function BlessingPage() {
   )
 
   return (
-    <div style={{minHeight:'100vh',background:'#fdf8f0',fontFamily:'Georgia,serif',color:'#2C1A0E'}}>
+    <div style={{minHeight:'100vh',background:'#fdf8f0',fontFamily:"'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",color:'#2C1A0E'}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
         .playfair { font-family: 'Playfair Display', serif; }
