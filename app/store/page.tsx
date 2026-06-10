@@ -171,31 +171,31 @@ export default function StorePage() {
   const total = subtotal + shipping;
 
   return (
-    <div style={{ fontFamily: "'Georgia', serif", background: "#FDFAF5", color: "#2C1A0E", minHeight: "100vh" }}>
+    <div style={{ fontFamily: "'Inter', sans-serif", background: "#F6F1E4", color: "#2A3344", minHeight: "100vh" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        .playfair { font-family: 'Playfair Display', serif; }
-        .lato { font-family: 'Lato', sans-serif; }
-        .section-label { font-family:'Lato',sans-serif; font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:#C8A96E; display:block; margin-bottom:10px; }
-        .add-btn { width: 100%; padding: 14px; border: none; border-radius: 4px; font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; font-weight: 700; }
-        .add-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(44,26,14,0.15); }
+        .playfair { font-family: 'Cormorant Garamond', serif; }
+        .lato { font-family: 'Inter', sans-serif; }
+        .section-label { font-family:'Cinzel',serif; font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:#9A7A35; display:block; margin-bottom:10px; }
+        .add-btn { width: 100%; padding: 14px; border: none; border-radius: 4px; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; font-weight: 600; }
+        .add-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(10,22,40,0.15); }
         .add-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-        .product-card { background: #fff; border: 1px solid #E8DFD0; border-radius: 10px; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
-        .product-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(44,26,14,0.10); }
-        .pack-card { background: #fff; border: 1px solid #E8DFD0; border-radius: 10px; padding: 32px 28px; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
-        .pack-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(44,26,14,0.10); }
-        .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #E8DFD0; background: #FDFAF5; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
-        .qty-btn:hover { background: #E8DFD0; }
-        .cart-overlay { position: fixed; inset: 0; background: rgba(44,26,14,0.4); z-index: 200; display: flex; justify-content: flex-end; }
-        .cart-drawer { width: 420px; max-width: 100vw; background: #FDFAF5; height: 100vh; overflow-y: auto; padding: 32px 28px; box-shadow: -8px 0 48px rgba(44,26,14,0.15); }
-        .checkout-btn { width: 100%; padding: 16px; background: #C8A96E; color: #fff; border: none; border-radius: 4px; font-family: 'Lato', sans-serif; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; font-weight: 700; transition: background 0.2s; margin-top: 16px; }
-        .checkout-btn:hover { background: #B8944A; }
-        .checkout-btn:disabled { background: #C8B49A; cursor: not-allowed; }
-        .size-btn { flex: 1; padding: 9px 0; border-radius: 4px; cursor: pointer; font-family: 'Lato', sans-serif; font-size: 12px; transition: all 0.15s; }
-        .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #2C1A0E; color: #FDFAF5; padding: 12px 28px; border-radius: 40px; font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.08em; z-index: 999; pointer-events: none; animation: fadeInUp 0.3s ease; }
+        .product-card { background: #FFFDF8; border: 1px solid rgba(200,169,110,0.34); border-radius: 10px; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+        .product-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(10,22,40,0.10); }
+        .pack-card { background: #FFFDF8; border: 1px solid rgba(200,169,110,0.34); border-radius: 10px; padding: 32px 28px; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
+        .pack-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(10,22,40,0.10); }
+        .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(92,101,115,0.30); background: #F6F1E4; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+        .qty-btn:hover { background: #ECEEF1; }
+        .cart-overlay { position: fixed; inset: 0; background: rgba(10,22,40,0.45); z-index: 200; display: flex; justify-content: flex-end; }
+        .cart-drawer { width: 420px; max-width: 100vw; background: #F6F1E4; height: 100vh; overflow-y: auto; padding: 32px 28px; box-shadow: -8px 0 48px rgba(10,22,40,0.18); }
+        .checkout-btn { width: 100%; padding: 16px; background: #C8A96E; color: #0A1628; border: none; border-radius: 4px; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; font-weight: 600; transition: background 0.2s; margin-top: 16px; }
+        .checkout-btn:hover { background: #E2C98A; }
+        .checkout-btn:disabled { background: #C9CFD6; color: #5C6573; cursor: not-allowed; }
+        .size-btn { flex: 1; padding: 9px 0; border-radius: 4px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px; transition: all 0.15s; }
+        .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #0E1E38; color: #F6F1E4; padding: 12px 28px; border-radius: 40px; font-family: 'Inter', sans-serif; font-size: 13px; letter-spacing: 0.08em; z-index: 999; pointer-events: none; animation: fadeInUp 0.3s ease; }
         @keyframes fadeInUp { from { opacity:0; transform:translateX(-50%) translateY(12px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
-        input, textarea, select { width: 100%; padding: 10px 14px; border: 1px solid #E8DFD0; border-radius: 4px; background: #FDFAF5; font-family: 'Lato', sans-serif; font-size: 14px; color: #2C1A0E; outline: none; transition: border-color 0.2s; }
+        input, textarea, select { width: 100%; padding: 10px 14px; border: 1px solid rgba(92,101,115,0.30); border-radius: 4px; background: #FFFDF8; font-family: 'Inter', sans-serif; font-size: 14px; color: #15223B; outline: none; transition: border-color 0.2s; }
         input:focus, textarea:focus, select:focus { border-color: #C8A96E; }
         textarea { resize: vertical; min-height: 72px; }
         @media (max-width: 768px) { .products-grid { grid-template-columns: 1fr !important; } .packs-grid { grid-template-columns: 1fr !important; } .cart-drawer { width: 100vw; } }
@@ -205,42 +205,42 @@ export default function StorePage() {
       {toast && <div className="toast">✝ {toast}</div>}
 
       {replaces && (
-        <div style={{ background: "#2C1A0E", color: "#F5EFE4", textAlign: "center", padding: "10px 20px", fontFamily: "'Lato', sans-serif", fontSize: 13, letterSpacing: "0.03em" }}>
+        <div style={{ background: "#0E1E38", color: "#F6F1E4", textAlign: "center", padding: "10px 20px", fontFamily: "'Inter', sans-serif", fontSize: 13, letterSpacing: "0.03em" }}>
           ✝ Replacing band <strong style={{ color: "#E2C98A" }}>{replaces}</strong> — its prayer journey will move to your new band once it ships.
         </div>
       )}
 
       {/* NAV */}
-      <nav className="store-nav" style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(253,250,245,0.97)", backdropFilter: "blur(12px)", borderBottom: "1px solid #E8DFD0", padding: "0 32px" }}>
+      <nav className="store-nav" style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(246,241,228,0.97)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(10,22,40,0.12)", padding: "0 32px" }}>
         <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <Logo size={30} />
-            <span className="playfair" style={{ fontSize: 18, fontWeight: 600, color: "#2C1A0E" }}>PrayerBands</span>
+            <span className="playfair" style={{ fontSize: 20, fontWeight: 600, color: "#15223B" }}>PrayerBands</span>
           </a>
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-            <a href="/" className="lato nav-extra" style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "#9B7B62", textDecoration: "none" }}>← Back to Home</a>
-            <a href="/subscribe" className="lato nav-extra" style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "#C8A96E", textDecoration: "none", fontWeight: 700 }}>Subscribe</a>
-            <button onClick={() => setCartOpen(true)} style={{ position: "relative", background: "#2C1A0E", border: "none", borderRadius: 4, padding: "9px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-              <Icon name="shop-bag" size={16} color="#FDFAF5" bg="#2C1A0E" />
-              <span className="lato" style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: "#FDFAF5", fontWeight: 700 }}>Cart</span>
-              {totalItems > 0 && <span style={{ position: "absolute", top: -8, right: -8, width: 20, height: 20, borderRadius: "50%", background: "#C8A96E", color: "#fff", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Lato, sans-serif", fontWeight: 700 }}>{totalItems}</span>}
+            <a href="/" className="lato nav-extra" style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "#5C6573", textDecoration: "none" }}>← Back to Home</a>
+            <a href="/subscribe" className="lato nav-extra" style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "#9A7A35", textDecoration: "none", fontWeight: 600 }}>Subscribe</a>
+            <button onClick={() => setCartOpen(true)} style={{ position: "relative", background: "#0A1628", border: "none", borderRadius: 4, padding: "9px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+              <Icon name="shop-bag" size={16} color="#F6F1E4" bg="#0A1628" />
+              <span style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#F6F1E4", fontWeight: 600 }}>Cart</span>
+              {totalItems > 0 && <span style={{ position: "absolute", top: -8, right: -8, width: 20, height: 20, borderRadius: "50%", background: "#C8A96E", color: "#0A1628", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Inter, sans-serif", fontWeight: 700 }}>{totalItems}</span>}
             </button>
           </div>
         </div>
       </nav>
 
       {/* HERO */}
-      <section style={{ padding: "72px 32px 56px", textAlign: "center", background: "linear-gradient(180deg, #F5EFE4 0%, #FDFAF5 100%)", borderBottom: "1px solid #E8DFD0" }}>
+      <section style={{ padding: "72px 32px 56px", textAlign: "center", background: "radial-gradient(ellipse at 60% 0%, rgba(200,169,110,0.13) 0%, transparent 60%), radial-gradient(ellipse at 20% 100%, rgba(201,207,214,0.18) 0%, transparent 55%), #F6F1E4", borderBottom: "1px solid rgba(10,22,40,0.12)" }}>
         <span className="section-label">The Store</span>
-        <h1 className="playfair" style={{ fontSize: "clamp(36px, 5vw, 60px)", fontWeight: 700, lineHeight: 1.15, marginBottom: 16 }}>Send a Prayer Into<br /><em style={{ color: "#C8A96E" }}>the World</em></h1>
-        <div style={{ width: 48, height: 2, background: "#C8A96E", margin: "0 auto 20px" }} />
-        <p className="lato" style={{ fontSize: 16, color: "#6B4C35", maxWidth: 480, margin: "0 auto", lineHeight: 1.8, fontWeight: 300 }}>Every band ships NFC-enabled and laser-engraved with a unique ID. One tap opens its digital journey.</p>
+        <h1 className="playfair" style={{ fontSize: "clamp(36px, 5vw, 60px)", fontWeight: 700, lineHeight: 1.15, marginBottom: 16, color: "#15223B" }}>Send a Prayer Into<br /><em style={{ color: "#C8A96E" }}>the World</em></h1>
+        <div style={{ width: 48, height: 2, background: "linear-gradient(90deg, #C8A96E, #C9CFD6)", margin: "0 auto 20px" }} />
+        <p className="lato" style={{ fontSize: 16, color: "#5C6573", maxWidth: 480, margin: "0 auto", lineHeight: 1.8, fontWeight: 300 }}>Every band ships NFC-enabled and laser-engraved with a unique ID. One tap opens its digital journey.</p>
       </section>
 
       <div style={{ maxWidth: 1160, margin: "0 auto", padding: "64px 32px" }}>
 
         {/* AUTO-DISCOUNT BANNER */}
-        <div style={{ background: "#2C1A0E", color: "#F5EFE4", borderRadius: 12, padding: "16px 24px", marginBottom: 32, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap", textAlign: "center" }}>
+        <div style={{ background: "#0E1E38", color: "#F6F1E4", borderRadius: 12, padding: "16px 24px", marginBottom: 32, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap", textAlign: "center", border: "1px solid rgba(200,169,110,0.25)" }}>
           <span style={{ fontSize: 22 }}>🎉</span>
           <span className="lato" style={{ fontSize: 14, letterSpacing: "0.02em", lineHeight: 1.6 }}>
             Buy more, save automatically — <strong style={{ color: "#E2C98A" }}>3+ bands ${tier3.toFixed(2)}/ea</strong> · <strong style={{ color: "#E2C98A" }}>5+ bands ${tier5.toFixed(2)}/ea</strong>. The discount applies right in your cart.
@@ -251,7 +251,8 @@ export default function StorePage() {
         <div style={{ marginBottom: 80 }}>
           <div style={{ marginBottom: 40 }}>
             <span className="section-label">Individual Bands</span>
-            <h2 className="playfair" style={{ fontSize: 36, fontWeight: 600 }}>For Personal Giving</h2>
+            <h2 className="playfair" style={{ fontSize: 36, fontWeight: 600, color: "#15223B" }}>For Personal Giving</h2>
+            <div style={{ width: 40, height: 1, background: "#C9CFD6", marginTop: 14 }} />
           </div>
 
           <div className="products-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>
@@ -266,21 +267,21 @@ export default function StorePage() {
                 <BandCarousel images={product.images || []} color={product.color} icon={product.icon} tag={product.tag} />
                 <div style={{ padding: "28px 28px 32px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                    <h3 className="playfair" style={{ fontSize: 24, fontWeight: 600 }}>{product.name}</h3>
-                    <div className="playfair" style={{ fontSize: 28, fontWeight: 700, color: "#C8A96E" }}>${price}</div>
+                    <h3 className="playfair" style={{ fontSize: 24, fontWeight: 600, color: "#15223B" }}>{product.name}</h3>
+                    <div className="playfair" style={{ fontSize: 28, fontWeight: 700, color: "#9A7A35" }}>${price}</div>
                   </div>
-                  <p className="lato" style={{ fontSize: 14, lineHeight: 1.75, color: "#6B4C35", fontWeight: 300, marginBottom: 20 }}>{product.description}</p>
+                  <p className="lato" style={{ fontSize: 14, lineHeight: 1.75, color: "#5C6573", fontWeight: 300, marginBottom: 20 }}>{product.description}</p>
 
                   {product.multiDiscount && (
-                    <div className="lato" style={{ fontSize: 12, color: "#7BAE8E", fontWeight: 700, marginBottom: 18, letterSpacing: "0.02em" }}>
+                    <div className="lato" style={{ fontSize: 12, color: "#9A7A35", fontWeight: 600, marginBottom: 18, letterSpacing: "0.02em" }}>
                       Buy 3+ for ${tier3.toFixed(2)} ea · 5+ for ${tier5.toFixed(2)} ea — applied automatically
                     </div>
                   )}
 
                   <div style={{ marginBottom: 20 }}>
                     {product.features.map(f => (
-                      <div key={f} className="lato" style={{ fontSize: 13, color: "#9B7B62", padding: "5px 0", borderBottom: "1px solid #F5EFE4", display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ color: product.color, fontSize: 10 }}>✦</span> {f}
+                      <div key={f} className="lato" style={{ fontSize: 13, color: "#2A3344", padding: "5px 0", borderBottom: "1px solid rgba(92,101,115,0.15)", display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ color: "#C8A96E", fontSize: 10 }}>✦</span> {f}
                       </div>
                     ))}
                   </div>
@@ -288,14 +289,14 @@ export default function StorePage() {
                   {product.hasSizes && (
                     <div style={{ marginBottom: 20 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                        <label className="lato" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#9B7B62" }}>Size</label>
-                        <button onClick={() => setShowSizeGuide(true)} className="lato" style={{ background: "none", border: "none", color: "#C8A96E", fontSize: 11, cursor: "pointer", textDecoration: "underline", letterSpacing: "0.05em", padding: 0 }}>Size guide</button>
+                        <label style={{ fontFamily: "'Cinzel', serif", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "#5C6573" }}>Size</label>
+                        <button onClick={() => setShowSizeGuide(true)} className="lato" style={{ background: "none", border: "none", color: "#9A7A35", fontSize: 11, cursor: "pointer", textDecoration: "underline", letterSpacing: "0.05em", padding: 0 }}>Size guide</button>
                       </div>
                       <div style={{ display: "flex", gap: 8 }}>
                         {product.sizes.map(sid => {
                           const sel = size === sid;
                           const label = SIZES.find(s => s.id === sid)?.label || sid;
-                          return <button key={sid} className="size-btn" onClick={() => setSizes(p => ({ ...p, [product.slug]: sid }))} style={{ border: `1px solid ${sel ? product.color : "#E8DFD0"}`, background: sel ? `${product.color}1f` : "#fff", color: sel ? "#2C1A0E" : "#9B7B62", fontWeight: sel ? 700 : 400 }}>{label}</button>;
+                          return <button key={sid} className="size-btn" onClick={() => setSizes(p => ({ ...p, [product.slug]: sid }))} style={{ border: `1px solid ${sel ? "#C8A96E" : "rgba(92,101,115,0.25)"}`, background: sel ? "rgba(200,169,110,0.12)" : "#FFFDF8", color: sel ? "#15223B" : "#5C6573", fontWeight: sel ? 700 : 400 }}>{label}</button>;
                         })}
                       </div>
                     </div>
@@ -304,20 +305,20 @@ export default function StorePage() {
                   {isCustom && (
                     <div style={{ marginBottom: 20, display: "grid", gap: 12 }}>
                       <div>
-                        <label className="lato" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#9B7B62", display: "block", marginBottom: 6 }}>Band Color</label>
+                        <label style={{ fontFamily: "'Cinzel', serif", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "#5C6573", display: "block", marginBottom: 6 }}>Band Color</label>
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                          {COLORS.map(c => <button key={c.name} title={c.name} onClick={() => setCustomColor(c.name)} style={{ width: 28, height: 28, borderRadius: "50%", background: c.hex, border: customColor === c.name ? "3px solid #2C1A0E" : "2px solid #E8DFD0", cursor: "pointer" }} />)}
+                          {COLORS.map(c => <button key={c.name} title={c.name} onClick={() => setCustomColor(c.name)} style={{ width: 28, height: 28, borderRadius: "50%", background: c.hex, border: customColor === c.name ? "3px solid #0A1628" : "2px solid rgba(92,101,115,0.25)", cursor: "pointer" }} />)}
                         </div>
                       </div>
-                      <div><label className="lato" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#9B7B62", display: "block", marginBottom: 6 }}>Scripture Verse (optional)</label><input placeholder="e.g. John 3:16" value={customVerse} onChange={e => setCustomVerse(e.target.value)} /></div>
-                      <div><label className="lato" style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#9B7B62", display: "block", marginBottom: 6 }}>Personal Message (optional)</label><textarea placeholder="A short message for the recipient..." value={customMsg} onChange={e => setCustomMsg(e.target.value)} /></div>
+                      <div><label style={{ fontFamily: "'Cinzel', serif", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "#5C6573", display: "block", marginBottom: 6 }}>Scripture Verse (optional)</label><input placeholder="e.g. John 3:16" value={customVerse} onChange={e => setCustomVerse(e.target.value)} /></div>
+                      <div><label style={{ fontFamily: "'Cinzel', serif", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "#5C6573", display: "block", marginBottom: 6 }}>Personal Message (optional)</label><textarea placeholder="A short message for the recipient..." value={customMsg} onChange={e => setCustomMsg(e.target.value)} /></div>
                     </div>
                   )}
 
-                  {avail === "backorder" && <div className="lato" style={{ fontSize: 12, color: "#B8860B", marginBottom: 10, fontWeight: 700 }}>On backorder — ships when restocked.</div>}
-                  {avail === "out" && <div className="lato" style={{ fontSize: 12, color: "#9B7B62", marginBottom: 10, fontWeight: 700 }}>Out of stock</div>}
+                  {avail === "backorder" && <div className="lato" style={{ fontSize: 12, color: "#9A7A35", marginBottom: 10, fontWeight: 700 }}>On backorder — ships when restocked.</div>}
+                  {avail === "out" && <div className="lato" style={{ fontSize: 12, color: "#5C6573", marginBottom: 10, fontWeight: 700 }}>Out of stock</div>}
 
-                  <button className="add-btn" disabled={avail === "out"} style={{ background: product.color, color: "#fff" }}
+                  <button className="add-btn" disabled={avail === "out"} style={{ background: "#C8A96E", color: "#0A1628" }}
                     onClick={() => addToCart({
                       id: product.slug, name: product.name, price, type: product.category, size,
                       multiDiscount: product.multiDiscount,
@@ -334,14 +335,14 @@ export default function StorePage() {
 
         {/* SUBSCRIPTION */}
         <a href="/subscribe" style={{ textDecoration: "none", color: "inherit" }}>
-          <div style={{ marginBottom: 80, background: "linear-gradient(135deg, #7B8FAE 0%, #566f92 100%)", border: "none", borderRadius: 12, padding: "40px 48px", display: "flex", alignItems: "center", gap: 40, flexWrap: "wrap", cursor: "pointer", boxShadow: "0 8px 28px rgba(86,111,146,0.28)" }}>
+          <div style={{ marginBottom: 80, background: "linear-gradient(135deg, #132544 0%, #0E1E38 100%)", border: "1px solid rgba(200,169,110,0.30)", borderRadius: 12, padding: "40px 48px", display: "flex", alignItems: "center", gap: 40, flexWrap: "wrap", cursor: "pointer", boxShadow: "0 8px 28px rgba(10,22,40,0.22)" }}>
             <div style={{ fontSize: 52 }}>🔁</div>
             <div style={{ flex: 1, minWidth: 260 }}>
-              <span className="section-label" style={{ color: "#E3EAF2" }}>Subscribe & Save</span>
-              <h3 className="playfair" style={{ fontSize: 30, fontWeight: 600, marginBottom: 10, color: "#fff" }}>A Band Delivered to Your Door, Every Month</h3>
-              <p className="lato" style={{ fontSize: 15, color: "#DCE4EF", lineHeight: 1.8, fontWeight: 300 }}>Make intercession a rhythm. Subscribe and save up to 25% — bands ship automatically, ready to give away. Cancel anytime.</p>
+              <span className="section-label" style={{ color: "#C8A96E" }}>Subscribe & Save</span>
+              <h3 className="playfair" style={{ fontSize: 30, fontWeight: 600, marginBottom: 10, color: "#F6F1E4" }}>A Band Delivered to Your Door, Every Month</h3>
+              <p className="lato" style={{ fontSize: 15, color: "#C9CFD6", lineHeight: 1.8, fontWeight: 300 }}>Make intercession a rhythm. Subscribe and save up to 25% — bands ship automatically, ready to give away. Cancel anytime.</p>
             </div>
-            <button style={{ background: "#FFFDF7", border: "none", color: "#4f6d8f", padding: "14px 36px", borderRadius: 4, fontFamily: "Lato, sans-serif", fontSize: 13, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap" }}>View Plans →</button>
+            <button style={{ background: "#C8A96E", border: "none", color: "#0A1628", padding: "14px 36px", borderRadius: 4, fontFamily: "'Cinzel', serif", fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>View Plans →</button>
           </div>
         </a>
 
@@ -350,8 +351,9 @@ export default function StorePage() {
         <div id="packs" style={{ marginBottom: 80, scrollMarginTop: 80 }}>
           <div style={{ marginBottom: 40 }}>
             <span className="section-label">Church & Ministry Packs</span>
-            <h2 className="playfair" style={{ fontSize: 36, fontWeight: 600 }}>For Communities</h2>
-            <p className="lato" style={{ fontSize: 15, color: "#9B7B62", marginTop: 10, fontWeight: 300 }}>Bulk pricing with a custom ministry prefix (e.g. FBC-XXXXX) and dashboard access.</p>
+            <h2 className="playfair" style={{ fontSize: 36, fontWeight: 600, color: "#15223B" }}>For Communities</h2>
+            <div style={{ width: 40, height: 1, background: "#C9CFD6", marginTop: 14, marginBottom: 10 }} />
+            <p className="lato" style={{ fontSize: 15, color: "#5C6573", marginTop: 0, fontWeight: 300 }}>Bulk pricing with a custom ministry prefix (e.g. FBC-XXXXX) and dashboard access.</p>
           </div>
           <div className="packs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
             {packProducts.map(pack => {
@@ -359,22 +361,22 @@ export default function StorePage() {
               const perBand = price / (pack.bandsPerUnit || 1);
               const avail = availabilityOf(pack, "");
               return (
-              <div key={pack.slug} className="pack-card" style={{ borderTop: `4px solid ${pack.color}` }}>
-                {pack.tag && <div className="lato" style={{ position: "absolute", top: -1, left: "50%", transform: "translateX(-50%)", background: pack.color, color: "#fff", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", padding: "3px 14px", borderRadius: "0 0 8px 8px", fontWeight: 700, whiteSpace: "nowrap" }}>{pack.tag}</div>}
+              <div key={pack.slug} className="pack-card" style={{ borderTop: "4px solid #C8A96E" }}>
+                {pack.tag && <div style={{ position: "absolute", top: -1, left: "50%", transform: "translateX(-50%)", background: "#C8A96E", color: "#0A1628", fontFamily: "'Cinzel', serif", fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", padding: "3px 14px", borderRadius: "0 0 8px 8px", fontWeight: 700, whiteSpace: "nowrap" }}>{pack.tag}</div>}
                 <div style={{ marginBottom: 20 }}>
-                  <h3 className="playfair" style={{ fontSize: 22, fontWeight: 600, marginBottom: 6 }}>{pack.name}</h3>
-                  <p className="lato" style={{ fontSize: 13, color: "#9B7B62", lineHeight: 1.7, fontWeight: 300 }}>{pack.description}</p>
+                  <h3 className="playfair" style={{ fontSize: 22, fontWeight: 600, marginBottom: 6, color: "#15223B" }}>{pack.name}</h3>
+                  <p className="lato" style={{ fontSize: 13, color: "#5C6573", lineHeight: 1.7, fontWeight: 300 }}>{pack.description}</p>
                 </div>
                 <div style={{ marginBottom: 24 }}>
-                  <div className="playfair" style={{ fontSize: 38, fontWeight: 700, color: pack.color, lineHeight: 1 }}>${price.toFixed(2)}</div>
-                  <div className="lato" style={{ fontSize: 12, color: "#9B7B62", marginTop: 4 }}>${perBand.toFixed(2)}/band · {pack.bandsPerUnit} bands</div>
+                  <div className="playfair" style={{ fontSize: 38, fontWeight: 700, color: "#9A7A35", lineHeight: 1 }}>${price.toFixed(2)}</div>
+                  <div className="lato" style={{ fontSize: 12, color: "#5C6573", marginTop: 4 }}>${perBand.toFixed(2)}/band · {pack.bandsPerUnit} bands</div>
                 </div>
                 <div style={{ marginBottom: 24 }}>
-                  {pack.features.map(f => <div key={f} className="lato" style={{ fontSize: 13, color: "#6B4C35", padding: "5px 0", borderBottom: "1px solid #F5EFE4", display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: pack.color, fontSize: 10 }}>✦</span> {f}</div>)}
+                  {pack.features.map(f => <div key={f} className="lato" style={{ fontSize: 13, color: "#2A3344", padding: "5px 0", borderBottom: "1px solid rgba(92,101,115,0.15)", display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: "#C8A96E", fontSize: 10 }}>✦</span> {f}</div>)}
                 </div>
-                {avail === "backorder" && <div className="lato" style={{ fontSize: 12, color: "#B8860B", marginBottom: 10, fontWeight: 700 }}>On backorder — ships when restocked.</div>}
-                {avail === "out" && <div className="lato" style={{ fontSize: 12, color: "#9B7B62", marginBottom: 10, fontWeight: 700 }}>Out of stock</div>}
-                <button className="add-btn" disabled={avail === "out"} style={{ background: pack.color, color: "#fff" }}
+                {avail === "backorder" && <div className="lato" style={{ fontSize: 12, color: "#9A7A35", marginBottom: 10, fontWeight: 700 }}>On backorder — ships when restocked.</div>}
+                {avail === "out" && <div className="lato" style={{ fontSize: 12, color: "#5C6573", marginBottom: 10, fontWeight: 700 }}>Out of stock</div>}
+                <button className="add-btn" disabled={avail === "out"} style={{ background: "#C8A96E", color: "#0A1628" }}
                   onClick={() => addToCart({ id: pack.slug, name: `${pack.name} (${pack.bandsPerUnit} bands)`, price, type: "pack" })}>
                   {avail === "out" ? "Out of Stock" : `Add to Cart — $${price.toFixed(2)}`}
                 </button>
@@ -386,37 +388,37 @@ export default function StorePage() {
         )}
 
         {/* LARGE ORDERS */}
-        <div style={{ background: "#2C1A0E", borderRadius: 12, padding: "48px 56px", display: "flex", alignItems: "center", gap: 48, flexWrap: "wrap" }}>
+        <div style={{ background: "linear-gradient(135deg, #0A1628 0%, #132544 100%)", borderRadius: 12, padding: "48px 56px", display: "flex", alignItems: "center", gap: 48, flexWrap: "wrap", border: "1px solid rgba(200,169,110,0.25)" }}>
           <div style={{ fontSize: 56 }}>🕊️</div>
           <div style={{ flex: 1, minWidth: 240 }}>
             <span className="section-label" style={{ color: "#C8A96E" }}>Large Orders</span>
-            <h3 className="playfair" style={{ fontSize: 28, color: "#FDFAF5", marginBottom: 12 }}>Need 500+ Bands?</h3>
-            <p className="lato" style={{ fontSize: 15, color: "#C8B49A", lineHeight: 1.8, fontWeight: 300 }}>We work with denominations, mission organizations, and large congregations for custom quantities and pricing.</p>
+            <h3 className="playfair" style={{ fontSize: 28, color: "#F6F1E4", marginBottom: 12 }}>Need 500+ Bands?</h3>
+            <p className="lato" style={{ fontSize: 15, color: "#C9CFD6", lineHeight: 1.8, fontWeight: 300 }}>We work with denominations, mission organizations, and large congregations for custom quantities and pricing.</p>
           </div>
-          <a href="/contact" style={{ textDecoration: "none" }}><button style={{ background: "transparent", border: "1.5px solid #C8A96E", color: "#C8A96E", padding: "14px 36px", borderRadius: 4, fontFamily: "Lato, sans-serif", fontSize: 13, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap" }}>Contact Us</button></a>
+          <a href="/contact" style={{ textDecoration: "none" }}><button style={{ background: "transparent", border: "1.5px solid #C8A96E", color: "#C8A96E", padding: "14px 36px", borderRadius: 4, fontFamily: "'Cinzel', serif", fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>Contact Us</button></a>
         </div>
       </div>
 
       {/* SIZE GUIDE MODAL */}
       {showSizeGuide && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(44,26,14,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={e => { if (e.target === e.currentTarget) setShowSizeGuide(false); }}>
-          <div style={{ background: "#FDFAF5", borderRadius: 12, padding: "32px 28px", maxWidth: 440, width: "100%", boxShadow: "0 24px 80px rgba(44,26,14,0.25)" }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.55)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={e => { if (e.target === e.currentTarget) setShowSizeGuide(false); }}>
+          <div style={{ background: "#FFFDF8", borderRadius: 12, padding: "32px 28px", maxWidth: 440, width: "100%", boxShadow: "0 24px 80px rgba(10,22,40,0.22)", border: "1px solid rgba(200,169,110,0.25)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-              <div><span className="section-label">Find your fit</span><h2 className="playfair" style={{ fontSize: 24, fontWeight: 600 }}>Band Size Guide</h2></div>
-              <button onClick={() => setShowSizeGuide(false)} style={{ background: "none", border: "none", fontSize: 24, cursor: "pointer", color: "#9B7B62", lineHeight: 1 }}>×</button>
+              <div><span className="section-label">Find your fit</span><h2 className="playfair" style={{ fontSize: 24, fontWeight: 600, color: "#15223B" }}>Band Size Guide</h2></div>
+              <button onClick={() => setShowSizeGuide(false)} style={{ background: "none", border: "none", fontSize: 24, cursor: "pointer", color: "#5C6573", lineHeight: 1 }}>×</button>
             </div>
-            <p className="lato" style={{ fontSize: 13, color: "#6B4C35", lineHeight: 1.7, marginBottom: 20, fontWeight: 300 }}>Measure around your wrist with a soft tape or a strip of paper, then match it below.</p>
-            <div style={{ border: "1px solid #E8DFD0", borderRadius: 8, overflow: "hidden" }}>
-              <div className="lato" style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", background: "#2C1A0E", color: "#F5EFE4", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>
+            <p className="lato" style={{ fontSize: 13, color: "#5C6573", lineHeight: 1.7, marginBottom: 20, fontWeight: 300 }}>Measure around your wrist with a soft tape or a strip of paper, then match it below.</p>
+            <div style={{ border: "1px solid rgba(92,101,115,0.20)", borderRadius: 8, overflow: "hidden" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", background: "#0A1628", color: "#F6F1E4", fontFamily: "'Cinzel', serif", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>
                 <div style={{ padding: "10px 12px" }}>Size</div><div style={{ padding: "10px 12px" }}>Wrist</div><div style={{ padding: "10px 12px" }}>Best for</div>
               </div>
               {SIZE_CHART.map((row, i) => (
-                <div key={row.size} className="lato" style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", fontSize: 13, color: "#2C1A0E", background: i % 2 ? "#F5EFE4" : "#fff" }}>
-                  <div style={{ padding: "12px", fontWeight: 700 }}>{row.size}</div><div style={{ padding: "12px", color: "#6B4C35" }}>{row.wrist}</div><div style={{ padding: "12px", color: "#9B7B62" }}>{row.fit}</div>
+                <div key={row.size} className="lato" style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", fontSize: 13, color: "#15223B", background: i % 2 ? "#ECEEF1" : "#FFFDF8" }}>
+                  <div style={{ padding: "12px", fontWeight: 700 }}>{row.size}</div><div style={{ padding: "12px", color: "#2A3344" }}>{row.wrist}</div><div style={{ padding: "12px", color: "#5C6573" }}>{row.fit}</div>
                 </div>
               ))}
             </div>
-            <button className="add-btn" style={{ background: "#C8A96E", color: "#fff", marginTop: 20 }} onClick={() => setShowSizeGuide(false)}>Got it</button>
+            <button className="add-btn" style={{ background: "#C8A96E", color: "#0A1628", marginTop: 20 }} onClick={() => setShowSizeGuide(false)}>Got it</button>
           </div>
         </div>
       )}
@@ -426,14 +428,14 @@ export default function StorePage() {
         <div className="cart-overlay" onClick={e => { if (e.target === e.currentTarget) setCartOpen(false); }}>
           <div className="cart-drawer">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
-              <h2 className="playfair" style={{ fontSize: 26, fontWeight: 600 }}>Your Cart</h2>
-              <button onClick={() => setCartOpen(false)} style={{ background: "none", border: "none", fontSize: 24, cursor: "pointer", color: "#9B7B62" }}>×</button>
+              <h2 className="playfair" style={{ fontSize: 26, fontWeight: 600, color: "#15223B" }}>Your Cart</h2>
+              <button onClick={() => setCartOpen(false)} style={{ background: "none", border: "none", fontSize: 24, cursor: "pointer", color: "#5C6573" }}>×</button>
             </div>
             {cart.length === 0 ? (
               <div style={{ textAlign: "center", padding: "60px 0" }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🙏</div>
-                <p className="lato" style={{ fontSize: 14, color: "#9B7B62", fontWeight: 300 }}>Your cart is empty.</p>
-                <p className="lato" style={{ fontSize: 13, color: "#C8B49A", marginTop: 8, fontWeight: 300 }}>Add a band to start a prayer chain.</p>
+                <p className="lato" style={{ fontSize: 14, color: "#5C6573", fontWeight: 300 }}>Your cart is empty.</p>
+                <p className="lato" style={{ fontSize: 13, color: "#9A7A35", marginTop: 8, fontWeight: 300 }}>Add a band to start a prayer chain.</p>
               </div>
             ) : (
               <>
@@ -441,31 +443,31 @@ export default function StorePage() {
                   {cart.map(item => {
                     const unit = lineUnit(item);
                     return (
-                    <div key={`${item.id}-${item.size || ""}`} style={{ background: "#fff", border: "1px solid #E8DFD0", borderRadius: 8, padding: "16px 18px" }}>
+                    <div key={`${item.id}-${item.size || ""}`} style={{ background: "#FFFDF8", border: "1px solid rgba(200,169,110,0.30)", borderRadius: 8, padding: "16px 18px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                         <div>
-                          <div className="playfair" style={{ fontSize: 16, fontWeight: 600 }}>{item.name}</div>
-                          {item.detail && <div className="lato" style={{ fontSize: 12, color: "#9B7B62", marginTop: 2 }}>{item.detail}</div>}
+                          <div className="playfair" style={{ fontSize: 16, fontWeight: 600, color: "#15223B" }}>{item.name}</div>
+                          {item.detail && <div className="lato" style={{ fontSize: 12, color: "#5C6573", marginTop: 2 }}>{item.detail}</div>}
                         </div>
-                        <div className="playfair" style={{ fontSize: 16, fontWeight: 600, color: "#C8A96E" }}>${(unit * item.qty).toFixed(2)}</div>
+                        <div className="playfair" style={{ fontSize: 16, fontWeight: 600, color: "#9A7A35" }}>${(unit * item.qty).toFixed(2)}</div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                         <button className="qty-btn" onClick={() => updateQty(item.id, item.size, -1)}>−</button>
-                        <span className="lato" style={{ fontSize: 15, fontWeight: 700, minWidth: 20, textAlign: "center" }}>{item.qty}</span>
+                        <span className="lato" style={{ fontSize: 15, fontWeight: 700, minWidth: 20, textAlign: "center", color: "#15223B" }}>{item.qty}</span>
                         <button className="qty-btn" onClick={() => updateQty(item.id, item.size, 1)}>+</button>
-                        <span className="lato" style={{ fontSize: 12, color: "#C8B49A", marginLeft: 4 }}>${unit.toFixed(2)} each</span>
+                        <span className="lato" style={{ fontSize: 12, color: "#5C6573", marginLeft: 4 }}>${unit.toFixed(2)} each</span>
                       </div>
                     </div>
                     );
                   })}
                 </div>
 
-                {stdSavings > 0.001 && <div className="lato" style={{ background: "#EAF4EE", color: "#1a4a3a", borderRadius: 8, padding: "10px 14px", fontSize: 13, marginBottom: 12, textAlign: "center", fontWeight: 700 }}>✓ Multi-band pricing saved you ${stdSavings.toFixed(2)}</div>}
+                {stdSavings > 0.001 && <div className="lato" style={{ background: "#ECEEF1", color: "#15223B", borderRadius: 8, padding: "10px 14px", fontSize: 13, marginBottom: 12, textAlign: "center", fontWeight: 700, border: "1px solid rgba(92,101,115,0.20)" }}>✓ Multi-band pricing saved you ${stdSavings.toFixed(2)}</div>}
 
-                <div style={{ background: "#F5EFE4", borderRadius: 8, padding: "20px 20px", marginBottom: 8 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span className="lato" style={{ fontSize: 13, color: "#9B7B62" }}>Subtotal</span><span className="lato" style={{ fontSize: 13, color: "#2C1A0E", fontWeight: 700 }}>${subtotal.toFixed(2)}</span></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span className="lato" style={{ fontSize: 13, color: "#9B7B62" }}>Shipping</span><span className="lato" style={{ fontSize: 13, color: "#9B7B62" }}>${shipping.toFixed(2)}</span></div>
-                  <div style={{ borderTop: "1px solid #E8DFD0", paddingTop: 12, marginTop: 8, display: "flex", justifyContent: "space-between" }}><span className="playfair" style={{ fontSize: 18, fontWeight: 600 }}>Total</span><span className="playfair" style={{ fontSize: 22, fontWeight: 700, color: "#C8A96E" }}>${total.toFixed(2)}</span></div>
+                <div style={{ background: "#ECEEF1", borderRadius: 8, padding: "20px 20px", marginBottom: 8, border: "1px solid rgba(92,101,115,0.15)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span className="lato" style={{ fontSize: 13, color: "#5C6573" }}>Subtotal</span><span className="lato" style={{ fontSize: 13, color: "#15223B", fontWeight: 700 }}>${subtotal.toFixed(2)}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span className="lato" style={{ fontSize: 13, color: "#5C6573" }}>Shipping</span><span className="lato" style={{ fontSize: 13, color: "#5C6573" }}>${shipping.toFixed(2)}</span></div>
+                  <div style={{ borderTop: "1px solid rgba(92,101,115,0.20)", paddingTop: 12, marginTop: 8, display: "flex", justifyContent: "space-between" }}><span className="playfair" style={{ fontSize: 18, fontWeight: 600, color: "#15223B" }}>Total</span><span className="playfair" style={{ fontSize: 22, fontWeight: 700, color: "#9A7A35" }}>${total.toFixed(2)}</span></div>
                 </div>
 
                 <button className="checkout-btn" disabled={checkoutLoading || cart.length === 0} onClick={async () => {
@@ -478,7 +480,7 @@ export default function StorePage() {
                   const data = await res.json()
                   if (data.url) { window.location.href = data.url } else { showToast('Something went wrong — please try again'); setCheckoutLoading(false) }
                 }}>{checkoutLoading ? 'Redirecting...' : `Proceed to Checkout — $${total.toFixed(2)}`}</button>
-                <p className="lato" style={{ fontSize: 11, textAlign: "center", color: "#C8B49A", marginTop: 12, letterSpacing: "0.05em" }}>Secure checkout via Stripe · Ships in 3-5 days</p>
+                <p className="lato" style={{ fontSize: 11, textAlign: "center", color: "#5C6573", marginTop: 12, letterSpacing: "0.05em" }}>Secure checkout via Stripe · Ships in 3-5 days</p>
               </>
             )}
           </div>

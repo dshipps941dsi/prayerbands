@@ -60,22 +60,23 @@ export default function NewCirclePage() {
     const link = `https://prayerbands.com/circles?code=${created.join_code}`
     const shareText = `Join my Prayer Circle on PrayerBands. Enter code ${created.join_code} at ${link}`
     const shareOption = (label: string, onClick: () => void, href?: string) => {
-      const style: React.CSSProperties = { display: 'block', width: '100%', boxSizing: 'border-box', textAlign: 'center', backgroundColor: '#fff', border: '1px solid #E8DCC8', borderRadius: 10, padding: '13px', fontSize: 14, fontFamily: 'Georgia, serif', color: '#2C1810', cursor: 'pointer', textDecoration: 'none', marginBottom: 10 }
+      const style: React.CSSProperties = { display: 'block', width: '100%', boxSizing: 'border-box', textAlign: 'center', backgroundColor: '#FFFDF8', border: '1px solid rgba(92,101,115,0.20)', borderRadius: 10, padding: '13px', fontSize: 12, fontFamily: "'Cinzel', serif", fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: '#15223B', cursor: 'pointer', textDecoration: 'none', marginBottom: 10 }
       return href
         ? <a href={href} style={style}>{label}</a>
         : <button onClick={onClick} style={style}>{label}</button>
     }
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#FAF6EF', fontFamily: 'Georgia, serif', padding: '0 0 80px 0' }}>
+      <div style={{ minHeight: '100vh', backgroundColor: '#F6F1E4', fontFamily: "'Inter', sans-serif", padding: '0 0 80px 0' }}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');`}</style>
         <div style={{ padding: '48px 24px 0', maxWidth: 480, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={36} color="#B8860B" /></div>
-          <div style={{ fontSize: 40, color: '#7BAE8E', marginBottom: 12 }}>✓</div>
-          <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 26, fontWeight: 700, color: '#2C1810', margin: '0 0 8px' }}>Circle Created!</h1>
-          <p style={{ fontSize: 14, color: '#8B7355', margin: '0 0 28px', lineHeight: 1.5 }}>Share this code so others can join your circle.</p>
+          <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={36} color="#C8A96E" /></div>
+          <div style={{ fontSize: 40, color: '#C8A96E', marginBottom: 12 }}>✓</div>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 26, fontWeight: 700, color: '#15223B', margin: '0 0 8px' }}>Circle Created!</h1>
+          <p style={{ fontSize: 14, color: '#5C6573', margin: '0 0 28px', lineHeight: 1.5, fontFamily: "'Inter', sans-serif" }}>Share this code so others can join your circle.</p>
 
-          <div style={{ backgroundColor: '#fff', border: '2px solid #B8860B', borderRadius: 14, padding: '24px', marginBottom: 24 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#B8860B', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Join Code</div>
-            <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 36, fontWeight: 700, letterSpacing: '0.25em', color: '#2C1810' }}>{created.join_code}</div>
+          <div style={{ backgroundColor: '#FFFDF8', border: '2px solid rgba(200,169,110,0.34)', borderRadius: 14, padding: '24px', marginBottom: 24, boxShadow: '0 4px 16px rgba(10,22,40,0.08)' }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: '#9A7A35', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10, fontFamily: "'Cinzel', serif" }}>Join Code</div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 36, fontWeight: 700, letterSpacing: '0.25em', color: '#15223B' }}>{created.join_code}</div>
           </div>
 
           {shareOption(copied === 'code' ? 'Copied!' : 'Copy Code', () => copy(created.join_code, 'code'))}
@@ -83,7 +84,7 @@ export default function NewCirclePage() {
           {shareOption('Share via Text', () => {}, `sms:?&body=${encodeURIComponent(shareText)}`)}
           {shareOption('Share via WhatsApp', () => {}, `https://wa.me/?text=${encodeURIComponent(shareText)}`)}
 
-          <button onClick={() => router.push(`/circles/${created.id}`)} style={{ width: '100%', boxSizing: 'border-box', backgroundColor: '#B8860B', color: '#fff', border: 'none', borderRadius: 10, padding: '16px', fontSize: 16, fontFamily: 'Playfair Display, Georgia, serif', fontWeight: 700, cursor: 'pointer', marginTop: 14 }}>
+          <button onClick={() => router.push(`/circles/${created.id}`)} style={{ width: '100%', boxSizing: 'border-box', backgroundColor: '#C8A96E', color: '#0A1628', border: 'none', borderRadius: 10, padding: '16px', fontSize: 13, fontFamily: "'Cinzel', serif", fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', marginTop: 14 }}>
             Go to Circle →
           </button>
         </div>
@@ -94,15 +95,16 @@ export default function NewCirclePage() {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#FAF6EF',
-      fontFamily: 'Georgia, serif',
+      backgroundColor: '#F6F1E4',
+      fontFamily: "'Inter', sans-serif",
       padding: '0 0 80px 0'
     }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');`}</style>
 
       {/* Header */}
       <div style={{
-        backgroundColor: '#fff',
-        borderBottom: '1px solid #E8DCC8',
+        backgroundColor: '#FFFDF8',
+        borderBottom: '1px solid rgba(10,22,40,0.12)',
         padding: '20px 24px',
         display: 'flex',
         alignItems: 'center',
@@ -116,21 +118,21 @@ export default function NewCirclePage() {
             fontSize: '20px',
             cursor: 'pointer',
             padding: '0',
-            color: '#8B7355'
+            color: '#5C6573'
           }}
         >
           ←
         </button>
-        <PrayerBandsLogo size={30} color="#B8860B" />
+        <PrayerBandsLogo size={30} color="#C8A96E" />
         <div>
           <h1 style={{
-            fontFamily: 'Playfair Display, Georgia, serif',
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontSize: '22px',
             fontWeight: '700',
-            color: '#2C1810',
+            color: '#15223B',
             margin: 0
           }}>Create a Circle</h1>
-          <p style={{ fontSize: '13px', color: '#8B7355', margin: '2px 0 0 0' }}>
+          <p style={{ fontSize: '13px', color: '#5C6573', margin: '2px 0 0 0', fontFamily: "'Inter', sans-serif" }}>
             Gather people around a shared prayer
           </p>
         </div>
@@ -140,17 +142,18 @@ export default function NewCirclePage() {
 
         {/* Intro */}
         <div style={{
-          backgroundColor: '#fff',
-          border: '1px solid #E8DCC8',
+          backgroundColor: '#FFFDF8',
+          border: '1px solid rgba(200,169,110,0.34)',
           borderRadius: '12px',
           padding: '20px',
           marginBottom: '28px'
         }}>
           <p style={{
             fontSize: '14px',
-            color: '#5C4033',
+            color: '#2A3344',
             lineHeight: '1.7',
-            margin: 0
+            margin: 0,
+            fontFamily: "'Inter', sans-serif"
           }}>
             A join code will be created for you to share. Anyone with the code can enter it
             at <strong>prayerbands.com/circles</strong> and request to join your circle.
@@ -159,23 +162,25 @@ export default function NewCirclePage() {
 
         {/* Form */}
         <div style={{
-          backgroundColor: '#fff',
-          border: '1px solid #E8DCC8',
+          backgroundColor: '#FFFDF8',
+          border: '1px solid rgba(10,22,40,0.12)',
           borderRadius: '12px',
           padding: '24px',
-          marginBottom: '20px'
+          marginBottom: '20px',
+          boxShadow: '0 2px 8px rgba(10,22,40,0.06)'
         }}>
 
           {/* Name field */}
           <div style={{ marginBottom: '24px' }}>
             <label style={{
               display: 'block',
-              fontSize: '13px',
+              fontSize: '11px',
               fontWeight: '600',
-              color: '#8B7355',
-              letterSpacing: '0.08em',
+              color: '#9A7A35',
+              letterSpacing: '0.10em',
               textTransform: 'uppercase',
-              marginBottom: '8px'
+              marginBottom: '8px',
+              fontFamily: "'Cinzel', serif"
             }}>
               Who or what is this circle for?
             </label>
@@ -189,20 +194,21 @@ export default function NewCirclePage() {
                 width: '100%',
                 padding: '12px 14px',
                 fontSize: '15px',
-                fontFamily: 'Georgia, serif',
-                color: '#2C1810',
-                border: '2px solid #E8DCC8',
+                fontFamily: "'Inter', sans-serif",
+                color: '#15223B',
+                border: '2px solid rgba(200,169,110,0.34)',
                 borderRadius: '8px',
-                backgroundColor: '#FAF6EF',
+                backgroundColor: '#F6F1E4',
                 outline: 'none',
                 boxSizing: 'border-box'
               }}
             />
             <p style={{
               fontSize: '12px',
-              color: '#B0A090',
+              color: '#5C6573',
               margin: '6px 0 0 0',
-              textAlign: 'right'
+              textAlign: 'right',
+              fontFamily: "'Inter', sans-serif"
             }}>
               {name.length}/80
             </p>
@@ -212,14 +218,15 @@ export default function NewCirclePage() {
           <div>
             <label style={{
               display: 'block',
-              fontSize: '13px',
+              fontSize: '11px',
               fontWeight: '600',
-              color: '#8B7355',
-              letterSpacing: '0.08em',
+              color: '#9A7A35',
+              letterSpacing: '0.10em',
               textTransform: 'uppercase',
-              marginBottom: '8px'
+              marginBottom: '8px',
+              fontFamily: "'Cinzel', serif"
             }}>
-              Description <span style={{ fontWeight: '400', textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+              Description <span style={{ fontWeight: '400', textTransform: 'none', letterSpacing: 0, fontFamily: "'Inter', sans-serif", color: '#5C6573' }}>(optional)</span>
             </label>
             <textarea
               value={description}
@@ -231,11 +238,11 @@ export default function NewCirclePage() {
                 width: '100%',
                 padding: '12px 14px',
                 fontSize: '15px',
-                fontFamily: 'Georgia, serif',
-                color: '#2C1810',
-                border: '2px solid #E8DCC8',
+                fontFamily: "'Inter', sans-serif",
+                color: '#15223B',
+                border: '2px solid rgba(200,169,110,0.34)',
                 borderRadius: '8px',
-                backgroundColor: '#FAF6EF',
+                backgroundColor: '#F6F1E4',
                 outline: 'none',
                 resize: 'vertical',
                 boxSizing: 'border-box',
@@ -244,9 +251,10 @@ export default function NewCirclePage() {
             />
             <p style={{
               fontSize: '12px',
-              color: '#B0A090',
+              color: '#5C6573',
               margin: '6px 0 0 0',
-              textAlign: 'right'
+              textAlign: 'right',
+              fontFamily: "'Inter', sans-serif"
             }}>
               {description.length}/300
             </p>
@@ -254,14 +262,14 @@ export default function NewCirclePage() {
         </div>
 
         {needsAccount && (
-          <div style={{ backgroundColor: '#FFF8E7', border: '1px solid #F0D080', borderRadius: 12, padding: '18px 20px', marginBottom: 16, textAlign: 'center' }}>
-            <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 16, fontWeight: 700, color: '#2C1810', marginBottom: 6 }}>Create a free account first</div>
-            <div style={{ fontSize: 13, color: '#8B7355', lineHeight: 1.5, marginBottom: 14 }}>
+          <div style={{ backgroundColor: '#FFFDF8', border: '1px solid rgba(200,169,110,0.34)', borderRadius: 12, padding: '18px 20px', marginBottom: 16, textAlign: 'center' }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, fontWeight: 700, color: '#15223B', marginBottom: 6 }}>Create a free account first</div>
+            <div style={{ fontSize: 13, color: '#5C6573', lineHeight: 1.5, marginBottom: 14, fontFamily: "'Inter', sans-serif" }}>
               Prayer Circles are tied to your account so you can lead and return to them. It only takes a moment.
             </div>
-            <a href="/signin?redirect=/circles/new" style={{ display: 'inline-block', backgroundColor: '#B8860B', color: '#fff', borderRadius: 8, padding: '10px 22px', fontSize: 14, fontFamily: 'Playfair Display, Georgia, serif', fontWeight: 700, textDecoration: 'none' }}>Create Free Account →</a>
+            <a href="/signin?redirect=/circles/new" style={{ display: 'inline-block', backgroundColor: '#C8A96E', color: '#0A1628', borderRadius: 8, padding: '10px 22px', fontSize: 12, fontFamily: "'Cinzel', serif", fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', textDecoration: 'none' }}>Create Free Account →</a>
             <div style={{ marginTop: 10 }}>
-              <a href="/signin?redirect=/circles/new" style={{ fontSize: 12, color: '#8B7355', textDecoration: 'underline' }}>Already have an account? Sign in</a>
+              <a href="/signin?redirect=/circles/new" style={{ fontSize: 12, color: '#5C6573', textDecoration: 'underline', fontFamily: "'Inter', sans-serif" }}>Already have an account? Sign in</a>
             </div>
           </div>
         )}
@@ -274,7 +282,7 @@ export default function NewCirclePage() {
             padding: '12px 16px',
             marginBottom: '16px'
           }}>
-            <p style={{ fontSize: '14px', color: '#C0392B', margin: 0 }}>{error}</p>
+            <p style={{ fontSize: '14px', color: '#C0392B', margin: 0, fontFamily: "'Inter', sans-serif" }}>{error}</p>
           </div>
         )}
 
@@ -283,14 +291,16 @@ export default function NewCirclePage() {
           disabled={loading || !name.trim()}
           style={{
             width: '100%',
-            backgroundColor: name.trim() ? '#B8860B' : '#D4C5B0',
-            color: '#fff',
+            backgroundColor: name.trim() ? '#C8A96E' : '#C9CFD6',
+            color: name.trim() ? '#0A1628' : '#5C6573',
             border: 'none',
             borderRadius: '10px',
             padding: '16px',
-            fontSize: '17px',
-            fontFamily: 'Playfair Display, Georgia, serif',
+            fontSize: '13px',
+            fontFamily: "'Cinzel', serif",
             fontWeight: '700',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
             cursor: name.trim() && !loading ? 'pointer' : 'default',
             opacity: loading ? 0.7 : 1
           }}
@@ -300,10 +310,11 @@ export default function NewCirclePage() {
 
         <p style={{
           fontSize: '12px',
-          color: '#8B7355',
+          color: '#5C6573',
           textAlign: 'center',
           marginTop: '14px',
-          lineHeight: '1.6'
+          lineHeight: '1.6',
+          fontFamily: "'Inter', sans-serif"
         }}>
           Only registered band holders can create a circle.
           You'll be the leader and will receive a shareable join code.

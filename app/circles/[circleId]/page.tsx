@@ -230,12 +230,12 @@ export default function CirclePage() {
     return (
       <div style={{
         minHeight: '100vh',
-        backgroundColor: '#FAF6EF',
+        backgroundColor: '#F6F1E4',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: 'Georgia, serif',
-        color: '#8B7355'
+        fontFamily: "'Inter', sans-serif",
+        color: '#5C6573'
       }}>
         Loading circle...
       </div>
@@ -246,28 +246,31 @@ export default function CirclePage() {
     return (
       <div style={{
         minHeight: '100vh',
-        backgroundColor: '#FAF6EF',
+        backgroundColor: '#F6F1E4',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: 'Georgia, serif',
+        fontFamily: "'Inter', sans-serif",
         padding: '24px',
         textAlign: 'center'
       }}>
-        <p style={{ fontSize: '16px', color: '#5C4033', marginBottom: '20px' }}>
+        <p style={{ fontSize: '16px', color: '#2A3344', marginBottom: '20px' }}>
           {error || 'This circle could not be found.'}
         </p>
         <button
           onClick={() => router.push('/circles')}
           style={{
-            backgroundColor: '#B8860B',
-            color: '#fff',
+            backgroundColor: '#C8A96E',
+            color: '#0A1628',
             border: 'none',
             borderRadius: '8px',
             padding: '10px 20px',
-            fontSize: '14px',
-            fontFamily: 'Georgia, serif',
+            fontSize: '12px',
+            fontFamily: "'Cinzel', serif",
+            fontWeight: '600',
+            letterSpacing: '0.07em',
+            textTransform: 'uppercase',
             cursor: 'pointer'
           }}
         >
@@ -283,15 +286,16 @@ export default function CirclePage() {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#FAF6EF',
-      fontFamily: 'Georgia, serif',
+      backgroundColor: '#F6F1E4',
+      fontFamily: "'Inter', sans-serif",
       paddingBottom: '80px'
     }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');`}</style>
 
       {/* Header */}
       <div style={{
-        backgroundColor: '#fff',
-        borderBottom: '1px solid #E8DCC8',
+        backgroundColor: '#FFFDF8',
+        borderBottom: '1px solid rgba(10,22,40,0.12)',
         padding: '20px 24px 0 24px'
       }}>
         <div style={{
@@ -308,24 +312,24 @@ export default function CirclePage() {
                 border: 'none',
                 fontSize: '20px',
                 cursor: 'pointer',
-                color: '#8B7355',
+                color: '#5C6573',
                 padding: 0,
                 lineHeight: 1
               }}
             >
               ←
             </button>
-            <PrayerBandsLogo size={28} color="#B8860B" />
+            <PrayerBandsLogo size={28} color="#C8A96E" />
             <div>
               <h1 style={{
-                fontFamily: 'Playfair Display, Georgia, serif',
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
                 fontSize: '20px',
                 fontWeight: '700',
-                color: '#2C1810',
+                color: '#15223B',
                 margin: 0,
                 lineHeight: 1.2
               }}>{circle.name}</h1>
-              <p style={{ fontSize: '12px', color: '#8B7355', margin: '3px 0 0 0' }}>
+              <p style={{ fontSize: '12px', color: '#5C6573', margin: '3px 0 0 0', fontFamily: "'Inter', sans-serif" }}>
                 {members.length} {members.length === 1 ? 'person' : 'people'} praying
               </p>
             </div>
@@ -334,8 +338,8 @@ export default function CirclePage() {
           <div
             onClick={copyCode}
             style={{
-              backgroundColor: '#FAF6EF',
-              border: '1px solid #E8DCC8',
+              backgroundColor: '#F6F1E4',
+              border: '1px solid rgba(200,169,110,0.34)',
               borderRadius: '8px',
               padding: '6px 12px',
               cursor: 'pointer',
@@ -343,13 +347,14 @@ export default function CirclePage() {
             }}
           >
             <p style={{
-              fontSize: '16px',
+              fontSize: '15px',
               fontWeight: '700',
               letterSpacing: '0.15em',
-              color: '#B8860B',
-              margin: 0
+              color: '#9A7A35',
+              margin: 0,
+              fontFamily: "'Cinzel', serif"
             }}>{circle.join_code}</p>
-            <p style={{ fontSize: '10px', color: '#8B7355', margin: '2px 0 0 0' }}>
+            <p style={{ fontSize: '10px', color: '#5C6573', margin: '2px 0 0 0', fontFamily: "'Inter', sans-serif" }}>
               {codeCopied ? 'Copied!' : 'tap to copy'}
             </p>
           </div>
@@ -365,14 +370,15 @@ export default function CirclePage() {
                 flex: 1,
                 background: 'none',
                 border: 'none',
-                borderBottom: tab === t ? '2px solid #B8860B' : '2px solid transparent',
+                borderBottom: tab === t ? '2px solid #C8A96E' : '2px solid transparent',
                 padding: '10px 0',
-                fontSize: '13px',
-                fontFamily: 'Georgia, serif',
+                fontSize: '11px',
+                fontFamily: "'Cinzel', serif",
                 fontWeight: tab === t ? '700' : '400',
-                color: tab === t ? '#B8860B' : '#8B7355',
+                color: tab === t ? '#9A7A35' : '#5C6573',
                 cursor: 'pointer',
-                textTransform: 'capitalize'
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em'
               }}
             >
               {t}
@@ -392,13 +398,16 @@ export default function CirclePage() {
                 onClick={() => setShowRequestForm(true)}
                 style={{
                   width: '100%',
-                  backgroundColor: '#fff',
-                  border: '2px dashed #D4C5B0',
+                  backgroundColor: '#FFFDF8',
+                  border: '2px dashed rgba(200,169,110,0.34)',
                   borderRadius: '10px',
                   padding: '14px',
-                  fontSize: '14px',
-                  fontFamily: 'Georgia, serif',
-                  color: '#8B7355',
+                  fontSize: '12px',
+                  fontFamily: "'Cinzel', serif",
+                  fontWeight: '600',
+                  letterSpacing: '0.07em',
+                  textTransform: 'uppercase',
+                  color: '#9A7A35',
                   cursor: 'pointer',
                   marginBottom: '20px'
                 }}
@@ -410,11 +419,12 @@ export default function CirclePage() {
             {/* Request form */}
             {showRequestForm && (
               <div style={{
-                backgroundColor: '#fff',
-                border: '1px solid #E8DCC8',
+                backgroundColor: '#FFFDF8',
+                border: '1px solid rgba(10,22,40,0.12)',
                 borderRadius: '12px',
                 padding: '20px',
-                marginBottom: '20px'
+                marginBottom: '20px',
+                boxShadow: '0 2px 8px rgba(10,22,40,0.06)'
               }}>
                 <textarea
                   value={requestText}
@@ -427,11 +437,11 @@ export default function CirclePage() {
                     width: '100%',
                     padding: '10px 14px',
                     fontSize: '15px',
-                    fontFamily: 'Georgia, serif',
-                    color: '#2C1810',
-                    border: '1px solid #E8DCC8',
+                    fontFamily: "'Inter', sans-serif",
+                    color: '#15223B',
+                    border: '1px solid rgba(200,169,110,0.34)',
                     borderRadius: '8px',
-                    backgroundColor: '#FAF6EF',
+                    backgroundColor: '#F6F1E4',
                     outline: 'none',
                     resize: 'none',
                     boxSizing: 'border-box',
@@ -444,12 +454,14 @@ export default function CirclePage() {
                     style={{
                       flex: 1,
                       backgroundColor: 'transparent',
-                      border: '1px solid #D4C5B0',
+                      border: '1px solid rgba(92,101,115,0.20)',
                       borderRadius: '8px',
                       padding: '10px',
-                      fontSize: '14px',
-                      fontFamily: 'Georgia, serif',
-                      color: '#8B7355',
+                      fontSize: '12px',
+                      fontFamily: "'Cinzel', serif",
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      color: '#5C6573',
                       cursor: 'pointer'
                     }}
                   >
@@ -460,14 +472,16 @@ export default function CirclePage() {
                     disabled={!requestText.trim() || submittingRequest}
                     style={{
                       flex: 2,
-                      backgroundColor: requestText.trim() ? '#B8860B' : '#D4C5B0',
+                      backgroundColor: requestText.trim() ? '#C8A96E' : '#C9CFD6',
                       border: 'none',
                       borderRadius: '8px',
                       padding: '10px',
-                      fontSize: '14px',
-                      fontFamily: 'Georgia, serif',
+                      fontSize: '12px',
+                      fontFamily: "'Cinzel', serif",
                       fontWeight: '600',
-                      color: '#fff',
+                      letterSpacing: '0.07em',
+                      textTransform: 'uppercase',
+                      color: requestText.trim() ? '#0A1628' : '#5C6573',
                       cursor: requestText.trim() ? 'pointer' : 'default'
                     }}
                   >
@@ -482,7 +496,8 @@ export default function CirclePage() {
               <div style={{
                 textAlign: 'center',
                 padding: '40px 20px',
-                color: '#8B7355'
+                color: '#5C6573',
+                fontFamily: "'Inter', sans-serif"
               }}>
                 <p style={{ fontSize: '32px', margin: '0 0 12px 0' }}>🕊️</p>
                 <p style={{ fontSize: '15px', margin: 0 }}>
@@ -505,12 +520,13 @@ export default function CirclePage() {
             {answeredRequests.length > 0 && (
               <div style={{ marginTop: '32px' }}>
                 <p style={{
-                  fontSize: '12px',
+                  fontSize: '10px',
                   fontWeight: '600',
-                  color: '#7BAE8E',
-                  letterSpacing: '0.1em',
+                  color: '#9A7A35',
+                  letterSpacing: '0.12em',
                   textTransform: 'uppercase',
-                  margin: '0 0 12px 0'
+                  margin: '0 0 12px 0',
+                  fontFamily: "'Cinzel', serif"
                 }}>
                   ✓ Answered Prayers ({answeredRequests.length})
                 </p>
@@ -536,14 +552,15 @@ export default function CirclePage() {
               <div
                 key={member.id}
                 style={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #E8DCC8',
+                  backgroundColor: '#FFFDF8',
+                  border: '1px solid rgba(10,22,40,0.12)',
                   borderRadius: '10px',
                   padding: '14px 16px',
                   marginBottom: '10px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between'
+                  justifyContent: 'space-between',
+                  boxShadow: '0 1px 4px rgba(10,22,40,0.05)'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -551,7 +568,7 @@ export default function CirclePage() {
                     width: '38px',
                     height: '38px',
                     borderRadius: '50%',
-                    backgroundColor: member.role === 'leader' ? '#B8860B' : '#E8DCC8',
+                    backgroundColor: member.role === 'leader' ? '#C8A96E' : '#ECEEF1',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -563,12 +580,13 @@ export default function CirclePage() {
                     <p style={{
                       fontSize: '14px',
                       fontWeight: '600',
-                      color: '#2C1810',
-                      margin: 0
+                      color: '#15223B',
+                      margin: 0,
+                      fontFamily: "'Inter', sans-serif"
                     }}>
                       {member.role === 'leader' ? 'Circle Leader' : 'Member'}
                     </p>
-                    <p style={{ fontSize: '12px', color: '#8B7355', margin: '2px 0 0 0' }}>
+                    <p style={{ fontSize: '12px', color: '#5C6573', margin: '2px 0 0 0', fontFamily: "'Inter', sans-serif" }}>
                       Joined {new Date(member.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </p>
                   </div>
@@ -578,10 +596,13 @@ export default function CirclePage() {
                     onClick={() => handleRemoveMember(member.user_id)}
                     style={{
                       background: 'none',
-                      border: '1px solid #E8C4BB',
+                      border: '1px solid rgba(192,57,43,0.35)',
                       borderRadius: '6px',
                       padding: '4px 10px',
-                      fontSize: '12px',
+                      fontSize: '11px',
+                      fontFamily: "'Cinzel', serif",
+                      letterSpacing: '0.05em',
+                      textTransform: 'uppercase',
                       color: '#C0392B',
                       cursor: 'pointer'
                     }}
@@ -599,34 +620,36 @@ export default function CirclePage() {
           <div>
             {/* Join code share card */}
             <div style={{
-              backgroundColor: '#fff',
-              border: '2px solid #B8860B',
+              backgroundColor: '#FFFDF8',
+              border: '2px solid rgba(200,169,110,0.34)',
               borderRadius: '12px',
               padding: '24px',
               marginBottom: '20px',
-              textAlign: 'center'
+              textAlign: 'center',
+              boxShadow: '0 4px 16px rgba(10,22,40,0.08)'
             }}>
               {isNew && (
                 <p style={{
-                  fontSize: '13px',
+                  fontSize: '10px',
                   fontWeight: '600',
-                  color: '#7BAE8E',
-                  letterSpacing: '0.08em',
+                  color: '#9A7A35',
+                  letterSpacing: '0.12em',
                   textTransform: 'uppercase',
-                  margin: '0 0 12px 0'
+                  margin: '0 0 12px 0',
+                  fontFamily: "'Cinzel', serif"
                 }}>
                   ✓ Circle Created!
                 </p>
               )}
-              <p style={{ fontSize: '13px', color: '#8B7355', margin: '0 0 8px 0' }}>
+              <p style={{ fontSize: '13px', color: '#5C6573', margin: '0 0 8px 0', fontFamily: "'Inter', sans-serif" }}>
                 Share this code to invite people
               </p>
               <div style={{
-                fontSize: '36px',
+                fontSize: '34px',
                 fontWeight: '700',
                 letterSpacing: '0.3em',
-                color: '#B8860B',
-                fontFamily: 'Georgia, serif',
+                color: '#15223B',
+                fontFamily: "'Cinzel', serif",
                 margin: '0 0 16px 0'
               }}>
                 {circle.join_code}
@@ -635,21 +658,23 @@ export default function CirclePage() {
                 onClick={shareCircle}
                 style={{
                   width: '100%',
-                  backgroundColor: '#B8860B',
-                  color: '#fff',
+                  backgroundColor: '#C8A96E',
+                  color: '#0A1628',
                   border: 'none',
                   borderRadius: '8px',
                   padding: '12px',
-                  fontSize: '15px',
-                  fontFamily: 'Georgia, serif',
+                  fontSize: '12px',
+                  fontFamily: "'Cinzel', serif",
                   fontWeight: '600',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
                   cursor: 'pointer',
                   marginBottom: '8px'
                 }}
               >
                 {codeCopied ? 'Copied!' : '📤 Share Join Code'}
               </button>
-              <p style={{ fontSize: '12px', color: '#B0A090', margin: 0 }}>
+              <p style={{ fontSize: '12px', color: '#5C6573', margin: 0, fontFamily: "'Inter', sans-serif" }}>
                 prayerbands.com/circles → enter code <strong>{circle.join_code}</strong>
               </p>
             </div>
@@ -657,26 +682,28 @@ export default function CirclePage() {
             {/* Circle description */}
             {circle.description && (
               <div style={{
-                backgroundColor: '#fff',
-                border: '1px solid #E8DCC8',
+                backgroundColor: '#FFFDF8',
+                border: '1px solid rgba(10,22,40,0.12)',
                 borderRadius: '12px',
                 padding: '20px',
                 marginBottom: '20px'
               }}>
                 <p style={{
-                  fontSize: '13px',
+                  fontSize: '10px',
                   fontWeight: '600',
-                  color: '#8B7355',
-                  letterSpacing: '0.08em',
+                  color: '#9A7A35',
+                  letterSpacing: '0.10em',
                   textTransform: 'uppercase',
-                  margin: '0 0 8px 0'
+                  margin: '0 0 8px 0',
+                  fontFamily: "'Cinzel', serif"
                 }}>About This Circle</p>
                 <p style={{
                   fontSize: '15px',
-                  color: '#5C4033',
+                  color: '#2A3344',
                   lineHeight: '1.7',
                   margin: 0,
-                  fontStyle: 'italic'
+                  fontStyle: 'italic',
+                  fontFamily: "'Cormorant Garamond', Georgia, serif"
                 }}>
                   "{circle.description}"
                 </p>
@@ -686,22 +713,24 @@ export default function CirclePage() {
             {/* Leader settings */}
             {myRole === 'leader' && (
               <div style={{
-                backgroundColor: '#fff',
-                border: '1px solid #E8DCC8',
+                backgroundColor: '#FFFDF8',
+                border: '1px solid rgba(10,22,40,0.12)',
                 borderRadius: '12px',
                 padding: '20px',
-                marginBottom: '20px'
+                marginBottom: '20px',
+                boxShadow: '0 2px 8px rgba(10,22,40,0.06)'
               }}>
                 <p style={{
-                  fontSize: '13px',
+                  fontSize: '10px',
                   fontWeight: '600',
-                  color: '#8B7355',
-                  letterSpacing: '0.08em',
+                  color: '#9A7A35',
+                  letterSpacing: '0.10em',
                   textTransform: 'uppercase',
-                  margin: '0 0 16px 0'
+                  margin: '0 0 16px 0',
+                  fontFamily: "'Cinzel', serif"
                 }}>Circle Settings</p>
 
-                <label style={{ fontSize: '12px', color: '#8B7355', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#5C6573', display: 'block', marginBottom: '4px', fontFamily: "'Inter', sans-serif", letterSpacing: '0.04em' }}>
                   Circle Name
                 </label>
                 <input
@@ -713,18 +742,18 @@ export default function CirclePage() {
                     width: '100%',
                     padding: '10px 12px',
                     fontSize: '14px',
-                    fontFamily: 'Georgia, serif',
-                    color: '#2C1810',
-                    border: '1px solid #E8DCC8',
+                    fontFamily: "'Inter', sans-serif",
+                    color: '#15223B',
+                    border: '1px solid rgba(200,169,110,0.34)',
                     borderRadius: '8px',
-                    backgroundColor: '#FAF6EF',
+                    backgroundColor: '#F6F1E4',
                     outline: 'none',
                     boxSizing: 'border-box',
                     marginBottom: '12px'
                   }}
                 />
 
-                <label style={{ fontSize: '12px', color: '#8B7355', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: '#5C6573', display: 'block', marginBottom: '4px', fontFamily: "'Inter', sans-serif", letterSpacing: '0.04em' }}>
                   Description
                 </label>
                 <textarea
@@ -736,11 +765,11 @@ export default function CirclePage() {
                     width: '100%',
                     padding: '10px 12px',
                     fontSize: '14px',
-                    fontFamily: 'Georgia, serif',
-                    color: '#2C1810',
-                    border: '1px solid #E8DCC8',
+                    fontFamily: "'Inter', sans-serif",
+                    color: '#15223B',
+                    border: '1px solid rgba(200,169,110,0.34)',
                     borderRadius: '8px',
-                    backgroundColor: '#FAF6EF',
+                    backgroundColor: '#F6F1E4',
                     outline: 'none',
                     resize: 'vertical',
                     boxSizing: 'border-box',
@@ -753,14 +782,16 @@ export default function CirclePage() {
                   disabled={savingSettings}
                   style={{
                     width: '100%',
-                    backgroundColor: '#2C1810',
-                    color: '#fff',
+                    backgroundColor: '#C8A96E',
+                    color: '#0A1628',
                     border: 'none',
                     borderRadius: '8px',
                     padding: '10px',
-                    fontSize: '14px',
-                    fontFamily: 'Georgia, serif',
+                    fontSize: '12px',
+                    fontFamily: "'Cinzel', serif",
                     fontWeight: '600',
+                    letterSpacing: '0.07em',
+                    textTransform: 'uppercase',
                     cursor: 'pointer',
                     marginBottom: '10px'
                   }}
@@ -773,12 +804,15 @@ export default function CirclePage() {
                   style={{
                     width: '100%',
                     backgroundColor: 'transparent',
-                    border: '1px solid #D4C5B0',
+                    border: '1px solid rgba(92,101,115,0.20)',
                     borderRadius: '8px',
                     padding: '10px',
-                    fontSize: '14px',
-                    fontFamily: 'Georgia, serif',
-                    color: '#8B7355',
+                    fontSize: '12px',
+                    fontFamily: "'Cinzel', serif",
+                    fontWeight: '600',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: '#5C6573',
                     cursor: 'pointer',
                     marginBottom: '10px'
                   }}
@@ -792,11 +826,14 @@ export default function CirclePage() {
                     style={{
                       width: '100%',
                       backgroundColor: 'transparent',
-                      border: '1px solid #E8C4BB',
+                      border: '1px solid rgba(192,57,43,0.35)',
                       borderRadius: '8px',
                       padding: '10px',
-                      fontSize: '14px',
-                      fontFamily: 'Georgia, serif',
+                      fontSize: '12px',
+                      fontFamily: "'Cinzel', serif",
+                      fontWeight: '600',
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
                       color: '#C0392B',
                       cursor: 'pointer'
                     }}
@@ -806,11 +843,11 @@ export default function CirclePage() {
                 ) : (
                   <div style={{
                     backgroundColor: '#FDF0EE',
-                    border: '1px solid #E8C4BB',
+                    border: '1px solid rgba(192,57,43,0.25)',
                     borderRadius: '8px',
                     padding: '14px'
                   }}>
-                    <p style={{ fontSize: '13px', color: '#5C4033', margin: '0 0 12px 0' }}>
+                    <p style={{ fontSize: '13px', color: '#2A3344', margin: '0 0 12px 0', fontFamily: "'Inter', sans-serif", lineHeight: 1.6 }}>
                       Closing this circle will remove it from everyone's dashboard.
                       Prayer requests will be preserved. Are you sure?
                     </p>
@@ -820,11 +857,14 @@ export default function CirclePage() {
                         style={{
                           flex: 1,
                           backgroundColor: 'transparent',
-                          border: '1px solid #D4C5B0',
+                          border: '1px solid rgba(92,101,115,0.20)',
                           borderRadius: '6px',
                           padding: '8px',
-                          fontSize: '13px',
-                          color: '#8B7355',
+                          fontSize: '11px',
+                          fontFamily: "'Cinzel', serif",
+                          letterSpacing: '0.05em',
+                          textTransform: 'uppercase',
+                          color: '#5C6573',
                           cursor: 'pointer'
                         }}
                       >
@@ -838,7 +878,10 @@ export default function CirclePage() {
                           border: 'none',
                           borderRadius: '6px',
                           padding: '8px',
-                          fontSize: '13px',
+                          fontSize: '11px',
+                          fontFamily: "'Cinzel', serif",
+                          letterSpacing: '0.05em',
+                          textTransform: 'uppercase',
                           color: '#fff',
                           fontWeight: '600',
                           cursor: 'pointer'
@@ -859,11 +902,14 @@ export default function CirclePage() {
                 style={{
                   width: '100%',
                   backgroundColor: 'transparent',
-                  border: '1px solid #E8C4BB',
+                  border: '1px solid rgba(192,57,43,0.35)',
                   borderRadius: '8px',
                   padding: '12px',
-                  fontSize: '14px',
-                  fontFamily: 'Georgia, serif',
+                  fontSize: '12px',
+                  fontFamily: "'Cinzel', serif",
+                  fontWeight: '600',
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
                   color: '#C0392B',
                   cursor: 'pointer'
                 }}
@@ -894,21 +940,23 @@ function PrayerRequestCard({
 }) {
   return (
     <div style={{
-      backgroundColor: answered ? '#F5F5F0' : '#fff',
-      border: `1px solid ${answered ? '#D4D0C8' : '#E8DCC8'}`,
+      backgroundColor: answered ? '#ECEEF1' : '#FFFDF8',
+      border: `1px solid ${answered ? 'rgba(92,101,115,0.20)' : 'rgba(10,22,40,0.12)'}`,
       borderRadius: '10px',
       padding: '16px',
       marginBottom: '12px',
-      opacity: answered ? 0.8 : 1
+      opacity: answered ? 0.85 : 1,
+      boxShadow: answered ? 'none' : '0 1px 4px rgba(10,22,40,0.05)'
     }}>
       {answered && (
         <p style={{
-          fontSize: '11px',
+          fontSize: '10px',
           fontWeight: '600',
-          color: '#7BAE8E',
-          letterSpacing: '0.08em',
+          color: '#9A7A35',
+          letterSpacing: '0.10em',
           textTransform: 'uppercase',
-          margin: '0 0 8px 0'
+          margin: '0 0 8px 0',
+          fontFamily: "'Cinzel', serif"
         }}>
           ✓ Answered
         </p>
@@ -916,10 +964,11 @@ function PrayerRequestCard({
 
       <p style={{
         fontSize: '15px',
-        color: '#2C1810',
+        color: '#2A3344',
         lineHeight: '1.6',
         margin: '0 0 12px 0',
-        fontStyle: 'italic'
+        fontStyle: 'italic',
+        fontFamily: "'Cormorant Garamond', Georgia, serif"
       }}>
         "{request.request_text}"
       </p>
@@ -932,13 +981,13 @@ function PrayerRequestCard({
         <button
           onClick={onIntercede}
           style={{
-            backgroundColor: request.i_prayed ? '#FFF8E7' : '#FAF6EF',
-            border: `1px solid ${request.i_prayed ? '#B8860B' : '#E8DCC8'}`,
+            backgroundColor: request.i_prayed ? '#F5EDD8' : '#F6F1E4',
+            border: `1px solid ${request.i_prayed ? 'rgba(200,169,110,0.34)' : 'rgba(92,101,115,0.20)'}`,
             borderRadius: '20px',
             padding: '6px 14px',
-            fontSize: '13px',
-            fontFamily: 'Georgia, serif',
-            color: request.i_prayed ? '#B8860B' : '#8B7355',
+            fontSize: '12px',
+            fontFamily: "'Inter', sans-serif",
+            color: request.i_prayed ? '#9A7A35' : '#5C6573',
             cursor: 'pointer',
             fontWeight: request.i_prayed ? '600' : '400'
           }}
@@ -952,8 +1001,11 @@ function PrayerRequestCard({
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '12px',
-              color: '#7BAE8E',
+              fontSize: '11px',
+              fontFamily: "'Cinzel', serif",
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              color: '#9A7A35',
               cursor: 'pointer',
               padding: '0'
             }}
@@ -968,8 +1020,11 @@ function PrayerRequestCard({
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '12px',
-              color: '#8B7355',
+              fontSize: '11px',
+              fontFamily: "'Cinzel', serif",
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              color: '#5C6573',
               cursor: 'pointer',
               padding: '0'
             }}

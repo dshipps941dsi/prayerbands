@@ -32,12 +32,13 @@ export default function SiteHeader() {
         </nav>
       </div>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
         .site-header {
           position: sticky; top: 0; z-index: 1000;
-          background: rgba(253,250,245,0.97);
-          -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-          border-bottom: 1px solid #E8DFD0;
-          font-family: Georgia, 'Times New Roman', serif;
+          background: rgba(246,241,228,0.95);
+          -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+          border-bottom: 1px solid var(--pb-border-gold, rgba(200,169,110,0.34));
+          font-family: var(--pb-font-display, 'Cormorant Garamond', Georgia, serif);
         }
         .site-header-inner {
           max-width: 1160px; margin: 0 auto; height: 56px;
@@ -45,14 +46,20 @@ export default function SiteHeader() {
           padding: 0 20px; gap: 14px;
         }
         .site-header-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; flex-shrink: 0; }
-        .site-header-name { font-size: 18px; font-weight: 700; color: #2C1A0E; }
-        .site-header-nav { display: flex; align-items: center; gap: 20px; }
-        .site-header-link {
-          font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase;
-          color: #5C3D2E; text-decoration: none; white-space: nowrap;
-          font-family: 'Lato', Helvetica, Arial, sans-serif; transition: color 0.15s;
+        .site-header-name {
+          font-family: var(--pb-font-heading, 'Cinzel', Georgia, serif);
+          font-size: 17px; font-weight: 700; letter-spacing: 0.06em;
+          color: var(--pb-ink, #15223B);
         }
-        .site-header-link:hover { color: #C8A96E; }
+        .site-header-nav { display: flex; align-items: center; gap: 22px; }
+        .site-header-link {
+          font-family: var(--pb-font-heading, 'Cinzel', Georgia, serif);
+          font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600;
+          color: var(--pb-slate, #5C6573); text-decoration: none; white-space: nowrap;
+          transition: color 0.15s;
+        }
+        .site-header-link:hover { color: var(--pb-gold-ink, #9A7A35); }
+        .site-header-link--secondary { color: var(--pb-ink, #15223B); }
         /* On phones, keep just the logo (home link) to avoid crowding/overflow;
            full nav returns on wider screens. */
         @media (max-width: 560px) {

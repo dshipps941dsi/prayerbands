@@ -15,3 +15,5 @@ Guidance:
   image). Add or rename files anytime — no code change needed.
 - To point a theme at a different filename or a remote URL, edit its
   `backgroundImage` value in `lib/themes.ts`.
+- To make a theme's image bolder/more visible, lower its `backgroundImageWash`
+  in `lib/themes.ts` (0–1; defaults to 0.82). Military uses 0.58 (image-forward).

@@ -1,6 +1,52 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────
+   PrayerBands brand palette — single source of truth.
+   Navy + gold + cream (from the home page), with silver/gray
+   mixed in to break things up. Light-background variant: pages
+   stay readable (dark text on light), accents are navy + gold,
+   and silver/gray carries alternating surfaces, borders & dividers.
+   Use these var()s instead of hardcoding hex going forward.
+   ───────────────────────────────────────────────────────────── */
 :root {
+  /* Core navy (deep brand) */
+  --pb-navy:        #0A1628;
+  --pb-navy-2:      #0E1E38;
+  --pb-navy-3:      #132544;
+
+  /* Gold */
+  --pb-gold:        #C8A96E;   /* primary gold */
+  --pb-gold-light:  #E2C98A;
+  --pb-gold-pale:   #F0DFA8;
+  --pb-gold-ink:    #9A7A35;   /* gold text/icons readable on light */
+  --pb-gold-deep:   #5A3E12;   /* deepest gold/brown for emphasis on gold */
+
+  /* Cream / light surfaces */
+  --pb-cream:       #F5EDD8;
+  --pb-page:        #F6F1E4;   /* default light page background */
+  --pb-surface:     #FFFDF8;   /* card / panel surface */
+  --pb-surface-2:   #FFFFFF;
+
+  /* Silver / gray (the break-up accent) */
+  --pb-silver:      #C9CFD6;   /* silver line / chip */
+  --pb-silver-soft: #ECEEF1;   /* alternating section surface */
+  --pb-mist:        #F0F1F4;   /* very subtle gray surface */
+  --pb-slate:       #5C6573;   /* secondary text (gray) */
+
+  /* Text */
+  --pb-ink:         #15223B;   /* primary heading/text (navy-tinted) */
+  --pb-body:        #2A3344;   /* body text */
+
+  /* Borders */
+  --pb-border:        rgba(10,22,40,0.12);    /* neutral hairline */
+  --pb-border-gold:   rgba(200,169,110,0.34); /* gold hairline */
+  --pb-border-silver: rgba(92,101,115,0.20);  /* silver/gray hairline */
+
+  /* Brand fonts */
+  --pb-font-display: 'Cormorant Garamond', Georgia, serif; /* big serif */
+  --pb-font-heading: 'Cinzel', Georgia, serif;             /* small-caps labels */
+  --pb-font-body:    'Inter', system-ui, sans-serif;       /* body / UI */
+
   --background: #ffffff;
   --foreground: #171717;
 }

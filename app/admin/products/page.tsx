@@ -5,7 +5,25 @@ import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 import { THEME_OPTIONS } from '@/lib/themes'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
-const green = '#1a6b4a'
+
+// PrayerBands brand palette
+const C = {
+  pageBg: '#F6F1E4',
+  card: '#FFFDF8',
+  navy: '#0A1628',
+  gold: '#C8A96E',
+  goldText: '#9A7A35',
+  silver: '#C9CFD6',
+  silverBg: '#ECEEF1',
+  heading: '#15223B',
+  body: '#2A3344',
+  secondary: '#5C6573',
+  borderGold: 'rgba(200,169,110,0.34)',
+  borderNavy: 'rgba(10,22,40,0.12)',
+  borderSilver: 'rgba(92,101,115,0.20)',
+  green: '#4A8A6A',
+  red: '#c0392b',
+}
 
 type Variant = { size: string; stock: number; backorder: boolean }
 type P = {
@@ -105,36 +123,36 @@ export default function AdminProducts() {
     else setMsg('❌ ' + (d.error || 'Upload failed.'))
   }
 
-  if (loading || !authorized) return <div style={{ padding: 40, fontFamily: 'Georgia, serif', color: '#8a7c6a' }}>Loading... ✝</div>
+  if (loading || !authorized) return <div style={{ padding: 40, fontFamily: 'Inter, sans-serif', color: C.secondary }}>Loading... ✝</div>
 
-  const label: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: '#7a6c5a', display: 'block', marginBottom: 5, letterSpacing: '0.04em', textTransform: 'uppercase' }
-  const input: React.CSSProperties = { width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #ddd6ca', fontSize: 14, fontFamily: 'Georgia, serif', background: '#fff', color: '#2c2416', boxSizing: 'border-box', outline: 'none' }
+  const label: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: C.goldText, display: 'block', marginBottom: 5, letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: 'Cinzel, serif' }
+  const input: React.CSSProperties = { width: '100%', padding: '8px 10px', borderRadius: 6, border: `1px solid ${C.borderNavy}`, fontSize: 14, fontFamily: 'Inter, sans-serif', background: C.pageBg, color: C.body, boxSizing: 'border-box', outline: 'none' }
   const field = (l: string, node: React.ReactNode) => <div style={{ marginBottom: 12 }}><label style={label}>{l}</label>{node}</div>
 
   return (
-    <div style={{ fontFamily: 'Georgia, serif', background: '#f7f4ef', minHeight: '100vh', padding: 32 }}>
+    <div style={{ fontFamily: 'Inter, sans-serif', background: C.pageBg, minHeight: '100vh', padding: 32 }}>
       <div style={{ maxWidth: 760, margin: '0 auto' }}>
         <div style={{ marginBottom: 24 }}>
-          <div style={{ marginBottom: 12 }}><PrayerBandsLogo size={34} color={green} /></div>
-          <a href="/admin" style={{ color: green, fontSize: 14, textDecoration: 'none' }}>← Admin</a>
-          <h1 style={{ fontSize: 26, fontWeight: 'bold', marginTop: 8, color: '#1a1208' }}>Products</h1>
-          <p style={{ color: '#8a7c6a', fontSize: 14 }}>Add band designs and packs, set prices, sizes, per-size stock, and backorder.</p>
+          <div style={{ marginBottom: 12 }}><PrayerBandsLogo size={34} color={C.gold} /></div>
+          <a href="/admin" style={{ color: C.goldText, fontSize: 13, textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>← Admin</a>
+          <h1 style={{ fontSize: 30, fontWeight: 600, marginTop: 8, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Products</h1>
+          <p style={{ color: C.secondary, fontSize: 14 }}>Add band designs and packs, set prices, sizes, per-size stock, and backorder.</p>
         </div>
 
-        {msg && <div style={{ marginBottom: 16, fontSize: 14, color: msg.startsWith('❌') ? '#c0392b' : green }}>{msg}</div>}
+        {msg && <div style={{ marginBottom: 16, fontSize: 14, color: msg.startsWith('❌') ? C.red : C.green }}>{msg}</div>}
 
         {/* New product */}
-        <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 12, padding: '16px 20px', marginBottom: 24, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 12, padding: '16px 20px', marginBottom: 24, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end', boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
           <div style={{ flex: 1, minWidth: 140 }}>{field('New product name', <input style={input} value={newName} onChange={e => setNewName(e.target.value)} placeholder="Beach Band" />)}</div>
           <div style={{ flex: 1, minWidth: 120 }}>{field('Slug (id)', <input style={input} value={newSlug} onChange={e => setNewSlug(e.target.value)} placeholder="beach" />)}</div>
-          <button onClick={addProduct} disabled={!newSlug.trim() || !newName.trim()} style={{ background: green, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', fontFamily: 'Georgia, serif', marginBottom: 12 }}>+ Add</button>
+          <button onClick={addProduct} disabled={!newSlug.trim() || !newName.trim()} style={{ background: C.gold, color: C.navy, border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>+ Add</button>
         </div>
 
         {products.map(p => (
-          <div key={p.id} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 12, padding: '20px 22px', marginBottom: 20, opacity: p.active ? 1 : 0.7 }}>
+          <div key={p.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 12, padding: '20px 22px', marginBottom: 20, opacity: p.active ? 1 : 0.7, boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 'bold', color: '#1a1208' }}>{p.name} <span style={{ fontSize: 12, color: '#b8a898', fontWeight: 400 }}>/{p.slug}</span></h2>
-              <label style={{ fontSize: 13, color: '#5a4f42', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 600, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{p.name} <span style={{ fontSize: 12, color: C.secondary, fontWeight: 400 }}>/{p.slug}</span></h2>
+              <label style={{ fontSize: 13, color: C.body, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <input type="checkbox" checked={p.active} onChange={e => edit(p.id, { active: e.target.checked })} style={{ width: 'auto' }} /> Active
               </label>
             </div>
@@ -154,13 +172,13 @@ export default function AdminProducts() {
             {field('Features (one per line)', <textarea style={{ ...input, minHeight: 70 }} value={p.features.join('\n')} onChange={e => edit(p.id, { features: e.target.value.split('\n').map(s => s.trim()).filter(Boolean) })} />)}
 
             <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 12 }}>
-              <label style={{ fontSize: 13, color: '#5a4f42', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <label style={{ fontSize: 13, color: C.body, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <input type="checkbox" checked={p.multi_discount} onChange={e => edit(p.id, { multi_discount: e.target.checked })} style={{ width: 'auto' }} /> Auto 3+/5+ discount
               </label>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 13, color: '#5a4f42' }}>Sizes:</span>
+                <span style={{ fontSize: 13, color: C.body }}>Sizes:</span>
                 {['S', 'M', 'L'].map(s => (
-                  <label key={s} style={{ fontSize: 13, color: '#5a4f42', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <label key={s} style={{ fontSize: 13, color: C.body, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     <input type="checkbox" checked={p.sizes.includes(s)} onChange={() => toggleSize(p, s)} style={{ width: 'auto' }} /> {s}
                   </label>
                 ))}
@@ -170,11 +188,11 @@ export default function AdminProducts() {
             {/* Stock per variant */}
             <div style={{ marginBottom: 12 }}>
               <label style={label}>Stock & backorder</label>
-              {p.variants.length === 0 ? <div style={{ fontSize: 13, color: '#b8a898' }}>Save to create variant rows.</div> : p.variants.map(v => (
+              {p.variants.length === 0 ? <div style={{ fontSize: 13, color: C.secondary }}>Save to create variant rows.</div> : p.variants.map(v => (
                 <div key={v.size} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-                  <span style={{ width: 70, fontSize: 13, color: '#5a4f42' }}>{v.size || 'One size'}</span>
+                  <span style={{ width: 70, fontSize: 13, color: C.body }}>{v.size || 'One size'}</span>
                   <input style={{ ...input, width: 110 }} type="number" value={v.stock.toString()} onChange={e => editVariant(p.id, v.size, { stock: parseInt(e.target.value) || 0 })} />
-                  <label style={{ fontSize: 13, color: '#5a4f42', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <label style={{ fontSize: 13, color: C.body, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                     <input type="checkbox" checked={v.backorder} onChange={e => editVariant(p.id, v.size, { backorder: e.target.checked })} style={{ width: 'auto' }} /> Backorder
                   </label>
                 </div>
@@ -183,14 +201,14 @@ export default function AdminProducts() {
 
             {/* Images */}
             {field('Image URLs (one per line)', <textarea style={{ ...input, minHeight: 54 }} value={p.image_urls.join('\n')} onChange={e => edit(p.id, { image_urls: e.target.value.split('\n').map(s => s.trim()).filter(Boolean) })} placeholder="/products/beach-1.jpg" />)}
-            <label style={{ display: 'inline-block', fontSize: 12, color: green, cursor: 'pointer', marginBottom: 14, textDecoration: 'underline' }}>
+            <label style={{ display: 'inline-block', fontSize: 12, color: C.goldText, cursor: 'pointer', marginBottom: 14, textDecoration: 'underline', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               + Upload image
               <input type="file" accept="image/png,image/jpeg,image/webp" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadImage(p, f) }} />
             </label>
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => save(p)} disabled={savingId === p.id} style={{ background: savingId === p.id ? '#ccc' : green, color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>{savingId === p.id ? 'Saving…' : 'Save'}</button>
-              <button onClick={() => remove(p)} style={{ background: 'transparent', border: '1px solid #e0b4b4', color: '#c0392b', borderRadius: 8, padding: '10px 16px', fontSize: 13, cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Delete</button>
+              <button onClick={() => save(p)} disabled={savingId === p.id} style={{ background: savingId === p.id ? C.silver : C.gold, color: savingId === p.id ? '#fff' : C.navy, border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{savingId === p.id ? 'Saving…' : 'Save'}</button>
+              <button onClick={() => remove(p)} style={{ background: 'transparent', border: `1px solid rgba(192,57,43,0.35)`, color: C.red, borderRadius: 8, padding: '10px 16px', fontSize: 11, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Delete</button>
             </div>
           </div>
         ))}

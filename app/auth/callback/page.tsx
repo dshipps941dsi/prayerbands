@@ -52,10 +52,10 @@ export default function AuthCallback() {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f4ef', fontFamily: 'Georgia, serif', textAlign: 'center' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F1E4', fontFamily: "'Inter', sans-serif", textAlign: 'center' }}>
       <div>
-        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={48} color="#1a6b4a" /></div>
-        <div style={{ fontSize: 16, color: '#5a4f42' }}>Signing you in...</div>
+        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={48} color="#C8A96E" /></div>
+        <div style={{ fontSize: 16, color: '#5C6573' }}>Signing you in...</div>
       </div>
     </div>
   )

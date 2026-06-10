@@ -98,10 +98,10 @@ export default function SubscribePage() {
   const color = BAND_COLORS.find(c => c.id === bandColor);
 
   if (!authed) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5ECD7', fontFamily: 'Georgia, serif', textAlign: 'center' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F1E4', fontFamily: 'Inter, sans-serif', textAlign: 'center' }}>
       <div>
         <div style={{ fontSize: 48, color: '#C8A96E', marginBottom: 16 }}>✝</div>
-        <div style={{ fontSize: 16, color: '#8B7060' }}>Loading subscription plans…</div>
+        <div style={{ fontSize: 16, color: '#5C6573' }}>Loading subscription plans…</div>
       </div>
     </div>
   );
@@ -126,22 +126,22 @@ export default function SubscribePage() {
     <>
       <SiteHeader />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lato:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-          background: #F5ECD7;
-          font-family: 'Lato', sans-serif;
-          color: #3D2B1F;
+          background: #F6F1E4;
+          font-family: 'Inter', sans-serif;
+          color: #2A3344;
         }
 
         .page {
           min-height: 100vh;
           background:
-            radial-gradient(ellipse at 20% 10%, rgba(200,169,110,0.12) 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 90%, rgba(123,143,174,0.10) 0%, transparent 50%),
-            #F5ECD7;
+            radial-gradient(ellipse at 20% 10%, rgba(200,169,110,0.10) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 90%, rgba(201,207,214,0.18) 0%, transparent 50%),
+            #F6F1E4;
         }
 
         /* ── HERO ── */
@@ -152,33 +152,33 @@ export default function SubscribePage() {
         }
 
         .hero-eyebrow {
-          font-family: 'Lato', sans-serif;
+          font-family: 'Cinzel', serif;
           font-size: 11px;
-          font-weight: 700;
+          font-weight: 600;
           letter-spacing: 0.25em;
           text-transform: uppercase;
-          color: #C8A96E;
+          color: #9A7A35;
           margin-bottom: 18px;
         }
 
         .hero-title {
-          font-family: 'Playfair Display', serif;
+          font-family: 'Cormorant Garamond', serif;
           font-size: clamp(36px, 6vw, 58px);
           font-weight: 700;
-          color: #3D2B1F;
+          color: #15223B;
           line-height: 1.1;
           margin-bottom: 20px;
         }
 
         .hero-title em {
           font-style: italic;
-          color: #7B8FAE;
+          color: #C8A96E;
         }
 
         .hero-subtitle {
           font-size: 17px;
           font-weight: 300;
-          color: #6B5040;
+          color: #5C6573;
           max-width: 520px;
           margin: 0 auto 40px;
           line-height: 1.7;
@@ -211,15 +211,15 @@ export default function SubscribePage() {
           width: 32px;
           height: 32px;
           border-radius: 50%;
-          border: 2px solid #D4C4A8;
+          border: 2px solid rgba(201,207,214,0.8);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-family: 'Lato', sans-serif;
-          font-size: 13px;
-          font-weight: 700;
-          color: #A89070;
-          background: #F5ECD7;
+          font-family: 'Cinzel', serif;
+          font-size: 12px;
+          font-weight: 600;
+          color: #5C6573;
+          background: #F6F1E4;
           flex-shrink: 0;
           transition: all 0.3s;
           position: relative;
@@ -229,31 +229,32 @@ export default function SubscribePage() {
         .step-dot.active {
           background: #C8A96E;
           border-color: #C8A96E;
-          color: #fff;
-          box-shadow: 0 0 0 4px rgba(200,169,110,0.2);
+          color: #0A1628;
+          box-shadow: 0 0 0 4px rgba(200,169,110,0.20);
         }
 
         .step-dot.done {
-          background: #7BAE8E;
-          border-color: #7BAE8E;
+          background: #9A7A35;
+          border-color: #9A7A35;
           color: #fff;
         }
 
         .step-label {
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.1em;
+          font-family: 'Cinzel', serif;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
-          color: #A89070;
+          color: #5C6573;
         }
 
-        .step-label.active { color: #C8A96E; }
-        .step-label.done { color: #7BAE8E; }
+        .step-label.active { color: #9A7A35; }
+        .step-label.done { color: #9A7A35; }
 
         .step-line {
           flex: 1;
-          height: 2px;
-          background: #D4C4A8;
+          height: 1px;
+          background: rgba(201,207,214,0.8);
           margin: 0 8px;
         }
 
@@ -265,19 +266,20 @@ export default function SubscribePage() {
 
         /* ── SECTION TITLE ── */
         .section-title {
-          font-family: 'Playfair Display', serif;
-          font-size: 26px;
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 28px;
           font-weight: 600;
-          color: #3D2B1F;
+          color: #15223B;
           text-align: center;
           margin-bottom: 8px;
         }
 
         .section-sub {
           font-size: 14px;
-          color: #8B7060;
+          color: #5C6573;
           text-align: center;
           margin-bottom: 36px;
+          font-family: 'Inter', sans-serif;
         }
 
         /* ── PLAN CARDS ── */
@@ -291,25 +293,25 @@ export default function SubscribePage() {
         }
 
         .plan-card {
-          background: rgba(255,255,255,0.6);
-          border: 2px solid #E0D0B8;
+          background: #FFFDF8;
+          border: 1px solid rgba(10,22,40,0.12);
           border-radius: 20px;
           padding: 32px 28px;
           cursor: pointer;
           transition: all 0.25s;
           position: relative;
-          backdrop-filter: blur(4px);
+          box-shadow: 0 2px 12px rgba(10,22,40,0.06);
         }
 
         .plan-card:hover {
           transform: translateY(-4px);
-          box-shadow: 0 12px 40px rgba(61,43,31,0.12);
+          box-shadow: 0 12px 40px rgba(10,22,40,0.10);
         }
 
         .plan-card.selected {
           border-width: 2px;
-          box-shadow: 0 8px 32px rgba(61,43,31,0.15);
-          background: rgba(255,255,255,0.85);
+          box-shadow: 0 8px 32px rgba(10,22,40,0.12);
+          background: #FFFDF8;
           transform: translateY(-4px);
         }
 
@@ -320,11 +322,12 @@ export default function SubscribePage() {
           transform: translateX(-50%);
           padding: 4px 16px;
           border-radius: 20px;
-          font-size: 10px;
+          font-family: 'Cinzel', serif;
+          font-size: 9px;
           font-weight: 700;
           letter-spacing: 0.15em;
           text-transform: uppercase;
-          color: #fff;
+          color: #0A1628;
           white-space: nowrap;
         }
 
@@ -335,26 +338,28 @@ export default function SubscribePage() {
         }
 
         .plan-name {
-          font-family: 'Playfair Display', serif;
+          font-family: 'Cormorant Garamond', serif;
           font-size: 22px;
           font-weight: 700;
-          color: #3D2B1F;
+          color: #15223B;
           margin-bottom: 4px;
         }
 
         .plan-cadence {
-          font-size: 12px;
-          font-weight: 700;
-          letter-spacing: 0.12em;
+          font-family: 'Cinzel', serif;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
           margin-bottom: 16px;
         }
 
         .plan-desc {
           font-size: 14px;
-          color: #6B5040;
+          color: #5C6573;
           line-height: 1.6;
           margin-bottom: 24px;
+          font-family: 'Inter', sans-serif;
         }
 
         .plan-pricing {
@@ -365,25 +370,27 @@ export default function SubscribePage() {
         }
 
         .plan-total {
-          font-family: 'Playfair Display', serif;
+          font-family: 'Cormorant Garamond', serif;
           font-size: 32px;
           font-weight: 700;
-          color: #3D2B1F;
+          color: #15223B;
         }
 
         .plan-period {
           font-size: 13px;
-          color: #8B7060;
+          color: #5C6573;
+          font-family: 'Inter', sans-serif;
         }
 
         .plan-savings {
           font-size: 12px;
-          font-weight: 700;
-          color: #7BAE8E;
+          font-weight: 600;
+          color: #9A7A35;
           margin-bottom: 20px;
           display: flex;
           align-items: center;
           gap: 6px;
+          font-family: 'Inter', sans-serif;
         }
 
         .plan-savings::before {
@@ -392,7 +399,7 @@ export default function SubscribePage() {
           width: 6px;
           height: 6px;
           border-radius: 50%;
-          background: #7BAE8E;
+          background: #C8A96E;
         }
 
         .plan-perks {
@@ -407,7 +414,8 @@ export default function SubscribePage() {
           align-items: center;
           gap: 10px;
           font-size: 13px;
-          color: #5B4030;
+          color: #2A3344;
+          font-family: 'Inter', sans-serif;
         }
 
         .perk-check {
@@ -418,7 +426,7 @@ export default function SubscribePage() {
           align-items: center;
           justify-content: center;
           font-size: 10px;
-          color: #fff;
+          color: #0A1628;
           flex-shrink: 0;
         }
 
@@ -428,10 +436,10 @@ export default function SubscribePage() {
           padding: 14px;
           border-radius: 12px;
           border: 2px solid;
-          font-family: 'Lato', sans-serif;
-          font-size: 14px;
-          font-weight: 700;
-          letter-spacing: 0.08em;
+          font-family: 'Cinzel', serif;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.10em;
           text-transform: uppercase;
           cursor: pointer;
           transition: all 0.2s;
@@ -439,7 +447,7 @@ export default function SubscribePage() {
         }
 
         .select-btn.selected-btn {
-          color: #fff !important;
+          color: #0A1628 !important;
           border-color: transparent !important;
         }
 
@@ -458,25 +466,26 @@ export default function SubscribePage() {
         }
 
         .color-card {
-          border: 2px solid #E0D0B8;
+          border: 1px solid rgba(201,207,214,0.6);
           border-radius: 16px;
           padding: 20px 16px;
           text-align: center;
           cursor: pointer;
           transition: all 0.2s;
-          background: rgba(255,255,255,0.5);
+          background: #FFFDF8;
+          box-shadow: 0 1px 6px rgba(10,22,40,0.05);
         }
 
         .color-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(61,43,31,0.1);
+          box-shadow: 0 6px 20px rgba(10,22,40,0.08);
         }
 
         .color-card.selected {
           border-width: 2px;
-          background: rgba(255,255,255,0.9);
+          background: #FFFDF8;
           transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(61,43,31,0.15);
+          box-shadow: 0 6px 20px rgba(200,169,110,0.18);
         }
 
         .color-swatch {
@@ -506,20 +515,23 @@ export default function SubscribePage() {
         }
 
         .color-name {
-          font-size: 12px;
-          font-weight: 700;
-          letter-spacing: 0.05em;
-          color: #5B4030;
+          font-family: 'Cinzel', serif;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          color: #2A3344;
+          text-transform: uppercase;
         }
 
         /* ── BAND PREVIEW ── */
         .band-preview {
-          background: rgba(255,255,255,0.5);
-          border: 2px solid #E0D0B8;
+          background: #FFFDF8;
+          border: 1px solid rgba(200,169,110,0.34);
           border-radius: 20px;
           padding: 32px;
           text-align: center;
           margin-bottom: 32px;
+          box-shadow: 0 2px 16px rgba(10,22,40,0.06);
         }
 
         .band-visual {
@@ -545,23 +557,24 @@ export default function SubscribePage() {
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          font-family: 'Lato', sans-serif;
-          font-size: 11px;
-          font-weight: 700;
+          font-family: 'Cinzel', serif;
+          font-size: 10px;
+          font-weight: 600;
           letter-spacing: 0.15em;
-          color: #8B7060;
+          color: #5C6573;
         }
 
         .band-preview-label {
-          font-family: 'Playfair Display', serif;
+          font-family: 'Cormorant Garamond', serif;
           font-size: 16px;
-          color: #3D2B1F;
+          color: #15223B;
           margin-bottom: 4px;
         }
 
         .band-preview-sub {
           font-size: 12px;
-          color: #8B7060;
+          color: #5C6573;
+          font-family: 'Inter', sans-serif;
         }
 
         /* ── SUMMARY ── */
@@ -572,11 +585,11 @@ export default function SubscribePage() {
         }
 
         .summary-box {
-          background: rgba(255,255,255,0.7);
-          border: 2px solid #E0D0B8;
+          background: #FFFDF8;
+          border: 1px solid rgba(200,169,110,0.34);
           border-radius: 20px;
           padding: 32px;
-          backdrop-filter: blur(4px);
+          box-shadow: 0 2px 16px rgba(10,22,40,0.06);
           margin-bottom: 20px;
         }
 
@@ -586,26 +599,27 @@ export default function SubscribePage() {
           align-items: center;
           padding: 10px 0;
           font-size: 14px;
-          color: #5B4030;
-          border-bottom: 1px solid #E8DCC8;
+          color: #2A3344;
+          border-bottom: 1px solid rgba(201,207,214,0.50);
+          font-family: 'Inter', sans-serif;
         }
 
         .summary-row:last-child { border-bottom: none; }
 
         .summary-row.total {
-          font-family: 'Playfair Display', serif;
+          font-family: 'Cormorant Garamond', serif;
           font-size: 22px;
           font-weight: 700;
-          color: #3D2B1F;
+          color: #15223B;
           padding-top: 16px;
           margin-top: 4px;
-          border-top: 2px solid #D4C4A8;
+          border-top: 2px solid rgba(200,169,110,0.34);
           border-bottom: none;
         }
 
         .summary-label { font-weight: 400; }
-        .summary-value { font-weight: 700; }
-        .summary-savings { color: #7BAE8E; font-weight: 700; }
+        .summary-value { font-weight: 600; }
+        .summary-savings { color: #9A7A35; font-weight: 600; }
 
         /* ── BUTTONS ── */
         .btn-primary {
@@ -613,22 +627,23 @@ export default function SubscribePage() {
           padding: 18px;
           border-radius: 14px;
           border: none;
-          background: linear-gradient(135deg, #3D2B1F 0%, #5B4030 100%);
-          color: #F5ECD7;
-          font-family: 'Lato', sans-serif;
-          font-size: 15px;
+          background: #C8A96E;
+          color: #0A1628;
+          font-family: 'Cinzel', serif;
+          font-size: 13px;
           font-weight: 700;
-          letter-spacing: 0.12em;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
           cursor: pointer;
           transition: all 0.2s;
-          box-shadow: 0 6px 20px rgba(61,43,31,0.3);
+          box-shadow: 0 4px 18px rgba(200,169,110,0.30);
           margin-bottom: 12px;
         }
 
         .btn-primary:hover {
+          background: #E2C98A;
           transform: translateY(-2px);
-          box-shadow: 0 10px 28px rgba(61,43,31,0.4);
+          box-shadow: 0 8px 24px rgba(200,169,110,0.40);
         }
 
         .btn-primary:disabled {
@@ -641,21 +656,21 @@ export default function SubscribePage() {
           width: 100%;
           padding: 14px;
           border-radius: 14px;
-          border: 2px solid #D4C4A8;
+          border: 1px solid rgba(201,207,214,0.70);
           background: transparent;
-          color: #8B7060;
-          font-family: 'Lato', sans-serif;
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.1em;
+          color: #5C6573;
+          font-family: 'Cinzel', serif;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .btn-secondary:hover {
-          border-color: #C8A96E;
-          color: #C8A96E;
+          border-color: rgba(200,169,110,0.34);
+          color: #9A7A35;
         }
 
         /* ── TRUST BADGES ── */
@@ -665,17 +680,21 @@ export default function SubscribePage() {
           gap: 28px;
           flex-wrap: wrap;
           margin-top: 28px;
-          padding: 0 24px 24px;
+          padding: 20px 24px 28px;
+          background: #ECEEF1;
+          border-top: 1px solid rgba(201,207,214,0.60);
         }
 
         .trust-item {
           display: flex;
           align-items: center;
           gap: 8px;
-          font-size: 12px;
-          color: #8B7060;
-          font-weight: 700;
-          letter-spacing: 0.05em;
+          font-family: 'Cinzel', serif;
+          font-size: 10px;
+          color: #5C6573;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
         }
 
         .trust-icon {
@@ -685,16 +704,16 @@ export default function SubscribePage() {
         /* ── TESTIMONIALS ── */
         .testimonials {
           max-width: 860px;
-          margin: 56px auto 0;
-          padding: 0 24px 72px;
+          margin: 0 auto;
+          padding: 56px 24px 72px;
         }
 
         .testimonials-title {
-          font-family: 'Playfair Display', serif;
-          font-size: 24px;
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 26px;
           font-style: italic;
           text-align: center;
-          color: #3D2B1F;
+          color: #15223B;
           margin-bottom: 32px;
         }
 
@@ -705,55 +724,58 @@ export default function SubscribePage() {
         }
 
         .testimonial-card {
-          background: rgba(255,255,255,0.5);
-          border: 1px solid #E0D0B8;
+          background: #FFFDF8;
+          border: 1px solid rgba(10,22,40,0.12);
           border-radius: 16px;
           padding: 24px;
+          box-shadow: 0 1px 8px rgba(10,22,40,0.05);
         }
 
         .testimonial-text {
-          font-family: 'Playfair Display', serif;
+          font-family: 'Cormorant Garamond', serif;
           font-style: italic;
-          font-size: 14px;
-          color: #5B4030;
+          font-size: 15px;
+          color: #2A3344;
           line-height: 1.7;
           margin-bottom: 16px;
         }
 
         .testimonial-author {
-          font-size: 12px;
-          font-weight: 700;
-          letter-spacing: 0.08em;
+          font-family: 'Cinzel', serif;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.10em;
           text-transform: uppercase;
-          color: #A89070;
+          color: #5C6573;
         }
 
         /* ── SCRIPTURE ── */
         .scripture-bar {
-          background: rgba(61,43,31,0.04);
-          border-top: 1px solid #E0D0B8;
-          border-bottom: 1px solid #E0D0B8;
+          background: #ECEEF1;
+          border-top: 1px solid rgba(201,207,214,0.60);
+          border-bottom: 1px solid rgba(201,207,214,0.60);
           padding: 20px 24px;
           text-align: center;
           margin: 0 0 48px;
         }
 
         .scripture-text {
-          font-family: 'Playfair Display', serif;
+          font-family: 'Cormorant Garamond', serif;
           font-style: italic;
-          font-size: 15px;
-          color: #6B5040;
+          font-size: 16px;
+          color: #2A3344;
           max-width: 560px;
           margin: 0 auto 4px;
           line-height: 1.6;
         }
 
         .scripture-ref {
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.15em;
+          font-family: 'Cinzel', serif;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: #C8A96E;
+          color: #9A7A35;
         }
 
         /* ── CONTENT SECTIONS ── */

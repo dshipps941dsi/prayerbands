@@ -4,6 +4,28 @@ import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
 
+// Brand font import
+if (typeof document !== 'undefined' && !document.getElementById('pb-brand-fonts')) {
+  const link = document.createElement('link')
+  link.id = 'pb-brand-fonts'
+  link.rel = 'stylesheet'
+  link.href = 'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap'
+  document.head.appendChild(link)
+}
+
+// Brand palette
+const CREAM_BG = '#F6F1E4'
+const CARD_BG = '#FFFDF8'
+const NAVY = '#0A1628'
+const NAVY_HEADING = '#15223B'
+const BODY_TEXT = '#2A3344'
+const GOLD = '#C8A96E'
+const GOLD_TEXT = '#9A7A35'
+const SILVER_BG = '#ECEEF1'
+const SILVER_BORDER = 'rgba(92,101,115,0.20)'
+const NAVY_BORDER = 'rgba(10,22,40,0.12)'
+const SECONDARY_TEXT = '#5C6573'
+
 const NAV = ['Overview', 'Bands', 'Prayer Wall', 'Lineage', 'Orders', 'Settings']
 const NAV_ICONS: Record<string, string> = {
   Overview: '◎', Bands: '⟳', 'Prayer Wall': '🙏', Lineage: '✦', Orders: '📦', Settings: '⚙'
@@ -55,7 +77,7 @@ function OrgMap({ orgId, green }: { orgId: string, green: string }) {
       valid.forEach(p => {
         const dot = L.divIcon({ className: '', html: '<div style="width:12px;height:12px;background:' + (mode === 'current' ? green : '#e8526a') + ';border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,0.3);"></div>', iconSize: [12, 12], iconAnchor: [6, 6] })
         const m = L.marker([p.lat, p.lng], { icon: dot }).addTo(map)
-        m.bindPopup('<div style="font-family:Georgia,serif"><div style="font-family:monospace;font-weight:bold;color:' + green + '">' + p.bandId + '</div>' + (p.name ? '<div style="font-size:13px">' + p.name + '</div>' : '') + (p.city || p.country ? '<div style="font-size:12px;color:#8a7c6a">' + [p.city, p.country].filter(Boolean).join(', ') + '</div>' : '') + (p.prayer ? '<div style="font-size:12px;font-style:italic;border-left:2px solid ' + green + ';padding-left:6px;margin-top:4px">"' + p.prayer.slice(0, 80) + '"</div>' : '') + '</div>')
+        m.bindPopup('<div style="font-family:Georgia,serif"><div style="font-family:monospace;font-weight:bold;color:' + green + '">' + p.bandId + '</div>' + (p.name ? '<div style="font-size:13px">' + p.name + '</div>' : '') + (p.city || p.country ? '<div style="font-size:12px;color:#5C6573">' + [p.city, p.country].filter(Boolean).join(', ') + '</div>' : '') + (p.prayer ? '<div style="font-size:12px;font-style:italic;border-left:2px solid ' + green + ';padding-left:6px;margin-top:4px">"' + p.prayer.slice(0, 80) + '"</div>' : '') + '</div>')
         markers.push(m)
       })
       if (markers.length === 1) { map.setView([valid[0].lat, valid[0].lng], 5) }
@@ -70,12 +92,12 @@ function OrgMap({ orgId, green }: { orgId: string, green: string }) {
   if (!mapLoaded || !points.length) return null
 
   return (
-    <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden', marginBottom: 20 }}>
-      <div style={{ padding: '14px 16px', borderBottom: '1px solid #f0ece6', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-        <span style={{ fontWeight: 'bold', fontSize: 15 }}>Ministry Map</span>
-        <div style={{ display: 'flex', gap: 4, background: '#f7f4ef', borderRadius: 6, padding: 3 }}>
-          <button onClick={() => setMode('current')} style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: mode === 'current' ? green : 'transparent', color: mode === 'current' ? '#fff' : '#8a7c6a', fontSize: 12, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: mode === 'current' ? 700 : 400 }}>Current ({currentCount})</button>
-          <button onClick={() => setMode('all')} style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: mode === 'all' ? green : 'transparent', color: mode === 'all' ? '#fff' : '#8a7c6a', fontSize: 12, cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: mode === 'all' ? 700 : 400 }}>All ({allCount})</button>
+    <div style={{ background: CARD_BG, border: `1px solid ${NAVY_BORDER}`, borderRadius: 10, overflow: 'hidden', marginBottom: 20, boxShadow: '0 1px 6px rgba(10,22,40,0.06)' }}>
+      <div style={{ padding: '14px 16px', borderBottom: `1px solid ${SILVER_BORDER}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+        <span style={{ fontWeight: 700, fontSize: 15, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Ministry Map</span>
+        <div style={{ display: 'flex', gap: 4, background: SILVER_BG, borderRadius: 6, padding: 3 }}>
+          <button onClick={() => setMode('current')} style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: mode === 'current' ? GOLD : 'transparent', color: mode === 'current' ? NAVY : SECONDARY_TEXT, fontSize: 11, cursor: 'pointer', fontFamily: 'Cinzel, serif', fontWeight: mode === 'current' ? 700 : 400, letterSpacing: '0.04em' }}>Current ({currentCount})</button>
+          <button onClick={() => setMode('all')} style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: mode === 'all' ? GOLD : 'transparent', color: mode === 'all' ? NAVY : SECONDARY_TEXT, fontSize: 11, cursor: 'pointer', fontFamily: 'Cinzel, serif', fontWeight: mode === 'all' ? 700 : 400, letterSpacing: '0.04em' }}>All ({allCount})</button>
         </div>
       </div>
       <div ref={mapRef} style={{ height: 300, width: '100%' }} />
@@ -85,33 +107,33 @@ function OrgMap({ orgId, green }: { orgId: string, green: string }) {
 
 function TopBar({ org, green }: { org: any, green: string }) {
   return (
-    <div style={{ background: green, color: '#fff', display: 'flex', alignItems: 'center', padding: '0 16px', height: 56, gap: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.18)', flexShrink: 0, position: 'sticky', top: 0, zIndex: 100 }}>
-      <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 'bold', letterSpacing: 1, whiteSpace: 'nowrap', color: '#fff', textDecoration: 'none', cursor: 'pointer' }}><Logo size={26} color="#fff" />PrayerBands</a>
-      <span style={{ background: 'rgba(255,255,255,0.18)', borderRadius: 4, padding: '2px 8px', fontSize: 11, letterSpacing: 0.5, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{org?.subdomain}.prayerbands.com</span>
+    <div style={{ background: NAVY, color: '#fff', display: 'flex', alignItems: 'center', padding: '0 16px', height: 56, gap: 12, boxShadow: '0 2px 12px rgba(10,22,40,0.25)', flexShrink: 0, position: 'sticky', top: 0, zIndex: 100 }}>
+      <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', whiteSpace: 'nowrap', color: GOLD, textDecoration: 'none', cursor: 'pointer', fontFamily: 'Cinzel, serif' }}><Logo size={26} color={GOLD} />PrayerBands</a>
+      <span style={{ background: 'rgba(200,169,110,0.12)', border: `1px solid rgba(200,169,110,0.25)`, borderRadius: 4, padding: '2px 8px', fontSize: 11, letterSpacing: 0.5, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180, color: GOLD }}>{org?.subdomain}.prayerbands.com</span>
       <div style={{ flex: 1 }} />
-      <button onClick={async () => { const s = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); await s.auth.signOut(); window.location.href = '/signin' }} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}>Sign out</button>
+      <button onClick={async () => { const s = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); await s.auth.signOut(); window.location.href = '/signin' }} style={{ background: 'rgba(200,169,110,0.12)', border: `1px solid rgba(200,169,110,0.25)`, color: GOLD, padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>Sign out</button>
     </div>
   )
 }
 
 function Sidebar({ org, tab, setTab, green }: { org: any, tab: string, setTab: (t: string) => void, green: string }) {
   return (
-    <div style={{ width: 290, background: '#fff', borderRight: '1px solid #e8e1d6', padding: '28px 0', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 56, height: 'calc(100vh - 56px)', overflowY: 'auto' }}>
-      <div style={{ padding: '0 20px 24px', borderBottom: '1px solid #e8e1d6' }}>
-        {org?.logo_url && <img src={org.logo_url} alt={org?.name} style={{ width: 250, height: 125, objectFit: 'contain', display: 'block', marginBottom: 12, borderRadius: 8, border: '1px solid #e8e1d6', background: '#fff', padding: 6 }} />}
-        <div style={{ fontSize: 15, fontWeight: 'bold', color: green, lineHeight: 1.3 }}>{org?.name}</div>
-        <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 4 }}>{org?.location}</div>
-        <div style={{ display: 'inline-block', marginTop: 8, background: '#e6f4ee', color: green, fontSize: 11, padding: '2px 8px', borderRadius: 12, fontFamily: 'monospace', letterSpacing: 0.5 }}>{org?.prefix}-XXXXX</div>
+    <div style={{ width: 290, background: CARD_BG, borderRight: `1px solid ${NAVY_BORDER}`, padding: '28px 0', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 56, height: 'calc(100vh - 56px)', overflowY: 'auto', boxShadow: '2px 0 8px rgba(10,22,40,0.04)' }}>
+      <div style={{ padding: '0 20px 24px', borderBottom: `1px solid ${SILVER_BORDER}` }}>
+        {org?.logo_url && <img src={org.logo_url} alt={org?.name} style={{ width: 250, height: 125, objectFit: 'contain', display: 'block', marginBottom: 12, borderRadius: 8, border: `1px solid ${SILVER_BORDER}`, background: '#fff', padding: 6 }} />}
+        <div style={{ fontSize: 15, fontWeight: 700, color: NAVY_HEADING, lineHeight: 1.3, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{org?.name}</div>
+        <div style={{ fontSize: 12, color: SECONDARY_TEXT, marginTop: 4, fontFamily: 'Inter, sans-serif' }}>{org?.location}</div>
+        <div style={{ display: 'inline-block', marginTop: 8, background: `${GOLD}18`, color: GOLD_TEXT, fontSize: 11, padding: '2px 8px', borderRadius: 12, fontFamily: 'monospace', letterSpacing: 0.5, border: `1px solid ${GOLD}44` }}>{org?.prefix}-XXXXX</div>
       </div>
       <div style={{ padding: '12px 0' }}>
         {NAV.map(item => (
-          <div key={item} onClick={() => setTab(item)} style={{ padding: '10px 24px', cursor: 'pointer', fontSize: 14, borderLeft: tab === item ? '3px solid ' + green : '3px solid transparent', color: tab === item ? green : '#5a4f42', background: tab === item ? '#f0f7f3' : 'transparent', fontWeight: tab === item ? 600 : 400 }}>{item}</div>
+          <div key={item} onClick={() => setTab(item)} style={{ padding: '10px 24px', cursor: 'pointer', fontSize: 11, borderLeft: tab === item ? `3px solid ${GOLD}` : '3px solid transparent', color: tab === item ? GOLD_TEXT : SECONDARY_TEXT, background: tab === item ? `${GOLD}0d` : 'transparent', fontWeight: tab === item ? 700 : 400, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{item}</div>
         ))}
       </div>
       <div style={{ flex: 1 }} />
-      <div style={{ margin: 16, background: 'linear-gradient(135deg, ' + green + ', #2d9966)', color: '#fff', borderRadius: 8, padding: '12px 14px', fontSize: 12 }}>
-        <div style={{ fontWeight: 'bold', marginBottom: 2 }}>{org?.plan || 'Ministry'} Plan</div>
-        <div style={{ opacity: 0.8 }}>{org?.created_at ? 'Since ' + new Date(org.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''}</div>
+      <div style={{ margin: 16, background: `linear-gradient(135deg, ${NAVY} 0%, #132544 100%)`, color: '#fff', borderRadius: 8, padding: '12px 14px', fontSize: 12, border: `1px solid ${GOLD}33` }}>
+        <div style={{ fontWeight: 700, marginBottom: 2, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em', color: GOLD, fontSize: 11 }}>{org?.plan || 'Ministry'} Plan</div>
+        <div style={{ opacity: 0.7, fontFamily: 'Inter, sans-serif', fontSize: 11 }}>{org?.created_at ? 'Since ' + new Date(org.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''}</div>
       </div>
     </div>
   )
@@ -119,14 +141,14 @@ function Sidebar({ org, tab, setTab, green }: { org: any, tab: string, setTab: (
 
 function BottomNav({ tab, setTab, green }: { tab: string, setTab: (t: string) => void, green: string }) {
   return (
-    <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #e8e1d6', display: 'flex', zIndex: 200, boxShadow: '0 -2px 12px rgba(0,0,0,0.08)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+    <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: NAVY, borderTop: `1px solid rgba(200,169,110,0.2)`, display: 'flex', zIndex: 200, boxShadow: '0 -2px 12px rgba(10,22,40,0.2)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       {NAV.map(item => {
         const active = tab === item
         return (
           <button key={item} onClick={() => setTab(item)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '8px 2px', border: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', minWidth: 0 }}>
-            {active && <div style={{ position: 'absolute', top: 0, width: 28, height: 2, background: green, borderRadius: '0 0 2px 2px' }} />}
+            {active && <div style={{ position: 'absolute', top: 0, width: 28, height: 2, background: GOLD, borderRadius: '0 0 2px 2px' }} />}
             <span style={{ fontSize: 16, lineHeight: 1 }}>{NAV_ICONS[item]}</span>
-            <span style={{ fontSize: 9, color: active ? green : '#b8a898', fontFamily: 'Georgia, serif', fontWeight: active ? 700 : 400, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%', paddingInline: 2 }}>{item}</span>
+            <span style={{ fontSize: 9, color: active ? GOLD : 'rgba(200,169,110,0.45)', fontFamily: 'Cinzel, serif', fontWeight: active ? 700 : 400, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%', paddingInline: 2, letterSpacing: '0.03em' }}>{item}</span>
           </button>
         )
       })}
@@ -278,65 +300,65 @@ function OrgDashboardInner() {
     return days + 'd ago'
   }
 
-  const labelStyle = { fontSize: 12, fontWeight: 600 as const, color: '#7a6c5a', display: 'block' as const, marginBottom: 6, letterSpacing: 0.4 }
-  const settingInput = { width: '100%', border: '1px solid #e8e1d6', borderRadius: 6, padding: '10px 14px', fontSize: 14, fontFamily: 'Georgia, serif', background: '#fff', color: '#2c2416', boxSizing: 'border-box' as const, outline: 'none' }
+  const labelStyle = { fontSize: 11, fontWeight: 700 as const, color: GOLD_TEXT, display: 'block' as const, marginBottom: 6, letterSpacing: '0.06em' as const, textTransform: 'uppercase' as const, fontFamily: 'Cinzel, serif' }
+  const settingInput = { width: '100%', border: `1px solid ${SILVER_BORDER}`, borderRadius: 6, padding: '10px 14px', fontSize: 14, fontFamily: 'Inter, sans-serif', background: CARD_BG, color: BODY_TEXT, boxSizing: 'border-box' as const, outline: 'none' }
 
   if (loading) return (
-    <div style={{ color: '#8a7c6a', fontSize: 15, paddingTop: 80, textAlign: 'center', fontFamily: 'Georgia, serif' }}>
-      <div style={{ fontSize: 32, marginBottom: 12 }}>✝</div>
+    <div style={{ color: SECONDARY_TEXT, fontSize: 15, paddingTop: 80, textAlign: 'center', fontFamily: 'Cinzel, serif', background: CREAM_BG, minHeight: '100vh' }}>
+      <div style={{ fontSize: 32, marginBottom: 12, color: GOLD }}>✝</div>
       Loading your ministry...
     </div>
   )
-  if (!org) return <div style={{ color: '#8a7c6a', fontSize: 15, paddingTop: 80, textAlign: 'center', fontFamily: 'Georgia, serif' }}>No organization found. <a href="/signin" style={{ color: '#1a6b4a' }}>Sign in again</a></div>
+  if (!org) return <div style={{ color: SECONDARY_TEXT, fontSize: 15, paddingTop: 80, textAlign: 'center', fontFamily: 'Inter, sans-serif', background: CREAM_BG, minHeight: '100vh' }}>No organization found. <a href="/signin" style={{ color: GOLD_TEXT }}>Sign in again</a></div>
 
   const renderContent = () => {
     if (tab === 'Overview') return (
       <div style={{ padding: isMobile ? '16px 14px' : '32px', maxWidth: 1100 }}>
-        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 'bold', marginBottom: 4, color: '#1a1208' }}>Ministry Dashboard</h1>
-        <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>Every band is a prayer in motion. Here's how far {org?.name}'s love has traveled.</p>
+        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, marginBottom: 4, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Ministry Dashboard</h1>
+        <p style={{ color: SECONDARY_TEXT, marginBottom: 20, fontSize: 14, fontFamily: 'Inter, sans-serif' }}>Every band is a prayer in motion. Here's how far {org?.name}'s love has traveled.</p>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: isMobile ? 10 : 16, marginBottom: 20 }}>
           {[{ label: 'Total Bands', value: stats?.total_bands || 0, icon: '⟳' }, { label: 'Active Bands', value: stats?.active_bands || 0, icon: '✦' }, { label: 'Prayers Offered', value: stats?.total_prayers || 0, icon: '◎' }, { label: 'Countries', value: stats?.countries || 0, icon: '◈' }].map(s => (
-            <div key={s.label} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: isMobile ? '14px 12px' : '20px' }}>
-              <div style={{ fontSize: 20, marginBottom: 4, color: green }}>{s.icon}</div>
-              <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 'bold', color: '#1a1208', lineHeight: 1 }}>{Number(s.value).toLocaleString()}</div>
-              <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 4 }}>{s.label}</div>
+            <div key={s.label} style={{ background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: isMobile ? '14px 12px' : '20px', boxShadow: '0 1px 4px rgba(10,22,40,0.06)' }}>
+              <div style={{ fontSize: 20, marginBottom: 4, color: GOLD_TEXT }}>{s.icon}</div>
+              <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 700, color: NAVY_HEADING, lineHeight: 1, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{Number(s.value).toLocaleString()}</div>
+              <div style={{ fontSize: 11, color: SECONDARY_TEXT, marginTop: 4, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{s.label}</div>
             </div>
           ))}
         </div>
         <OrgMap orgId={org?.id} green={green} />
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr', gap: isMobile ? 14 : 20 }}>
-          <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
-            <div style={{ padding: '14px 16px', borderBottom: '1px solid #f0ece6', display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: 'bold', fontSize: 15 }}>Recent Bands</span>
-              <button onClick={() => setTab('Bands')} style={{ fontSize: 12, color: green, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>View all →</button>
+          <div style={{ background: CARD_BG, border: `1px solid ${NAVY_BORDER}`, borderRadius: 10, overflow: 'hidden', boxShadow: '0 1px 6px rgba(10,22,40,0.06)' }}>
+            <div style={{ padding: '14px 16px', borderBottom: `1px solid ${SILVER_BORDER}`, display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontWeight: 700, fontSize: 15, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Recent Bands</span>
+              <button onClick={() => setTab('Bands')} style={{ fontSize: 11, color: GOLD_TEXT, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>View all →</button>
             </div>
             {bands.slice(0, 6).map((b, i) => {
               const sc = statusColor(b.status)
               return (
-                <div key={b.band_id} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', gap: 12, borderBottom: i < 5 ? '1px solid #f7f4ef' : 'none' }}>
-                  <div style={{ fontFamily: 'monospace', fontSize: 12, color: green, fontWeight: 'bold', flex: 1 }}>{b.band_id}</div>
+                <div key={b.band_id} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', gap: 12, borderBottom: i < 5 ? `1px solid ${SILVER_BORDER}` : 'none' }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: 12, color: GOLD_TEXT, fontWeight: 'bold', flex: 1 }}>{b.band_id}</div>
                   <div style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: sc.bg, color: sc.color, textTransform: 'capitalize' as const }}>{b.status}</div>
                 </div>
               )
             })}
-            {bands.length === 0 && <div style={{ padding: '24px 16px', color: '#8a7c6a', fontSize: 13, textAlign: 'center' }}>No bands yet.</div>}
+            {bands.length === 0 && <div style={{ padding: '24px 16px', color: SECONDARY_TEXT, fontSize: 13, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>No bands yet.</div>}
           </div>
-          <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
-            <div style={{ padding: '14px 16px', borderBottom: '1px solid #f0ece6', display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: 'bold', fontSize: 15 }}>Recent Prayers</span>
-              <button onClick={() => setTab('Prayer Wall')} style={{ fontSize: 12, color: green, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>View all →</button>
+          <div style={{ background: CARD_BG, border: `1px solid ${NAVY_BORDER}`, borderRadius: 10, overflow: 'hidden', boxShadow: '0 1px 6px rgba(10,22,40,0.06)' }}>
+            <div style={{ padding: '14px 16px', borderBottom: `1px solid ${SILVER_BORDER}`, display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontWeight: 700, fontSize: 15, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Recent Prayers</span>
+              <button onClick={() => setTab('Prayer Wall')} style={{ fontSize: 11, color: GOLD_TEXT, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>View all →</button>
             </div>
             {prayers.slice(0, 4).map((p, i) => (
-              <div key={i} style={{ padding: '14px 16px', borderBottom: i < 3 ? '1px solid #f7f4ef' : 'none' }}>
+              <div key={i} style={{ padding: '14px 16px', borderBottom: i < 3 ? `1px solid ${SILVER_BORDER}` : 'none' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: 12, fontWeight: 'bold' }}>{p.user_name}</span>
-                  <span style={{ fontSize: 11, color: '#b0a090' }}>{timeAgo(p.registered_at)}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: BODY_TEXT, fontFamily: 'Inter, sans-serif' }}>{p.user_name}</span>
+                  <span style={{ fontSize: 11, color: SECONDARY_TEXT, fontFamily: 'Inter, sans-serif' }}>{timeAgo(p.registered_at)}</span>
                 </div>
-                <div style={{ fontSize: 13, color: '#5a4f42', lineHeight: 1.5, fontStyle: 'italic' }}>"{p.prayer}"</div>
-                <div style={{ fontSize: 10, color: green, fontFamily: 'monospace', marginTop: 4 }}>{p.band_id}</div>
+                <div style={{ fontSize: 13, color: BODY_TEXT, lineHeight: 1.5, fontStyle: 'italic', fontFamily: 'Cormorant Garamond, Georgia, serif' }}>"{p.prayer}"</div>
+                <div style={{ fontSize: 10, color: GOLD_TEXT, fontFamily: 'monospace', marginTop: 4 }}>{p.band_id}</div>
               </div>
             ))}
-            {prayers.length === 0 && <div style={{ padding: '24px 16px', color: '#8a7c6a', fontSize: 13, textAlign: 'center' }}>No prayers yet.</div>}
+            {prayers.length === 0 && <div style={{ padding: '24px 16px', color: SECONDARY_TEXT, fontSize: 13, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>No prayers yet.</div>}
           </div>
         </div>
       </div>
@@ -344,83 +366,83 @@ function OrgDashboardInner() {
 
     if (tab === 'Bands') return (
       <div style={{ padding: isMobile ? '16px 14px' : '32px' }}>
-        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 'bold', marginBottom: 4 }}>Your Bands</h1>
-        <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>All bands under the {org?.prefix} prefix.</p>
-        <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0ece6', background: '#fbf9f7', display: 'flex', gap: 12 }}>
-            {['Band ID', 'Status'].map(h => <div key={h} style={{ fontSize: 11, fontWeight: 700, color: '#8a7c6a', letterSpacing: 0.5, textTransform: 'uppercase' as const, flex: 1 }}>{h}</div>)}
+        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, marginBottom: 4, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Your Bands</h1>
+        <p style={{ color: SECONDARY_TEXT, marginBottom: 20, fontSize: 14, fontFamily: 'Inter, sans-serif' }}>All bands under the {org?.prefix} prefix.</p>
+        <div style={{ background: CARD_BG, border: `1px solid ${NAVY_BORDER}`, borderRadius: 10, overflow: 'hidden', boxShadow: '0 1px 6px rgba(10,22,40,0.06)' }}>
+          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${SILVER_BORDER}`, background: SILVER_BG, display: 'flex', gap: 12 }}>
+            {['Band ID', 'Status'].map(h => <div key={h} style={{ fontSize: 11, fontWeight: 700, color: GOLD_TEXT, letterSpacing: '0.06em', textTransform: 'uppercase' as const, flex: 1, fontFamily: 'Cinzel, serif' }}>{h}</div>)}
           </div>
           {bands.map((b, i) => {
             const sc = statusColor(b.status)
             return (
-              <div key={b.band_id} style={{ display: 'flex', gap: 12, padding: '13px 16px', alignItems: 'center', borderBottom: i < bands.length - 1 ? '1px solid #f7f4ef' : 'none' }}>
-                <a href={'/band/' + b.band_id} style={{ fontFamily: 'monospace', fontSize: 13, color: green, fontWeight: 'bold', textDecoration: 'none', flex: 1 }}>{b.band_id}</a>
+              <div key={b.band_id} style={{ display: 'flex', gap: 12, padding: '13px 16px', alignItems: 'center', borderBottom: i < bands.length - 1 ? `1px solid ${SILVER_BORDER}` : 'none' }}>
+                <a href={'/band/' + b.band_id} style={{ fontFamily: 'monospace', fontSize: 13, color: GOLD_TEXT, fontWeight: 'bold', textDecoration: 'none', flex: 1 }}>{b.band_id}</a>
                 <div style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: sc.bg, color: sc.color, textTransform: 'capitalize' as const }}>{b.status}</div>
               </div>
             )
           })}
-          {bands.length === 0 && <div style={{ padding: '40px 16px', color: '#8a7c6a', fontSize: 14, textAlign: 'center' }}>No bands yet. ✝</div>}
+          {bands.length === 0 && <div style={{ padding: '40px 16px', color: SECONDARY_TEXT, fontSize: 14, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>No bands yet. ✝</div>}
         </div>
       </div>
     )
 
     if (tab === 'Prayer Wall') return (
       <div style={{ padding: isMobile ? '16px 14px' : '32px' }}>
-        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 'bold', marginBottom: 4 }}>Prayer Wall</h1>
-        <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>Every prayer left by someone holding a {org?.prefix} band.</p>
+        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, marginBottom: 4, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Prayer Wall</h1>
+        <p style={{ color: SECONDARY_TEXT, marginBottom: 20, fontSize: 14, fontFamily: 'Inter, sans-serif' }}>Every prayer left by someone holding a {org?.prefix} band.</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {prayers.map((p, i) => (
-            <div key={i} style={{ background: '#fff', border: '1px solid #e8e1d6', borderLeft: '3px solid ' + green, borderRadius: 10, padding: '16px' }}>
+            <div key={i} style={{ background: CARD_BG, border: `1px solid ${NAVY_BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '16px', boxShadow: '0 1px 4px rgba(10,22,40,0.05)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontWeight: 'bold', fontSize: 14 }}>{p.user_name}</span>
-                <span style={{ fontSize: 12, color: '#b0a090' }}>{timeAgo(p.registered_at)}</span>
+                <span style={{ fontWeight: 600, fontSize: 14, color: NAVY_HEADING, fontFamily: 'Inter, sans-serif' }}>{p.user_name}</span>
+                <span style={{ fontSize: 12, color: SECONDARY_TEXT, fontFamily: 'Inter, sans-serif' }}>{timeAgo(p.registered_at)}</span>
               </div>
-              <div style={{ fontSize: 15, color: '#3a2f22', lineHeight: 1.7, fontStyle: 'italic', marginBottom: 8 }}>"{p.prayer}"</div>
-              <div style={{ fontSize: 11, color: green, fontFamily: 'monospace' }}>{p.band_id} · {[p.city, p.country].filter(Boolean).join(', ')}</div>
+              <div style={{ fontSize: 15, color: BODY_TEXT, lineHeight: 1.7, fontStyle: 'italic', marginBottom: 8, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>"{p.prayer}"</div>
+              <div style={{ fontSize: 11, color: GOLD_TEXT, fontFamily: 'monospace' }}>{p.band_id} · {[p.city, p.country].filter(Boolean).join(', ')}</div>
             </div>
           ))}
-          {prayers.length === 0 && <div style={{ padding: '40px 16px', color: '#8a7c6a', fontSize: 14, textAlign: 'center' }}>Prayers will appear here as bands are registered. ✝</div>}
+          {prayers.length === 0 && <div style={{ padding: '40px 16px', color: SECONDARY_TEXT, fontSize: 14, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>Prayers will appear here as bands are registered. ✝</div>}
         </div>
       </div>
     )
 
     if (tab === 'Lineage') return (
       <div style={{ padding: isMobile ? '16px 14px' : '32px' }}>
-        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 'bold', marginBottom: 4 }}>Band Lineage</h1>
-        <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>Track how far each {org?.prefix} band has traveled.</p>
-        {lineageLoading && <div style={{ color: '#8a7c6a', textAlign: 'center', padding: 40 }}>Loading lineage... ✝</div>}
+        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, marginBottom: 4, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Band Lineage</h1>
+        <p style={{ color: SECONDARY_TEXT, marginBottom: 20, fontSize: 14, fontFamily: 'Inter, sans-serif' }}>Track how far each {org?.prefix} band has traveled.</p>
+        {lineageLoading && <div style={{ color: SECONDARY_TEXT, textAlign: 'center', padding: 40, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Loading lineage... ✝</div>}
         {!lineageLoading && lineage.length === 0 && (
-          <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: 40, textAlign: 'center', color: '#8a7c6a' }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>✝</div>
-            <div style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: '#2c2416' }}>No registered bands yet</div>
-            <div style={{ fontSize: 14 }}>Lineage data will appear once bands are registered.</div>
+          <div style={{ background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: 40, textAlign: 'center', color: SECONDARY_TEXT, boxShadow: '0 1px 4px rgba(10,22,40,0.05)' }}>
+            <div style={{ fontSize: 32, marginBottom: 12, color: GOLD }}>✝</div>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>No registered bands yet</div>
+            <div style={{ fontSize: 14, fontFamily: 'Inter, sans-serif' }}>Lineage data will appear once bands are registered.</div>
           </div>
         )}
         {!lineageLoading && lineage.length > 0 && (
           <div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: isMobile ? 10 : 16, marginBottom: 20 }}>
               {[{ label: 'Bands Traveling', value: lineage.length }, { label: 'Total Holders', value: lineage.reduce((s: number, b: any) => s + Number(b.total_holders), 0) }, { label: 'Countries', value: lineage.reduce((s: number, b: any) => s + Number(b.countries), 0) }].map(s => (
-                <div key={s.label} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: isMobile ? '14px 10px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? 22 : 28, fontWeight: 'bold', color: green }}>{s.value}</div>
-                  <div style={{ fontSize: 11, color: '#8a7c6a', marginTop: 4 }}>{s.label}</div>
+                <div key={s.label} style={{ background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: isMobile ? '14px 10px' : '20px', textAlign: 'center', boxShadow: '0 1px 4px rgba(10,22,40,0.06)' }}>
+                  <div style={{ fontSize: isMobile ? 22 : 28, fontWeight: 700, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{s.value}</div>
+                  <div style={{ fontSize: 11, color: SECONDARY_TEXT, marginTop: 4, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{s.label}</div>
                 </div>
               ))}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {lineage.map((b: any) => (
-                <div key={b.band_id} style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
+                <div key={b.band_id} style={{ background: CARD_BG, border: `1px solid ${NAVY_BORDER}`, borderRadius: 10, overflow: 'hidden', boxShadow: '0 1px 4px rgba(10,22,40,0.05)' }}>
                   <div onClick={() => setExpandedBand(expandedBand === b.band_id ? null : b.band_id)} style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', cursor: 'pointer', gap: 12 }}>
-                    <div style={{ fontFamily: 'monospace', fontSize: 13, color: green, fontWeight: 'bold', minWidth: 90 }}>{b.band_id}</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 13, color: GOLD_TEXT, fontWeight: 'bold', minWidth: 90 }}>{b.band_id}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: '#5a4f42', marginBottom: 4 }}>{b.total_holders} people · {b.countries} {Number(b.countries) === 1 ? 'country' : 'countries'} · {b.prayers} prayers</div>
-                      <div style={{ height: 5, background: '#f0ece6', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: Math.min(100, (Number(b.total_holders) / Math.max(...lineage.map((x: any) => Number(x.total_holders)))) * 100) + '%', background: 'linear-gradient(90deg, ' + green + ', #2d9966)', borderRadius: 3 }} />
+                      <div style={{ fontSize: 12, color: BODY_TEXT, marginBottom: 4, fontFamily: 'Inter, sans-serif' }}>{b.total_holders} people · {b.countries} {Number(b.countries) === 1 ? 'country' : 'countries'} · {b.prayers} prayers</div>
+                      <div style={{ height: 5, background: SILVER_BG, borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: Math.min(100, (Number(b.total_holders) / Math.max(...lineage.map((x: any) => Number(x.total_holders)))) * 100) + '%', background: `linear-gradient(90deg, ${GOLD}, #E2C98A)`, borderRadius: 3 }} />
                       </div>
                     </div>
-                    <div style={{ fontSize: 16, color: '#b0a090', transform: expandedBand === b.band_id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>▾</div>
+                    <div style={{ fontSize: 16, color: SECONDARY_TEXT, transform: expandedBand === b.band_id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>▾</div>
                   </div>
                   {expandedBand === b.band_id && (
-                    <div style={{ borderTop: '1px solid #f0ece6', padding: '16px', background: '#fbf9f7' }}>
+                    <div style={{ borderTop: `1px solid ${SILVER_BORDER}`, padding: '16px', background: SILVER_BG }}>
                       <LineageJourney bandId={b.band_id} green={green} />
                     </div>
                   )}
@@ -434,56 +456,56 @@ function OrgDashboardInner() {
 
     if (tab === 'Orders') return (
       <div style={{ padding: isMobile ? '16px 14px' : '32px' }}>
-        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 'bold', marginBottom: 4 }}>Order Bands</h1>
-        <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>All bands ship laser-engraved with NFC chips and your {org?.prefix} prefix.</p>
-        <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 12, padding: isMobile ? '16px 14px' : '28px', marginBottom: 20, maxWidth: isMobile ? '100%' : 520 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 'bold', marginBottom: 16 }}>New Band Order</h2>
+        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, marginBottom: 4, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Order Bands</h1>
+        <p style={{ color: SECONDARY_TEXT, marginBottom: 20, fontSize: 14, fontFamily: 'Inter, sans-serif' }}>All bands ship laser-engraved with NFC chips and your {org?.prefix} prefix.</p>
+        <div style={{ background: CARD_BG, border: `1px solid ${NAVY_BORDER}`, borderRadius: 12, padding: isMobile ? '16px 14px' : '28px', marginBottom: 20, maxWidth: isMobile ? '100%' : 520, boxShadow: '0 1px 6px rgba(10,22,40,0.06)' }}>
+          <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 16, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>New Band Order</h2>
           <div style={{ marginBottom: 16 }}>
             <label style={labelStyle}>QUANTITY</label>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
               {[50, 100, 250, 500, 1000].map(qty => (
-                <button key={qty} onClick={() => setOrderQty(qty)} style={{ padding: '8px 14px', borderRadius: 6, border: orderQty === qty ? '2px solid ' + green : '2px solid #e8e1d6', background: orderQty === qty ? '#e6f4ee' : '#fff', color: orderQty === qty ? green : '#5a4f42', fontWeight: orderQty === qty ? 700 : 400, cursor: 'pointer', fontSize: 14 }}>{qty}</button>
+                <button key={qty} onClick={() => setOrderQty(qty)} style={{ padding: '8px 14px', borderRadius: 6, border: orderQty === qty ? `2px solid ${GOLD}` : `2px solid ${SILVER_BORDER}`, background: orderQty === qty ? `${GOLD}18` : CARD_BG, color: orderQty === qty ? GOLD_TEXT : BODY_TEXT, fontWeight: orderQty === qty ? 700 : 400, cursor: 'pointer', fontSize: 14, fontFamily: 'Inter, sans-serif' }}>{qty}</button>
               ))}
             </div>
           </div>
-          <div style={{ background: '#f7f4ef', borderRadius: 8, padding: '12px 14px', marginBottom: 16, fontSize: 12 }}>
-            <div style={{ fontWeight: 'bold', marginBottom: 6, fontSize: 13 }}>Volume Pricing</div>
+          <div style={{ background: SILVER_BG, borderRadius: 8, padding: '12px 14px', marginBottom: 16, fontSize: 12 }}>
+            <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 12, color: GOLD_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Volume Pricing</div>
             {[{ min: 50, max: 99, price: 4.50 }, { min: 100, max: 249, price: 4.20 }, { min: 250, max: 499, price: 4.00 }, { min: 500, max: null, price: 3.75 }].map(tier => {
               const active = orderQty >= tier.min && (tier.max === null || orderQty <= tier.max)
-              return <div key={tier.min} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', color: active ? green : '#8a7c6a', fontWeight: active ? 700 : 400 }}><span>{tier.max ? tier.min + '–' + tier.max + ' bands' : tier.min + '+ bands'}</span><span>${tier.price.toFixed(2)}/band</span></div>
+              return <div key={tier.min} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', color: active ? GOLD_TEXT : SECONDARY_TEXT, fontWeight: active ? 700 : 400, fontFamily: 'Inter, sans-serif' }}><span>{tier.max ? tier.min + '–' + tier.max + ' bands' : tier.min + '+ bands'}</span><span>${tier.price.toFixed(2)}/band</span></div>
             })}
           </div>
-          <div style={{ borderTop: '1px solid #e8e1d6', paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ borderTop: `1px solid ${SILVER_BORDER}`, paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 13, color: '#8a7c6a' }}>{orderQty} × ${pricePerBand}/band</div>
-              <div style={{ fontSize: 24, fontWeight: 'bold' }}>${orderTotal}</div>
+              <div style={{ fontSize: 13, color: SECONDARY_TEXT, fontFamily: 'Inter, sans-serif' }}>{orderQty} × ${pricePerBand}/band</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>${orderTotal}</div>
             </div>
-            <button onClick={async () => { const res = await fetch('/api/create-org-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quantity: orderQty, orgId: org?.id, orgName: org?.name, prefix: org?.prefix }) }); const { url } = await res.json(); if (url) window.location.href = url }} style={{ background: green, color: '#fff', border: 'none', borderRadius: 8, padding: '12px 20px', fontSize: 15, fontWeight: 'bold', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Order →</button>
+            <button onClick={async () => { const res = await fetch('/api/create-org-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quantity: orderQty, orgId: org?.id, orgName: org?.name, prefix: org?.prefix }) }); const { url } = await res.json(); if (url) window.location.href = url }} style={{ background: GOLD, color: NAVY, border: 'none', borderRadius: 8, padding: '12px 20px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Order →</button>
           </div>
-          <div style={{ marginTop: 10, fontSize: 11, color: '#8a7c6a', textAlign: 'center' }}>Engraved with {org?.prefix}-XXXXX · NFC chip included · Ships in 2–3 weeks</div>
+          <div style={{ marginTop: 10, fontSize: 11, color: SECONDARY_TEXT, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>Engraved with {org?.prefix}-XXXXX · NFC chip included · Ships in 2–3 weeks</div>
         </div>
-        <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden', maxWidth: isMobile ? '100%' : 520 }}>
-          <div style={{ padding: '14px 16px', borderBottom: '1px solid #f0ece6', fontWeight: 'bold', fontSize: 15 }}>Order History</div>
+        <div style={{ background: CARD_BG, border: `1px solid ${NAVY_BORDER}`, borderRadius: 10, overflow: 'hidden', maxWidth: isMobile ? '100%' : 520, boxShadow: '0 1px 6px rgba(10,22,40,0.06)' }}>
+          <div style={{ padding: '14px 16px', borderBottom: `1px solid ${SILVER_BORDER}`, fontWeight: 700, fontSize: 15, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Order History</div>
           {orders.map((o, i) => (
-            <div key={o.id} style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', borderBottom: i < orders.length - 1 ? '1px solid #f7f4ef' : 'none', gap: 12 }}>
+            <div key={o.id} style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', borderBottom: i < orders.length - 1 ? `1px solid ${SILVER_BORDER}` : 'none', gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 'bold' }}>ORD-{o.id.slice(0, 8)}</div>
-                <div style={{ fontSize: 11, color: '#8a7c6a' }}>{new Date(o.created_at).toLocaleDateString()} · {o.order_metadata?.quantity || '—'} bands</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 'bold', color: GOLD_TEXT }}>ORD-{o.id.slice(0, 8)}</div>
+                <div style={{ fontSize: 11, color: SECONDARY_TEXT, fontFamily: 'Inter, sans-serif' }}>{new Date(o.created_at).toLocaleDateString()} · {o.order_metadata?.quantity || '—'} bands</div>
               </div>
-              <div style={{ fontWeight: 'bold', fontSize: 15, flexShrink: 0 }}>${((o.amount_total || 0) / 100).toFixed(2)}</div>
-              <div style={{ fontSize: 11, padding: '2px 10px', borderRadius: 10, background: '#e6f4ee', color: green, textTransform: 'capitalize' as const, flexShrink: 0 }}>{o.status}</div>
+              <div style={{ fontWeight: 700, fontSize: 15, flexShrink: 0, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>${((o.amount_total || 0) / 100).toFixed(2)}</div>
+              <div style={{ fontSize: 11, padding: '2px 10px', borderRadius: 10, background: `${GOLD}18`, color: GOLD_TEXT, textTransform: 'capitalize' as const, flexShrink: 0, border: `1px solid ${GOLD}44` }}>{o.status}</div>
             </div>
           ))}
-          {orders.length === 0 && <div style={{ padding: '24px 16px', color: '#8a7c6a', fontSize: 13, textAlign: 'center' }}>No orders yet.</div>}
+          {orders.length === 0 && <div style={{ padding: '24px 16px', color: SECONDARY_TEXT, fontSize: 13, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>No orders yet.</div>}
         </div>
       </div>
     )
 
     return (
       <div style={{ padding: isMobile ? '16px 14px' : '32px' }}>
-        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 'bold', marginBottom: 4 }}>Church Settings</h1>
-        <p style={{ color: '#8a7c6a', marginBottom: 20, fontSize: 14 }}>Update your ministry&rsquo;s profile and theme color.</p>
-        <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 12, padding: isMobile ? '16px 14px' : '28px', maxWidth: isMobile ? '100%' : 520 }}>
+        <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, marginBottom: 4, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Church Settings</h1>
+        <p style={{ color: SECONDARY_TEXT, marginBottom: 20, fontSize: 14, fontFamily: 'Inter, sans-serif' }}>Update your ministry&rsquo;s profile and theme color.</p>
+        <div style={{ background: CARD_BG, border: `1px solid ${NAVY_BORDER}`, borderRadius: 12, padding: isMobile ? '16px 14px' : '28px', maxWidth: isMobile ? '100%' : 520, boxShadow: '0 1px 6px rgba(10,22,40,0.06)' }}>
           {/* Editable fields */}
           <div style={{ marginBottom: 18 }}>
             <label style={labelStyle}>CHURCH NAME</label>
@@ -503,21 +525,21 @@ function OrgDashboardInner() {
             <label style={labelStyle}>MINISTRY LOGO</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' as const }}>
               {org?.logo_url ? (
-                <img src={org.logo_url} alt="Ministry logo" style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'contain', border: '1px solid #e8e1d6', background: '#fff', padding: 4 }} />
+                <img src={org.logo_url} alt="Ministry logo" style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'contain', border: `1px solid ${SILVER_BORDER}`, background: '#fff', padding: 4 }} />
               ) : (
-                <div style={{ width: 56, height: 56, borderRadius: 8, border: '1px dashed #d8cdbb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#b8a898', fontSize: 22 }}>✝</div>
+                <div style={{ width: 56, height: 56, borderRadius: 8, border: `1px dashed ${SILVER_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: SECONDARY_TEXT, fontSize: 22 }}>✝</div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const }}>
-                <label style={{ display: 'inline-block', background: '#fff', color: green, border: '1px solid ' + green, borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 'bold', cursor: logoUploading ? 'wait' : 'pointer', fontFamily: 'Georgia, serif' }}>
+                <label style={{ display: 'inline-block', background: GOLD, color: NAVY, border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 11, fontWeight: 700, cursor: logoUploading ? 'wait' : 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                   {logoUploading ? 'Uploading…' : (org?.logo_url ? 'Replace logo' : 'Upload logo')}
                   <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={handleLogoUpload} disabled={logoUploading} style={{ display: 'none' }} />
                 </label>
                 {org?.logo_url && (
-                  <button onClick={removeLogo} disabled={logoUploading} style={{ background: 'none', border: 'none', color: '#c0392b', fontSize: 13, cursor: 'pointer', fontFamily: 'Georgia, serif' }}>Remove</button>
+                  <button onClick={removeLogo} disabled={logoUploading} style={{ background: 'none', border: 'none', color: '#c0392b', fontSize: 13, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Remove</button>
                 )}
               </div>
             </div>
-            <div style={{ fontSize: 11, color: '#8a7c6a', marginTop: 8 }}>PNG, JPG, WEBP, or SVG · up to 2MB.</div>
+            <div style={{ fontSize: 11, color: SECONDARY_TEXT, marginTop: 8, fontFamily: 'Inter, sans-serif' }}>PNG, JPG, WEBP, or SVG · up to 2MB.</div>
           </div>
 
           {/* Theme color picker */}
@@ -527,38 +549,38 @@ function OrgDashboardInner() {
               {PRESET_COLORS.map(c => (
                 <button key={c} onClick={() => setSettings(s => ({ ...s, color: c }))} aria-label={'Theme color ' + c} style={{ width: 30, height: 30, borderRadius: '50%', background: c, border: settings.color.toLowerCase() === c.toLowerCase() ? '3px solid #2c2416' : '2px solid #fff', boxShadow: '0 1px 4px rgba(0,0,0,0.2)', cursor: 'pointer', padding: 0 }} />
               ))}
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#8a7c6a', cursor: 'pointer' }}>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: SECONDARY_TEXT, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                 <input type="color" value={settings.color} onChange={e => setSettings(s => ({ ...s, color: e.target.value }))} style={{ width: 30, height: 30, padding: 0, border: 'none', background: 'none', cursor: 'pointer' }} />
                 Custom
               </label>
-              <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#8a7c6a' }}>{settings.color}</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 12, color: SECONDARY_TEXT }}>{settings.color}</span>
             </div>
-            <div style={{ fontSize: 11, color: '#8a7c6a', marginTop: 8 }}>Used across your dashboard and your public band pages. Saved changes apply right away.</div>
+            <div style={{ fontSize: 11, color: SECONDARY_TEXT, marginTop: 8, fontFamily: 'Inter, sans-serif' }}>Used across your dashboard and your public band pages. Saved changes apply right away.</div>
           </div>
 
           {/* Read-only fields */}
           {[{ label: 'BAND PREFIX', value: org?.prefix + '-XXXXX', mono: true }, { label: 'SUBDOMAIN', value: org?.subdomain + '.prayerbands.com', mono: true }, { label: 'PLAN', value: org?.plan || 'Ministry' }].map(field => (
             <div key={field.label} style={{ marginBottom: 18 }}>
               <label style={labelStyle}>{field.label}</label>
-              <div style={{ border: '1px solid #e8e1d6', borderRadius: 6, padding: '10px 14px', fontSize: field.mono ? 13 : 14, fontFamily: field.mono ? 'monospace' : 'Georgia, serif', background: '#fbf9f7', color: '#8a7c6a', wordBreak: 'break-all' as const }}>{field.value}</div>
+              <div style={{ border: `1px solid ${SILVER_BORDER}`, borderRadius: 6, padding: '10px 14px', fontSize: field.mono ? 13 : 14, fontFamily: field.mono ? 'monospace' : 'Inter, sans-serif', background: SILVER_BG, color: SECONDARY_TEXT, wordBreak: 'break-all' as const }}>{field.value}</div>
             </div>
           ))}
 
           {/* Save */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 6, flexWrap: 'wrap' as const }}>
-            <button onClick={saveSettings} disabled={settingsSaving} style={{ background: green, color: '#fff', border: 'none', borderRadius: 8, padding: '11px 24px', fontSize: 14, fontWeight: 'bold', cursor: settingsSaving ? 'wait' : 'pointer', fontFamily: 'Georgia, serif', opacity: settingsSaving ? 0.7 : 1 }}>{settingsSaving ? 'Saving…' : 'Save Changes'}</button>
+            <button onClick={saveSettings} disabled={settingsSaving} style={{ background: GOLD, color: NAVY, border: 'none', borderRadius: 8, padding: '11px 24px', fontSize: 11, fontWeight: 700, cursor: settingsSaving ? 'wait' : 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase', opacity: settingsSaving ? 0.7 : 1 }}>{settingsSaving ? 'Saving…' : 'Save Changes'}</button>
             {settingsMsg === 'saved'
-              ? <span style={{ color: green, fontSize: 13, fontWeight: 600 }}>Saved ✓</span>
-              : settingsMsg && <span style={{ color: '#c0392b', fontSize: 13 }}>{settingsMsg}</span>}
+              ? <span style={{ color: GOLD_TEXT, fontSize: 13, fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>Saved ✓</span>
+              : settingsMsg && <span style={{ color: '#c0392b', fontSize: 13, fontFamily: 'Inter, sans-serif' }}>{settingsMsg}</span>}
           </div>
-          <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 16 }}>To change your band prefix or subdomain, contact support@prayerbands.com</div>
+          <div style={{ fontSize: 12, color: SECONDARY_TEXT, marginTop: 16, fontFamily: 'Inter, sans-serif' }}>To change your band prefix or subdomain, contact support@prayerbands.com</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div style={{ fontFamily: 'Georgia, serif', background: '#f7f4ef', minHeight: '100vh', color: '#2c2416' }}>
+    <div style={{ fontFamily: 'Inter, sans-serif', background: CREAM_BG, minHeight: '100vh', color: BODY_TEXT }}>
       <TopBar org={org} green={green} />
       <div style={{ display: 'flex', minHeight: 'calc(100vh - 56px)' }}>
         {!isMobile && <Sidebar org={org} tab={tab} setTab={setTab} green={green} />}
@@ -578,22 +600,22 @@ function LineageJourney({ bandId, green }: { bandId: string, green: string }) {
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     supabase.from('registrations').select('user_name, city, country, prayer, registered_at').eq('band_id', bandId).order('registered_at', { ascending: true }).then(({ data }) => { setRegs(data || []); setLoading(false) })
   }, [bandId])
-  if (loading) return <div style={{ fontSize: 13, color: '#8a7c6a' }}>Loading...</div>
+  if (loading) return <div style={{ fontSize: 13, color: SECONDARY_TEXT, fontFamily: 'Inter, sans-serif' }}>Loading...</div>
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {regs.map((r, i) => (
         <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: i === 0 ? green : '#c8b49a', marginTop: 3 }} />
-            {i < regs.length - 1 && <div style={{ width: 1, height: 20, background: '#e8e1d6', margin: '2px 0' }} />}
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: i === 0 ? GOLD : SILVER_BORDER, marginTop: 3 }} />
+            {i < regs.length - 1 && <div style={{ width: 1, height: 20, background: SILVER_BORDER, margin: '2px 0' }} />}
           </div>
           <div style={{ flex: 1, paddingBottom: 4 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#2c2416' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: BODY_TEXT, fontFamily: 'Inter, sans-serif' }}>
               {r.user_name || 'Anonymous'}
-              {i === 0 && <span style={{ fontSize: 10, background: '#e6f4ee', color: green, padding: '1px 6px', borderRadius: 8, marginLeft: 6, fontWeight: 400 }}>origin</span>}
+              {i === 0 && <span style={{ fontSize: 10, background: `${GOLD}18`, color: GOLD_TEXT, padding: '1px 6px', borderRadius: 8, marginLeft: 6, fontWeight: 400, border: `1px solid ${GOLD}44` }}>origin</span>}
             </div>
-            <div style={{ fontSize: 11, color: '#8a7c6a' }}>{[r.city, r.country].filter(Boolean).join(', ') || 'Unknown'} · {new Date(r.registered_at).toLocaleDateString()}</div>
-            {r.prayer && <div style={{ fontSize: 12, color: '#5a4f42', fontStyle: 'italic', marginTop: 2 }}>"{r.prayer}"</div>}
+            <div style={{ fontSize: 11, color: SECONDARY_TEXT, fontFamily: 'Inter, sans-serif' }}>{[r.city, r.country].filter(Boolean).join(', ') || 'Unknown'} · {new Date(r.registered_at).toLocaleDateString()}</div>
+            {r.prayer && <div style={{ fontSize: 12, color: BODY_TEXT, fontStyle: 'italic', marginTop: 2, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>"{r.prayer}"</div>}
           </div>
         </div>
       ))}
@@ -603,7 +625,7 @@ function LineageJourney({ bandId, green }: { bandId: string, green: string }) {
 
 export default function OrgDashboardPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', fontFamily: 'Georgia, serif', color: '#8a7c6a' }}>Loading... ✝</div>}>
+    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', fontFamily: 'Cinzel, serif', color: SECONDARY_TEXT, background: CREAM_BG, minHeight: '100vh' }}>Loading... ✝</div>}>
       <OrgDashboardInner />
     </Suspense>
   )

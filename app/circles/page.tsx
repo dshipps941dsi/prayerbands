@@ -89,31 +89,38 @@ export default function CirclesPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#FAF6EF',
-      fontFamily: 'Georgia, serif',
+      backgroundColor: '#F6F1E4',
+      fontFamily: "'Inter', sans-serif",
       padding: '0 0 80px 0'
     }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
 
       {/* Header */}
       <div style={{
-        backgroundColor: '#fff',
-        borderBottom: '1px solid #E8DCC8',
+        backgroundColor: '#FFFDF8',
+        borderBottom: '1px solid rgba(10,22,40,0.12)',
         padding: '20px 24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <PrayerBandsLogo size={34} color="#B8860B" />
+          <PrayerBandsLogo size={34} color="#C8A96E" />
           <div>
             <h1 style={{
-              fontFamily: 'Playfair Display, Georgia, serif',
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
               fontSize: '22px',
               fontWeight: '700',
-              color: '#2C1810',
+              color: '#15223B',
               margin: 0
             }}>Prayer Circles</h1>
-            <p style={{ fontSize: '13px', color: '#8B7355', margin: '2px 0 0 0' }}>
+            <p style={{ fontSize: '13px', color: '#5C6573', margin: '2px 0 0 0', fontFamily: "'Inter', sans-serif" }}>
               Join a group or gather one
             </p>
           </div>
@@ -121,15 +128,17 @@ export default function CirclesPage() {
         <button
           onClick={() => router.push('/circles/new')}
           style={{
-            backgroundColor: '#B8860B',
-            color: '#fff',
+            backgroundColor: '#C8A96E',
+            color: '#0A1628',
             border: 'none',
             borderRadius: '20px',
             padding: '8px 18px',
-            fontSize: '14px',
-            fontFamily: 'Georgia, serif',
+            fontSize: '12px',
+            fontFamily: "'Cinzel', serif",
             cursor: 'pointer',
-            fontWeight: '600'
+            fontWeight: '600',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em'
           }}
         >
           + Create
@@ -141,8 +150,8 @@ export default function CirclesPage() {
         {/* What is a circle */}
         {!circle && (
           <div style={{
-            backgroundColor: '#fff',
-            border: '1px solid #E8DCC8',
+            backgroundColor: '#FFFDF8',
+            border: '1px solid rgba(200,169,110,0.34)',
             borderRadius: '12px',
             padding: '20px',
             marginBottom: '28px',
@@ -151,9 +160,10 @@ export default function CirclesPage() {
             <div style={{ fontSize: '32px', marginBottom: '10px' }}>🙏</div>
             <p style={{
               fontSize: '15px',
-              color: '#5C4033',
+              color: '#2A3344',
               lineHeight: '1.6',
-              margin: 0
+              margin: 0,
+              fontFamily: "'Inter', sans-serif"
             }}>
               A Prayer Circle is a small group that gathers around a shared prayer need —
               a person healing, a family in crisis, a season of seeking.
@@ -164,20 +174,22 @@ export default function CirclesPage() {
 
         {/* Code entry */}
         <div style={{
-          backgroundColor: '#fff',
-          border: '1px solid #E8DCC8',
+          backgroundColor: '#FFFDF8',
+          border: '1px solid rgba(10,22,40,0.12)',
           borderRadius: '12px',
           padding: '24px',
-          marginBottom: '20px'
+          marginBottom: '20px',
+          boxShadow: '0 2px 8px rgba(10,22,40,0.06)'
         }}>
           <label style={{
             display: 'block',
-            fontSize: '13px',
+            fontSize: '11px',
             fontWeight: '600',
-            color: '#8B7355',
-            letterSpacing: '0.08em',
+            color: '#9A7A35',
+            letterSpacing: '0.10em',
             textTransform: 'uppercase',
-            marginBottom: '10px'
+            marginBottom: '10px',
+            fontFamily: "'Cinzel', serif"
           }}>
             Enter Join Code
           </label>
@@ -199,12 +211,12 @@ export default function CirclesPage() {
                 padding: '12px 16px',
                 fontSize: '20px',
                 letterSpacing: '0.2em',
-                fontFamily: 'Georgia, serif',
+                fontFamily: "'Cinzel', serif",
                 fontWeight: '700',
-                color: '#2C1810',
-                border: '2px solid #E8DCC8',
+                color: '#15223B',
+                border: '2px solid rgba(200,169,110,0.34)',
                 borderRadius: '8px',
-                backgroundColor: '#FAF6EF',
+                backgroundColor: '#F6F1E4',
                 outline: 'none',
                 textTransform: 'uppercase'
               }}
@@ -215,14 +227,16 @@ export default function CirclesPage() {
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
-                backgroundColor: code.length >= 4 ? '#2C1810' : '#D4C5B0',
-                color: '#fff',
+                backgroundColor: code.length >= 4 ? '#C8A96E' : '#C9CFD6',
+                color: code.length >= 4 ? '#0A1628' : '#5C6573',
                 border: 'none',
                 borderRadius: '8px',
                 padding: '14px 20px',
-                fontSize: '15px',
-                fontFamily: 'Georgia, serif',
+                fontSize: '12px',
+                fontFamily: "'Cinzel', serif",
                 fontWeight: '600',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
                 cursor: code.length >= 4 ? 'pointer' : 'default'
               }}
             >
@@ -235,7 +249,8 @@ export default function CirclesPage() {
               color: '#C0392B',
               fontSize: '13px',
               marginTop: '10px',
-              marginBottom: 0
+              marginBottom: 0,
+              fontFamily: "'Inter', sans-serif"
             }}>
               {error}
             </p>
@@ -245,11 +260,12 @@ export default function CirclesPage() {
         {/* Circle preview card */}
         {circle && (
           <div style={{
-            backgroundColor: '#fff',
-            border: '2px solid #B8860B',
+            backgroundColor: '#FFFDF8',
+            border: '2px solid rgba(200,169,110,0.34)',
             borderRadius: '12px',
             padding: '24px',
-            animation: 'fadeIn 0.3s ease'
+            animation: 'fadeIn 0.3s ease',
+            boxShadow: '0 4px 16px rgba(10,22,40,0.08)'
           }}>
             <div style={{
               display: 'flex',
@@ -259,30 +275,31 @@ export default function CirclesPage() {
             }}>
               <div>
                 <p style={{
-                  fontSize: '11px',
+                  fontSize: '10px',
                   fontWeight: '600',
-                  color: '#B8860B',
-                  letterSpacing: '0.1em',
+                  color: '#9A7A35',
+                  letterSpacing: '0.12em',
                   textTransform: 'uppercase',
-                  margin: '0 0 4px 0'
+                  margin: '0 0 4px 0',
+                  fontFamily: "'Cinzel', serif"
                 }}>Circle Found</p>
                 <h2 style={{
-                  fontFamily: 'Playfair Display, Georgia, serif',
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
                   fontSize: '20px',
                   fontWeight: '700',
-                  color: '#2C1810',
+                  color: '#15223B',
                   margin: 0
                 }}>{circle.name}</h2>
               </div>
               <div style={{
-                backgroundColor: '#FAF6EF',
-                border: '1px solid #E8DCC8',
+                backgroundColor: '#F6F1E4',
+                border: '1px solid rgba(92,101,115,0.20)',
                 borderRadius: '8px',
                 padding: '6px 12px',
                 textAlign: 'center'
               }}>
                 <p style={{ fontSize: '18px', margin: 0 }}>🙏</p>
-                <p style={{ fontSize: '11px', color: '#8B7355', margin: '2px 0 0 0' }}>
+                <p style={{ fontSize: '11px', color: '#5C6573', margin: '2px 0 0 0', fontFamily: "'Inter', sans-serif" }}>
                   {circle.member_count} praying
                 </p>
               </div>
@@ -291,10 +308,11 @@ export default function CirclesPage() {
             {circle.description && (
               <p style={{
                 fontSize: '15px',
-                color: '#5C4033',
+                color: '#2A3344',
                 lineHeight: '1.6',
                 margin: '0 0 20px 0',
-                fontStyle: 'italic'
+                fontStyle: 'italic',
+                fontFamily: "'Cormorant Garamond', Georgia, serif"
               }}>
                 "{circle.description}"
               </p>
@@ -304,7 +322,8 @@ export default function CirclesPage() {
               <p style={{
                 color: '#C0392B',
                 fontSize: '13px',
-                marginBottom: '12px'
+                marginBottom: '12px',
+                fontFamily: "'Inter', sans-serif"
               }}>
                 {joinError}
               </p>
@@ -315,14 +334,16 @@ export default function CirclesPage() {
               disabled={joining}
               style={{
                 width: '100%',
-                backgroundColor: '#B8860B',
-                color: '#fff',
+                backgroundColor: '#C8A96E',
+                color: '#0A1628',
                 border: 'none',
                 borderRadius: '10px',
                 padding: '14px',
-                fontSize: '16px',
-                fontFamily: 'Playfair Display, Georgia, serif',
-                fontWeight: '700',
+                fontSize: '13px',
+                fontFamily: "'Cinzel', serif",
+                fontWeight: '600',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
                 cursor: joining ? 'default' : 'pointer',
                 opacity: joining ? 0.7 : 1
               }}
@@ -332,10 +353,11 @@ export default function CirclesPage() {
 
             <p style={{
               fontSize: '12px',
-              color: '#8B7355',
+              color: '#5C6573',
               textAlign: 'center',
               marginTop: '10px',
-              marginBottom: 0
+              marginBottom: 0,
+              fontFamily: "'Inter', sans-serif"
             }}>
               You'll need an account to join. We'll send you there if needed.
             </p>
@@ -343,13 +365,6 @@ export default function CirclesPage() {
         )}
 
       </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   )
 }

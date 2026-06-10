@@ -12,10 +12,10 @@ export default function NFCRedirect() {
   }, [params])
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAF6EF' }}>
-      <div style={{ textAlign: 'center', fontFamily: 'Georgia, serif', color: '#7A6A5A' }}>
-        <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={42} color="#B8860B" /></div>
-        <div style={{ fontStyle: 'italic' }}>Opening your band...</div>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F1E4' }}>
+      <div style={{ textAlign: 'center', fontFamily: 'Cormorant Garamond, Georgia, serif', color: '#5C6573' }}>
+        <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={42} color="#C8A96E" /></div>
+        <div style={{ fontStyle: 'italic', color: '#15223B' }}>Opening your band...</div>
       </div>
     </div>
   )

@@ -182,55 +182,56 @@ export default function PrayerWallPage() {
   }
 
   return (
-    <div style={{ fontFamily: 'Georgia, serif', background: '#FDFAF5', minHeight: '100vh', color: '#2C1A0E' }}>
+    <div style={{ fontFamily: 'Inter, sans-serif', background: '#F6F1E4', minHeight: '100vh', color: '#2A3344' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        .playfair { font-family: 'Playfair Display', serif; }
-        .lato { font-family: 'Lato', sans-serif; }
-        .prayer-card { background: #fff; border: 1px solid #E8DFD0; border-radius: 10px; padding: 28px; transition: transform 0.2s, box-shadow 0.2s; break-inside: avoid; margin-bottom: 20px; }
-        .prayer-card:hover { transform: translateY(-3px); box-shadow: 0 10px 36px rgba(44,26,14,0.09); }
-        .filter-btn { font-family: 'Lato', sans-serif; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; padding: 8px 18px; border-radius: 40px; border: 1px solid #E8DFD0; background: transparent; cursor: pointer; transition: all 0.2s; color: #9B7B62; white-space: nowrap; }
-        .filter-btn.active { background: #2C1A0E; color: #FDFAF5; border-color: #2C1A0E; }
-        .filter-btn:not(.active):hover { border-color: #C8A96E; color: #C8A96E; }
-        .submit-btn { font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; padding: 14px 32px; background: #C8A96E; color: #fff; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
-        .submit-btn:hover { background: #B8944A; }
-        .submit-btn:disabled { background: #C8B49A; cursor: not-allowed; }
-        input, textarea { width: 100%; padding: 12px 16px; border: 1px solid #E8DFD0; border-radius: 4px; background: #FDFAF5; font-family: 'Lato', sans-serif; font-size: 14px; color: #2C1A0E; outline: none; transition: border-color 0.2s; }
-        input:focus, textarea:focus { border-color: #C8A96E; }
+        .cormorant { font-family: 'Cormorant Garamond', serif; }
+        .cinzel { font-family: 'Cinzel', serif; }
+        .inter { font-family: 'Inter', sans-serif; }
+        .prayer-card { background: #FFFDF8; border: 1px solid rgba(10,22,40,0.12); border-radius: 10px; padding: 28px; transition: transform 0.2s, box-shadow 0.2s; break-inside: avoid; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(10,22,40,0.06); }
+        .prayer-card:hover { transform: translateY(-3px); box-shadow: 0 10px 36px rgba(10,22,40,0.10); }
+        .filter-btn { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 18px; border-radius: 40px; border: 1px solid rgba(92,101,115,0.20); background: transparent; cursor: pointer; transition: all 0.2s; color: #5C6573; white-space: nowrap; }
+        .filter-btn.active { background: #0A1628; color: #F6F1E4; border-color: #0A1628; }
+        .filter-btn:not(.active):hover { border-color: rgba(200,169,110,0.34); color: #9A7A35; }
+        .submit-btn { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; padding: 14px 32px; background: #C8A96E; color: #0A1628; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+        .submit-btn:hover { background: #E2C98A; }
+        .submit-btn:disabled { background: #C9CFD6; color: #5C6573; cursor: not-allowed; }
+        input, textarea { width: 100%; padding: 12px 16px; border: 1px solid rgba(10,22,40,0.12); border-radius: 4px; background: #FFFDF8; font-family: 'Inter', sans-serif; font-size: 14px; color: #2A3344; outline: none; transition: border-color 0.2s; }
+        input:focus, textarea:focus { border-color: rgba(200,169,110,0.34); box-shadow: 0 0 0 3px rgba(200,169,110,0.12); }
         textarea { resize: vertical; min-height: 100px; line-height: 1.7; }
-        .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #2C1A0E; color: #FDFAF5; padding: 12px 28px; border-radius: 40px; font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.08em; z-index: 999; animation: fadeUp 0.3s ease; pointer-events: none; }
+        .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #0A1628; color: #F6F1E4; padding: 12px 28px; border-radius: 40px; font-family: 'Inter', sans-serif; font-size: 13px; letter-spacing: 0.06em; z-index: 999; animation: fadeUp 0.3s ease; pointer-events: none; }
         @keyframes fadeUp { from { opacity:0; transform:translateX(-50%) translateY(10px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
         .prayers-masonry { columns: 3; column-gap: 24px; }
-        .load-more-btn { font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; padding: 13px 40px; background: transparent; color: #C8A96E; border: 1.5px solid #C8A96E; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
-        .load-more-btn:hover { background: #C8A96E; color: #fff; }
+        .load-more-btn { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; padding: 13px 40px; background: transparent; color: #9A7A35; border: 1.5px solid rgba(200,169,110,0.34); border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+        .load-more-btn:hover { background: #C8A96E; color: #0A1628; border-color: #C8A96E; }
         @media (max-width: 900px) { .prayers-masonry { columns: 2; } }
         @media (max-width: 600px) { .prayers-masonry { columns: 1; } .stats-row { flex-wrap: wrap !important; } }
       `}</style>
 
       {toast && <div className="toast">✝ {toast}</div>}
 
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(253,250,245,0.97)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #E8DFD0', padding: '0 32px' }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(246,241,228,0.97)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(10,22,40,0.12)', padding: '0 32px' }}>
         <div style={{ maxWidth: 1160, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
           <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
             <Logo size={30} />
-            <span className="playfair" style={{ fontSize: 18, fontWeight: 600, color: '#2C1A0E' }}>PrayerBands</span>
+            <span className="cormorant" style={{ fontSize: 20, fontWeight: 600, color: '#15223B' }}>PrayerBands</span>
           </a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <a href="/store" className="lato" style={{ fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9B7B62', textDecoration: 'none' }}>Shop</a>
-            <a href="/dashboard" className="lato" style={{ fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9B7B62', textDecoration: 'none' }}>Dashboard</a>
-            <button onClick={() => setShowForm(true)} className="submit-btn" style={{ padding: '9px 20px', fontSize: 12 }}>+ Leave a Prayer</button>
+            <a href="/store" className="cinzel" style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#5C6573', textDecoration: 'none' }}>Shop</a>
+            <a href="/dashboard" className="cinzel" style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#5C6573', textDecoration: 'none' }}>Dashboard</a>
+            <button onClick={() => setShowForm(true)} className="submit-btn" style={{ padding: '9px 20px', fontSize: 11 }}>+ Leave a Prayer</button>
           </div>
         </div>
       </nav>
 
-      <section style={{ padding: '72px 32px 48px', textAlign: 'center', background: 'linear-gradient(180deg, #F5EFE4 0%, #FDFAF5 100%)', borderBottom: '1px solid #E8DFD0' }}>
-        <span className="lato" style={{ fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#C8A96E', display: 'block', marginBottom: 10 }}>Global Prayer Wall</span>
-        <h1 className="playfair" style={{ fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 700, lineHeight: 1.15, marginBottom: 16 }}>
+      <section style={{ padding: '72px 32px 48px', textAlign: 'center', background: 'linear-gradient(180deg, #F5EDD8 0%, #F6F1E4 100%)', borderBottom: '1px solid rgba(10,22,40,0.12)' }}>
+        <span className="cinzel" style={{ fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A7A35', display: 'block', marginBottom: 10 }}>Global Prayer Wall</span>
+        <h1 className="cormorant" style={{ fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 700, lineHeight: 1.15, marginBottom: 16, color: '#15223B' }}>
           Prayers Traveling<br /><em style={{ color: '#C8A96E' }}>the World</em>
         </h1>
         <div style={{ width: 48, height: 2, background: '#C8A96E', margin: '0 auto 20px' }} />
-        <p className="lato" style={{ fontSize: 16, color: '#6B4C35', maxWidth: 480, margin: '0 auto 40px', lineHeight: 1.8, fontWeight: 300 }}>
+        <p className="inter" style={{ fontSize: 16, color: '#5C6573', maxWidth: 480, margin: '0 auto 40px', lineHeight: 1.8, fontWeight: 300 }}>
           Every prayer below was left on a real band, in a real person's hands, somewhere in the world.
         </p>
         <div className="stats-row" style={{ display: 'flex', justifyContent: 'center', gap: 48, flexWrap: 'wrap' }}>
@@ -239,22 +240,22 @@ export default function PrayerWallPage() {
             { value: '23', label: 'Countries' },
             { value: '250', label: 'Bands Active' },
           ].map(s => (
-            <div key={s.label} style={{ textAlign: 'center' }}>
-              <div className="playfair" style={{ fontSize: 32, fontWeight: 700, color: '#C8A96E' }}>{s.value}</div>
-              <div className="lato" style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9B7B62', marginTop: 2 }}>{s.label}</div>
+            <div key={s.label} style={{ textAlign: 'center', padding: '16px 24px', background: '#FFFDF8', border: '1px solid rgba(200,169,110,0.34)', borderRadius: 8 }}>
+              <div className="cormorant" style={{ fontSize: 32, fontWeight: 700, color: '#C8A96E' }}>{s.value}</div>
+              <div className="cinzel" style={{ fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#5C6573', marginTop: 2 }}>{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      <div style={{ position: 'sticky', top: 64, zIndex: 90, background: 'rgba(253,250,245,0.97)', backdropFilter: 'blur(8px)', borderBottom: '1px solid #E8DFD0', padding: '14px 32px' }}>
+      <div style={{ position: 'sticky', top: 64, zIndex: 90, background: 'rgba(236,238,241,0.97)', backdropFilter: 'blur(8px)', borderBottom: '1px solid rgba(92,101,115,0.20)', padding: '14px 32px' }}>
         <div style={{ maxWidth: 1160, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {FILTERS.map(f => (
               <button key={f} className={`filter-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>{f}</button>
             ))}
           </div>
-          <div className="lato" style={{ fontSize: 12, color: '#9B7B62', letterSpacing: '0.08em' }}>
+          <div className="inter" style={{ fontSize: 12, color: '#5C6573', letterSpacing: '0.06em' }}>
             {filtered.length} prayer{filtered.length !== 1 ? 's' : ''} showing
           </div>
         </div>
@@ -264,13 +265,13 @@ export default function PrayerWallPage() {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <div style={{ fontSize: 48, color: '#C8A96E', marginBottom: 16 }}>✝</div>
-            <div className="lato" style={{ fontSize: 14, color: '#9B7B62', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Loading prayers...</div>
+            <div className="cinzel" style={{ fontSize: 12, color: '#5C6573', letterSpacing: '0.14em', textTransform: 'uppercase' }}>Loading prayers...</div>
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🙏</div>
-            <h3 className="playfair" style={{ fontSize: 24, marginBottom: 12 }}>No prayers yet</h3>
-            <p className="lato" style={{ fontSize: 14, color: '#9B7B62', fontWeight: 300, marginBottom: 28 }}>Be the first to leave a prayer on the wall.</p>
+            <h3 className="cormorant" style={{ fontSize: 28, marginBottom: 12, color: '#15223B' }}>No prayers yet</h3>
+            <p className="inter" style={{ fontSize: 14, color: '#5C6573', fontWeight: 300, marginBottom: 28 }}>Be the first to leave a prayer on the wall.</p>
             <button className="submit-btn" onClick={() => setShowForm(true)}>Leave the First Prayer</button>
           </div>
         ) : (
@@ -283,33 +284,33 @@ export default function PrayerWallPage() {
                   <div key={prayer.id} className="prayer-card" style={{ borderTop: `3px solid ${color}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                       <div style={{ width: 38, height: 38, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <span className="lato" style={{ fontSize: 12, color: '#fff', fontWeight: 700 }}>{getInitials(prayer)}</span>
+                        <span className="cinzel" style={{ fontSize: 11, color: '#0A1628', fontWeight: 700 }}>{getInitials(prayer)}</span>
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="lato" style={{ fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#9B7B62' }}>
+                        <div className="cinzel" style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#5C6573' }}>
                           {prayer.user_name || 'Anonymous'}
                         </div>
-                        {location && <div className="lato" style={{ fontSize: 12, color: '#C8B49A', marginTop: 1 }}>📍 {location}</div>}
+                        {location && <div className="inter" style={{ fontSize: 12, color: '#9A7A35', marginTop: 1 }}>📍 {location}</div>}
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <span className="lato" style={{ fontSize: 10, letterSpacing: '0.15em', background: `${color}18`, color, border: `1px solid ${color}44`, padding: '2px 8px', borderRadius: 20, display: 'block', marginBottom: 4 }}>{prayer.isNetwork ? 'Network' : prayer.band_id}</span>
-                        <span className="lato" style={{ fontSize: 11, color: '#C8B49A' }}>{timeAgo(prayer.registered_at)}</span>
+                        <span className="cinzel" style={{ fontSize: 9, letterSpacing: '0.12em', background: `${color}18`, color, border: `1px solid ${color}44`, padding: '2px 8px', borderRadius: 20, display: 'block', marginBottom: 4 }}>{prayer.isNetwork ? 'Network' : prayer.band_id}</span>
+                        <span className="inter" style={{ fontSize: 11, color: '#5C6573' }}>{timeAgo(prayer.registered_at)}</span>
                       </div>
                     </div>
-                    <p className="playfair" style={{ fontSize: 15, lineHeight: 1.85, color: '#4A2E1A', fontStyle: 'italic' }}>"{prayer.prayer}"</p>
-                    {prayer.verse && <div className="lato" style={{ fontSize: 12, color: '#7BAE8E', marginTop: 10, fontWeight: 700 }}>📖 {prayer.verse}</div>}
+                    <p className="cormorant" style={{ fontSize: 16, lineHeight: 1.85, color: '#2A3344', fontStyle: 'italic' }}>"{prayer.prayer}"</p>
+                    {prayer.verse && <div className="inter" style={{ fontSize: 12, color: '#9A7A35', marginTop: 10, fontWeight: 500 }}>📖 {prayer.verse}</div>}
                     {!prayer.isNetwork && (
-                      <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #F5EFE4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <a href={`/band/${prayer.band_id}`} className="lato" style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9B7B62', textDecoration: 'none' }}
-                          onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = color}
-                          onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = '#9B7B62'}
+                      <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(10,22,40,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <a href={`/band/${prayer.band_id}`} className="cinzel" style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#5C6573', textDecoration: 'none' }}
+                          onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#9A7A35'}
+                          onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = '#5C6573'}
                         >See Band Journey →</a>
                         <button
                           onClick={() => reportPrayer(prayer.id)}
-                          className="lato"
-                          style={{fontSize:11,color:'#C8B49A',background:'none',border:'none',cursor:'pointer',fontFamily:'Lato,sans-serif',padding:0,transition:'color 0.2s'}}
-                          onMouseEnter={e=>(e.currentTarget as HTMLButtonElement).style.color='#AE7B7B'}
-                          onMouseLeave={e=>(e.currentTarget as HTMLButtonElement).style.color='#C8B49A'}
+                          className="inter"
+                          style={{fontSize:11,color:'#C9CFD6',background:'none',border:'none',cursor:'pointer',fontFamily:'Inter,sans-serif',padding:0,transition:'color 0.2s'}}
+                          onMouseEnter={e=>(e.currentTarget as HTMLButtonElement).style.color='#5C6573'}
+                          onMouseLeave={e=>(e.currentTarget as HTMLButtonElement).style.color='#C9CFD6'}
                         >⚑ Report</button>
                       </div>
                     )}
@@ -320,7 +321,7 @@ export default function PrayerWallPage() {
             {prayers.length < totalCount && (
               <div style={{ textAlign: 'center', marginTop: 40 }}>
                 <button className="load-more-btn" onClick={() => { const next = page + 1; setPage(next); loadPrayers(next) }}>Load More Prayers</button>
-                <div className="lato" style={{ fontSize: 12, color: '#C8B49A', marginTop: 12 }}>Showing {filtered.length} of {totalCount.toLocaleString()} prayers</div>
+                <div className="inter" style={{ fontSize: 12, color: '#5C6573', marginTop: 12 }}>Showing {filtered.length} of {totalCount.toLocaleString()} prayers</div>
               </div>
             )}
           </>
@@ -328,27 +329,27 @@ export default function PrayerWallPage() {
       </div>
 
       {showForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,14,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,22,40,0.55)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
           onClick={e => { if (e.target === e.currentTarget) setShowForm(false) }}>
-          <div style={{ background: '#FDFAF5', borderRadius: 12, padding: '44px 40px', maxWidth: 520, width: '100%', boxShadow: '0 24px 80px rgba(44,26,14,0.2)' }}>
+          <div style={{ background: '#FFFDF8', borderRadius: 12, padding: '44px 40px', maxWidth: 520, width: '100%', boxShadow: '0 24px 80px rgba(10,22,40,0.22)', border: '1px solid rgba(200,169,110,0.34)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
               <div>
-                <span className="lato" style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C8A96E', display: 'block', marginBottom: 6 }}>Leave a Prayer</span>
-                <h2 className="playfair" style={{ fontSize: 28, fontWeight: 600 }}>Add to the Wall</h2>
+                <span className="cinzel" style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9A7A35', display: 'block', marginBottom: 6 }}>Leave a Prayer</span>
+                <h2 className="cormorant" style={{ fontSize: 30, fontWeight: 600, color: '#15223B' }}>Add to the Wall</h2>
               </div>
-              <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#9B7B62', lineHeight: 1 }}>×</button>
+              <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#5C6573', lineHeight: 1 }}>×</button>
             </div>
             <div style={{ display: 'grid', gap: 16 }}>
               <div>
-                <label className="lato" style={{ fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#9B7B62', display: 'block', marginBottom: 6 }}>Band ID *</label>
+                <label className="cinzel" style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#5C6573', display: 'block', marginBottom: 6 }}>Band ID *</label>
                 <input placeholder="e.g. PB-K7M2R" value={bandId} onChange={e => setBandId(e.target.value)} />
               </div>
               <div>
-                <label className="lato" style={{ fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#9B7B62', display: 'block', marginBottom: 6 }}>Your Prayer *</label>
+                <label className="cinzel" style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#5C6573', display: 'block', marginBottom: 6 }}>Your Prayer *</label>
                 <textarea placeholder="Write your prayer for whoever holds this band..." value={message} onChange={e => setMessage(e.target.value)} />
               </div>
               <div>
-                <label className="lato" style={{ fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#9B7B62', display: 'block', marginBottom: 6 }}>Your Location (optional)</label>
+                <label className="cinzel" style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#5C6573', display: 'block', marginBottom: 6 }}>Your Location (optional)</label>
                 <input placeholder="e.g. Nashville, TN" value={location} onChange={e => setLocation(e.target.value)} />
               </div>
             </div>
@@ -356,9 +357,9 @@ export default function PrayerWallPage() {
               <button className="submit-btn" style={{ flex: 1 }} disabled={submitting} onClick={submitPrayer}>
                 {submitting ? 'Sending...' : '✝ Leave My Prayer'}
               </button>
-              <button onClick={() => setShowForm(false)} style={{ padding: '14px 20px', background: 'transparent', border: '1px solid #E8DFD0', borderRadius: 4, cursor: 'pointer', fontFamily: 'Lato, sans-serif', fontSize: 13, color: '#9B7B62' }}>Cancel</button>
+              <button onClick={() => setShowForm(false)} style={{ padding: '14px 20px', background: 'transparent', border: '1px solid rgba(92,101,115,0.20)', borderRadius: 4, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#5C6573' }}>Cancel</button>
             </div>
-            <p className="lato" style={{ fontSize: 12, color: '#C8B49A', marginTop: 14, textAlign: 'center', lineHeight: 1.6 }}>Your prayer will appear publicly on the wall. No account required.</p>
+            <p className="inter" style={{ fontSize: 12, color: '#5C6573', marginTop: 14, textAlign: 'center', lineHeight: 1.6 }}>Your prayer will appear publicly on the wall. No account required.</p>
           </div>
         </div>
       )}

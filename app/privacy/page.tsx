@@ -2,32 +2,33 @@ import Logo from "@/components/Logo";
 
 export default function PrivacyPolicy() {
   return (
-    <div style={{minHeight:'100vh',background:'#fdf8f0',fontFamily:'Georgia,serif',color:'#2C1A0E'}}>
+    <div style={{minHeight:'100vh',background:'#F6F1E4',fontFamily:'Inter, sans-serif',color:'#2A3344'}}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap');
-        .playfair { font-family: 'Playfair Display', serif; }
-        .lato { font-family: 'Lato', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+        .cinzel { font-family: 'Cinzel', serif; }
+        .cormorant { font-family: 'Cormorant Garamond', serif; }
         * { box-sizing: border-box; }
-        h2 { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; margin: 36px 0 12px; color: #2C1A0E; }
-        p { font-family: 'Lato', sans-serif; font-size: 15px; line-height: 1.8; color: #6B4C35; margin-bottom: 16px; font-weight: 300; }
-        ul { font-family: 'Lato', sans-serif; font-size: 15px; line-height: 1.8; color: #6B4C35; margin: 0 0 16px 24px; font-weight: 300; }
+        h2 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin: 36px 0 12px; color: #15223B; }
+        p { font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.8; color: #2A3344; margin-bottom: 16px; font-weight: 300; }
+        ul { font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.8; color: #2A3344; margin: 0 0 16px 24px; font-weight: 300; }
         li { margin-bottom: 6px; }
-        a { color: #C8A96E; }
+        a { color: #9A7A35; }
+        strong { font-weight: 600; color: #15223B; }
       `}</style>
 
-      <nav style={{background:'rgba(253,250,245,0.97)',borderBottom:'1px solid #E8DFD0',padding:'0 32px',height:60,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+      <nav style={{background:'rgba(246,241,228,0.97)',borderBottom:'1px solid rgba(201,207,214,0.60)',padding:'0 32px',height:60,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <a href="/" style={{display:'flex',alignItems:'center',gap:8,textDecoration:'none'}}>
           <Logo size={28} />
-          <span className="playfair" style={{fontSize:17,fontWeight:600,color:'#2C1A0E'}}>PrayerBands</span>
+          <span className="cormorant" style={{fontSize:18,fontWeight:600,color:'#15223B'}}>PrayerBands</span>
         </a>
-        <a href="/" className="lato" style={{fontSize:12,letterSpacing:'0.12em',textTransform:'uppercase',color:'#9B7B62',textDecoration:'none'}}>← Back to Home</a>
+        <a href="/" className="cinzel" style={{fontSize:10,letterSpacing:'0.14em',textTransform:'uppercase',color:'#5C6573',textDecoration:'none'}}>← Back to Home</a>
       </nav>
 
       <div style={{maxWidth:720,margin:'0 auto',padding:'60px 24px 80px'}}>
-        <span className="lato" style={{fontSize:11,letterSpacing:'0.25em',textTransform:'uppercase',color:'#C8A96E',display:'block',marginBottom:12}}>Legal</span>
-        <h1 className="playfair" style={{fontSize:'clamp(32px,5vw,48px)',fontWeight:700,lineHeight:1.15,marginBottom:8}}>Privacy Policy</h1>
-        <div style={{width:48,height:2,background:'#C8A96E',margin:'0 0 12px'}}/>
-        <p className="lato" style={{fontSize:13,color:'#C8B49A'}}>Last updated: June 2025</p>
+        <span className="cinzel" style={{fontSize:10,letterSpacing:'0.28em',textTransform:'uppercase',color:'#9A7A35',display:'block',marginBottom:12}}>Legal</span>
+        <h1 className="cormorant" style={{fontSize:'clamp(32px,5vw,48px)',fontWeight:700,lineHeight:1.15,marginBottom:8,color:'#15223B'}}>Privacy Policy</h1>
+        <div style={{width:48,height:2,background:'linear-gradient(90deg, #C8A96E, #E2C98A)',margin:'0 0 12px'}}/>
+        <p className="cinzel" style={{fontSize:11,color:'#5C6573',letterSpacing:'0.10em',textTransform:'uppercase'}}>Last updated: June 2025</p>
 
         <h2>Who We Are</h2>
         <p>PrayerBands.com is a faith-based ministry platform. Our mission is to connect people through prayer via physical wristbands with unique IDs. We are based in the United States.</p>
@@ -87,8 +88,8 @@ export default function PrivacyPolicy() {
         <h2>Contact</h2>
         <p>Questions about your privacy? Email us at <a href="mailto:hello@prayerbands.com">hello@prayerbands.com</a></p>
 
-        <div style={{marginTop:48,padding:'24px 28px',background:'#F5EFE4',borderRadius:12,borderLeft:'4px solid #C8A96E'}}>
-          <p className="lato" style={{fontSize:14,color:'#6B4C35',fontStyle:'italic',margin:0,lineHeight:1.7}}>
+        <div style={{marginTop:48,padding:'24px 28px',background:'#FFFDF8',borderRadius:12,borderLeft:'4px solid #C8A96E',boxShadow:'0 2px 12px rgba(10,22,40,0.06)'}}>
+          <p className="cormorant" style={{fontSize:15,color:'#2A3344',fontStyle:'italic',margin:0,lineHeight:1.7}}>
             ✝ PrayerBands is a ministry platform, not a data company. We collect only what is necessary to make the prayer journey work. Your privacy and your faith are both sacred to us.
           </p>
         </div>

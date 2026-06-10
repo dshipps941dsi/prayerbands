@@ -60,6 +60,10 @@ export interface BandTheme {
   // Rendered subtly behind the content with a translucent wash for readability. ---
   backgroundImage?: string;
 
+  // --- Optional: opacity (0–1) of the theme-color wash laid over backgroundImage.
+  // Lower = image shows through more (bolder). Defaults to 0.82 (subtle/readable). ---
+  backgroundImageWash?: number;
+
   // --- Optional: default verse shown on first tap ---
   defaultVerse?: {
     text: string;
@@ -199,6 +203,7 @@ export const themes: Record<ThemeKey, BandTheme> = {
     cardAccent:    '#4A5C3A',  // olive drab left-border
 
     backgroundImage: '/themes/military.jpg',
+    backgroundImageWash: 0.58,  // lighter wash — image-forward
 
     defaultVerse: {
       text:      'Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.',
@@ -238,7 +243,7 @@ function hexToRgba(hex: string, alpha: number): string {
 // solid background color when the theme has no image.
 function pageBackground(theme: BandTheme): string {
   if (!theme.backgroundImage) return theme.background;
-  const wash = hexToRgba(theme.background, 0.82);
+  const wash = hexToRgba(theme.background, theme.backgroundImageWash ?? 0.82);
   return `linear-gradient(${wash}, ${wash}), url("${theme.backgroundImage}") center / cover no-repeat, ${theme.background}`;
 }
 

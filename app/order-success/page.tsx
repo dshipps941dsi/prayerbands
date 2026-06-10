@@ -5,14 +5,13 @@ import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
 import { track } from '@/lib/analytics'
 
-const GOLD  = '#B8860B'
-const GREEN = '#1a4a3a'
-const NAVY  = '#1a2a4a'
-const DARK  = '#2C1810'
-const CREAM = '#FAF6EF'
-const GRAY  = '#7A6A5A'
-const serif = "'Playfair Display', Georgia, serif"
-const body  = "'Lora', Georgia, serif"
+const GOLD  = '#C8A96E'
+const GREEN = '#0E1E38'
+const NAVY  = '#0A1628'
+const DARK  = '#15223B'
+const GRAY  = '#5C6573'
+const serif = "'Cormorant Garamond', Georgia, serif"
+const body  = "'Inter', system-ui, sans-serif"
 
 type BandDedication = {
   bandId: string
@@ -76,7 +75,7 @@ function OrderSuccessInner() {
   }
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: CREAM, fontFamily: body }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F1E4', fontFamily: body }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 48, color: GOLD, marginBottom: 16 }}>✝</div>
         <div style={{ fontSize: 16, color: GRAY, fontStyle: 'italic' }}>Confirming your order...</div>
@@ -85,9 +84,10 @@ function OrderSuccessInner() {
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: CREAM, fontFamily: body, color: DARK }}>
+    <div style={{ minHeight: '100vh', background: '#F6F1E4', fontFamily: body, color: DARK }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');`}</style>
       {/* Nav */}
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)' }}>
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(10,22,40,0.12)', background: 'rgba(246,241,228,0.97)' }}>
         <Logo size={28} withName nameColor={DARK} nameSize={18} />
       </nav>
 
@@ -96,15 +96,15 @@ function OrderSuccessInner() {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>✝</div>
-          <div style={{ fontFamily: serif, fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Order Confirmed</div>
-          <div style={{ fontFamily: body, fontSize: 15, color: GRAY, fontStyle: 'italic', lineHeight: 1.6 }}>
+          <div style={{ fontFamily: serif, fontSize: 26, fontWeight: 700, marginBottom: 8, color: DARK }}>Order Confirmed</div>
+          <div style={{ fontFamily: body, fontSize: 15, color: GRAY, lineHeight: 1.6 }}>
             Your bands are on their way. Before they ship, dedicate each one to the person you're giving it to.
           </div>
         </div>
 
         {allSaved ? (
           /* All saved state */
-          <div style={{ background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, borderRadius: 16, padding: '32px 24px', textAlign: 'center', color: 'white', marginBottom: 24 }}>
+          <div style={{ background: `linear-gradient(135deg, ${NAVY}, ${GREEN})`, borderRadius: 16, padding: '32px 24px', textAlign: 'center', color: 'white', marginBottom: 24, border: '1px solid rgba(200,169,110,0.34)' }}>
             <div style={{ fontSize: 44, marginBottom: 12 }}>🙏</div>
             <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Bands dedicated</div>
             <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6 }}>
@@ -117,30 +117,30 @@ function OrderSuccessInner() {
             {dedications.length > 0 ? (
               <>
                 {dedications.map((d, i) => (
-                  <div key={d.bandId} style={{ background: 'white', borderRadius: 16, padding: '24px', marginBottom: 16, border: '1px solid rgba(44,24,16,0.1)', boxShadow: '0 4px 20px rgba(44,24,16,0.06)' }}>
+                  <div key={d.bandId} style={{ background: '#FFFDF8', borderRadius: 16, padding: '24px', marginBottom: 16, border: '1px solid rgba(200,169,110,0.34)', boxShadow: '0 4px 20px rgba(10,22,40,0.07)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                       <div style={{ width: 36, height: 36, borderRadius: '50%', background: NAVY, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: serif, fontSize: 14, fontWeight: 700, color: 'white', flexShrink: 0 }}>{i + 1}</div>
                       <div>
-                        <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700 }}>Band {d.bandId}</div>
-                        <div style={{ fontFamily: body, fontSize: 12, color: GRAY }}>Who is this band for?</div>
+                        <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK }}>Band {d.bandId}</div>
+                        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: GRAY }}>Who is this band for?</div>
                       </div>
                     </div>
 
-                    <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Recipient name (optional)</label>
+                    <label style={{ display: 'block', fontFamily: "'Cinzel', serif", fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: GRAY, marginBottom: 6 }}>Recipient name (optional)</label>
                     <input
                       value={d.recipientName}
                       onChange={e => setDedications(prev => prev.map((x, j) => j === i ? { ...x, recipientName: e.target.value } : x))}
                       placeholder="e.g. Emma, my daughter"
-                      style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }}
+                      style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1.5px solid rgba(200,169,110,0.34)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: '#F6F1E4', marginBottom: 12, outline: 'none', boxSizing: 'border-box' as const }}
                     />
 
-                    <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your prayer for them (optional)</label>
+                    <label style={{ display: 'block', fontFamily: "'Cinzel', serif", fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: GRAY, marginBottom: 6 }}>Your prayer for them (optional)</label>
                     <textarea
                       value={d.note}
                       onChange={e => setDedications(prev => prev.map((x, j) => j === i ? { ...x, note: e.target.value } : x))}
                       placeholder="e.g. I pray this band reminds you that you are loved and never alone..."
                       rows={3}
-                      style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }}
+                      style={{ display: 'block', width: '100%', padding: '10px 14px', border: '1.5px solid rgba(200,169,110,0.34)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: '#F6F1E4', outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' as const }}
                     />
                   </div>
                 ))}
@@ -148,20 +148,20 @@ function OrderSuccessInner() {
                 <button
                   onClick={saveDedications}
                   disabled={saving}
-                  style={{ display: 'block', width: '100%', padding: 16, background: GOLD, color: '#0f0d09', border: 'none', borderRadius: 12, fontFamily: serif, fontSize: 17, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}
+                  style={{ display: 'block', width: '100%', padding: 16, background: GOLD, color: NAVY, border: 'none', borderRadius: 12, fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, cursor: 'pointer', marginBottom: 12, boxShadow: '0 4px 16px rgba(200,169,110,0.35)' }}
                 >
                   {saving ? 'Saving dedications...' : 'Save & dedicate these bands ✝'}
                 </button>
                 <button
                   onClick={() => setAllSaved(true)}
-                  style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 12, fontFamily: body, fontSize: 14, cursor: 'pointer', marginBottom: 24 }}
+                  style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: GRAY, border: '1px solid rgba(92,101,115,0.30)', borderRadius: 12, fontFamily: body, fontSize: 14, cursor: 'pointer', marginBottom: 24 }}
                 >
                   Skip — I'll dedicate later
                 </button>
               </>
             ) : (
               /* No bands found — show generic success */
-              <div style={{ background: 'white', borderRadius: 16, padding: '28px 24px', marginBottom: 24, border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
+              <div style={{ background: '#FFFDF8', borderRadius: 16, padding: '28px 24px', marginBottom: 24, border: '1px solid rgba(200,169,110,0.34)', textAlign: 'center' }}>
                 <div style={{ fontFamily: body, fontSize: 14, color: GRAY, fontStyle: 'italic', lineHeight: 1.6 }}>
                   Your bands will be assigned IDs when they ship. You'll receive an email with a link to dedicate each one.
                 </div>
@@ -171,8 +171,8 @@ function OrderSuccessInner() {
         )}
 
         {/* What happens next */}
-        <div style={{ background: 'white', borderRadius: 14, padding: '20px 24px', border: '1px solid rgba(44,24,16,0.1)', marginBottom: 16 }}>
-          <div style={{ fontFamily: body, fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: GOLD, marginBottom: 14 }}>What Happens Next</div>
+        <div style={{ background: '#FFFDF8', borderRadius: 14, padding: '20px 24px', border: '1px solid rgba(200,169,110,0.34)', marginBottom: 16, boxShadow: '0 2px 12px rgba(10,22,40,0.06)' }}>
+          <div style={{ fontFamily: "'Cinzel', serif", fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: '#9A7A35', marginBottom: 14 }}>What Happens Next</div>
           {[
             'You receive a confirmation email',
             'Your bands ship within 3–5 business days',
@@ -180,15 +180,15 @@ function OrderSuccessInner() {
             'When someone taps it, they see your name and prayer',
           ].map((s, i) => (
             <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 10 }}>
-              <div style={{ width: 22, height: 22, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: serif, fontSize: 11, fontWeight: 700, color: '#0f0d09', flexShrink: 0 }}>{i + 1}</div>
-              <div style={{ fontFamily: body, fontSize: 14, color: DARK, lineHeight: 1.5 }}>{s}</div>
+              <div style={{ width: 22, height: 22, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cinzel', serif", fontSize: 10, fontWeight: 700, color: NAVY, flexShrink: 0 }}>{i + 1}</div>
+              <div style={{ fontFamily: body, fontSize: 14, color: '#2A3344', lineHeight: 1.5 }}>{s}</div>
             </div>
           ))}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <a href="/dashboard" style={{ display: 'block', textAlign: 'center', background: NAVY, color: 'white', padding: '14px 24px', borderRadius: 10, textDecoration: 'none', fontFamily: serif, fontSize: 15, fontWeight: 700 }}>Go to Dashboard ✝</a>
-          <a href="/store" style={{ display: 'block', textAlign: 'center', background: 'transparent', color: GRAY, padding: '12px 24px', borderRadius: 10, textDecoration: 'none', fontFamily: body, fontSize: 14, border: '1px solid rgba(44,24,16,0.15)' }}>Order More Bands</a>
+          <a href="/dashboard" style={{ display: 'block', textAlign: 'center', background: GOLD, color: NAVY, padding: '14px 24px', borderRadius: 10, textDecoration: 'none', fontFamily: "'Cinzel', serif", fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, boxShadow: '0 4px 16px rgba(200,169,110,0.35)' }}>Go to Dashboard ✝</a>
+          <a href="/store" style={{ display: 'block', textAlign: 'center', background: 'transparent', color: GRAY, padding: '12px 24px', borderRadius: 10, textDecoration: 'none', fontFamily: body, fontSize: 14, border: '1px solid rgba(92,101,115,0.30)' }}>Order More Bands</a>
         </div>
 
       </div>
@@ -198,7 +198,7 @@ function OrderSuccessInner() {
 
 export default function OrderSuccess() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAF6EF' }}><div style={{ fontSize: 48, textAlign: 'center' }}>✝</div></div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F1E4' }}><div style={{ fontSize: 48, textAlign: 'center', color: '#C8A96E' }}>✝</div></div>}>
       <OrderSuccessInner />
     </Suspense>
   )

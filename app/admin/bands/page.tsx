@@ -4,7 +4,25 @@ import { createBrowserClient } from '@supabase/ssr'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
-const green = '#1a6b4a'
+
+// PrayerBands brand palette
+const C = {
+  pageBg: '#F6F1E4',
+  card: '#FFFDF8',
+  navy: '#0A1628',
+  gold: '#C8A96E',
+  goldText: '#9A7A35',
+  silver: '#C9CFD6',
+  silverBg: '#ECEEF1',
+  heading: '#15223B',
+  body: '#2A3344',
+  secondary: '#5C6573',
+  borderGold: 'rgba(200,169,110,0.34)',
+  borderNavy: 'rgba(10,22,40,0.12)',
+  borderSilver: 'rgba(92,101,115,0.20)',
+  green: '#4A8A6A',
+  red: '#c0392b',
+}
 
 export default function AdminBands() {
   const [authorized, setAuthorized] = useState(false)
@@ -99,45 +117,45 @@ export default function AdminBands() {
   }
 
   if (loading || !authorized) return (
-    <div style={{ padding: 40, fontFamily: 'Georgia, serif', color: '#8a7c6a' }}>Loading... ✝</div>
+    <div style={{ padding: 40, fontFamily: 'Inter, sans-serif', color: C.secondary }}>Loading... ✝</div>
   )
 
-  const label: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: '#7a6c5a', display: 'block', marginBottom: 8, letterSpacing: '0.04em', textTransform: 'uppercase' }
-  const input: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: 7, border: '1px solid #ddd6ca', fontSize: 15, fontFamily: 'Georgia, serif', background: '#fdfaf7', color: '#2c2416', boxSizing: 'border-box', outline: 'none', marginBottom: 14 }
-  const btn = (busy: boolean): React.CSSProperties => ({ background: busy ? '#ccc' : green, color: '#fff', border: 'none', borderRadius: 8, padding: '11px 22px', fontSize: 14, fontWeight: 'bold', cursor: busy ? 'default' : 'pointer', fontFamily: 'Georgia, serif' })
-  const card: React.CSSProperties = { background: '#fff', border: '1px solid #e8e1d6', borderRadius: 12, padding: '24px 26px', marginBottom: 24 }
+  const label: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: C.goldText, display: 'block', marginBottom: 8, letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: 'Cinzel, serif' }
+  const input: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: 7, border: `1px solid ${C.borderNavy}`, fontSize: 14, fontFamily: 'Inter, sans-serif', background: C.pageBg, color: C.body, boxSizing: 'border-box', outline: 'none', marginBottom: 14 }
+  const btn = (busy: boolean): React.CSSProperties => ({ background: busy ? C.silver : C.gold, color: busy ? '#fff' : C.navy, border: 'none', borderRadius: 8, padding: '11px 22px', fontSize: 11, fontWeight: 700, cursor: busy ? 'default' : 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.07em' })
+  const card: React.CSSProperties = { background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 12, padding: '24px 26px', marginBottom: 24, boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }
 
   return (
-    <div style={{ fontFamily: 'Georgia, serif', background: '#f7f4ef', minHeight: '100vh', padding: 32 }}>
+    <div style={{ fontFamily: 'Inter, sans-serif', background: C.pageBg, minHeight: '100vh', padding: 32 }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
         <div style={{ marginBottom: 28 }}>
-          <div style={{ marginBottom: 12 }}><PrayerBandsLogo size={34} color={green} /></div>
-          <a href="/admin" style={{ color: green, fontSize: 14, textDecoration: 'none' }}>← Admin</a>
-          <h1 style={{ fontSize: 26, fontWeight: 'bold', marginTop: 8, color: '#1a1208' }}>Band Management</h1>
-          <p style={{ color: '#8a7c6a', fontSize: 14 }}>Link bands to a personal account, or replace a lost band.</p>
+          <div style={{ marginBottom: 12 }}><PrayerBandsLogo size={34} color={C.gold} /></div>
+          <a href="/admin" style={{ color: C.goldText, fontSize: 13, textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>← Admin</a>
+          <h1 style={{ fontSize: 30, fontWeight: 600, marginTop: 8, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Band Management</h1>
+          <p style={{ color: C.secondary, fontSize: 14 }}>Link bands to a personal account, or replace a lost band.</p>
         </div>
 
         {/* Assign bands to an account */}
         <div style={card}>
-          <h2 style={{ fontSize: 17, fontWeight: 'bold', marginBottom: 6, color: '#1a1208' }}>Assign Bands to an Account</h2>
-          <p style={{ fontSize: 13, color: '#8a7c6a', marginBottom: 18, lineHeight: 1.5 }}>Sets each band&rsquo;s owner to this account so they all appear under the person&rsquo;s dashboard. Useful for sending someone a curated set of design bands.</p>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 6, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Assign Bands to an Account</h2>
+          <p style={{ fontSize: 13, color: C.secondary, marginBottom: 18, lineHeight: 1.5 }}>Sets each band&rsquo;s owner to this account so they all appear under the person&rsquo;s dashboard. Useful for sending someone a curated set of design bands.</p>
           <label style={label}>Account email</label>
           <input value={email} onChange={e => setEmail(e.target.value)} placeholder="person@example.com" style={input} />
           <label style={label}>Band IDs (one per line, or comma/space separated)</label>
           <textarea value={assignIds} onChange={e => setAssignIds(e.target.value)} placeholder={'PB-AB12C\nPB-XY34Z'} rows={4} style={{ ...input, resize: 'vertical', minHeight: 90 }} />
           <button onClick={assignBands} disabled={assigning || !email.trim() || !assignIds.trim()} style={btn(assigning || !email.trim() || !assignIds.trim())}>{assigning ? 'Assigning…' : 'Assign Bands'}</button>
-          {assignMsg && <div style={{ marginTop: 14, fontSize: 13, color: assignMsg.startsWith('❌') ? '#c0392b' : green, lineHeight: 1.5 }}>{assignMsg}</div>}
+          {assignMsg && <div style={{ marginTop: 14, fontSize: 13, color: assignMsg.startsWith('❌') ? C.red : C.green, lineHeight: 1.5 }}>{assignMsg}</div>}
         </div>
 
         {/* Pending replacement orders */}
         {pending.length > 0 && (
-          <div style={{ ...card, borderColor: '#B8972A', background: '#fffdf5' }}>
-            <h2 style={{ fontSize: 17, fontWeight: 'bold', marginBottom: 6, color: '#1a1208' }}>Pending Replacement Orders ({pending.length})</h2>
-            <p style={{ fontSize: 13, color: '#8a7c6a', marginBottom: 18, lineHeight: 1.5 }}>Customers who ordered a replacement. Enter the band ID you&rsquo;re shipping and complete — the lost band&rsquo;s journey transfers automatically.</p>
+          <div style={{ ...card, borderColor: C.borderGold }}>
+            <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 6, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Pending Replacement Orders ({pending.length})</h2>
+            <p style={{ fontSize: 13, color: C.secondary, marginBottom: 18, lineHeight: 1.5 }}>Customers who ordered a replacement. Enter the band ID you&rsquo;re shipping and complete — the lost band&rsquo;s journey transfers automatically.</p>
             {pending.map(p => (
-              <div key={p.order_id} style={{ borderTop: '1px solid #efe6cf', paddingTop: 14, marginTop: 14 }}>
-                <div style={{ fontSize: 13, color: '#2c2416', marginBottom: 8 }}>
-                  Replacing <strong>{p.replaces}</strong> &middot; <span style={{ color: '#8a7c6a' }}>{p.email || 'unknown email'}</span>
+              <div key={p.order_id} style={{ borderTop: `1px solid ${C.borderSilver}`, paddingTop: 14, marginTop: 14 }}>
+                <div style={{ fontSize: 13, color: C.body, marginBottom: 8 }}>
+                  Replacing <strong style={{ color: C.heading }}>{p.replaces}</strong> &middot; <span style={{ color: C.secondary }}>{p.email || 'unknown email'}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                   <input
@@ -152,20 +170,20 @@ export default function AdminBands() {
                 </div>
               </div>
             ))}
-            {pendingMsg && <div style={{ marginTop: 14, fontSize: 13, color: pendingMsg.startsWith('❌') ? '#c0392b' : green, lineHeight: 1.5 }}>{pendingMsg}</div>}
+            {pendingMsg && <div style={{ marginTop: 14, fontSize: 13, color: pendingMsg.startsWith('❌') ? C.red : C.green, lineHeight: 1.5 }}>{pendingMsg}</div>}
           </div>
         )}
 
         {/* Replace a lost band */}
         <div style={card}>
-          <h2 style={{ fontSize: 17, fontWeight: 'bold', marginBottom: 6, color: '#1a1208' }}>Replace a Lost Band</h2>
-          <p style={{ fontSize: 13, color: '#8a7c6a', marginBottom: 18, lineHeight: 1.5 }}>Ship a new physical band and carry the lost band&rsquo;s identity onto it: the new band inherits the owner and theme, the full prayer journey moves over, and the old band is retired.</p>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 6, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Replace a Lost Band</h2>
+          <p style={{ fontSize: 13, color: C.secondary, marginBottom: 18, lineHeight: 1.5 }}>Ship a new physical band and carry the lost band&rsquo;s identity onto it: the new band inherits the owner and theme, the full prayer journey moves over, and the old band is retired.</p>
           <label style={label}>Lost band ID</label>
           <input value={oldId} onChange={e => setOldId(e.target.value)} placeholder="PB-OLD12 (the lost band)" style={input} />
           <label style={label}>New band ID</label>
           <input value={newId} onChange={e => setNewId(e.target.value)} placeholder="PB-NEW34 (the replacement)" style={input} />
           <button onClick={replaceBand} disabled={replacing || !oldId.trim() || !newId.trim()} style={btn(replacing || !oldId.trim() || !newId.trim())}>{replacing ? 'Replacing…' : 'Replace Band'}</button>
-          {replaceMsg && <div style={{ marginTop: 14, fontSize: 13, color: replaceMsg.startsWith('❌') ? '#c0392b' : green, lineHeight: 1.5 }}>{replaceMsg}</div>}
+          {replaceMsg && <div style={{ marginTop: 14, fontSize: 13, color: replaceMsg.startsWith('❌') ? C.red : C.green, lineHeight: 1.5 }}>{replaceMsg}</div>}
         </div>
       </div>
     </div>

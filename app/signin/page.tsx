@@ -2,78 +2,104 @@
 
 import Logo from '@/components/Logo'
 
+// Brand palette: navy + gold + silver/gray on cream
+const BRAND = {
+  pageBg: '#F6F1E4',
+  cardBg: '#FFFDF8',
+  navy: '#0A1628',
+  navyMid: '#15223B',
+  gold: '#C8A96E',
+  goldText: '#9A7A35',
+  goldDark: '#5A3E12',
+  silver: '#C9CFD6',
+  silverBorder: 'rgba(92,101,115,0.20)',
+  goldBorder: 'rgba(200,169,110,0.34)',
+  navyBorder: 'rgba(10,22,40,0.12)',
+  bodyText: '#2A3344',
+  secondaryText: '#5C6573',
+  mutedText: '#7A8494',
+}
+
 export default function SignInChooser() {
-  const green = '#1a6b4a'
-
   return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      background: '#f7f4ef', fontFamily: 'Georgia, serif',
-      padding: '24px 16px',
-    }}>
-      <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Logo size={44} /></div>
-        <div style={{ fontSize: 36, marginBottom: 10 }}>✝</div>
-        <h1 style={{ fontSize: 26, fontWeight: 'bold', color: '#1a1208', margin: '0 0 8px' }}>
-          Welcome to PrayerBands
-        </h1>
-        <p style={{ fontSize: 15, color: '#8a7c6a', margin: 0 }}>
-          How would you like to sign in?
-        </p>
-      </div>
-
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+        .signin-card:hover { box-shadow: 0 6px 28px rgba(10,22,40,0.13) !important; }
+      `}</style>
       <div style={{
-        display: 'flex', flexDirection: 'column', gap: 16,
-        width: '100%', maxWidth: 420,
+        minHeight: '100vh', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        background: '#F6F1E4',
+        backgroundImage: 'radial-gradient(ellipse at 70% 20%, rgba(200,169,110,0.10) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(201,207,214,0.13) 0%, transparent 55%)',
+        fontFamily: "'Inter', sans-serif",
+        padding: '24px 16px',
       }}>
-        {/* Personal */}
-        <a href="/signin/personal" style={{ textDecoration: 'none' }}>
-          <div style={{
-            background: '#fff', borderRadius: 14, padding: '28px 28px',
-            border: '1px solid #e8e1d6', boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-            cursor: 'pointer', transition: 'box-shadow 0.15s',
-          }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div>
-            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#1a1208', marginBottom: 6 }}>
-              I have a band
-            </div>
-            <div style={{ fontSize: 14, color: '#8a7c6a', lineHeight: 1.6 }}>
-              Sign in to see your band's journey, leave prayers, and track where it has traveled.
-            </div>
-            <div style={{ marginTop: 16, display: 'inline-block', background: green, color: '#fff', borderRadius: 8, padding: '8px 20px', fontSize: 14, fontWeight: 'bold' }}>
-              Sign in →
-            </div>
-          </div>
-        </a>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Logo size={44} /></div>
+          <div style={{ fontSize: 13, letterSpacing: '0.14em', color: BRAND.goldText, fontFamily: "'Cinzel', serif", textTransform: 'uppercase', marginBottom: 10 }}>Welcome</div>
+          <h1 style={{ fontSize: 28, fontWeight: 600, color: BRAND.navyMid, margin: '0 0 8px', fontFamily: "'Cormorant Garamond', serif", lineHeight: 1.2 }}>
+            Welcome to PrayerBands
+          </h1>
+          <p style={{ fontSize: 15, color: BRAND.secondaryText, margin: 0, fontFamily: "'Inter', sans-serif" }}>
+            How would you like to sign in?
+          </p>
+        </div>
 
-        {/* Church / Org */}
-        <a href="/signin/org" style={{ textDecoration: 'none' }}>
-          <div style={{
-            background: '#fff', borderRadius: 14, padding: '28px 28px',
-            border: '1px solid #e8e1d6', boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-            cursor: 'pointer',
-          }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>⛪</div>
-            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#1a1208', marginBottom: 6 }}>
-              I represent a church or ministry
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: 16,
+          width: '100%', maxWidth: 420,
+        }}>
+          {/* Personal */}
+          <a href="/signin/personal" style={{ textDecoration: 'none' }}>
+            <div className="signin-card" style={{
+              background: BRAND.cardBg, borderRadius: 14, padding: '28px 28px',
+              border: `1px solid ${BRAND.goldBorder}`,
+              boxShadow: '0 2px 16px rgba(10,22,40,0.07)',
+              cursor: 'pointer', transition: 'box-shadow 0.15s',
+            }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div>
+              <div style={{ fontSize: 18, fontWeight: 600, color: BRAND.navyMid, marginBottom: 6, fontFamily: "'Cormorant Garamond', serif" }}>
+                I have a band
+              </div>
+              <div style={{ fontSize: 14, color: BRAND.secondaryText, lineHeight: 1.6, marginBottom: 16, borderBottom: `1px solid ${BRAND.silverBorder}`, paddingBottom: 16 }}>
+                Sign in to see your band's journey, leave prayers, and track where it has traveled.
+              </div>
+              <div style={{ display: 'inline-block', background: BRAND.gold, color: BRAND.navy, borderRadius: 8, padding: '8px 20px', fontSize: 12, fontWeight: 700, fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                Sign In
+              </div>
             </div>
-            <div style={{ fontSize: 14, color: '#8a7c6a', lineHeight: 1.6 }}>
-              Access your ministry dashboard, order bands, and track your church's impact.
-            </div>
-            <div style={{ marginTop: 16, display: 'inline-block', background: '#fff', color: green, border: '2px solid ' + green, borderRadius: 8, padding: '8px 20px', fontSize: 14, fontWeight: 'bold' }}>
-              Ministry sign in →
-            </div>
-          </div>
-        </a>
-      </div>
+          </a>
 
-      <div style={{ marginTop: 32, fontSize: 13, color: '#b0a090', textAlign: 'center' }}>
-        New church or ministry?{' '}
-        <a href="/onboard" style={{ color: green, textDecoration: 'none', fontWeight: 'bold' }}>
-          Set up your account →
-        </a>
+          {/* Church / Org */}
+          <a href="/signin/org" style={{ textDecoration: 'none' }}>
+            <div className="signin-card" style={{
+              background: BRAND.cardBg, borderRadius: 14, padding: '28px 28px',
+              border: `1px solid ${BRAND.silverBorder}`,
+              boxShadow: '0 2px 16px rgba(10,22,40,0.07)',
+              cursor: 'pointer', transition: 'box-shadow 0.15s',
+            }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>⛪</div>
+              <div style={{ fontSize: 18, fontWeight: 600, color: BRAND.navyMid, marginBottom: 6, fontFamily: "'Cormorant Garamond', serif" }}>
+                I represent a church or ministry
+              </div>
+              <div style={{ fontSize: 14, color: BRAND.secondaryText, lineHeight: 1.6, marginBottom: 16, borderBottom: `1px solid ${BRAND.silverBorder}`, paddingBottom: 16 }}>
+                Access your ministry dashboard, order bands, and track your church's impact.
+              </div>
+              <div style={{ display: 'inline-block', background: 'transparent', color: BRAND.goldText, border: `2px solid ${BRAND.gold}`, borderRadius: 8, padding: '7px 20px', fontSize: 12, fontWeight: 700, fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                Ministry Sign In
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <div style={{ marginTop: 32, fontSize: 13, color: BRAND.mutedText, textAlign: 'center', fontFamily: "'Inter', sans-serif" }}>
+          New church or ministry?{' '}
+          <a href="/onboard" style={{ color: BRAND.goldText, textDecoration: 'none', fontWeight: 600 }}>
+            Set up your account →
+          </a>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

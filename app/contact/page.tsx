@@ -216,7 +216,7 @@ export default function ContactPage() {
         <div className="contact-inner">
           {/* Header */}
           <div className="contact-header">
-            <div className="cross-ornament"><Icon name="mail" size={34} color="#b8964a" /></div>
+            <div className="cross-ornament"><Icon name="mail" size={34} color="#9A7A35" /></div>
             <h1>Get in Touch</h1>
             <p className="contact-subtitle">
               We&rsquo;re here to help you on your prayer journey. Expect a reply within 1–2 business days.
@@ -423,7 +423,7 @@ function FaqSection() {
   return (
     <section className="faq-section">
       <div className="faq-section-head">
-        <div className="cross-ornament"><Icon name="bible" size={28} color="#b8964a" /></div>
+        <div className="cross-ornament"><Icon name="bible" size={28} color="#9A7A35" /></div>
         <h2>Frequently Asked Questions</h2>
         <p>Quick answers to the questions we hear most. Still stuck? Send us a note above.</p>
       </div>
@@ -504,18 +504,17 @@ function SuccessPage({ name }: { name: string }) {
 }
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
 
   .contact-page {
     min-height: 100vh;
-    background: #faf7f2;
+    background: #F6F1E4;
     background-image:
-      radial-gradient(ellipse at 20% 20%, rgba(180,140,90,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse at 80% 80%, rgba(100,130,160,0.06) 0%, transparent 60%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+      radial-gradient(ellipse at 20% 20%, rgba(200,169,110,0.09) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(201,207,214,0.10) 0%, transparent 60%);
     padding: 60px 24px 80px;
-    font-family: 'Lora', Georgia, serif;
-    color: #3a2f1e;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #2A3344;
   }
 
   .contact-inner {
@@ -531,25 +530,25 @@ const styles = `
 
   .cross-ornament {
     font-size: 28px;
-    color: #b8964a;
-    opacity: 0.7;
+    color: #9A7A35;
+    opacity: 0.8;
     margin-bottom: 12px;
     display: block;
     letter-spacing: 2px;
   }
 
   .contact-header h1 {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: clamp(2rem, 5vw, 3rem);
     font-weight: 700;
-    color: #2a1f0e;
+    color: #15223B;
     margin: 0 0 14px;
     letter-spacing: -0.5px;
   }
 
   .contact-subtitle {
     font-size: 1.05rem;
-    color: #7a6a52;
+    color: #5C6573;
     max-width: 480px;
     margin: 0 auto;
     line-height: 1.65;
@@ -573,16 +572,16 @@ const styles = `
     }
   }
 
-  /* Parchment card */
+  /* Main form card */
   .parchment-card {
-    background: #fffdf7;
-    border: 1px solid rgba(184,150,74,0.25);
+    background: #FFFDF8;
+    border: 1px solid rgba(200,169,110,0.34);
     border-radius: 12px;
     padding: 36px 40px;
     box-shadow:
-      0 2px 16px rgba(100,80,40,0.06),
-      0 1px 3px rgba(100,80,40,0.08),
-      inset 0 0 0 1px rgba(255,255,255,0.8);
+      0 2px 16px rgba(10,22,40,0.06),
+      0 1px 3px rgba(10,22,40,0.05),
+      inset 0 0 0 1px rgba(255,255,255,0.7);
   }
 
   @media (max-width: 580px) {
@@ -612,11 +611,11 @@ const styles = `
   }
 
   .field-group label {
-    font-family: 'Playfair Display', serif;
-    font-size: 0.85rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
     font-weight: 600;
-    color: #5a4a30;
-    letter-spacing: 0.5px;
+    color: #5C6573;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     display: flex;
     justify-content: space-between;
@@ -624,14 +623,14 @@ const styles = `
   }
 
   .required {
-    color: #b8964a;
+    color: #C8A96E;
     font-weight: 700;
   }
 
   .char-count {
-    font-family: 'Lora', serif;
+    font-family: 'Inter', sans-serif;
     font-size: 0.75rem;
-    color: #a09070;
+    color: #5C6573;
     text-transform: none;
     letter-spacing: 0;
     font-weight: 400;
@@ -640,13 +639,13 @@ const styles = `
   .field-group input,
   .field-group select,
   .field-group textarea {
-    background: #faf8f3;
-    border: 1.5px solid rgba(184,150,74,0.3);
+    background: #F6F1E4;
+    border: 1.5px solid rgba(200,169,110,0.34);
     border-radius: 8px;
     padding: 11px 14px;
-    font-family: 'Lora', serif;
+    font-family: 'Inter', sans-serif;
     font-size: 0.95rem;
-    color: #2a1f0e;
+    color: #15223B;
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     outline: none;
     -webkit-appearance: none;
@@ -654,9 +653,10 @@ const styles = `
   }
 
   .field-group select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b8964a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239A7A35' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 14px center;
+    background-color: #F6F1E4;
     padding-right: 40px;
     cursor: pointer;
   }
@@ -664,9 +664,9 @@ const styles = `
   .field-group input:focus,
   .field-group select:focus,
   .field-group textarea:focus {
-    border-color: #b8964a;
-    background: #fffdf7;
-    box-shadow: 0 0 0 3px rgba(184,150,74,0.12);
+    border-color: #C8A96E;
+    background: #FFFDF8;
+    box-shadow: 0 0 0 3px rgba(200,169,110,0.15);
   }
 
   .field-group textarea {
@@ -692,23 +692,24 @@ const styles = `
   /* Submit button */
   .submit-btn {
     width: 100%;
-    background: linear-gradient(135deg, #b8964a 0%, #9a7a35 100%);
-    color: #fffdf7;
+    background: #C8A96E;
+    color: #0A1628;
     border: none;
     border-radius: 8px;
     padding: 15px 24px;
-    font-family: 'Playfair Display', serif;
-    font-size: 1rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
-    box-shadow: 0 4px 16px rgba(184,150,74,0.35);
+    box-shadow: 0 4px 16px rgba(200,169,110,0.35);
   }
 
   .submit-btn:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(184,150,74,0.45);
+    box-shadow: 0 6px 20px rgba(200,169,110,0.45);
   }
 
   .submit-btn:active:not(:disabled) {
@@ -730,8 +731,8 @@ const styles = `
   .spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: white;
+    border: 2px solid rgba(10,22,40,0.2);
+    border-top-color: #0A1628;
     border-radius: 50%;
     display: inline-block;
     animation: spin 0.7s linear infinite;
@@ -742,14 +743,14 @@ const styles = `
   .recaptcha-notice {
     text-align: center;
     font-size: 0.75rem;
-    color: #a09070;
+    color: #5C6573;
     margin-top: 14px;
     margin-bottom: 0;
     line-height: 1.5;
   }
 
   .recaptcha-notice a {
-    color: #b8964a;
+    color: #9A7A35;
     text-decoration: none;
   }
 
@@ -766,17 +767,17 @@ const styles = `
 
   /* FAQ Panel */
   .faq-panel {
-    background: #fffdf7;
-    border: 1.5px solid rgba(184,150,74,0.3);
+    background: #FFFDF8;
+    border: 1.5px solid rgba(200,169,110,0.34);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 2px 16px rgba(100,80,40,0.07);
+    box-shadow: 0 2px 16px rgba(10,22,40,0.06);
     animation: fadeSlideIn 0.3s ease;
   }
 
   .faq-panel--highlight {
-    border-color: rgba(184,150,74,0.6);
-    box-shadow: 0 4px 20px rgba(184,150,74,0.18);
+    border-color: rgba(200,169,110,0.65);
+    box-shadow: 0 4px 20px rgba(200,169,110,0.20);
   }
 
   @keyframes fadeSlideIn {
@@ -789,28 +790,28 @@ const styles = `
     align-items: flex-start;
     gap: 12px;
     padding: 16px 18px;
-    background: linear-gradient(135deg, rgba(184,150,74,0.1), rgba(184,150,74,0.05));
-    border-bottom: 1px solid rgba(184,150,74,0.15);
+    background: linear-gradient(135deg, rgba(200,169,110,0.10), rgba(236,238,241,0.50));
+    border-bottom: 1px solid rgba(200,169,110,0.18);
   }
 
   .faq-icon {
     font-size: 18px;
-    color: #b8964a;
+    color: #9A7A35;
     flex-shrink: 0;
     margin-top: 2px;
   }
 
   .faq-panel-header h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: 0.95rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
     font-weight: 600;
-    color: #3a2f1e;
+    color: #15223B;
     margin: 0 0 3px;
   }
 
   .faq-panel-header p {
     font-size: 0.8rem;
-    color: #7a6a52;
+    color: #5C6573;
     margin: 0;
     font-style: italic;
   }
@@ -819,7 +820,7 @@ const styles = `
     margin-left: auto;
     background: none;
     border: none;
-    color: #a09070;
+    color: #5C6573;
     font-size: 20px;
     cursor: pointer;
     padding: 0 4px;
@@ -828,7 +829,7 @@ const styles = `
     transition: color 0.15s;
   }
 
-  .faq-dismiss:hover { color: #3a2f1e; }
+  .faq-dismiss:hover { color: #15223B; }
 
   .faq-searching {
     display: flex;
@@ -836,14 +837,14 @@ const styles = `
     gap: 6px;
     padding: 14px 18px;
     font-size: 0.85rem;
-    color: #7a6a52;
+    color: #5C6573;
     font-style: italic;
   }
 
   .pulse-dot {
     width: 6px;
     height: 6px;
-    background: #b8964a;
+    background: #C8A96E;
     border-radius: 50%;
     animation: pulse 1.2s ease-in-out infinite;
     flex-shrink: 0;
@@ -859,7 +860,7 @@ const styles = `
 
   /* FAQ matches */
   .faq-match {
-    border-bottom: 1px solid rgba(184,150,74,0.1);
+    border-bottom: 1px solid rgba(200,169,110,0.12);
   }
 
   .faq-match:last-child { border-bottom: none; }
@@ -874,14 +875,14 @@ const styles = `
     border: none;
     text-align: left;
     cursor: pointer;
-    font-family: 'Lora', serif;
+    font-family: 'Inter', sans-serif;
     font-size: 0.88rem;
-    color: #3a2f1e;
+    color: #2A3344;
     font-weight: 500;
     transition: background 0.15s;
   }
 
-  .faq-match-q:hover { background: rgba(184,150,74,0.05); }
+  .faq-match-q:hover { background: rgba(200,169,110,0.06); }
 
   .faq-confidence-dot {
     width: 8px;
@@ -891,20 +892,20 @@ const styles = `
   }
 
   .faq-match--high .faq-confidence-dot { background: #4caf79; }
-  .faq-match--medium .faq-confidence-dot { background: #b8964a; }
-  .faq-match--low .faq-confidence-dot { background: #a0aabb; }
+  .faq-match--medium .faq-confidence-dot { background: #C8A96E; }
+  .faq-match--low .faq-confidence-dot { background: #C9CFD6; }
 
   .faq-chevron {
     margin-left: auto;
     font-size: 10px;
-    color: #b8964a;
+    color: #9A7A35;
     flex-shrink: 0;
   }
 
   .faq-match-a {
     padding: 4px 18px 14px 36px;
     font-size: 0.85rem;
-    color: #5a4a30;
+    color: #2A3344;
     line-height: 1.65;
     animation: fadeIn 0.2s ease;
   }
@@ -924,8 +925,8 @@ const styles = `
   .info-card {
     display: flex;
     gap: 14px;
-    background: #fffdf7;
-    border: 1px solid rgba(184,150,74,0.2);
+    background: #ECEEF1;
+    border: 1px solid rgba(92,101,115,0.20);
     border-radius: 10px;
     padding: 16px 18px;
   }
@@ -937,16 +938,18 @@ const styles = `
   }
 
   .info-card h4 {
-    font-family: 'Playfair Display', serif;
-    font-size: 0.88rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
     font-weight: 600;
-    color: #3a2f1e;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #15223B;
     margin: 0 0 5px;
   }
 
   .info-card p {
     font-size: 0.82rem;
-    color: #7a6a52;
+    color: #5C6573;
     line-height: 1.55;
     margin: 0;
   }
@@ -957,59 +960,59 @@ const styles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #faf7f2;
+    background: #F6F1E4;
     padding: 40px 24px;
-    font-family: 'Lora', Georgia, serif;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 
   .success-inner {
     text-align: center;
     max-width: 520px;
-    background: #fffdf7;
-    border: 1px solid rgba(184,150,74,0.25);
+    background: #FFFDF8;
+    border: 1px solid rgba(200,169,110,0.34);
     border-radius: 16px;
     padding: 52px 48px;
-    box-shadow: 0 4px 32px rgba(100,80,40,0.08);
+    box-shadow: 0 4px 32px rgba(10,22,40,0.08);
   }
 
   .success-cross {
     font-size: 36px;
-    color: #b8964a;
-    opacity: 0.6;
+    color: #C8A96E;
+    opacity: 0.7;
     margin-bottom: 20px;
     animation: gentleGlow 3s ease-in-out infinite;
   }
 
   @keyframes gentleGlow {
     0%, 100% { opacity: 0.5; }
-    50% { opacity: 0.85; }
+    50% { opacity: 0.9; }
   }
 
   .success-inner h1 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
     font-size: 2rem;
     font-weight: 700;
-    color: #2a1f0e;
+    color: #15223B;
     margin: 0 0 8px;
   }
 
   .success-name {
     font-size: 1.05rem;
-    color: #b8964a;
+    color: #9A7A35;
     font-style: italic;
     margin: 0 0 20px;
   }
 
   .success-body {
     font-size: 0.95rem;
-    color: #5a4a30;
+    color: #2A3344;
     line-height: 1.7;
     margin: 0 0 28px;
   }
 
   .success-divider {
-    color: #b8964a;
-    opacity: 0.5;
+    color: #C8A96E;
+    opacity: 0.55;
     letter-spacing: 8px;
     margin-bottom: 28px;
     font-size: 1rem;
@@ -1025,33 +1028,35 @@ const styles = `
   .success-btn {
     padding: 12px 24px;
     border-radius: 8px;
-    font-family: 'Playfair Display', serif;
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     text-decoration: none;
     transition: all 0.2s;
     cursor: pointer;
   }
 
   .success-btn--primary {
-    background: linear-gradient(135deg, #b8964a, #9a7a35);
-    color: #fffdf7;
-    box-shadow: 0 3px 12px rgba(184,150,74,0.3);
+    background: #C8A96E;
+    color: #0A1628;
+    box-shadow: 0 3px 12px rgba(200,169,110,0.35);
   }
 
   .success-btn--primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 5px 16px rgba(184,150,74,0.4);
+    box-shadow: 0 5px 16px rgba(200,169,110,0.45);
   }
 
   .success-btn--ghost {
     background: transparent;
-    color: #b8964a;
-    border: 1.5px solid rgba(184,150,74,0.4);
+    color: #9A7A35;
+    border: 1.5px solid rgba(200,169,110,0.45);
   }
 
   .success-btn--ghost:hover {
-    background: rgba(184,150,74,0.07);
+    background: rgba(200,169,110,0.08);
   }
 
   /* ── FAQ section ── */
@@ -1065,16 +1070,16 @@ const styles = `
   }
 
   .faq-section-head h2 {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: clamp(1.6rem, 3.5vw, 2.2rem);
     font-weight: 700;
-    color: #2a1f0e;
+    color: #15223B;
     margin: 6px 0 10px;
   }
 
   .faq-section-head p {
     font-size: 0.95rem;
-    color: #7a6a52;
+    color: #5C6573;
     font-style: italic;
     max-width: 460px;
     margin: 0 auto;
@@ -1090,16 +1095,16 @@ const styles = `
   }
 
   .faq-item {
-    background: #fffdf7;
-    border: 1px solid rgba(184,150,74,0.25);
+    background: #FFFDF8;
+    border: 1px solid rgba(200,169,110,0.28);
     border-radius: 10px;
     overflow: hidden;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
 
   .faq-item--open {
-    border-color: rgba(184,150,74,0.55);
-    box-shadow: 0 4px 18px rgba(184,150,74,0.12);
+    border-color: rgba(200,169,110,0.60);
+    box-shadow: 0 4px 18px rgba(200,169,110,0.12);
   }
 
   .faq-q {
@@ -1113,22 +1118,22 @@ const styles = `
     text-align: left;
     cursor: pointer;
     padding: 18px 22px;
-    font-family: 'Playfair Display', serif;
-    font-size: 1rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem;
     font-weight: 600;
-    color: #3a2f1e;
+    color: #15223B;
     transition: color 0.15s;
   }
 
-  .faq-q:hover { color: #9a7a35; }
+  .faq-q:hover { color: #9A7A35; }
 
   .faq-toggle {
     flex-shrink: 0;
     width: 26px;
     height: 26px;
     border-radius: 50%;
-    background: rgba(184,150,74,0.12);
-    color: #b8964a;
+    background: rgba(200,169,110,0.12);
+    color: #C8A96E;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1146,7 +1151,7 @@ const styles = `
     padding: 0 22px 20px;
     margin: 0;
     font-size: 0.92rem;
-    color: #5a4a30;
+    color: #2A3344;
     line-height: 1.7;
   }
 

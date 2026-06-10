@@ -94,26 +94,43 @@ export default function AdminOrgs() {
     setGenerating(false)
   }
 
-  const green = '#1a6b4a'
+  // PrayerBands brand palette
+  const C = {
+    pageBg: '#F6F1E4',
+    card: '#FFFDF8',
+    navy: '#0A1628',
+    gold: '#C8A96E',
+    goldText: '#9A7A35',
+    silver: '#C9CFD6',
+    silverBg: '#ECEEF1',
+    heading: '#15223B',
+    body: '#2A3344',
+    secondary: '#5C6573',
+    borderGold: 'rgba(200,169,110,0.34)',
+    borderNavy: 'rgba(10,22,40,0.12)',
+    borderSilver: 'rgba(92,101,115,0.20)',
+    green: '#4A8A6A',
+    red: '#c0392b',
+  }
 
   if (!authorized || loading) return (
-    <div style={{ padding: 40, fontFamily: 'Georgia, serif', color: '#8a7c6a' }}>Loading... ✝</div>
+    <div style={{ padding: 40, fontFamily: 'Inter, sans-serif', color: C.secondary }}>Loading... ✝</div>
   )
 
   return (
-    <div style={{ fontFamily: 'Georgia, serif', background: '#f7f4ef', minHeight: '100vh', padding: 32 }}>
+    <div style={{ fontFamily: 'Inter, sans-serif', background: C.pageBg, minHeight: '100vh', padding: 32 }}>
       <div style={{ maxWidth: 1000, margin: '0 auto' }}>
         <div style={{ marginBottom: 32 }}>
-          <div style={{ marginBottom: 12 }}><PrayerBandsLogo size={34} color={green} /></div>
-          <a href="/admin" style={{ color: green, fontSize: 14, textDecoration: 'none' }}>← Admin</a>
-          <h1 style={{ fontSize: 26, fontWeight: 'bold', marginTop: 8, color: '#1a1208' }}>Church Accounts</h1>
-          <p style={{ color: '#8a7c6a', fontSize: 14 }}>Manage organizations, generate and assign bands.</p>
+          <div style={{ marginBottom: 12 }}><PrayerBandsLogo size={34} color={C.gold} /></div>
+          <a href="/admin" style={{ color: C.goldText, fontSize: 13, textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>← Admin</a>
+          <h1 style={{ fontSize: 30, fontWeight: 600, marginTop: 8, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Church Accounts</h1>
+          <p style={{ color: C.secondary, fontSize: 14 }}>Manage organizations, generate and assign bands.</p>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24 }}>
           {/* Org list */}
-          <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0ece6', fontWeight: 'bold', fontSize: 15 }}>
+          <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
+            <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.borderSilver}`, fontWeight: 600, fontSize: 14, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
               Organizations ({orgs.length})
             </div>
             {orgs.map(org => (
@@ -122,22 +139,22 @@ export default function AdminOrgs() {
                 onClick={() => { setSelectedOrg(org); loadOrgBands(org.id); setMessage('') }}
                 style={{
                   padding: '14px 20px', cursor: 'pointer',
-                  borderBottom: '1px solid #f7f4ef',
-                  background: selectedOrg?.id === org.id ? '#f0f7f3' : '#fff',
-                  borderLeft: selectedOrg?.id === org.id ? `3px solid ${green}` : '3px solid transparent',
+                  borderBottom: `1px solid ${C.borderSilver}`,
+                  background: selectedOrg?.id === org.id ? 'rgba(200,169,110,0.08)' : C.card,
+                  borderLeft: selectedOrg?.id === org.id ? `3px solid ${C.gold}` : '3px solid transparent',
                 }}
               >
-                <div style={{ fontWeight: 600, fontSize: 14, color: '#1a1208' }}>{org.name}</div>
-                <div style={{ fontSize: 12, color: '#8a7c6a', marginTop: 2, fontFamily: 'monospace' }}>
+                <div style={{ fontWeight: 600, fontSize: 14, color: C.heading }}>{org.name}</div>
+                <div style={{ fontSize: 12, color: C.goldText, marginTop: 2, fontFamily: 'monospace' }}>
                   {org.prefix}-XXXXX
                 </div>
-                <div style={{ fontSize: 11, color: '#8a7c6a', marginTop: 2 }}>
+                <div style={{ fontSize: 11, color: C.secondary, marginTop: 2 }}>
                   {new Date(org.created_at).toLocaleDateString()}
                 </div>
               </div>
             ))}
             {orgs.length === 0 && (
-              <div style={{ padding: '24px 20px', color: '#8a7c6a', fontSize: 13, textAlign: 'center' }}>
+              <div style={{ padding: '24px 20px', color: C.secondary, fontSize: 13, textAlign: 'center', fontStyle: 'italic' }}>
                 No organizations yet.
               </div>
             )}
@@ -148,12 +165,12 @@ export default function AdminOrgs() {
             {selectedOrg ? (
               <div>
                 {/* Header */}
-                <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '20px 24px', marginBottom: 16 }}>
-                  <h2 style={{ fontSize: 18, fontWeight: 'bold', margin: '0 0 4px' }}>{selectedOrg.name}</h2>
-                  <div style={{ fontSize: 13, color: '#8a7c6a' }}>
-                    <span style={{ fontFamily: 'monospace', color: green }}>{selectedOrg.prefix}-XXXXX</span>
+                <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 10, padding: '20px 24px', marginBottom: 16, boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 4px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{selectedOrg.name}</h2>
+                  <div style={{ fontSize: 13, color: C.secondary }}>
+                    <span style={{ fontFamily: 'monospace', color: C.goldText }}>{selectedOrg.prefix}-XXXXX</span>
                     {' · '}
-                    <a href={`https://${selectedOrg.subdomain}.prayerbands.com`} target="_blank" rel="noopener noreferrer" style={{ color: green }}>
+                    <a href={`https://${selectedOrg.subdomain}.prayerbands.com`} target="_blank" rel="noopener noreferrer" style={{ color: C.goldText }}>
                       {selectedOrg.subdomain}.prayerbands.com ↗
                     </a>
                   </div>
@@ -162,9 +179,10 @@ export default function AdminOrgs() {
                 {message && (
                   <div style={{
                     padding: '12px 16px', borderRadius: 8, marginBottom: 16,
-                    background: message.startsWith('✅') ? '#e6f4ee' : '#fef0f0',
-                    color: message.startsWith('✅') ? green : '#c0392b',
+                    background: message.startsWith('✅') ? 'rgba(74,138,106,0.1)' : 'rgba(192,57,43,0.08)',
+                    color: message.startsWith('✅') ? C.green : C.red,
                     fontSize: 13, lineHeight: 1.5,
+                    border: `1px solid ${message.startsWith('✅') ? 'rgba(74,138,106,0.25)' : 'rgba(192,57,43,0.25)'}`,
                   }}>
                     {message}
                   </div>
@@ -172,49 +190,49 @@ export default function AdminOrgs() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                   {/* Generate bands */}
-                  <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '20px 24px' }}>
-                    <h3 style={{ fontSize: 15, fontWeight: 'bold', marginBottom: 16, color: '#1a1208' }}>
+                  <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 10, padding: '20px 24px', boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
                       Generate New Bands
                     </h3>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: '#7a6c5a', display: 'block', marginBottom: 8 }}>
-                      QUANTITY
+                    <label style={{ fontSize: 11, fontWeight: 600, color: C.goldText, display: 'block', marginBottom: 8, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                      Quantity
                     </label>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
                       {[50, 100, 250, 500].map(qty => (
                         <button key={qty} onClick={() => setGenerateQty(qty)} style={{
                           padding: '6px 14px', borderRadius: 6,
-                          border: generateQty === qty ? `2px solid ${green}` : '2px solid #e8e1d6',
-                          background: generateQty === qty ? '#e6f4ee' : '#fff',
-                          color: generateQty === qty ? green : '#5a4f42',
+                          border: generateQty === qty ? `2px solid ${C.gold}` : `1px solid ${C.borderNavy}`,
+                          background: generateQty === qty ? 'rgba(200,169,110,0.14)' : C.pageBg,
+                          color: generateQty === qty ? C.goldText : C.secondary,
                           fontWeight: generateQty === qty ? 700 : 400,
-                          cursor: 'pointer', fontSize: 13,
+                          cursor: 'pointer', fontSize: 13, fontFamily: 'Inter, sans-serif',
                         }}>{qty}</button>
                       ))}
                     </div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: '#7a6c5a', display: 'block', marginBottom: 8 }}>
-                      THEME
+                    <label style={{ fontSize: 11, fontWeight: 600, color: C.goldText, display: 'block', marginBottom: 8, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                      Theme
                     </label>
                     <select
                       value={bandTheme}
                       onChange={e => setBandTheme(e.target.value)}
-                      style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '2px solid #e8e1d6', background: '#fff', color: '#1a1208', fontSize: 13, fontFamily: 'Georgia, serif', marginBottom: 16, cursor: 'pointer' }}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: `1px solid ${C.borderNavy}`, background: C.pageBg, color: C.body, fontSize: 13, fontFamily: 'Inter, sans-serif', marginBottom: 16, cursor: 'pointer', outline: 'none' }}
                     >
                       {THEME_OPTIONS.map(t => (
                         <option key={t.id} value={t.id}>{t.label}</option>
                       ))}
                     </select>
-                    <div style={{ fontSize: 12, color: '#8a7c6a', marginBottom: 16, lineHeight: 1.5 }}>
-                      Generates {generateQty} unique {selectedOrg.prefix}-XXXXX IDs in the <strong>{THEME_OPTIONS.find(t => t.id === bandTheme)?.label}</strong> theme, seeds them into Supabase, and emails you the supplier NFC CSV.
+                    <div style={{ fontSize: 12, color: C.secondary, marginBottom: 16, lineHeight: 1.5 }}>
+                      Generates {generateQty} unique {selectedOrg.prefix}-XXXXX IDs in the <strong style={{ color: C.body }}>{THEME_OPTIONS.find(t => t.id === bandTheme)?.label}</strong> theme, seeds them into Supabase, and emails you the supplier NFC CSV.
                     </div>
                     <button
                       onClick={generateBands}
                       disabled={generating}
                       style={{
-                        background: generating ? '#ccc' : green,
-                        color: '#fff', border: 'none', borderRadius: 8,
-                        padding: '10px 20px', fontSize: 14, fontWeight: 'bold',
+                        background: generating ? C.silver : C.gold,
+                        color: generating ? '#fff' : C.navy, border: 'none', borderRadius: 8,
+                        padding: '10px 20px', fontSize: 11, fontWeight: 700,
                         cursor: generating ? 'default' : 'pointer',
-                        fontFamily: 'Georgia, serif', width: '100%',
+                        fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em', width: '100%',
                       }}
                     >
                       {generating ? 'Generating...' : `Generate ${generateQty} Bands ✝`}
@@ -222,12 +240,12 @@ export default function AdminOrgs() {
                   </div>
 
                   {/* Manual assign */}
-                  <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, padding: '20px 24px' }}>
-                    <h3 style={{ fontSize: 15, fontWeight: 'bold', marginBottom: 16, color: '#1a1208' }}>
+                  <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 10, padding: '20px 24px', boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
                       Manual Assign
                     </h3>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: '#7a6c5a', display: 'block', marginBottom: 6 }}>
-                      BAND IDs (one per line)
+                    <label style={{ fontSize: 11, fontWeight: 600, color: C.goldText, display: 'block', marginBottom: 6, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                      Band IDs (one per line)
                     </label>
                     <textarea
                       value={bandInput}
@@ -236,20 +254,20 @@ export default function AdminOrgs() {
                       rows={4}
                       style={{
                         width: '100%', padding: '10px 12px', borderRadius: 7,
-                        border: '1px solid #ddd6ca', fontSize: 12,
-                        fontFamily: 'monospace', background: '#fdfaf7',
-                        color: '#2c2416', boxSizing: 'border-box' as const,
-                        resize: 'vertical', marginBottom: 12,
+                        border: `1px solid ${C.borderNavy}`, fontSize: 12,
+                        fontFamily: 'monospace', background: C.pageBg,
+                        color: C.body, boxSizing: 'border-box' as const,
+                        resize: 'vertical', marginBottom: 12, outline: 'none',
                       }}
                     />
                     <button
                       onClick={assignBands}
                       disabled={saving || !bandInput.trim()}
                       style={{
-                        background: (!saving && bandInput.trim()) ? '#5a4f42' : '#ccc',
-                        color: '#fff', border: 'none', borderRadius: 8,
-                        padding: '10px 20px', fontSize: 14, fontWeight: 'bold',
-                        cursor: 'pointer', fontFamily: 'Georgia, serif', width: '100%',
+                        background: (!saving && bandInput.trim()) ? C.gold : C.silver,
+                        color: (!saving && bandInput.trim()) ? C.navy : '#fff', border: 'none', borderRadius: 8,
+                        padding: '10px 20px', fontSize: 11, fontWeight: 700,
+                        cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em', width: '100%',
                       }}
                     >
                       {saving ? 'Assigning...' : 'Assign Bands'}
@@ -258,10 +276,10 @@ export default function AdminOrgs() {
                 </div>
 
                 {/* Existing bands */}
-                <div style={{ background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10, overflow: 'hidden' }}>
-                  <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0ece6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 'bold', fontSize: 15 }}>Assigned Bands ({bands.length})</span>
-                    <span style={{ fontSize: 12, color: '#8a7c6a' }}>
+                <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
+                  <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.borderSilver}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 600, fontSize: 14, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Assigned Bands ({bands.length})</span>
+                    <span style={{ fontSize: 12, color: C.secondary }}>
                       {bands.filter(b => b.status === 'registered').length} registered · {bands.filter(b => b.status === 'unregistered').length} unregistered
                     </span>
                   </div>
@@ -269,27 +287,29 @@ export default function AdminOrgs() {
                     {bands.slice(0, 50).map((b, i) => (
                       <div key={b.band_id} style={{
                         display: 'flex', alignItems: 'center', padding: '10px 20px',
-                        borderBottom: i < bands.length - 1 ? '1px solid #f7f4ef' : 'none',
+                        borderBottom: i < bands.length - 1 ? `1px solid ${C.borderSilver}` : 'none',
                         gap: 12,
                       }}>
-                        <div style={{ fontFamily: 'monospace', fontSize: 13, color: green, fontWeight: 'bold', flex: 1 }}>
+                        <div style={{ fontFamily: 'monospace', fontSize: 13, color: C.goldText, fontWeight: 'bold', flex: 1 }}>
                           {b.band_id}
                         </div>
-                        <div style={{ fontSize: 11, color: '#8a7c6a' }}>
+                        <div style={{ fontSize: 11, color: C.secondary }}>
                           {new Date(b.created_at).toLocaleDateString()}
                         </div>
                         <div style={{
                           fontSize: 11, padding: '2px 8px', borderRadius: 10,
-                          background: b.status === 'registered' ? '#e6f4ee' : '#fef3e2',
-                          color: b.status === 'registered' ? green : '#c17f2a',
+                          background: b.status === 'registered' ? 'rgba(74,138,106,0.14)' : 'rgba(200,169,110,0.14)',
+                          color: b.status === 'registered' ? C.green : C.goldText,
                           textTransform: 'capitalize' as const,
+                          fontFamily: 'Cinzel, serif',
+                          letterSpacing: '0.04em',
                         }}>
                           {b.status}
                         </div>
                       </div>
                     ))}
                     {bands.length === 0 && (
-                      <div style={{ padding: '24px 20px', color: '#8a7c6a', fontSize: 13, textAlign: 'center' }}>
+                      <div style={{ padding: '24px 20px', color: C.secondary, fontSize: 13, textAlign: 'center', fontStyle: 'italic' }}>
                         No bands assigned yet.
                       </div>
                     )}
@@ -298,11 +318,11 @@ export default function AdminOrgs() {
               </div>
             ) : (
               <div style={{
-                background: '#fff', border: '1px solid #e8e1d6', borderRadius: 10,
-                padding: 60, textAlign: 'center', color: '#8a7c6a',
+                background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 10,
+                padding: 60, textAlign: 'center', color: C.secondary, boxShadow: '0 2px 10px rgba(10,22,40,0.06)',
               }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>✝</div>
-                <div style={{ fontSize: 14 }}>Select a church to manage their bands.</div>
+                <div style={{ fontSize: 32, marginBottom: 12, color: C.borderGold }}>✝</div>
+                <div style={{ fontSize: 14, fontStyle: 'italic' }}>Select a church to manage their bands.</div>
               </div>
             )}
           </div>

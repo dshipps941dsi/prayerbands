@@ -3,6 +3,28 @@ import { useEffect, useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
+// PrayerBands brand palette
+const C = {
+  pageBg: '#F6F1E4',
+  card: '#FFFDF8',
+  navy: '#0A1628',
+  navyMid: '#0E1E38',
+  gold: '#C8A96E',
+  goldText: '#9A7A35',
+  goldDark: '#5A3E12',
+  silver: '#C9CFD6',
+  silverBg: '#ECEEF1',
+  heading: '#15223B',
+  body: '#2A3344',
+  secondary: '#5C6573',
+  borderGold: 'rgba(200,169,110,0.34)',
+  borderNavy: 'rgba(10,22,40,0.12)',
+  borderSilver: 'rgba(92,101,115,0.20)',
+  green: '#4A8A6A',
+  greenBg: 'rgba(74,138,106,0.12)',
+  red: '#c0392b',
+}
+
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 type Order = {
@@ -257,33 +279,33 @@ export default function AdminPage() {
   }
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#FAF6EF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ fontFamily: 'Georgia, serif', color: '#8B6914' }}>Loading admin panel...</p>
+    <div style={{ minHeight: '100vh', background: C.pageBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <p style={{ fontFamily: 'Inter, sans-serif', color: C.goldText }}>Loading admin panel...</p>
     </div>
   )
 
   if (!authorized) return (
-    <div style={{ minHeight: '100vh', background: '#FAF6EF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ fontFamily: 'Georgia, serif', color: '#8B6914' }}>Access denied.</p>
+    <div style={{ minHeight: '100vh', background: C.pageBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <p style={{ fontFamily: 'Inter, sans-serif', color: C.goldText }}>Access denied.</p>
     </div>
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FAF6EF', fontFamily: 'Georgia, serif', color: '#2C1A0E' }}>
+    <div style={{ minHeight: '100vh', background: C.pageBg, fontFamily: 'Inter, sans-serif', color: C.body }}>
       {/* Header */}
-      <div style={{ background: '#2C1A0E', padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: C.navy, padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 12px rgba(10,22,40,0.25)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <PrayerBandsLogo size={38} color="#C8A96E" />
+          <PrayerBandsLogo size={38} color={C.gold} />
           <div>
-            <h1 style={{ margin: 0, color: '#C8A96E', fontSize: '22px', fontFamily: 'Playfair Display, Georgia, serif' }}>PrayerBands Admin</h1>
-            <p style={{ margin: '2px 0 0', color: '#8B6914', fontSize: '13px' }}>Order Management &amp; Fulfillment</p>
+            <h1 style={{ margin: 0, color: C.gold, fontSize: '22px', fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>PrayerBands Admin</h1>
+            <p style={{ margin: '2px 0 0', color: C.silver, fontSize: '12px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Order Management &amp; Fulfillment</p>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-          <a href="/admin/products" style={{ color: '#C8A96E', fontSize: '13px', textDecoration: 'none', fontWeight: 600 }}>Products</a>
-          <a href="/admin/bands" style={{ color: '#C8A96E', fontSize: '13px', textDecoration: 'none', fontWeight: 600 }}>Band Management</a>
-          <a href="/admin/orgs" style={{ color: '#C8A96E', fontSize: '13px', textDecoration: 'none' }}>Churches</a>
-          <a href="/dashboard" style={{ color: '#C8A96E', fontSize: '13px', textDecoration: 'none' }}>Back to Dashboard</a>
+          <a href="/admin/products" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Products</a>
+          <a href="/admin/bands" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Band Management</a>
+          <a href="/admin/orgs" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Churches</a>
+          <a href="/dashboard" style={{ color: C.silver, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Dashboard</a>
         </div>
       </div>
 
@@ -296,31 +318,32 @@ export default function AdminPage() {
           { label: 'Bands Available', value: availableBands },
         ].map(s => (
           <div key={s.label} style={{
-            background: '#fff',
-            border: `1px solid ${s.highlight ? '#C8A96E' : '#E8DCC8'}`,
-            borderRadius: '8px',
+            background: C.card,
+            border: `1px solid ${s.highlight ? C.borderGold : C.borderNavy}`,
+            borderRadius: '10px',
             padding: '16px 20px',
-            boxShadow: s.highlight ? '0 0 0 2px #C8A96E33' : 'none',
+            boxShadow: s.highlight ? `0 0 0 2px rgba(200,169,110,0.18), 0 2px 8px rgba(10,22,40,0.06)` : '0 2px 8px rgba(10,22,40,0.06)',
           }}>
-            <div style={{ fontSize: '28px', fontWeight: 'bold', color: s.highlight ? '#B8860B' : '#2C1A0E' }}>{s.value}</div>
-            <div style={{ fontSize: '12px', color: '#8B6914', marginTop: '2px' }}>{s.label}</div>
+            <div style={{ fontSize: '28px', fontWeight: '600', color: s.highlight ? C.goldText : C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{s.value}</div>
+            <div style={{ fontSize: '11px', color: C.secondary, marginTop: '4px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '4px', padding: '20px 32px 0', borderBottom: '1px solid #E8DCC8', marginTop: '8px' }}>
+      <div style={{ display: 'flex', gap: '4px', padding: '20px 32px 0', borderBottom: `1px solid ${C.borderGold}`, marginTop: '8px' }}>
         {(['orders', 'prayers', 'users', 'contact', 'activity', 'pricing'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             padding: '8px 18px',
-            background: activeTab === tab ? '#2C1A0E' : 'transparent',
-            color: activeTab === tab ? '#C8A96E' : '#8B6914',
+            background: activeTab === tab ? C.navy : 'transparent',
+            color: activeTab === tab ? C.gold : C.secondary,
             border: 'none',
             borderRadius: '6px 6px 0 0',
             cursor: 'pointer',
-            fontSize: '13px',
-            fontFamily: 'Georgia, serif',
-            textTransform: 'capitalize',
+            fontSize: '11px',
+            fontFamily: 'Cinzel, serif',
+            textTransform: 'uppercase',
+            letterSpacing: '0.07em',
           }}>{tab}{tab === 'prayers' && flaggedPrayers.length > 0 ? ` (${flaggedPrayers.length})` : ''}</button>
         ))}
       </div>
@@ -335,20 +358,21 @@ export default function AdminPage() {
               {['pending', 'processing', 'shipped', 'all'].map(f => (
                 <button key={f} onClick={() => setFilter(f)} style={{
                   padding: '6px 16px',
-                  background: filter === f ? '#B8860B' : '#fff',
-                  color: filter === f ? '#fff' : '#8B6914',
-                  border: '1px solid #E8DCC8',
+                  background: filter === f ? C.gold : C.card,
+                  color: filter === f ? C.navy : C.secondary,
+                  border: `1px solid ${filter === f ? C.gold : C.borderNavy}`,
                   borderRadius: '20px',
                   cursor: 'pointer',
-                  fontSize: '12px',
-                  fontFamily: 'Georgia, serif',
-                  textTransform: 'capitalize',
+                  fontSize: '11px',
+                  fontFamily: 'Cinzel, serif',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
                 }}>{f}</button>
               ))}
             </div>
 
             {filteredOrders.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px', color: '#8B6914' }}>
+              <div style={{ textAlign: 'center', padding: '60px', color: C.secondary, fontStyle: 'italic' }}>
                 No {filter} orders.
               </div>
             ) : (
@@ -362,59 +386,63 @@ export default function AdminPage() {
 
                   return (
                     <div key={order.id} style={{
-                      background: '#fff',
-                      border: '1px solid #E8DCC8',
+                      background: C.card,
+                      border: `1px solid ${C.borderNavy}`,
                       borderRadius: '10px',
                       padding: '20px 24px',
-                      borderLeft: `4px solid ${isShipped ? '#7BAE8E' : needsAssignment ? '#C8A96E' : '#B8860B'}`,
+                      borderLeft: `4px solid ${isShipped ? C.green : needsAssignment ? C.gold : C.goldText}`,
+                      boxShadow: '0 2px 8px rgba(10,22,40,0.06)',
                     }}>
                       {/* Order header */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                         <div>
-                          <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{order.customer_name}</div>
-                          <div style={{ fontSize: '13px', color: '#8B6914' }}>{order.customer_email}</div>
-                          <div style={{ fontSize: '12px', color: '#AAA', marginTop: '2px' }}>
+                          <div style={{ fontWeight: '600', fontSize: '16px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{order.customer_name}</div>
+                          <div style={{ fontSize: '13px', color: C.goldText }}>{order.customer_email}</div>
+                          <div style={{ fontSize: '12px', color: C.secondary, marginTop: '2px' }}>
                             {new Date(order.created_at).toLocaleDateString()} &middot; Order #{order.id}
                           </div>
                           {order.order_metadata?.backordered && (
-                            <div style={{ display: 'inline-block', marginTop: 6, background: '#B8860B', color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: 10 }}>⚑ Backorder</div>
+                            <div style={{ display: 'inline-block', marginTop: 6, background: C.gold, color: C.navy, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: 10, fontFamily: 'Cinzel, serif' }}>⚑ Backorder</div>
                           )}
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2C1A0E' }}>
+                          <div style={{ fontSize: '18px', fontWeight: '600', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
                             ${(order.amount_total / 100).toFixed(2)}
                           </div>
                           <div style={{ fontSize: '12px', marginTop: '4px' }}>
                             <span style={{
                               padding: '2px 10px',
                               borderRadius: '12px',
-                              background: isShipped ? '#7BAE8E22' : needsAssignment ? '#C8A96E22' : '#B8860B22',
-                              color: isShipped ? '#4A8A6A' : needsAssignment ? '#B8860B' : '#8B4A00',
+                              background: isShipped ? C.greenBg : needsAssignment ? 'rgba(200,169,110,0.14)' : 'rgba(154,122,53,0.14)',
+                              color: isShipped ? C.green : needsAssignment ? C.goldText : C.goldDark,
                               fontSize: '11px',
+                              fontFamily: 'Cinzel, serif',
+                              textTransform: 'uppercase' as const,
+                              letterSpacing: '0.05em',
                             }}>{order.status}</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Order details */}
-                      <div style={{ fontSize: '13px', color: '#555', marginBottom: '12px', lineHeight: '1.6' }}>
+                      <div style={{ fontSize: '13px', color: C.body, marginBottom: '12px', lineHeight: '1.6' }}>
                         <strong>Type:</strong> {order.has_custom_bands ? 'Custom' : 'Standard'} &middot; <strong>Qty:</strong> {qty}<br />
                         <strong>Ship to:</strong> {shippingAddr(order)}
                       </div>
 
                       {/* Assigned bands */}
                       {bands.length > 0 && (
-                        <div style={{ marginBottom: '12px', padding: '10px 14px', background: '#FAF6EF', borderRadius: '6px', fontSize: '13px' }}>
-                          <strong>Assigned bands:</strong>{' '}
+                        <div style={{ marginBottom: '12px', padding: '10px 14px', background: C.silverBg, borderRadius: '6px', fontSize: '13px', border: `1px solid ${C.borderSilver}` }}>
+                          <strong style={{ color: C.heading }}>Assigned bands:</strong>{' '}
                           {bands.map((b: string) => (
-                            <span key={b} style={{ display: 'inline-block', margin: '2px 4px 2px 0', padding: '2px 8px', background: '#C8A96E22', border: '1px solid #C8A96E', borderRadius: '4px', fontFamily: 'monospace', fontSize: '12px' }}>{b}</span>
+                            <span key={b} style={{ display: 'inline-block', margin: '2px 4px 2px 0', padding: '2px 8px', background: 'rgba(200,169,110,0.14)', border: `1px solid ${C.borderGold}`, borderRadius: '4px', fontFamily: 'monospace', fontSize: '12px', color: C.goldText }}>{b}</span>
                           ))}
                         </div>
                       )}
 
                       {/* Tracking number (shipped) */}
                       {isShipped && order.tracking_number && (
-                        <div style={{ padding: '10px 14px', background: '#7BAE8E11', border: '1px solid #7BAE8E44', borderRadius: '6px', fontSize: '13px', color: '#4A8A6A' }}>
+                        <div style={{ padding: '10px 14px', background: C.greenBg, border: `1px solid rgba(74,138,106,0.28)`, borderRadius: '6px', fontSize: '13px', color: C.green }}>
                           <strong>Tracking:</strong> {order.tracking_number}
                         </div>
                       )}
@@ -428,13 +456,16 @@ export default function AdminPage() {
                               disabled={assigningBands === order.id}
                               style={{
                                 padding: '8px 18px',
-                                background: '#C8A96E',
-                                color: '#fff',
+                                background: C.gold,
+                                color: C.navy,
                                 border: 'none',
                                 borderRadius: '6px',
                                 cursor: 'pointer',
-                                fontSize: '13px',
-                                fontFamily: 'Georgia, serif',
+                                fontSize: '11px',
+                                fontFamily: 'Cinzel, serif',
+                                textTransform: 'uppercase' as const,
+                                letterSpacing: '0.05em',
+                                fontWeight: '600',
                               }}
                             >
                               {assigningBands === order.id ? 'Assigning...' : `Assign ${qty} Band${qty > 1 ? 's' : ''} \u2192`}
@@ -444,7 +475,7 @@ export default function AdminPage() {
                           {needsShipping && (
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', flex: 1 }}>
                               <div style={{ flex: 1 }}>
-                                <label style={{ display: 'block', fontSize: '11px', color: '#8B6914', marginBottom: '4px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                <label style={{ display: 'block', fontSize: '11px', color: C.goldText, marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontFamily: 'Cinzel, serif' }}>
                                   Pirateship Tracking #
                                 </label>
                                 <input
@@ -455,11 +486,12 @@ export default function AdminPage() {
                                   style={{
                                     width: '100%',
                                     padding: '8px 12px',
-                                    border: '1px solid #E8DCC8',
+                                    border: `1px solid ${C.borderNavy}`,
                                     borderRadius: '6px',
                                     fontFamily: 'monospace',
                                     fontSize: '13px',
-                                    background: '#FAF6EF',
+                                    background: C.pageBg,
+                                    color: C.body,
                                     outline: 'none',
                                     boxSizing: 'border-box',
                                   }}
@@ -470,13 +502,15 @@ export default function AdminPage() {
                                 disabled={markingShipped === order.id || !trackingInputs[order.id]?.trim()}
                                 style={{
                                   padding: '8px 18px',
-                                  background: trackingInputs[order.id]?.trim() ? '#7BAE8E' : '#ccc',
+                                  background: trackingInputs[order.id]?.trim() ? C.green : C.silver,
                                   color: '#fff',
                                   border: 'none',
                                   borderRadius: '6px',
                                   cursor: trackingInputs[order.id]?.trim() ? 'pointer' : 'not-allowed',
-                                  fontSize: '13px',
-                                  fontFamily: 'Georgia, serif',
+                                  fontSize: '11px',
+                                  fontFamily: 'Cinzel, serif',
+                                  textTransform: 'uppercase' as const,
+                                  letterSpacing: '0.05em',
                                   whiteSpace: 'nowrap',
                                 }}
                               >
@@ -497,21 +531,21 @@ export default function AdminPage() {
         {/* PRAYERS TAB */}
         {activeTab === 'prayers' && (
           <div>
-            <h2 style={{ margin: '0 0 16px', fontSize: '18px', color: '#2C1A0E' }}>Flagged Prayers</h2>
+            <h2 style={{ margin: '0 0 16px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Flagged Prayers</h2>
             {flaggedPrayers.length === 0 ? (
-              <p style={{ color: '#8B6914' }}>No flagged prayers. All clear.</p>
+              <p style={{ color: C.secondary, fontStyle: 'italic' }}>No flagged prayers. All clear.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {flaggedPrayers.map(p => (
-                  <div key={p.id} style={{ background: '#fff', border: '1px solid #E8DCC8', borderRadius: '8px', padding: '16px 20px' }}>
-                    <div style={{ fontSize: '13px', marginBottom: '8px' }}>
-                      <strong>{p.user_name || 'Anonymous'}</strong> &middot; Band {p.band_id}
+                  <div key={p.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '8px', padding: '16px 20px', boxShadow: '0 2px 8px rgba(10,22,40,0.06)' }}>
+                    <div style={{ fontSize: '13px', marginBottom: '8px', color: C.body }}>
+                      <strong style={{ color: C.heading }}>{p.user_name || 'Anonymous'}</strong> &middot; Band {p.band_id}
                     </div>
-                    <p style={{ margin: '0 0 8px', color: '#555', fontSize: '14px' }}>{p.prayer_text}</p>
-                    {p.flagged_reason && <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#999' }}>Reason: {p.flagged_reason}</p>}
+                    <p style={{ margin: '0 0 8px', color: C.body, fontSize: '14px' }}>{p.prayer_text}</p>
+                    {p.flagged_reason && <p style={{ margin: '0 0 12px', fontSize: '12px', color: C.secondary }}>Reason: {p.flagged_reason}</p>}
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <button onClick={() => approvePrayer(p.id)} style={{ padding: '6px 14px', background: '#7BAE8E', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>Approve</button>
-                      <button onClick={() => removePrayer(p.id)} style={{ padding: '6px 14px', background: '#c0392b', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>Remove</button>
+                      <button onClick={() => approvePrayer(p.id)} style={{ padding: '6px 14px', background: C.green, color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Approve</button>
+                      <button onClick={() => removePrayer(p.id)} style={{ padding: '6px 14px', background: C.red, color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Remove</button>
                     </div>
                   </div>
                 ))}
@@ -523,7 +557,7 @@ export default function AdminPage() {
         {/* USERS TAB */}
         {activeTab === 'users' && (
           <div>
-            <h2 style={{ margin: '0 0 16px', fontSize: '18px' }}>User Lookup</h2>
+            <h2 style={{ margin: '0 0 16px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>User Lookup</h2>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
               <input
                 type="text"
@@ -531,22 +565,22 @@ export default function AdminPage() {
                 value={userSearch}
                 onChange={e => setUserSearch(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && searchUsers()}
-                style={{ flex: 1, padding: '10px 14px', border: '1px solid #E8DCC8', borderRadius: '6px', fontFamily: 'Georgia, serif', fontSize: '14px', background: '#FAF6EF' }}
+                style={{ flex: 1, padding: '10px 14px', border: `1px solid ${C.borderNavy}`, borderRadius: '6px', fontFamily: 'Inter, sans-serif', fontSize: '14px', background: C.pageBg, color: C.body, outline: 'none' }}
               />
-              <button onClick={searchUsers} disabled={searchingUsers} style={{ padding: '10px 20px', background: '#2C1A0E', color: '#C8A96E', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
+              <button onClick={searchUsers} disabled={searchingUsers} style={{ padding: '10px 20px', background: C.gold, color: C.navy, border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>
                 {searchingUsers ? 'Searching...' : 'Search'}
               </button>
             </div>
             {userResults.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {userResults.map(u => (
-                  <div key={u.id} style={{ background: '#fff', border: '1px solid #E8DCC8', borderRadius: '8px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div key={u.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '8px', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 8px rgba(10,22,40,0.06)' }}>
                     <div>
-                      <div style={{ fontWeight: 'bold' }}>{u.full_name || 'No name'}</div>
-                      <div style={{ fontSize: '13px', color: '#8B6914' }}>{u.email}</div>
-                      <div style={{ fontSize: '12px', color: '#AAA' }}>{u.band_count || 0} bands registered</div>
+                      <div style={{ fontWeight: '600', color: C.heading }}>{u.full_name || 'No name'}</div>
+                      <div style={{ fontSize: '13px', color: C.goldText }}>{u.email}</div>
+                      <div style={{ fontSize: '12px', color: C.secondary }}>{u.band_count || 0} bands registered</div>
                     </div>
-                    <a href={`/dashboard?viewAs=${u.id}`} style={{ padding: '7px 16px', background: '#C8A96E', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontSize: '13px' }}>View Dashboard</a>
+                    <a href={`/dashboard?viewAs=${u.id}`} style={{ padding: '7px 16px', background: C.gold, color: C.navy, borderRadius: '6px', textDecoration: 'none', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>View Dashboard</a>
                   </div>
                 ))}
               </div>
@@ -557,21 +591,21 @@ export default function AdminPage() {
         {/* CONTACT TAB */}
         {activeTab === 'contact' && (
           <div>
-            <h2 style={{ margin: '0 0 16px', fontSize: '18px' }}>Contact Submissions</h2>
+            <h2 style={{ margin: '0 0 16px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Contact Submissions</h2>
             {contactSubmissions.length === 0 ? (
-              <p style={{ color: '#8B6914' }}>No submissions yet.</p>
+              <p style={{ color: C.secondary, fontStyle: 'italic' }}>No submissions yet.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {contactSubmissions.map(s => (
-                  <div key={s.id} style={{ background: '#fff', border: '1px solid #E8DCC8', borderRadius: '8px', padding: '16px 20px' }}>
+                  <div key={s.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '8px', padding: '16px 20px', boxShadow: '0 2px 8px rgba(10,22,40,0.06)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                       <div>
-                        <strong>{s.name}</strong> &middot; <span style={{ color: '#8B6914', fontSize: '13px' }}>{s.email}</span>
+                        <strong style={{ color: C.heading }}>{s.name}</strong> &middot; <span style={{ color: C.goldText, fontSize: '13px' }}>{s.email}</span>
                       </div>
-                      <span style={{ fontSize: '12px', color: '#AAA' }}>{new Date(s.created_at).toLocaleDateString()}</span>
+                      <span style={{ fontSize: '12px', color: C.secondary }}>{new Date(s.created_at).toLocaleDateString()}</span>
                     </div>
-                    <p style={{ margin: '0 0 10px', fontSize: '14px', color: '#555' }}>{s.message}</p>
-                    <button onClick={() => promoteToFaq(s)} style={{ padding: '5px 14px', background: '#FAF6EF', border: '1px solid #C8A96E', color: '#B8860B', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}>
+                    <p style={{ margin: '0 0 10px', fontSize: '14px', color: C.body }}>{s.message}</p>
+                    <button onClick={() => promoteToFaq(s)} style={{ padding: '5px 14px', background: 'transparent', border: `1px solid ${C.borderGold}`, color: C.goldText, borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Promote to FAQ
                     </button>
                   </div>
@@ -584,18 +618,18 @@ export default function AdminPage() {
         {/* ACTIVITY TAB */}
         {activeTab === 'activity' && (
           <div>
-            <h2 style={{ margin: '0 0 16px', fontSize: '18px' }}>Live Activity Feed</h2>
+            <h2 style={{ margin: '0 0 16px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Live Activity Feed</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {activityFeed.map(a => (
-                <div key={a.id} style={{ background: '#fff', border: '1px solid #E8DCC8', borderRadius: '8px', padding: '12px 16px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#7BAE8E', marginTop: '6px', flexShrink: 0 }} />
+                <div key={a.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '8px', padding: '12px 16px', display: 'flex', gap: '12px', alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(10,22,40,0.05)' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: C.green, marginTop: '6px', flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '13px' }}>
-                      <strong>{a.user_name || 'Anonymous'}</strong> registered band <span style={{ fontFamily: 'monospace', color: '#B8860B' }}>{a.band_id}</span>
+                    <div style={{ fontSize: '13px', color: C.body }}>
+                      <strong style={{ color: C.heading }}>{a.user_name || 'Anonymous'}</strong> registered band <span style={{ fontFamily: 'monospace', color: C.goldText }}>{a.band_id}</span>
                       {a.location_name && <> in <em>{a.location_name}</em></>}
                     </div>
-                    {a.prayer_text && <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#777', fontStyle: 'italic' }}>"{a.prayer_text}"</p>}
-                    <div style={{ fontSize: '11px', color: '#AAA', marginTop: '4px' }}>{new Date(a.created_at).toLocaleString()}</div>
+                    {a.prayer_text && <p style={{ margin: '4px 0 0', fontSize: '13px', color: C.secondary, fontStyle: 'italic' }}>"{a.prayer_text}"</p>}
+                    <div style={{ fontSize: '11px', color: C.secondary, marginTop: '4px' }}>{new Date(a.created_at).toLocaleString()}</div>
                   </div>
                 </div>
               ))}
@@ -606,35 +640,35 @@ export default function AdminPage() {
         {/* PRICING & SHIPPING TAB */}
         {activeTab === 'pricing' && (
           <div>
-            <h2 style={{ margin: '0 0 6px', fontSize: '18px' }}>Pricing &amp; Shipping</h2>
-            <p style={{ fontSize: '13px', color: '#8B6914', margin: '0 0 20px' }}>Edit amounts in dollars. Saved values drive Stripe checkout immediately.</p>
+            <h2 style={{ margin: '0 0 6px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Pricing &amp; Shipping</h2>
+            <p style={{ fontSize: '13px', color: C.secondary, margin: '0 0 20px' }}>Edit amounts in dollars. Saved values drive Stripe checkout immediately.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '480px' }}>
               {siteConfig.length === 0 && (
-                <div style={{ background: '#fff', border: '1px solid #E8DCC8', borderRadius: '8px', padding: '20px', textAlign: 'center', color: '#8B6914', fontSize: '13px' }}>
+                <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '8px', padding: '20px', textAlign: 'center', color: C.secondary, fontSize: '13px' }}>
                   No config rows found. Run the site_config migration in Supabase.
                 </div>
               )}
               {siteConfig.map(row => (
-                <div key={row.key} style={{ background: '#fff', border: '1px solid #E8DCC8', borderRadius: '8px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div key={row.key} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '8px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 2px 8px rgba(10,22,40,0.06)' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '14px', color: '#2C1A0E', fontWeight: 'bold' }}>{row.label || row.key}</div>
-                    <div style={{ fontSize: '11px', color: '#AAA', fontFamily: 'monospace' }}>{row.key}</div>
+                    <div style={{ fontSize: '14px', color: C.heading, fontWeight: '600' }}>{row.label || row.key}</div>
+                    <div style={{ fontSize: '11px', color: C.secondary, fontFamily: 'monospace' }}>{row.key}</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ color: '#8B6914' }}>$</span>
+                    <span style={{ color: C.goldText, fontWeight: '600' }}>$</span>
                     <input
                       type="number"
                       step="0.01"
                       min="0"
                       value={configDraft[row.key] ?? ''}
                       onChange={e => setConfigDraft(d => ({ ...d, [row.key]: e.target.value }))}
-                      style={{ width: '90px', padding: '8px 10px', border: '1px solid #E8DCC8', borderRadius: '6px', fontSize: '14px', fontFamily: 'Georgia, serif', background: '#FDFAF5', color: '#2C1A0E', outline: 'none' }}
+                      style={{ width: '90px', padding: '8px 10px', border: `1px solid ${C.borderNavy}`, borderRadius: '6px', fontSize: '14px', fontFamily: 'Inter, sans-serif', background: C.pageBg, color: C.body, outline: 'none' }}
                     />
                   </div>
                   <button
                     onClick={() => saveConfig(row.key)}
                     disabled={savingKey === row.key}
-                    style={{ background: '#2C1A0E', color: '#C8A96E', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '13px', fontFamily: 'Georgia, serif', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    style={{ background: C.gold, color: C.navy, border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: '600' }}
                   >
                     {savingKey === row.key ? 'Saving…' : 'Save'}
                   </button>
