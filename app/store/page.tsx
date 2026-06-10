@@ -235,11 +235,11 @@ function StorePageInner() {
         input, textarea, select { width: 100%; padding: 10px 14px; border: 1px solid rgba(92,101,115,0.30); border-radius: 4px; background: #FFFDF8; font-family: 'Inter', sans-serif; font-size: 14px; color: #15223B; outline: none; transition: border-color 0.2s; }
         input:focus, textarea:focus, select:focus { border-color: #C8A96E; }
         textarea { resize: vertical; min-height: 72px; }
-        .store-tabs { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin-bottom: 48px; border-bottom: 1px solid rgba(10,22,40,0.12); }
-        .store-tab { background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 13px 22px; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #5C6573; cursor: pointer; font-weight: 600; transition: color 0.15s, border-color 0.15s; }
-        .store-tab:hover { color: #9A7A35; }
-        .store-tab--active { color: #15223B; border-bottom-color: #C8A96E; }
-        @media (max-width: 600px) { .store-tab { padding: 11px 13px; font-size: 11px; letter-spacing: 0.05em; } }
+        .store-tabs { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; width: fit-content; max-width: 100%; margin: 0 auto 48px; padding: 6px; background: #FFFDF8; border: 1px solid rgba(200,169,110,0.40); border-radius: 999px; box-shadow: 0 3px 16px rgba(10,22,40,0.10); }
+        .store-tab { background: transparent; border: none; border-radius: 999px; padding: 12px 28px; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #5C6573; cursor: pointer; font-weight: 600; transition: color 0.18s, background 0.18s, box-shadow 0.18s; white-space: nowrap; }
+        .store-tab:hover { color: #15223B; background: rgba(200,169,110,0.12); }
+        .store-tab--active, .store-tab--active:hover { color: #F5EDD8; background: linear-gradient(135deg, #0E1E38 0%, #0A1628 100%); box-shadow: 0 3px 12px rgba(10,22,40,0.30); }
+        @media (max-width: 600px) { .store-tabs { gap: 4px; padding: 5px; } .store-tab { padding: 10px 16px; font-size: 11px; letter-spacing: 0.04em; } }
         @media (max-width: 768px) { .products-grid { grid-template-columns: 1fr !important; } .packs-grid { grid-template-columns: 1fr !important; } .cart-drawer { width: 100vw; } }
         @media (max-width: 600px) { .nav-extra { display: none !important; } .store-nav { padding: 0 16px !important; } }
       `}</style>
