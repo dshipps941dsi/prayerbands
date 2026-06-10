@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
@@ -59,11 +59,13 @@ export default function AdminPage() {
   const [userResults, setUserResults] = useState<any[]>([])
   const [searchingUsers, setSearchingUsers] = useState(false)
   const [contactSubmissions, setContactSubmissions] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<'orders' | 'prayers' | 'users' | 'contact' | 'activity' | 'pricing'>('orders')
+  const [activeTab, setActiveTab] = useState<'orders' | 'sales' | 'prayers' | 'users' | 'contact' | 'activity' | 'pricing'>('orders')
   const [activityFeed, setActivityFeed] = useState<any[]>([])
   const [siteConfig, setSiteConfig] = useState<{ key: string; value: string; label: string | null }[]>([])
   const [configDraft, setConfigDraft] = useState<Record<string, string>>({})
   const [savingKey, setSavingKey] = useState<string | null>(null)
+  const [sales, setSales] = useState<any>(null)
+  const [salesDays, setSalesDays] = useState('30')
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -73,6 +75,16 @@ export default function AdminPage() {
   useEffect(() => {
     checkAuth()
   }, [])
+
+  useEffect(() => {
+    if (activeTab === 'sales' && authorized) loadSales()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, salesDays, authorized])
+
+  async function loadSales() {
+    const res = await fetch('/api/admin/sales?days=' + salesDays)
+    if (res.ok) setSales(await res.json())
+  }
 
   async function checkAuth() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -290,6 +302,13 @@ export default function AdminPage() {
     </div>
   )
 
+  const money = (c: number) => '$' + ((c || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const kpiCard: CSSProperties = { background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 10, padding: '16px 20px', boxShadow: '0 2px 8px rgba(10,22,40,0.06)' }
+  const kpiValue: CSSProperties = { fontSize: 26, fontWeight: 600, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }
+  const kpiLabel: CSSProperties = { fontSize: 11, color: C.secondary, marginTop: 4, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }
+  const panel: CSSProperties = { background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 8px rgba(10,22,40,0.06)' }
+  const panelHead: CSSProperties = { padding: '13px 16px', borderBottom: `1px solid ${C.borderSilver}`, fontWeight: 700, fontSize: 14, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }
+
   return (
     <div style={{ minHeight: '100vh', background: C.pageBg, fontFamily: 'Inter, sans-serif', color: C.body }}>
       {/* Header */}
@@ -332,7 +351,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '4px', padding: '20px 32px 0', borderBottom: `1px solid ${C.borderGold}`, marginTop: '8px' }}>
-        {(['orders', 'prayers', 'users', 'contact', 'activity', 'pricing'] as const).map(tab => (
+        {(['orders', 'sales', 'prayers', 'users', 'contact', 'activity', 'pricing'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             padding: '8px 18px',
             background: activeTab === tab ? C.navy : 'transparent',
@@ -675,6 +694,90 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* SALES TAB */}
+        {activeTab === 'sales' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Sales</h2>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {([['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['all', 'All time']] as const).map(([val, label]) => (
+                  <button key={val} onClick={() => setSalesDays(val)} style={{ padding: '6px 14px', background: salesDays === val ? C.gold : C.card, color: salesDays === val ? C.navy : C.secondary, border: `1px solid ${salesDays === val ? C.gold : C.borderNavy}`, borderRadius: 20, cursor: 'pointer', fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</button>
+                ))}
+              </div>
+            </div>
+
+            {!sales ? (
+              <div style={{ textAlign: 'center', padding: 60, color: C.secondary, fontStyle: 'italic' }}>Loading sales…</div>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
+                  {[
+                    { label: salesDays === 'all' ? 'Revenue (all time)' : `Revenue (${salesDays}d)`, value: money(sales.period.revenueCents) },
+                    { label: 'Orders', value: sales.period.orders },
+                    { label: 'Avg Order', value: money(sales.period.aovCents) },
+                    { label: 'Bands Sold', value: sales.period.bands },
+                  ].map(c => (
+                    <div key={c.label} style={kpiCard}><div style={kpiValue}>{c.value}</div><div style={kpiLabel}>{c.label}</div></div>
+                  ))}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+                  {[
+                    { label: 'All-Time Revenue', value: money(sales.allTime.revenueCents) },
+                    { label: 'Active Subscriptions', value: sales.subscriptions.active },
+                    { label: 'Subscription MRR', value: money(sales.subscriptions.mrrCents) },
+                    { label: `Referral Revenue · ${sales.referrals.orders} ord`, value: money(sales.referrals.revenueCents) },
+                  ].map(c => (
+                    <div key={c.label} style={kpiCard}><div style={kpiValue}>{c.value}</div><div style={kpiLabel}>{c.label}</div></div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 20 }}>
+                  <div style={panel}>
+                    <div style={panelHead}>Revenue {salesDays === 'all' ? 'by month' : 'by day'}</div>
+                    <div style={{ padding: '18px 16px' }}>
+                      {sales.series.length === 0 ? (
+                        <div style={{ color: C.secondary, fontStyle: 'italic', fontSize: 13 }}>No sales in this period.</div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 160 }}>
+                          {(() => {
+                            const max = Math.max(...sales.series.map((s: any) => s.cents), 1)
+                            return sales.series.map((s: any) => (
+                              <div key={s.label} title={`${s.label}: ${money(s.cents)}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', minWidth: 0 }}>
+                                <div style={{ width: '100%', maxWidth: 22, height: Math.max(2, Math.round((s.cents / max) * 140)), background: `linear-gradient(180deg, ${C.gold}, ${C.goldText})`, borderRadius: '3px 3px 0 0' }} />
+                              </div>
+                            ))
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={panel}>
+                    <div style={panelHead}>Top Sellers ({salesDays === 'all' ? 'all time' : salesDays + 'd'})</div>
+                    <div>
+                      {sales.topSellers.length === 0 ? (
+                        <div style={{ padding: 18, color: C.secondary, fontStyle: 'italic', fontSize: 13 }}>No items sold in this period.</div>
+                      ) : sales.topSellers.map((t: any, i: number) => (
+                        <div key={t.slug} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', borderBottom: i < sales.topSellers.length - 1 ? `1px solid ${C.borderSilver}` : 'none' }}>
+                          <div style={{ width: 22, textAlign: 'center', color: C.goldText, fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 16 }}>{i + 1}</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 14, color: C.heading, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
+                            <div style={{ fontSize: 11, color: C.secondary, fontFamily: 'monospace' }}>{t.slug}</div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: 15, color: C.heading, fontWeight: 700, fontFamily: 'Cormorant Garamond, serif' }}>{t.units}</div>
+                            <div style={{ fontSize: 10, color: C.secondary, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Cinzel, serif' }}>units</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
