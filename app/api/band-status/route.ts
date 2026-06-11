@@ -99,6 +99,17 @@ export async function GET(req: NextRequest) {
     })
   }
 
+  // 3.5 Pre-dedicated gift band — recipient's first tap, message not yet seen
+  if (band.status === 'unregistered' && band.dedication_note && !band.dedication_viewed) {
+    return NextResponse.json({
+      screen: 'incoming_gift',
+      band,
+      registrations: regs,
+      dedicationNote: band.dedication_note,
+      dedicationRecipient: band.dedication_recipient,
+    })
+  }
+
   // 4. Band is dedicated (purchased/gifted) but never tapped
   if (band.owner_id && regs.length === 0) {
     const { data: dedicator } = await supabase

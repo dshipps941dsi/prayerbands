@@ -10,6 +10,7 @@ import PurchaseTab from '@/components/PurchaseTab'
 import { useApplyTheme } from '@/components/ThemeProvider'
 import { track } from '@/lib/analytics'
 import { CATEGORIES, getVerseForCategory } from '@/lib/verses'
+import IncomingGiftScreen from './screens/IncomingGiftScreen'
 
 type Registration = {
   id: string
@@ -24,7 +25,7 @@ type Registration = {
 }
 
 type BandStatus = {
-  screen: 'personal_space' | 'incoming_transfer' | 'first_tap_gift' | 'journey' | 'first_tap_blank' | 'not_found' | 'loading'
+  screen: 'personal_space' | 'incoming_transfer' | 'incoming_gift' | 'first_tap_gift' | 'journey' | 'first_tap_blank' | 'not_found' | 'loading'
   reason?: string
   band?: any
   registrations?: Registration[]
@@ -132,6 +133,7 @@ export default function BandPage() {
   const [claimPrayer, setClaimPrayer] = useState('')
   const [showSignup, setShowSignup] = useState(false)
   const [claimStep, setClaimStep] = useState<'prompt' | 'form' | 'done'>('prompt')
+  const [giftAcknowledged, setGiftAcknowledged] = useState(false)
   const [transferNote, setTransferNote] = useState('')
   const [transferStep, setTransferStep] = useState<'idle' | 'sheet' | 'pending' | 'save_prompt'>('idle')
   const [transferComplete, setTransferComplete] = useState(false)
@@ -892,6 +894,17 @@ export default function BandPage() {
         <PrayerChain regs={regs} />
         <div style={{ height: 40 }} />
       </div>
+    )
+  }
+
+  if (status.screen === 'incoming_gift' && !giftAcknowledged) {
+    return (
+      <IncomingGiftScreen
+        bandId={bandId}
+        recipient={status.band?.dedication_recipient}
+        note={status.band?.dedication_note}
+        onProceed={() => setGiftAcknowledged(true)}
+      />
     )
   }
 

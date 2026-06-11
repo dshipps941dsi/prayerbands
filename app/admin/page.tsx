@@ -27,6 +27,8 @@ const C = {
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
+const dedInput: CSSProperties = { padding: '10px 12px', border: `1px solid ${C.borderNavy}`, borderRadius: 6, fontSize: 14, fontFamily: 'Inter, sans-serif', color: C.heading, background: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box' }
+
 type Order = {
   id: number
   stripe_session_id: string
@@ -66,6 +68,11 @@ export default function AdminPage() {
   const [savingKey, setSavingKey] = useState<string | null>(null)
   const [sales, setSales] = useState<any>(null)
   const [salesDays, setSalesDays] = useState('30')
+  const [dedBandId, setDedBandId] = useState('')
+  const [dedRecipient, setDedRecipient] = useState('')
+  const [dedNote, setDedNote] = useState('')
+  const [dedSaving, setDedSaving] = useState(false)
+  const [dedMsg, setDedMsg] = useState('')
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -84,6 +91,21 @@ export default function AdminPage() {
   async function loadSales() {
     const res = await fetch('/api/admin/sales?days=' + salesDays)
     if (res.ok) setSales(await res.json())
+  }
+
+  async function preDedicate() {
+    if (!dedBandId.trim()) { setDedMsg('Enter a band ID.'); return }
+    setDedSaving(true); setDedMsg('')
+    try {
+      const res = await fetch('/api/save-dedications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bandId: dedBandId.trim(), dedication_recipient: dedRecipient, dedication_note: dedNote, adminOverride: true }),
+      })
+      if (res.ok) { setDedMsg('saved'); setDedBandId(''); setDedRecipient(''); setDedNote(''); setTimeout(() => setDedMsg(''), 3000) }
+      else { const d = await res.json().catch(() => ({})); setDedMsg(d.error || 'Could not save.') }
+    } catch { setDedMsg('Network error.') }
+    setDedSaving(false)
   }
 
   async function checkAuth() {
@@ -372,6 +394,21 @@ export default function AdminPage() {
         {/* ORDERS TAB */}
         {activeTab === 'orders' && (
           <div>
+            {/* Pre-dedicate a band */}
+            <div style={{ background: C.card, border: `1px solid ${C.borderGold}`, borderRadius: 10, padding: '18px 20px', marginBottom: 20 }}>
+              <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 700, color: C.heading, marginBottom: 4 }}>Pre-dedicate a Band</div>
+              <div style={{ fontSize: 12, color: C.secondary, marginBottom: 14, lineHeight: 1.5 }}>Attach a recipient + message so the band shows a &ldquo;sent especially for you&rdquo; screen on the recipient&rsquo;s first tap.</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                <input value={dedBandId} onChange={e => setDedBandId(e.target.value)} placeholder="Band ID (e.g. PB-1234)" style={dedInput} />
+                <input value={dedRecipient} onChange={e => setDedRecipient(e.target.value)} placeholder="Recipient name" style={dedInput} />
+              </div>
+              <textarea value={dedNote} onChange={e => setDedNote(e.target.value)} placeholder="Personal message…" style={{ ...dedInput, minHeight: 72, resize: 'vertical' as const, fontFamily: 'Inter, sans-serif' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10 }}>
+                <button onClick={preDedicate} disabled={dedSaving} style={{ background: C.gold, color: C.navy, border: 'none', borderRadius: 6, padding: '9px 20px', fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, cursor: dedSaving ? 'wait' : 'pointer' }}>{dedSaving ? 'Saving…' : 'Save Dedication'}</button>
+                {dedMsg === 'saved' ? <span style={{ color: C.green, fontSize: 13, fontWeight: 600 }}>Saved ✓</span> : dedMsg && <span style={{ color: C.red, fontSize: 13 }}>{dedMsg}</span>}
+              </div>
+            </div>
+
             {/* Filter */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
               {['pending', 'processing', 'shipped', 'all'].map(f => (

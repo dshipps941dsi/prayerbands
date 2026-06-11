@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { createClient } from '@supabase/supabase-js'
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,6 +23,32 @@ export async function POST(req: NextRequest) {
         </div>
       `
       : ''
+
+    // Invite the buyer to attach a personal "sent especially for you" message
+    // the recipient sees on first tap. Each band has its own secret token.
+    let dedicationSection = ''
+    if (Array.isArray(bandIds) && bandIds.length > 0) {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_KEY!
+      )
+      const { data: bands } = await supabase
+        .from('bands')
+        .select('band_id, dedication_token')
+        .in('band_id', bandIds)
+      if (bands && bands.length > 0) {
+        const buttons = bands
+          .map((b: any) => `<a href="https://prayerbands.com/dedicate/${b.band_id}?token=${b.dedication_token}" style="display:inline-block; margin:6px 8px 0 0; background:#0E1E38; color:#F5EDD8; text-decoration:none; padding:11px 20px; border-radius:8px; font-size:13px; font-weight:bold;">Add Personal Message${bands.length > 1 ? ` (${b.band_id})` : ' →'}</a>`)
+          .join('')
+        dedicationSection = `
+          <div style="margin: 24px 0; padding: 18px 20px; background: #fdf8ef; border: 1px solid #C8A96E; border-radius: 8px;">
+            <p style="margin: 0 0 6px; font-size: 14px; font-weight: bold; color: #8B6914;">Want to add a personal message?</p>
+            <p style="margin: 0 0 12px; font-size: 13px; color: #555; line-height: 1.6;">Tap the band when it arrives — but first, leave a note the recipient will see on their very first tap:</p>
+            ${buttons}
+          </div>
+        `
+      }
+    }
 
     const { error } = await resend.emails.send({
       from: 'PrayerBands <hello@prayerbands.com>',
@@ -49,6 +76,8 @@ export async function POST(req: NextRequest) {
               </p>
 
               ${trackingSection}
+
+              ${dedicationSection}
 
               <!-- Band IDs -->
               <div style="margin: 24px 0; padding: 16px 20px; background: #FAF6EF; border: 1px solid #E8DCC8; border-radius: 8px;">
