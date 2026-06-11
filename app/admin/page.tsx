@@ -449,6 +449,24 @@ export default function AdminPage() {
                         <strong>Ship to:</strong> {shippingAddr(order)}
                       </div>
 
+                      {/* Personalization — read before fulfilling */}
+                      {(order.order_metadata?.customMessage || order.order_metadata?.verse || order.order_metadata?.color) && (
+                        <div style={{ marginBottom: '12px', padding: '12px 16px', background: 'rgba(200,169,110,0.10)', border: `1px solid ${C.borderGold}`, borderRadius: '6px', fontSize: '13px', lineHeight: '1.65', color: C.body }}>
+                          {order.order_metadata?.color && (
+                            <div><strong style={{ color: C.heading }}>Band color:</strong> {order.order_metadata.color}</div>
+                          )}
+                          {order.order_metadata?.customMessage && (
+                            <div style={{ marginTop: order.order_metadata?.color ? 5 : 0 }}>
+                              <strong style={{ color: C.heading }}>✍️ Dedication / message:</strong>{' '}
+                              <span style={{ fontStyle: 'italic', color: C.goldDark }}>&ldquo;{order.order_metadata.customMessage}&rdquo;</span>
+                            </div>
+                          )}
+                          {order.order_metadata?.verse && (
+                            <div style={{ marginTop: 5 }}><strong style={{ color: C.heading }}>Verse:</strong> {order.order_metadata.verse}</div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Assigned bands */}
                       {bands.length > 0 && (
                         <div style={{ marginBottom: '12px', padding: '10px 14px', background: C.silverBg, borderRadius: '6px', fontSize: '13px', border: `1px solid ${C.borderSilver}` }}>
