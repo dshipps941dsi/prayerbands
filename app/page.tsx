@@ -74,6 +74,67 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
   );
 }
 
+// ─── Sample band points for the global prayer map ──────────────────────────────
+const MAP_POINTS = [
+  { lat: 36.17, lng: -86.78, name: "M.R.", loc: "Nashville, USA", band: "PB-47291", prayer: "Lord, cover whoever holds this band with Your peace that passes all understanding." },
+  { lat: 6.52, lng: 3.37, name: "A.O.", loc: "Lagos, Nigeria", band: "PB-18834", prayer: "Father, let Your light shine through every hand this band passes through." },
+  { lat: -23.55, lng: -46.63, name: "C.F.", loc: "São Paulo, Brazil", band: "PB-92011", prayer: "May this band carry hope to someone who needs it today. In Jesus' name." },
+  { lat: 37.57, lng: 126.98, name: "J.K.", loc: "Seoul, South Korea", band: "PB-33107", prayer: "I pray for healing, restoration, and renewal for everyone this touches." },
+  { lat: 51.51, lng: -0.13, name: "S.H.", loc: "London, UK", band: "PB-65498", prayer: "God, let this small band carry Your immeasurable love around the world." },
+  { lat: 40.71, lng: -74.0, name: "D.L.", loc: "New York, USA", band: "PB-20114", prayer: "Be near to the brokenhearted in this city. Let them feel You." },
+  { lat: -33.87, lng: 151.21, name: "E.W.", loc: "Sydney, Australia", band: "PB-77320", prayer: "Carry my friend through her treatment, Lord. Hold her steady." },
+  { lat: 19.08, lng: 72.88, name: "R.P.", loc: "Mumbai, India", band: "PB-51277", prayer: "Provide for the family that holds this next. You see every need." },
+  { lat: -1.29, lng: 36.82, name: "G.M.", loc: "Nairobi, Kenya", band: "PB-39845", prayer: "Let revival start in one heart and travel band to band." },
+  { lat: 19.43, lng: -99.13, name: "L.G.", loc: "Mexico City, Mexico", band: "PB-60223", prayer: "Paz para mi familia. Peace for whoever wears this next." },
+  { lat: 52.52, lng: 13.40, name: "K.B.", loc: "Berlin, Germany", band: "PB-28910", prayer: "Soften hard hearts. Let this little band be a seed of hope." },
+  { lat: 43.65, lng: -79.38, name: "T.N.", loc: "Toronto, Canada", band: "PB-44102", prayer: "Watch over my son tonight wherever he is. Bring him home." },
+  { lat: 14.6, lng: 120.98, name: "M.S.", loc: "Manila, Philippines", band: "PB-81560", prayer: "Strength for every tired parent holding this band. You are faithful." },
+  { lat: -34.6, lng: -58.38, name: "P.A.", loc: "Buenos Aires, Argentina", band: "PB-19073", prayer: "Que esta oración encuentre a quien más la necesite hoy." },
+  { lat: 34.05, lng: -118.24, name: "B.C.", loc: "Los Angeles, USA", band: "PB-70488", prayer: "For the one who feels invisible — You see them. You know their name." },
+  { lat: -33.92, lng: 18.42, name: "N.D.", loc: "Cape Town, South Africa", band: "PB-55619", prayer: "Bind up wounds in this nation. Let healing pass hand to hand." },
+  { lat: 35.68, lng: 139.69, name: "H.T.", loc: "Tokyo, Japan", band: "PB-31204", prayer: "A whisper of hope to a quiet heart. You are not far." },
+  { lat: 4.71, lng: -74.07, name: "V.R.", loc: "Bogotá, Colombia", band: "PB-66730", prayer: "Cubre a quien lleva esta banda con tu amor. Amén." },
+  { lat: 41.88, lng: -87.63, name: "J.W.", loc: "Chicago, USA", band: "PB-48817", prayer: "For my neighbor in the hospital — let her know she's prayed over." },
+  { lat: 48.86, lng: 2.35, name: "A.D.", loc: "Paris, France", band: "PB-22945", prayer: "Que cette prière voyage loin et touche un cœur fatigué." },
+];
+
+// Leaflet world map of sample band points; tapping a dot opens its prayer.
+function GlobalPrayerMap() {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const instRef = useRef<any>(null);
+  useEffect(() => {
+    if (!mapRef.current || typeof window === "undefined") return;
+    const render = () => {
+      const L = (window as any).L;
+      if (!L || !mapRef.current) return;
+      if (instRef.current) { instRef.current.remove(); instRef.current = null; }
+      const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false, scrollWheelZoom: false, worldCopyJump: true, minZoom: 1 });
+      instRef.current = map;
+      map.setView([22, 8], 2);
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
+      MAP_POINTS.forEach((p) => {
+        const dot = L.divIcon({ className: "", html: '<div class="pb-map-dot"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
+        L.marker([p.lat, p.lng], { icon: dot }).addTo(map).bindPopup(
+          `<div style="font-family:Georgia,serif;max-width:230px">
+             <div style="font-family:monospace;font-weight:bold;color:#9A7A35;font-size:12px">${p.band}</div>
+             <div style="font-size:13px;color:#15223B;font-weight:600;margin-top:2px">${p.name} · ${p.loc}</div>
+             <div style="font-size:13px;color:#2A3344;font-style:italic;line-height:1.55;margin-top:7px;border-left:2px solid #C8A96E;padding-left:9px">"${p.prayer}"</div>
+           </div>`
+        );
+      });
+    };
+    if ((window as any).L) { render(); return () => { if (instRef.current) { instRef.current.remove(); instRef.current = null; } }; }
+    if (!document.getElementById("leaflet-css")) {
+      const link = document.createElement("link"); link.id = "leaflet-css"; link.rel = "stylesheet"; link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"; document.head.appendChild(link);
+    }
+    let script = document.getElementById("leaflet-js") as HTMLScriptElement | null;
+    if (!script) { script = document.createElement("script"); script.id = "leaflet-js"; script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"; document.head.appendChild(script); }
+    script.addEventListener("load", render, { once: true });
+    return () => { if (instRef.current) { instRef.current.remove(); instRef.current = null; } };
+  }, []);
+  return <div ref={mapRef} className="prayer-map" />;
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -486,6 +547,38 @@ export default function HomePage() {
         }
         .step-card:hover .step-line { transform: scaleX(1); }
 
+        /* ── Global Prayer Map ── */
+        .globe {
+          padding: 90px 0;
+          background:
+            radial-gradient(ellipse 60% 50% at 50% 0%, rgba(200,169,110,0.10) 0%, transparent 60%),
+            linear-gradient(180deg, var(--navy) 0%, var(--navy2) 100%);
+        }
+        .prayer-map-wrap {
+          margin-top: 44px;
+          border-radius: 14px;
+          overflow: hidden;
+          border: 1px solid rgba(200,169,110,0.30);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.40);
+        }
+        .prayer-map { height: 480px; width: 100%; background: #0A1628; }
+        @media (max-width: 700px) { .prayer-map { height: 380px; } .globe { padding: 64px 0; } }
+        .pb-map-dot {
+          width: 12px; height: 12px; border-radius: 50%;
+          background: #E2C98A;
+          border: 2px solid rgba(245,237,216,0.92);
+          box-shadow: 0 0 0 0 rgba(226,201,138,0.55);
+          animation: pbPulse 2.6s ease-out infinite;
+          cursor: pointer;
+        }
+        @keyframes pbPulse {
+          0% { box-shadow: 0 0 0 0 rgba(226,201,138,0.5); }
+          70% { box-shadow: 0 0 0 12px rgba(226,201,138,0); }
+          100% { box-shadow: 0 0 0 0 rgba(226,201,138,0); }
+        }
+        .leaflet-popup-content-wrapper { border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+        .leaflet-popup-content { margin: 14px 16px; }
+
         /* ── Prayer Wall ── */
         .wall {
           padding: 100px 0;
@@ -865,6 +958,24 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Global Prayer Map ── */}
+      <section className="globe section">
+        <div className="container">
+          <Reveal>
+            <div className="section-label" style={{ textAlign: "center", display: "block" }}>The Prayer Network</div>
+            <h2 className="section-title" style={{ textAlign: "center" }}>Prayers Crossing<br /><em>the Earth</em></h2>
+            <p className="section-body" style={{ textAlign: "center", maxWidth: 560, margin: "16px auto 0" }}>
+              Every dot is a band carrying a prayer somewhere in the world. Tap one to read the prayer attached to it.
+            </p>
+          </Reveal>
+          <Reveal delay={150}>
+            <div className="prayer-map-wrap">
+              <GlobalPrayerMap />
+            </div>
+          </Reveal>
+        </div>
+      </section>
 
       {/* ── Mission ── */}
       <section id="mission" className="mission section">
