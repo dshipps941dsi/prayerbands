@@ -47,6 +47,7 @@ export default function CirclePage() {
   const [requests, setRequests] = useState<PrayerRequest[]>([])
   const [myRole, setMyRole] = useState<'leader' | 'member' | null>(null)
   const [myUserId, setMyUserId] = useState<string | null>(null)
+  const [isMember, setIsMember] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -65,9 +66,12 @@ export default function CirclePage() {
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
 
   const loadCircle = useCallback(async () => {
-    const res = await fetch(`/api/circles/${circleId}`)
+    // Carry the join code through so guests (no account) can view read-only.
+    const code = searchParams?.get('code')
+    const res = await fetch(`/api/circles/${circleId}${code ? `?code=${encodeURIComponent(code)}` : ''}`)
     if (res.status === 401) {
-      router.push('/signin')
+      // Not signed in and no valid code — send to the join/sign-in flow.
+      router.push('/circles')
       return
     }
     if (res.status === 403) {
@@ -86,11 +90,18 @@ export default function CirclePage() {
     setRequests(data.requests)
     setMyRole(data.my_role)
     setMyUserId(data.my_user_id)
+    setIsMember(!!data.is_member)
     setEditName(data.circle.name)
     setEditDescription(data.circle.description || '')
 
     setLoading(false)
-  }, [circleId, router])
+  }, [circleId, router, searchParams])
+
+  // Guests (and signed-in non-members) are sent through the join/sign-in flow
+  // when they try to act.
+  const promptJoin = useCallback(() => {
+    router.push(`/circles?code=${circle?.join_code ?? ''}`)
+  }, [router, circle])
 
   useEffect(() => {
     loadCircle()
@@ -104,6 +115,7 @@ export default function CirclePage() {
   }, [isNew, circle])
 
   async function handleIntercede(requestId: string) {
+    if (!isMember) { promptJoin(); return }
     const res = await fetch(`/api/circles/${circleId}/intercede`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -123,6 +135,7 @@ export default function CirclePage() {
   }
 
   async function handleSubmitRequest() {
+    if (!isMember) { promptJoin(); return }
     if (!requestText.trim()) return
     setSubmittingRequest(true)
     const res = await fetch(`/api/circles/${circleId}/request`, {
@@ -306,7 +319,7 @@ export default function CirclePage() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
-              onClick={() => router.push('/dashboard?tab=prayers')}
+              onClick={() => router.push(isMember ? '/dashboard?tab=prayers' : '/circles')}
               style={{
                 background: 'none',
                 border: 'none',
@@ -392,10 +405,15 @@ export default function CirclePage() {
         {/* ── PRAYERS TAB ── */}
         {tab === 'prayers' && (
           <div>
+            {!isMember && (
+              <div onClick={promptJoin} style={{ backgroundColor: '#FFF8E7', border: '1px solid rgba(200,169,110,0.45)', borderRadius: 10, padding: '12px 14px', marginBottom: 16, cursor: 'pointer', fontSize: 13, color: '#5A3E12', fontFamily: "'Inter', sans-serif", lineHeight: 1.5 }}>
+                👋 You&rsquo;re viewing as a guest. <strong style={{ color: '#9A7A35' }}>Sign in to share a request or pray →</strong>
+              </div>
+            )}
             {/* Add request button */}
             {!showRequestForm && (
               <button
-                onClick={() => setShowRequestForm(true)}
+                onClick={() => { if (!isMember) { promptJoin(); return } setShowRequestForm(true) }}
                 style={{
                   width: '100%',
                   backgroundColor: '#FFFDF8',
@@ -412,7 +430,7 @@ export default function CirclePage() {
                   marginBottom: '20px'
                 }}
               >
-                + Share a Prayer Request
+                {isMember ? '+ Share a Prayer Request' : '🔒 Sign in to share a request'}
               </button>
             )}
 

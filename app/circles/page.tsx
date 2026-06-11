@@ -330,8 +330,7 @@ export default function CirclesPage() {
             )}
 
             <button
-              onClick={handleJoin}
-              disabled={joining}
+              onClick={() => router.push(`/circles/${circle.id}?code=${circle.join_code}`)}
               style={{
                 width: '100%',
                 backgroundColor: '#C8A96E',
@@ -344,8 +343,30 @@ export default function CirclesPage() {
                 fontWeight: '600',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
+                cursor: 'pointer'
+              }}
+            >
+              View Circle →
+            </button>
+
+            <button
+              onClick={handleJoin}
+              disabled={joining}
+              style={{
+                width: '100%',
+                backgroundColor: 'transparent',
+                color: '#9A7A35',
+                border: '1px solid rgba(200,169,110,0.45)',
+                borderRadius: '10px',
+                padding: '12px',
+                fontSize: '12px',
+                fontFamily: "'Cinzel', serif",
+                fontWeight: '600',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
                 cursor: joining ? 'default' : 'pointer',
-                opacity: joining ? 0.7 : 1
+                opacity: joining ? 0.7 : 1,
+                marginTop: '10px'
               }}
             >
               {joining ? 'Joining...' : 'Join This Circle'}
@@ -359,7 +380,7 @@ export default function CirclesPage() {
               marginBottom: 0,
               fontFamily: "'Inter', sans-serif"
             }}>
-              You'll need an account to join. We'll send you there if needed.
+              No account needed to view. Sign in to share a request or pray.
             </p>
           </div>
         )}

@@ -17,28 +17,12 @@ export async function GET(
 ) {
   try {
     const supabase = await createClient()
-
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const { circleId } = await params
 
     // DB ops via service role (these tables have recursive RLS policies).
     const admin = createServiceClient()
-
-    // Verify membership
-    const { data: membership } = await admin
-      .from('circle_members')
-      .select('role')
-      .eq('circle_id', circleId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (!membership) {
-      return NextResponse.json({ error: 'Not a member of this circle' }, { status: 403 })
-    }
 
     // Get circle details
     const { data: circle, error } = await admin
@@ -49,6 +33,28 @@ export async function GET(
 
     if (error || !circle) {
       return NextResponse.json({ error: 'Circle not found' }, { status: 404 })
+    }
+
+    // Access: a signed-in member, OR anyone presenting the correct join code
+    // (read-only — they can view but must sign in to post or pray).
+    let membership: { role: string } | null = null
+    if (user) {
+      const { data } = await admin
+        .from('circle_members')
+        .select('role')
+        .eq('circle_id', circleId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+      membership = data
+    }
+    const code = (req.nextUrl.searchParams.get('code') || '').trim().toUpperCase()
+    const codeValid = !!code && !!circle.join_code && code === String(circle.join_code).toUpperCase()
+
+    if (!membership && !codeValid) {
+      return NextResponse.json(
+        { error: user ? 'Not a member of this circle' : 'Sign in or use a join code to view this circle' },
+        { status: user ? 403 : 401 }
+      )
     }
 
     // Get members
@@ -92,15 +98,16 @@ export async function GET(
     const requestsWithCounts = (requests ?? []).map(r => ({
       ...r,
       intercession_count: intercessions.filter(i => i.request_id === r.id).length,
-      i_prayed: intercessions.some(i => i.request_id === r.id && i.user_id === user.id)
+      i_prayed: !!user && intercessions.some(i => i.request_id === r.id && i.user_id === user.id)
     }))
 
     return NextResponse.json({
       circle,
       members: members ?? [],
       requests: requestsWithCounts,
-      my_role: membership.role,
-      my_user_id: user.id
+      my_role: membership?.role ?? null,
+      my_user_id: user?.id ?? null,
+      is_member: !!membership
     })
   } catch (err) {
     console.error('Circle GET error:', err)
