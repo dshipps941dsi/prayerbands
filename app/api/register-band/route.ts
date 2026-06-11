@@ -1,6 +1,7 @@
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { isFlaggable, AUTO_FLAG_REASON } from '@/lib/moderation'
 
 export async function POST(req: NextRequest) {
   const supabase = createClient(
@@ -58,6 +59,10 @@ export async function POST(req: NextRequest) {
       .eq('band_id', bandId)
       .not('email', 'is', null)
 
+    // Auto-flag prayers containing filtered language for admin review (hidden
+    // from the public wall until approved). Soft — never blocks the submission.
+    const autoFlag = isFlaggable(prayer)
+
     const { data, error } = await supabase
       .from('registrations')
       .insert({
@@ -72,6 +77,8 @@ export async function POST(req: NextRequest) {
         verse: verse || null,
         email: email || null,
         ip_address: ip || null,
+        flagged: autoFlag,
+        flagged_reason: autoFlag ? AUTO_FLAG_REASON : null,
       })
       .select()
       .single()
