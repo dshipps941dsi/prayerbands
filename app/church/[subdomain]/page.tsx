@@ -150,8 +150,8 @@ export default function ChurchPage({ params }: { params: { subdomain: string } }
           </p>
           {org.website && (
             <a href={org.website} target="_blank" rel="noopener noreferrer" style={{
-              color: NAVY, fontSize: 12, textDecoration: 'none',
-              background: GOLD, padding: '10px 20px', borderRadius: 6,
+              color: '#fff', fontSize: 12, textDecoration: 'none',
+              background: green, padding: '10px 20px', borderRadius: 6,
               display: 'inline-block', fontFamily: 'Cinzel, serif', fontWeight: 700,
               letterSpacing: '0.05em', textTransform: 'uppercase',
             }}>
@@ -170,7 +170,7 @@ export default function ChurchPage({ params }: { params: { subdomain: string } }
               {prayers.map((p, i) => (
                 <div key={i} style={{
                   background: CARD_BG, border: `1px solid ${NAVY_BORDER}`,
-                  borderLeft: `3px solid ${GOLD}`,
+                  borderLeft: `3px solid ${green}`,
                   borderRadius: 10, padding: '20px 24px',
                   boxShadow: '0 1px 4px rgba(10,22,40,0.05)',
                 }}>
@@ -190,7 +190,7 @@ export default function ChurchPage({ params }: { params: { subdomain: string } }
 
         {/* CTA */}
         <div style={{
-          marginTop: 40, background: `linear-gradient(135deg, ${NAVY} 0%, #132544 100%)`, borderRadius: 12,
+          marginTop: 40, background: `linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.22) 100%), ${green}`, borderRadius: 12,
           padding: '32px', textAlign: 'center', color: '#fff',
           border: `1px solid ${GOLD}33`, boxShadow: '0 4px 20px rgba(10,22,40,0.2)',
         }}>
