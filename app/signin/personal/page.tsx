@@ -39,12 +39,23 @@ export default function SignInPersonal() {
     )
   }
 
+  // Optional ?redirect=… (e.g. arriving from a circle link) — return there after auth.
+  function redirectParam() {
+    if (typeof window === 'undefined') return ''
+    return new URLSearchParams(window.location.search).get('redirect') || ''
+  }
+  function oauthCallback() {
+    const next = redirectParam()
+    const base = `${window.location.origin}/auth/callback`
+    return next ? `${base}?next=${encodeURIComponent(next)}` : base
+  }
+
   async function signInWithGoogle() {
     setLoading(true)
     const supabase = getSupabase()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'https://prayerbands.com/auth/callback' }
+      options: { redirectTo: oauthCallback() }
     })
   }
 
@@ -53,7 +64,7 @@ export default function SignInPersonal() {
     const supabase = getSupabase()
     await supabase.auth.signInWithOAuth({
       provider: 'facebook',
-      options: { redirectTo: 'https://prayerbands.com/auth/callback' }
+      options: { redirectTo: oauthCallback() }
     })
   }
 
@@ -70,7 +81,7 @@ export default function SignInPersonal() {
       return
     }
     setStatus('Redirecting...')
-    window.location.replace('/dashboard')
+    window.location.replace(redirectParam() || '/dashboard')
   }
 
   const inputStyle = {

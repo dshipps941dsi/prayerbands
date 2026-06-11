@@ -11,6 +11,13 @@ export default function AuthCallback() {
     )
 
     async function handleRedirect(userId: string) {
+      // Return to an explicit ?next=… destination if one was provided
+      // (e.g. a circle link the user signed in from).
+      const next = new URLSearchParams(window.location.search).get('next')
+      if (next && next.startsWith('/')) {
+        window.location.href = next
+        return
+      }
       const { data: profile } = await supabase
         .from('profiles')
         .select('org_id')

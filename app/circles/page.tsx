@@ -67,7 +67,7 @@ export default function CirclesPage() {
     const data = await res.json()
 
     if (res.status === 401) {
-      router.push(`/signin?redirect=/circles&code=${circle.join_code}`)
+      router.push(`/signin/personal?redirect=${encodeURIComponent(`/circles/${circle.id}?code=${circle.join_code}`)}`)
       return
     }
 
