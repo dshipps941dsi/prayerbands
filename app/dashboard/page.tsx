@@ -66,6 +66,10 @@ const SECONDARY_TEXT = '#5C6573'
 const AMBER = '#C8A96E'
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 const BAND_HEX: Record<string, string> = { sky: '#7BB8D4', sage: '#7BAE8E', amber: '#C8A96E', slate: '#7B8FAE', rose: '#C47B8E', ivory: '#E8DCC8' }
+const BAND_COLOR_OPTIONS = [
+  { id: 'sky', name: 'Sky' }, { id: 'sage', name: 'Sage' }, { id: 'amber', name: 'Amber' },
+  { id: 'slate', name: 'Slate' }, { id: 'rose', name: 'Rose' }, { id: 'ivory', name: 'Ivory' },
+]
 const SUB_STATUS: Record<string, { label: string; color: string }> = {
   active: { label: 'Active', color: '#7BAE8E' },
   past_due: { label: 'Past Due', color: '#AE7B7B' },
@@ -453,6 +457,10 @@ export default function Dashboard() {
   const [shareUrl, setShareUrl] = useState('')
   const [copied, setCopied] = useState(false)
   const [hoveredKpi, setHoveredKpi] = useState<string | null>(null)
+  const [subColor, setSubColor] = useState('')
+  const [subSize, setSubSize] = useState('M')
+  const [savingPrefs, setSavingPrefs] = useState(false)
+  const [prefsMsg, setPrefsMsg] = useState('')
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700)
@@ -580,6 +588,27 @@ export default function Dashboard() {
       if (data.url) { window.location.href = data.url; return }
     } catch {}
     setPortalLoading(false)
+  }
+
+  // Keep the shipment-preference editor in sync with the loaded subscription.
+  useEffect(() => {
+    if (subscription) {
+      setSubColor(subscription.band_color || 'sky')
+      setSubSize(String(subscription.band_size || 'M').toUpperCase())
+    }
+  }, [subscription])
+
+  async function savePrefs() {
+    setSavingPrefs(true); setPrefsMsg('')
+    try {
+      const res = await fetch('/api/my-subscription', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ band_color: subColor, band_size: subSize }),
+      })
+      const data = await res.json()
+      if (res.ok && data.subscription) { setSubscription(data.subscription); setPrefsMsg('saved'); setTimeout(() => setPrefsMsg(''), 2500) }
+      else setPrefsMsg(data.error || 'Could not save.')
+    } catch { setPrefsMsg('Network error.') } finally { setSavingPrefs(false) }
   }
   const displayName = profile?.full_name
     || (isViewingAs ? profile?.email?.split('@')[0] : (user?.user_metadata?.full_name || user?.email?.split('@')[0]))
@@ -711,6 +740,38 @@ export default function Dashboard() {
                   <div style={{ fontSize: 14, fontWeight: 600, color: cancelScheduled ? '#C0853E' : BODY_TEXT, fontFamily: 'Inter, sans-serif' }}>{cancelScheduled ? (cancelDateLong || '—') : nextShip}</div>
                 </div>
               </div>
+
+              {!isViewingAs && (
+                <div style={{ borderTop: `1px solid ${GOLD_BORDER}`, marginTop: 14, paddingTop: 14 }}>
+                  <div style={{ fontSize: 10, color: SECONDARY_TEXT, marginBottom: 8, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                    Shipment preferences <span style={{ textTransform: 'none', letterSpacing: 0, color: '#9A8A7A', fontFamily: 'Inter, sans-serif' }}>· applies to your next shipment</span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, alignItems: 'flex-end' }}>
+                    <div>
+                      <div style={{ fontSize: 10, color: SECONDARY_TEXT, marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>Color</div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {BAND_COLOR_OPTIONS.map(c => (
+                          <button key={c.id} title={c.name} onClick={() => setSubColor(c.id)} aria-label={c.name} style={{ width: 26, height: 26, borderRadius: '50%', background: BAND_HEX[c.id], border: subColor === c.id ? `2px solid ${NAVY}` : '2px solid #fff', boxShadow: '0 1px 4px rgba(10,22,40,0.2)', cursor: 'pointer', padding: 0 }} />
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 10, color: SECONDARY_TEXT, marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>Size</div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {['S', 'M', 'L'].map(s => (
+                          <button key={s} onClick={() => setSubSize(s)} style={{ padding: '6px 13px', borderRadius: 8, border: subSize === s ? `2px solid ${GOLD}` : `1px solid ${SILVER_BORDER}`, background: subSize === s ? `${GOLD}1f` : CARD_BG, color: subSize === s ? GOLD_TEXT : SECONDARY_TEXT, fontWeight: subSize === s ? 700 : 400, fontSize: 12, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>{s}</button>
+                        ))}
+                      </div>
+                    </div>
+                    {(subColor !== subscription.band_color || subSize !== String(subscription.band_size || 'M').toUpperCase()) && (
+                      <button onClick={savePrefs} disabled={savingPrefs} style={{ background: GOLD, color: NAVY, border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, fontWeight: 700, cursor: savingPrefs ? 'wait' : 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{savingPrefs ? 'Saving…' : 'Save'}</button>
+                    )}
+                    {prefsMsg === 'saved'
+                      ? <span style={{ color: GOLD_TEXT, fontSize: 12, fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>Saved ✓</span>
+                      : prefsMsg && <span style={{ color: '#c0392b', fontSize: 12, fontFamily: 'Inter, sans-serif' }}>{prefsMsg}</span>}
+                  </div>
+                </div>
+              )}
             </div>
           )
         })()}
