@@ -225,13 +225,13 @@ export default function PrayerWallPage() {
         </div>
       </nav>
 
-      <section style={{ padding: '72px 32px 48px', textAlign: 'center', background: 'linear-gradient(180deg, #F5EDD8 0%, #F6F1E4 100%)', borderBottom: '1px solid rgba(10,22,40,0.12)' }}>
-        <span className="cinzel" style={{ fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#9A7A35', display: 'block', marginBottom: 10 }}>Global Prayer Wall</span>
-        <h1 className="cormorant" style={{ fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 700, lineHeight: 1.15, marginBottom: 16, color: '#15223B' }}>
+      <section style={{ padding: '72px 32px 48px', textAlign: 'center', background: 'radial-gradient(ellipse 70% 80% at 50% 0%, rgba(200,169,110,0.16) 0%, transparent 60%), linear-gradient(180deg, #0A1628 0%, #0E1E38 55%, #0A1628 100%)', borderBottom: '1px solid rgba(200,169,110,0.34)' }}>
+        <span className="cinzel" style={{ fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#C8A96E', display: 'block', marginBottom: 10 }}>Global Prayer Wall</span>
+        <h1 className="cormorant" style={{ fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 700, lineHeight: 1.15, marginBottom: 16, color: '#F5EDD8' }}>
           Prayers Traveling<br /><em style={{ color: '#C8A96E' }}>the World</em>
         </h1>
-        <div style={{ width: 48, height: 2, background: '#C8A96E', margin: '0 auto 20px' }} />
-        <p className="inter" style={{ fontSize: 16, color: '#5C6573', maxWidth: 480, margin: '0 auto 40px', lineHeight: 1.8, fontWeight: 300 }}>
+        <div style={{ width: 48, height: 2, background: 'linear-gradient(90deg, #C8A96E, #E2C98A)', margin: '0 auto 20px' }} />
+        <p className="inter" style={{ fontSize: 16, color: 'rgba(245,237,216,0.78)', maxWidth: 480, margin: '0 auto 40px', lineHeight: 1.8, fontWeight: 300 }}>
           Every prayer below was left on a real band, in a real person's hands, somewhere in the world.
         </p>
         <div className="stats-row" style={{ display: 'flex', justifyContent: 'center', gap: 48, flexWrap: 'wrap' }}>

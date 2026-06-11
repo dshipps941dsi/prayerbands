@@ -147,8 +147,12 @@ export default function SubscribePage() {
         /* ── HERO ── */
         .hero {
           text-align: center;
-          padding: 72px 24px 48px;
+          padding: 72px 24px 56px;
           position: relative;
+          background:
+            radial-gradient(ellipse 70% 80% at 50% 0%, rgba(200,169,110,0.16) 0%, transparent 60%),
+            linear-gradient(180deg, #0A1628 0%, #0E1E38 55%, #0A1628 100%);
+          border-bottom: 1px solid rgba(200,169,110,0.34);
         }
 
         .hero-eyebrow {
@@ -157,7 +161,7 @@ export default function SubscribePage() {
           font-weight: 600;
           letter-spacing: 0.25em;
           text-transform: uppercase;
-          color: #9A7A35;
+          color: #C8A96E;
           margin-bottom: 18px;
         }
 
@@ -165,7 +169,7 @@ export default function SubscribePage() {
           font-family: 'Cormorant Garamond', serif;
           font-size: clamp(36px, 6vw, 58px);
           font-weight: 700;
-          color: #15223B;
+          color: #F5EDD8;
           line-height: 1.1;
           margin-bottom: 20px;
         }
@@ -178,7 +182,7 @@ export default function SubscribePage() {
         .hero-subtitle {
           font-size: 17px;
           font-weight: 300;
-          color: #5C6573;
+          color: rgba(245,237,216,0.78);
           max-width: 520px;
           margin: 0 auto 40px;
           line-height: 1.7;
@@ -187,8 +191,8 @@ export default function SubscribePage() {
         .hero-divider {
           width: 60px;
           height: 2px;
-          background: linear-gradient(90deg, transparent, #C8A96E, transparent);
-          margin: 0 auto 48px;
+          background: linear-gradient(90deg, transparent, #E2C98A, transparent);
+          margin: 0 auto;
         }
 
         /* ── STEPS ── */
@@ -197,7 +201,7 @@ export default function SubscribePage() {
           justify-content: center;
           gap: 0;
           max-width: 480px;
-          margin: 0 auto 56px;
+          margin: 44px auto 56px;
         }
 
         .step-item {
@@ -803,9 +807,10 @@ export default function SubscribePage() {
             Subscribe and make intercession a rhythm of life.
           </p>
           <div className="hero-divider" />
+        </div>
 
-          {/* Step Indicators */}
-          <div className="steps">
+        {/* Step Indicators */}
+        <div className="steps">
             <div className="step-item">
               <div className={`step-dot ${step >= 1 ? (step > 1 ? 'done' : 'active') : ''}`}>
                 {step > 1 ? '✓' : '1'}
@@ -829,7 +834,6 @@ export default function SubscribePage() {
               <span className={`step-label ${step === 3 ? 'active' : ''}`}>Confirm</span>
             </div>
           </div>
-        </div>
 
         <div className="scripture-bar">
           <p className="scripture-text">"Pray without ceasing."</p>
