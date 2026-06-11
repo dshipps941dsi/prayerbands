@@ -48,6 +48,7 @@ export default function CirclePage() {
   const [myRole, setMyRole] = useState<'leader' | 'member' | null>(null)
   const [myUserId, setMyUserId] = useState<string | null>(null)
   const [isMember, setIsMember] = useState(false)
+  const [toast, setToast] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -114,6 +115,7 @@ export default function CirclePage() {
     })
     if (res.ok || res.status === 409) {
       setIsMember(true)
+      if (res.ok) { setToast('✓ Joined the circle'); setTimeout(() => setToast(''), 2500) }
       loadCircle()
       return true
     }
@@ -321,6 +323,12 @@ export default function CirclePage() {
       paddingBottom: '80px'
     }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');`}</style>
+
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)', zIndex: 999, background: '#0E1E38', color: '#F6F1E4', padding: '11px 24px', borderRadius: 40, fontFamily: "'Inter', sans-serif", fontSize: 13, letterSpacing: '0.04em', boxShadow: '0 6px 24px rgba(10,22,40,0.3)', pointerEvents: 'none' }}>
+          {toast}
+        </div>
+      )}
 
       {/* Header */}
       <div style={{
