@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import PrayerBandsLogo from "@/components/PrayerBandsLogo";
+import SiteFooter from "@/components/SiteFooter";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Prayer {
@@ -1159,41 +1160,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="footer section">
-        <div className="container">
-          <div className="footer-inner">
-            <div>
-              <div className="footer-brand">PrayerBands</div>
-              <div className="footer-tagline">
-                A living chain of prayer, passed hand to hand, carried by faith around the world.
-              </div>
-            </div>
-            <div>
-              <div className="footer-col-title">Platform</div>
-              <Link href="/store" className="footer-link">Get Bands</Link>
-              <Link href="/subscribe" className="footer-link">Subscribe</Link>
-              <Link href="/prayer-wall" className="footer-link">Prayer Wall</Link>
-              <Link href="/dashboard" className="footer-link">My Dashboard</Link>
-            </div>
-            <div>
-              <div className="footer-col-title">About</div>
-              <Link href="/about" className="footer-link">Our Story</Link>
-              <Link href="/contact" className="footer-link">Contact</Link>
-              <Link href="/faq" className="footer-link">FAQ</Link>
-            </div>
-            <div>
-              <div className="footer-col-title">Account</div>
-              <Link href="/signin" className="footer-link">Sign In</Link>
-              <Link href="/signin" className="footer-link">Create Account</Link>
-              <Link href="/dashboard" className="footer-link">Dashboard</Link>
-            </div>
-          </div>
-          <div className="footer-bottom">
-            <div className="footer-copy">© {new Date().getFullYear()} PrayerBands. All rights reserved.</div>
-            <div className="footer-verse">"Pray without ceasing." — 1 Thessalonians 5:17</div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

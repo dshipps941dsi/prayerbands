@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import SiteHeader from "../components/SiteHeader";
 import Icon from "@/components/Icon";
+import SiteFooter from "@/components/SiteFooter";
 
 declare global {
   interface Window {
@@ -429,6 +430,7 @@ export default function ContactPage() {
         </div>
       </div>
 
+      <SiteFooter />
       <style>{styles}</style>
     </>
   );

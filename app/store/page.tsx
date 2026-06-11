@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import Logo from "@/components/Logo";
 import Icon from "@/components/Icon";
 import { track } from "@/lib/analytics";
+import SiteFooter from "@/components/SiteFooter";
 
 type PendingReferral = { code: string; referrerUserId: string };
 
@@ -550,6 +551,7 @@ function StorePageInner() {
           </div>
         </div>
       )}
+      <SiteFooter />
     </div>
   );
 }

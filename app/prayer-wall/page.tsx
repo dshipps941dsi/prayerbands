@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
+import SiteFooter from '@/components/SiteFooter'
 
 type Prayer = {
   id: string
@@ -363,6 +364,7 @@ export default function PrayerWallPage() {
           </div>
         </div>
       )}
+      <SiteFooter />
     </div>
   )
 }

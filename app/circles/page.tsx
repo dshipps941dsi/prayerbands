@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
+import SiteFooter from '@/components/SiteFooter'
 
 interface CirclePreview {
   id: string
@@ -103,8 +104,8 @@ export default function CirclesPage() {
 
       {/* Header */}
       <div style={{
-        backgroundColor: '#FFFDF8',
-        borderBottom: '1px solid rgba(10,22,40,0.12)',
+        background: 'linear-gradient(180deg, #0E1E38 0%, #0A1628 100%)',
+        borderBottom: '1px solid rgba(200,169,110,0.34)',
         padding: '20px 24px',
         display: 'flex',
         alignItems: 'center',
@@ -117,10 +118,10 @@ export default function CirclesPage() {
               fontFamily: "'Cormorant Garamond', Georgia, serif",
               fontSize: '22px',
               fontWeight: '700',
-              color: '#15223B',
+              color: '#F5EDD8',
               margin: 0
             }}>Prayer Circles</h1>
-            <p style={{ fontSize: '13px', color: '#5C6573', margin: '2px 0 0 0', fontFamily: "'Inter', sans-serif" }}>
+            <p style={{ fontSize: '13px', color: 'rgba(245,237,216,0.7)', margin: '2px 0 0 0', fontFamily: "'Inter', sans-serif" }}>
               Join a group or gather one
             </p>
           </div>
@@ -386,6 +387,7 @@ export default function CirclesPage() {
         )}
 
       </div>
+      <SiteFooter />
     </div>
   )
 }

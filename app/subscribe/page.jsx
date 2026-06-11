@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import SiteHeader from "../components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 const PLANS = [
   {
@@ -1061,6 +1062,7 @@ export default function SubscribePage() {
           </div>
         </div>
       </div>
+      <SiteFooter />
     </>
   );
 }
