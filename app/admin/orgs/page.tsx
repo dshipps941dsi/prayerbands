@@ -118,7 +118,16 @@ export default function AdminOrgs() {
   )
 
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif', background: C.pageBg, minHeight: '100vh', padding: 32 }}>
+    <div className="pb-orgs-root" style={{ fontFamily: 'Inter, sans-serif', background: C.pageBg, minHeight: '100vh', padding: 32 }}>
+      {/* Inline styles can't be hit by media queries — collapse the desktop
+          two-column grids to a single column on phones. */}
+      <style>{`
+        @media (max-width: 760px) {
+          .pb-orgs-root { padding: 18px 14px !important; }
+          .pb-orgs-main { grid-template-columns: 1fr !important; gap: 16px !important; }
+          .pb-orgs-tools { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
       <div style={{ maxWidth: 1000, margin: '0 auto' }}>
         <div style={{ marginBottom: 32 }}>
           <div style={{ marginBottom: 12 }}><PrayerBandsLogo size={34} color={C.gold} /></div>
@@ -127,7 +136,7 @@ export default function AdminOrgs() {
           <p style={{ color: C.secondary, fontSize: 14 }}>Manage organizations, generate and assign bands.</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24 }}>
+        <div className="pb-orgs-main" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24 }}>
           {/* Org list */}
           <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
             <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.borderSilver}`, fontWeight: 600, fontSize: 14, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
@@ -188,7 +197,7 @@ export default function AdminOrgs() {
                   </div>
                 )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                <div className="pb-orgs-tools" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                   {/* Generate bands */}
                   <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 10, padding: '20px 24px', boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
                     <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
