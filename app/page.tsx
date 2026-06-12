@@ -913,11 +913,12 @@ export default function HomePage() {
       {/* ── Nav ── */}
       <nav className={`nav${scrolled || menuOpen ? " scrolled" : ""}`}>
         <div className="nav-inner">
-          <Link href="/" className="nav-logo" style={{ display: "inline-flex", alignItems: "center", gap: 10 }}><PrayerBandsLogo size={26} color="#E2C98A" />Prayer<span>Bands</span></Link>
+          <Link href="/" className="nav-logo" style={{ display: "inline-flex", alignItems: "center", gap: 10 }}><PrayerBandsLogo size={26} color="#E2C98A" />Prayer&nbsp;<span>Bands</span></Link>
           <div className="nav-links">
             <Link href="#mission" className="nav-link">Our Mission</Link>
             <Link href="#how" className="nav-link">How It Works</Link>
             <Link href="#wall" className="nav-link">Prayer Network</Link>
+            <Link href="/prayer-circles" className="nav-link">Prayer Circles</Link>
             <Link href="/store" className="nav-link">Store</Link>
             <Link href="/contact" className="nav-link">Contact</Link>
             <Link href="/signin" className="nav-cta">Sign In</Link>
@@ -936,6 +937,7 @@ export default function HomePage() {
             <Link href="#mission" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Our Mission</Link>
             <Link href="#how" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>How It Works</Link>
             <Link href="#wall" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Prayer Network</Link>
+            <Link href="/prayer-circles" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Prayer Circles</Link>
             <Link href="/store" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Store</Link>
             <Link href="/contact" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Contact</Link>
             <Link href="/signin" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Sign In</Link>

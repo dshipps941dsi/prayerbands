@@ -7,6 +7,7 @@ import Logo from "@/components/Logo";
 const LINKS = [
   { label: "Shop", href: "/store", primary: true },
   { label: "Prayer Wall", href: "/prayer-wall", primary: false },
+  { label: "Circles", href: "/prayer-circles", primary: false },
   { label: "Contact", href: "/contact", primary: true },
   { label: "Sign In", href: "/signin", primary: false },
 ];

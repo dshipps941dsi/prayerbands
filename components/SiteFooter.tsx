@@ -67,6 +67,7 @@ export default function SiteFooter() {
             <Link href="/store" className="pbf-link">Get Bands</Link>
             <Link href="/subscribe" className="pbf-link">Subscribe</Link>
             <Link href="/prayer-wall" className="pbf-link">Prayer Wall</Link>
+            <Link href="/prayer-circles" className="pbf-link">Prayer Circles</Link>
             <Link href="/dashboard" className="pbf-link">My Dashboard</Link>
           </div>
           <div>
