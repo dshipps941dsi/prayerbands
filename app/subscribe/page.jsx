@@ -83,31 +83,26 @@ export default function SubscribePage() {
   const [loading, setLoading] = useState(false);
   const [authed, setAuthed] = useState(false);
 
-  // Subscribing must be tied to an account so each subscription links to a profile.
+  // Anyone can browse plans; an account is only required at checkout so each
+  // subscription can link to a profile.
   useEffect(() => {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) { window.location.href = '/signin/personal'; return; }
-      setAuthed(true);
+      setAuthed(!!user);
     });
   }, []);
 
   const plan = PLANS.find(p => p.id === selected);
   const color = BAND_COLORS.find(c => c.id === bandColor);
 
-  if (!authed) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F1E4', fontFamily: 'Inter, sans-serif', textAlign: 'center' }}>
-      <div>
-        <div style={{ fontSize: 48, color: '#C8A96E', marginBottom: 16 }}>✝</div>
-        <div style={{ fontSize: 16, color: '#5C6573' }}>Loading subscription plans…</div>
-      </div>
-    </div>
-  );
-
   const handleCheckout = async () => {
+    if (!authed) {
+      window.location.href = '/signin/personal?redirect=' + encodeURIComponent('/subscribe');
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch('/api/create-subscription-checkout', {

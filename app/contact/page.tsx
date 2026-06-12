@@ -109,6 +109,11 @@ export default function ContactPage() {
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
   const lastQuery = useRef("");
 
+  // Always open at the top (the page is tall with an FAQ below the form).
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Debounced AI FAQ lookup
   const lookupFaq = useCallback(async (query: string) => {
     if (query.length < 20 || query === lastQuery.current) return;
