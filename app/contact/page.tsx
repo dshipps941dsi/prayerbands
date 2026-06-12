@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import SiteHeader from "../components/SiteHeader";
-import Icon from "@/components/Icon";
 import SiteFooter from "@/components/SiteFooter";
 
 declare global {
@@ -446,7 +445,6 @@ function FaqSection() {
   return (
     <section className="faq-section">
       <div className="faq-section-head">
-        <div className="cross-ornament"><Icon name="bible" size={28} color="#9A7A35" /></div>
         <h2>Frequently Asked Questions</h2>
         <p>Quick answers to the questions we hear most. Still stuck? Send us a note above.</p>
       </div>
