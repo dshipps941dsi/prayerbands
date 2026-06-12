@@ -120,7 +120,7 @@ function GlobalPrayerMap({ points }: { points: MapPoint[] }) {
       const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false, scrollWheelZoom: false, worldCopyJump: true, minZoom: 1 });
       instRef.current = map;
       map.setView([22, 8], 2);
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
       points.forEach((p) => {
         const dot = L.divIcon({ className: "", html: '<div class="pb-map-dot"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
         L.marker([p.lat, p.lng], { icon: dot }).addTo(map).bindPopup(
@@ -594,13 +594,13 @@ export default function HomePage() {
           border: 1px solid rgba(200,169,110,0.30);
           box-shadow: 0 20px 60px rgba(0,0,0,0.40);
         }
-        .prayer-map { height: 480px; width: 100%; background: #0A1628; }
+        .prayer-map { height: 480px; width: 100%; background: #E8E4D8; }
         @media (max-width: 700px) { .prayer-map { height: 380px; } .globe { padding: 64px 0; } }
         .pb-map-dot {
           width: 12px; height: 12px; border-radius: 50%;
-          background: #E2C98A;
-          border: 2px solid rgba(245,237,216,0.92);
-          box-shadow: 0 0 0 0 rgba(226,201,138,0.55);
+          background: #0E1E38;
+          border: 2px solid #C8A96E;
+          box-shadow: 0 0 0 0 rgba(200,169,110,0.6);
           animation: pbPulse 2.6s ease-out infinite;
           cursor: pointer;
         }
