@@ -366,6 +366,14 @@ export default function AdminPage() {
     setBandPrayers(prev => prev ? prev.map(p => p.id === id ? { ...p, prayer: null, flagged: true } : p) : prev)
   }
 
+  // Hard delete: removes the registration row entirely (prayer AND the band-journey
+  // stop). Use for test data. Irreversible.
+  async function deleteBandRegistration(id: number) {
+    if (!confirm('Delete this entry entirely? This removes the prayer AND this stop from the band’s journey. This cannot be undone.')) return
+    await supabase.from('registrations').delete().eq('id', id)
+    setBandPrayers(prev => prev ? prev.filter(p => p.id !== id) : prev)
+  }
+
   async function promoteToFaq(submission: any) {
     await fetch('/api/admin/promote-faq', {
       method: 'POST',
@@ -700,9 +708,12 @@ export default function AdminPage() {
                         {p.prayer
                           ? <p style={{ margin: '0 0 10px', fontSize: 14, color: C.body, fontStyle: 'italic' }}>&ldquo;{p.prayer}&rdquo;</p>
                           : <p style={{ margin: '0 0 10px', fontSize: 13, color: C.secondary, fontStyle: 'italic' }}>(prayer removed)</p>}
-                        {p.prayer && (
-                          <button onClick={() => removeBandPrayer(p.id)} style={{ padding: '6px 14px', background: C.red, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Remove Prayer</button>
-                        )}
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          {p.prayer && (
+                            <button onClick={() => removeBandPrayer(p.id)} style={{ padding: '6px 14px', background: C.red, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Remove Prayer</button>
+                          )}
+                          <button onClick={() => deleteBandRegistration(p.id)} style={{ padding: '6px 14px', background: 'transparent', color: C.red, border: `1px solid ${C.red}`, borderRadius: 6, cursor: 'pointer', fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Delete Entirely</button>
+                        </div>
                       </div>
                     ))}
                   </div>
