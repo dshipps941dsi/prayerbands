@@ -239,11 +239,12 @@ export default function HomePage() {
           border-color: var(--border);
         }
         .nav-inner {
-          max-width: 1200px; margin: 0 auto;
-          padding: 0 32px;
+          max-width: none; margin: 0;
+          padding: 0 48px;
           height: 72px;
           display: flex; align-items: center; justify-content: space-between;
         }
+        @media (max-width: 600px) { .nav-inner { padding: 0 20px; } }
         .nav-logo {
           font-family: 'Cinzel', serif;
           font-size: 1.25rem; font-weight: 600;
