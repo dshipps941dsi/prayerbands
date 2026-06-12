@@ -794,7 +794,7 @@ export default function SubscribePage() {
       <div className="page">
         {/* Hero */}
         <div className="hero">
-          <p className="hero-eyebrow">✝ PrayerBands Subscription</p>
+          <p className="hero-eyebrow">✝ Prayer Bands Subscription</p>
           <h1 className="hero-title">
             Commit to Passing<br /><em>Prayer Forward</em>
           </h1>

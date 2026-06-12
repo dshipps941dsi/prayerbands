@@ -89,7 +89,7 @@ export default function OnboardPage() {
       <div style={{ textAlign: 'center', marginBottom: 36 }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>✝</div>
         <h1 style={{ fontSize: 26, fontWeight: 'bold', color: '#1a1208', margin: 0 }}>
-          PrayerBands for Churches
+          Prayer Bands for Churches
         </h1>
         <p style={{ color: '#8a7c6a', marginTop: 8, fontSize: 14 }}>
           Set up your ministry account and start spreading prayer.
@@ -271,7 +271,7 @@ export default function OnboardPage() {
               Your ministry account is ready!
             </h2>
             <p style={{ color: '#5a4f42', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-              Welcome to PrayerBands, <strong>{form.pastor}</strong>.<br />
+              Welcome to Prayer Bands, <strong>{form.pastor}</strong>.<br />
               Your church prefix is{' '}
               <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: green }}>
                 {preview.prefix}-XXXXX

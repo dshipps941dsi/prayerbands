@@ -47,7 +47,7 @@ export default async function handler(req, res) {
   // 3. Send notification email to the requester
   if (requesterEmail) {
     await resend.emails.send({
-      from: 'PrayerBands <prayer@prayerbands.com>',
+      from: 'Prayer Bands <prayer@prayerbands.com>',
       to: requesterEmail,
       subject: `🙏 ${intercessorName} is praying for you`,
       html: `

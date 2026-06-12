@@ -117,7 +117,7 @@ export default function SignInPersonal() {
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}><Logo size={40} /></div>
             <div style={{ fontSize: 11, letterSpacing: '0.14em', color: BRAND.goldText, fontFamily: "'Cinzel', serif", textTransform: 'uppercase', marginBottom: 8 }}>Personal Sign In</div>
-            <h1 style={{ fontSize: 24, fontWeight: 600, color: BRAND.navyMid, margin: '0 0 6px', fontFamily: "'Cormorant Garamond', serif" }}>Sign in to PrayerBands</h1>
+            <h1 style={{ fontSize: 24, fontWeight: 600, color: BRAND.navyMid, margin: '0 0 6px', fontFamily: "'Cormorant Garamond', serif" }}>Sign in to Prayer Bands</h1>
             <p style={{ fontSize: 13, color: BRAND.secondaryText, margin: 0 }}>Track your band's journey and leave prayers</p>
           </div>
 

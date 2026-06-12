@@ -292,7 +292,7 @@ export default function BandPage() {
     const currentHolder = status.registrations?.[status.registrations.length - 1]
     return (
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <a href="/" aria-label="PrayerBands home" style={{ display: 'inline-flex', textDecoration: 'none' }}>
+        <a href="/" aria-label="Prayer Bands home" style={{ display: 'inline-flex', textDecoration: 'none' }}>
           <Logo size={28} withName nameColor={DARK} nameSize={18} />
         </a>
         <div style={{ textAlign: 'right' }}>

@@ -42,7 +42,7 @@ export default function SignInChooser() {
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Logo size={44} color={BRAND.gold} /></div>
           <div style={{ fontSize: 13, letterSpacing: '0.14em', color: BRAND.gold, fontFamily: "'Cinzel', serif", textTransform: 'uppercase', marginBottom: 10 }}>Welcome</div>
           <h1 style={{ fontSize: 28, fontWeight: 600, color: BRAND.cream, margin: '0 0 8px', fontFamily: "'Cormorant Garamond', serif", lineHeight: 1.2 }}>
-            Welcome to PrayerBands
+            Welcome to Prayer Bands
           </h1>
           <p style={{ fontSize: 15, color: BRAND.creamSoft, margin: 0, fontFamily: "'Inter', sans-serif" }}>
             How would you like to sign in?

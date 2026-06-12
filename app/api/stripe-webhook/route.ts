@@ -71,9 +71,9 @@ export async function POST(req: NextRequest) {
 
       if (email) {
         await resend.emails.send({
-          from: 'PrayerBands <bands@prayerbands.com>',
+          from: 'Prayer Bands <bands@prayerbands.com>',
           to: [email],
-          subject: '✝ Your PrayerBands Order is Confirmed',
+          subject: '✝ Your Prayer Bands Order is Confirmed',
           html: `
             <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;background:#fdf8f0;border-radius:12px;overflow:hidden;border:1px solid #e2d5b8">
               <div style="background:#0d3d6e;padding:32px;text-align:center">
@@ -112,12 +112,12 @@ export async function POST(req: NextRequest) {
       }
 
       await resend.emails.send({
-        from: 'PrayerBands <bands@prayerbands.com>',
+        from: 'Prayer Bands <bands@prayerbands.com>',
         to: ['dshipps941@gmail.com'],
         subject: `✝ New Order — ${qty}x ${type} band — $${amount}`,
         html: `
           <div style="font-family:sans-serif;max-width:400px;margin:0 auto;padding:24px">
-            <h2 style="color:#1a5fa0">New PrayerBands Order ✝</h2>
+            <h2 style="color:#1a5fa0">New Prayer Bands Order ✝</h2>
             <p><strong>Customer:</strong> ${name}</p>
             <p><strong>Email:</strong> ${email}</p>
             <p><strong>Type:</strong> ${type}</p>
@@ -389,7 +389,7 @@ async function handleInvoicePaid(stripe: Stripe, supabase: any, invoice: Stripe.
       const { Resend } = await import('resend')
       const resend = new Resend(process.env.RESEND_API_KEY)
       await resend.emails.send({
-        from: 'PrayerBands <bands@prayerbands.com>',
+        from: 'Prayer Bands <bands@prayerbands.com>',
         to: ['dshipps941@gmail.com'],
         subject: `✝ Subscription renewal — ${plan?.bands_per_cycle || 1}x ${sub.band_color} band to ship`,
         html: `<div style="font-family:sans-serif;max-width:400px;margin:0 auto;padding:24px">
@@ -445,15 +445,15 @@ async function sendSubscriptionEmails(session: Stripe.Checkout.Session, plan: an
     const resend = new Resend(process.env.RESEND_API_KEY)
     const email = session.customer_details?.email
     const name = session.customer_details?.name || 'Friend'
-    const planName = plan?.name || 'PrayerBands Subscription'
+    const planName = plan?.name || 'Prayer Bands Subscription'
     const bands = plan?.bands_per_cycle || 1
     const cadence = plan?.interval_months > 1 ? `every ${plan.interval_months} months` : 'every month'
 
     if (email) {
       await resend.emails.send({
-        from: 'PrayerBands <bands@prayerbands.com>',
+        from: 'Prayer Bands <bands@prayerbands.com>',
         to: [email],
-        subject: '✝ Your PrayerBands Subscription is Active',
+        subject: '✝ Your Prayer Bands Subscription is Active',
         html: `
           <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;background:#fdf8f0;border-radius:12px;overflow:hidden;border:1px solid #e2d5b8">
             <div style="background:#0d3d6e;padding:32px;text-align:center">
@@ -491,12 +491,12 @@ async function sendSubscriptionEmails(session: Stripe.Checkout.Session, plan: an
     }
 
     await resend.emails.send({
-      from: 'PrayerBands <bands@prayerbands.com>',
+      from: 'Prayer Bands <bands@prayerbands.com>',
       to: ['dshipps941@gmail.com'],
       subject: `✝ New Subscription — ${planName} (${bands}x ${bandColor})`,
       html: `
         <div style="font-family:sans-serif;max-width:400px;margin:0 auto;padding:24px">
-          <h2 style="color:#1a5fa0">New PrayerBands Subscription ✝</h2>
+          <h2 style="color:#1a5fa0">New Prayer Bands Subscription ✝</h2>
           <p><strong>Customer:</strong> ${name}</p>
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Plan:</strong> ${planName}</p>

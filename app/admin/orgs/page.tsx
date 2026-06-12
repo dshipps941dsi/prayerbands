@@ -94,7 +94,7 @@ export default function AdminOrgs() {
     setGenerating(false)
   }
 
-  // PrayerBands brand palette
+  // Prayer Bands brand palette
   const C = {
     pageBg: '#F6F1E4',
     card: '#FFFDF8',

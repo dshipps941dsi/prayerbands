@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       .eq('id', userId)
       .single()
 
-    const senderName = anonymous ? 'Someone in your PrayerBands network' : (sender?.display_name || 'A friend')
+    const senderName = anonymous ? 'Someone in your Prayer Bands network' : (sender?.display_name || 'A friend')
     const senderEmail = sender?.email
 
     const { data: senderBands } = await supabase
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
       const ackUrl = `https://prayerbands.com/pray-ack?id=${chainPrayerId}&name=${encodeURIComponent(recipient.name)}&email=${encodeURIComponent(recipient.email)}`
 
       await resend.emails.send({
-        from: 'PrayerBands <bands@prayerbands.com>',
+        from: 'Prayer Bands <bands@prayerbands.com>',
         to: [recipient.email],
         subject: `🙏 ${senderName} is asking for prayer`,
         html: `
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
             </div>
             <div style="padding:32px">
               <p style="font-size:15px;color:#4a5568;line-height:1.7;margin:0 0 20px">
-                Hi ${recipient.name}, <strong>${senderName}</strong> — who ${recipient.relationship} — is reaching out through PrayerBands to ask for prayer.
+                Hi ${recipient.name}, <strong>${senderName}</strong> — who ${recipient.relationship} — is reaching out through Prayer Bands to ask for prayer.
               </p>
               <div style="background:#fff;border-left:4px solid #1a6b4a;padding:20px 24px;border-radius:0 10px 10px 0;margin:20px 0">
                 <div style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#1a6b4a;margin-bottom:10px">Their Prayer Request</div>

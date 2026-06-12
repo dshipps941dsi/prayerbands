@@ -6,9 +6,9 @@ export async function POST(req: NextRequest) {
   try {
     const { email, name, bandIds, quantity } = await req.json()
     await resend.emails.send({
-      from: 'PrayerBands <bands@prayerbands.com>',
+      from: 'Prayer Bands <bands@prayerbands.com>',
       to: [email],
-      subject: '✝ Your PrayerBands Have Shipped!',
+      subject: '✝ Your Prayer Bands Have Shipped!',
       html: `
         <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;background:#fdf8f0;border-radius:12px;overflow:hidden;border:1px solid #e2d5b8">
           <div style="background:#0d3d6e;padding:32px;text-align:center">

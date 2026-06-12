@@ -1,5 +1,5 @@
 // ============================================================
-// PrayerBands — Verse library (single source of truth)
+// Prayer Bands — Verse library (single source of truth)
 // /lib/verses.ts
 //
 // Static reference data: imported wherever verses are shown (band page, etc.).

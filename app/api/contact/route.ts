@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       await resend.emails.send({
         from: FROM_EMAIL,
         to: ADMIN_EMAIL,
-        subject: `[PrayerBands Contact] ${category.toUpperCase()}: ${subject || name}`,
+        subject: `[Prayer Bands Contact] ${category.toUpperCase()}: ${subject || name}`,
         html: `
           <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #2a1f0e;">
             <div style="background: #b8964a; padding: 20px 28px; border-radius: 8px 8px 0 0;">
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
       await resend.emails.send({
         from: FROM_EMAIL,
         to: email,
-        subject: "We received your message — PrayerBands",
+        subject: "We received your message — Prayer Bands",
         html: `
           <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #2a1f0e;">
             <div style="text-align: center; padding: 32px 28px 0;">

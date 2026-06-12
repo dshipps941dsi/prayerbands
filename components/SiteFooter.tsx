@@ -57,7 +57,7 @@ export default function SiteFooter() {
       <div className="pbf-inner">
         <div className="pbf-grid">
           <div>
-            <div className="pbf-brand">PrayerBands</div>
+            <div className="pbf-brand">Prayer Bands</div>
             <div className="pbf-tagline">
               A living chain of prayer, passed hand to hand, carried by faith around the world.
             </div>
@@ -83,7 +83,7 @@ export default function SiteFooter() {
           </div>
         </div>
         <div className="pbf-bottom">
-          <div className="pbf-copy">© {new Date().getFullYear()} PrayerBands. All rights reserved.</div>
+          <div className="pbf-copy">© {new Date().getFullYear()} Prayer Bands. All rights reserved.</div>
           <div className="pbf-verse">&ldquo;Pray without ceasing.&rdquo; — 1 Thessalonians 5:17</div>
         </div>
       </div>

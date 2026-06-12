@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       if (rprofile?.email) {
         const resend = new Resend(process.env.RESEND_API_KEY!)
         await resend.emails.send({
-          from: 'PrayerBands <bands@prayerbands.com>',
+          from: 'Prayer Bands <bands@prayerbands.com>',
           to: [rprofile.email],
           subject: `🙏 ${requesterName} wants to connect with you in prayer`,
           html: `

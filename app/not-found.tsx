@@ -18,7 +18,7 @@ export default function NotFound() {
     <div style={{ background: CREAM, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", textAlign: "center", color: DARK }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');`}</style>
 
-      <a href="/" aria-label="PrayerBands home" style={{ textDecoration: "none", marginBottom: 32 }}>
+      <a href="/" aria-label="Prayer Bands home" style={{ textDecoration: "none", marginBottom: 32 }}>
         <Logo size={40} withName nameColor={DARK} nameSize={22} />
       </a>
 

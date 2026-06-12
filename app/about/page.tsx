@@ -3,8 +3,8 @@ import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata = {
-  title: "Our Story — PrayerBands",
-  description: "How PrayerBands began, and the mission behind a living chain of prayer passed hand to hand.",
+  title: "Our Story — Prayer Bands",
+  description: "How Prayer Bands began, and the mission behind a living chain of prayer passed hand to hand.",
 };
 
 const VALUES = [
@@ -68,7 +68,7 @@ export default function AboutPage() {
       <section className="ab-hero">
         <div className="ab-eyebrow">✝ Our Story</div>
         <h1 className="ab-title">A Living Chain<br /><em>of Prayer</em></h1>
-        <p className="ab-sub">PrayerBands began with a simple conviction: that prayer is meant to be shared, and that a small act of faith can travel further than we imagine.</p>
+        <p className="ab-sub">Prayer Bands began with a simple conviction: that prayer is meant to be shared, and that a small act of faith can travel further than we imagine.</p>
       </section>
 
       <div className="ab-wrap">

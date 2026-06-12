@@ -50,7 +50,7 @@ const email = searchParams?.get('email')
               </p>
             </div>
             <a href="https://prayerbands.com" style={{ display: 'inline-block', background: '#C8A96E', color: '#0A1628', padding: '13px 32px', borderRadius: 4, textDecoration: 'none', fontFamily: 'Cinzel, serif', fontSize: 12, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-              Visit PrayerBands ✝
+              Visit Prayer Bands ✝
             </a>
           </div>
         )}

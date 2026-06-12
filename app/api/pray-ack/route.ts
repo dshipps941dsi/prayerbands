@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     if (requesterEmail) {
       await resend.emails.send({
-        from: 'PrayerBands <bands@prayerbands.com>',
+        from: 'Prayer Bands <bands@prayerbands.com>',
         to: [requesterEmail],
         subject: `🙏 ${acknowledgerDisplayName} is praying for you`,
         html: `

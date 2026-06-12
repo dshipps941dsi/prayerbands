@@ -80,19 +80,19 @@ export async function POST(req: Request) {
 
     // Send welcome email
     await resend.emails.send({
-      from: 'PrayerBands <bands@prayerbands.com>',
+      from: 'Prayer Bands <bands@prayerbands.com>',
       to: [email],
-      subject: '✝ Welcome to PrayerBands — Your Ministry Account is Ready',
+      subject: '✝ Welcome to Prayer Bands — Your Ministry Account is Ready',
       html: `
         <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;background:#fdf8f0;border-radius:12px;overflow:hidden;border:1px solid #e2d5b8">
           <div style="background:#1a6b4a;padding:32px;text-align:center">
             <div style="font-size:36px;color:#f5a623;margin-bottom:8px">✝</div>
-            <h1 style="font-family:Georgia,serif;font-size:24px;color:#fff;margin:0;font-weight:400">Welcome to PrayerBands</h1>
+            <h1 style="font-family:Georgia,serif;font-size:24px;color:#fff;margin:0;font-weight:400">Welcome to Prayer Bands</h1>
             <p style="color:rgba(255,255,255,0.7);font-size:14px;margin:8px 0 0">${name} is now on the map</p>
           </div>
           <div style="padding:32px">
             <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 24px">
-              Hi ${pastor}, welcome to PrayerBands! Your ministry account has been created and your bands are ready to start traveling the world. ✝
+              Hi ${pastor}, welcome to Prayer Bands! Your ministry account has been created and your bands are ready to start traveling the world. ✝
             </p>
 
             <div style="background:#f0f7f3;border-radius:10px;padding:20px 24px;margin:0 0 24px">
@@ -149,7 +149,7 @@ export async function POST(req: Request) {
 
     // Notify you
     await resend.emails.send({
-      from: 'PrayerBands <bands@prayerbands.com>',
+      from: 'Prayer Bands <bands@prayerbands.com>',
       to: ['dshipps941@gmail.com'],
       subject: `✝ New Church Account — ${name} (${prefix.toUpperCase()})`,
       html: `

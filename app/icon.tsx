@@ -17,7 +17,7 @@ export default function Icon() {
   return new ImageResponse(
     (
       // eslint-disable-next-line @next/next/no-img-element
-      <img width={32} height={32} src={src} alt="PrayerBands" />
+      <img width={32} height={32} src={src} alt="Prayer Bands" />
     ),
     { ...size }
   )

@@ -3,7 +3,7 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
-// PrayerBands brand palette
+// Prayer Bands brand palette
 const C = {
   pageBg: '#F6F1E4',
   card: '#FFFDF8',
@@ -386,7 +386,7 @@ export default function AdminPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <PrayerBandsLogo size={38} color={C.gold} />
           <div>
-            <h1 style={{ margin: 0, color: C.gold, fontSize: '22px', fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>PrayerBands Admin</h1>
+            <h1 style={{ margin: 0, color: C.gold, fontSize: '22px', fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Prayer Bands Admin</h1>
             <p style={{ margin: '2px 0 0', color: C.silver, fontSize: '12px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Order Management &amp; Fulfillment</p>
           </div>
         </div>

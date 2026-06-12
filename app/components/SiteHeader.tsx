@@ -15,9 +15,9 @@ export default function SiteHeader() {
   return (
     <header className="site-header">
       <div className="site-header-inner">
-        <a href="/" className="site-header-logo" aria-label="PrayerBands home">
+        <a href="/" className="site-header-logo" aria-label="Prayer Bands home">
           <Logo size={28} />
-          <span className="site-header-name">PrayerBands</span>
+          <span className="site-header-name">Prayer Bands</span>
         </a>
         <nav className="site-header-nav">
           {LINKS.map((l) => (

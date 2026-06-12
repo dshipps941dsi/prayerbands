@@ -59,7 +59,7 @@ export default async function handler(req, res) {
   // 3. Notify every intercessor
   const emailPromises = uniqueIntercessors.map(({ name, email }) =>
     resend.emails.send({
-      from: 'PrayerBands <prayer@prayerbands.com>',
+      from: 'Prayer Bands <prayer@prayerbands.com>',
       to: email,
       subject: `✨ Prayer Answered — ${requesterName} has a testimony to share`,
       html: `

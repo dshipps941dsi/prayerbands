@@ -81,7 +81,7 @@ export default function BlessingPage() {
         <div style={{maxWidth:760,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'space-between',height:60}}>
           <a href="/" style={{display:'flex',alignItems:'center',gap:8,textDecoration:'none'}}>
             <Logo size={28} />
-            <span className="playfair" style={{fontSize:17,fontWeight:600,color:'#2C1A0E'}}>PrayerBands</span>
+            <span className="playfair" style={{fontSize:17,fontWeight:600,color:'#2C1A0E'}}>Prayer Bands</span>
           </a>
           <a href={`/band/${bandId}`} className="lato" style={{fontSize:12,letterSpacing:'0.12em',textTransform:'uppercase',color:'#9B7B62',textDecoration:'none'}}>View Full Journey →</a>
         </div>

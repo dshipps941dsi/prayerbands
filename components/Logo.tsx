@@ -1,6 +1,6 @@
-// Shared PrayerBands brand mark — the traced P+B logo, drawn as an inline SVG so
+// Shared Prayer Bands brand mark — the traced P+B logo, drawn as an inline SVG so
 // it stays crisp at any size and inherits its color from the `color` prop.
-// Optionally renders the "PrayerBands" wordmark beside the mark for header /
+// Optionally renders the "Prayer Bands" wordmark beside the mark for header /
 // footer lockups. (The standalone mark also lives in PrayerBandsLogo.tsx.)
 
 import type { CSSProperties } from 'react'
@@ -15,7 +15,7 @@ export default function Logo({
   size = 30,
   color = LOGO_SLATE,
   withName = false,
-  name = 'PrayerBands',
+  name = 'Prayer Bands',
   nameColor,
   nameSize,
   nameClassName,

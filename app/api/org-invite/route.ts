@@ -83,9 +83,9 @@ export async function POST(req: NextRequest) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY!)
     await resend.emails.send({
-      from: 'PrayerBands <bands@prayerbands.com>',
+      from: 'Prayer Bands <bands@prayerbands.com>',
       to: [email],
-      subject: `✝ You're invited to join ${org.name} on PrayerBands`,
+      subject: `✝ You're invited to join ${org.name} on Prayer Bands`,
       html: `
         <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;background:#fdf8f0;border-radius:12px;overflow:hidden;border:1px solid #e2d5b8">
           <div style="background:#0A1628;padding:32px;text-align:center">
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
           </div>
           <div style="padding:32px">
             <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 24px">
-              You've been invited to help manage <strong>${org.name}</strong>'s ministry dashboard on PrayerBands.
+              You've been invited to help manage <strong>${org.name}</strong>'s ministry dashboard on Prayer Bands.
               Set a password to join the team and start tracking bands, prayers, and orders. ✝
             </p>
             <div style="text-align:center;margin:28px 0">

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     }
     const location = [city, country].filter(Boolean).join(', ')
     const { data, error } = await resend.emails.send({
-      from: 'PrayerBands <bands@prayerbands.com>',
+      from: 'Prayer Bands <bands@prayerbands.com>',
       to: [ownerEmail],
       subject: `✝ Your band ${bandId} just moved on — keep the chain going`,
       html: `

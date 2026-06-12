@@ -51,9 +51,9 @@ export async function POST(req: NextRequest) {
     }
 
     const { error } = await resend.emails.send({
-      from: 'PrayerBands <hello@prayerbands.com>',
+      from: 'Prayer Bands <hello@prayerbands.com>',
       to: customerEmail,
-      subject: 'Your PrayerBands Have Shipped! \u2728',
+      subject: 'Your Prayer Bands Have Shipped! \u2728',
       html: `
         <!DOCTYPE html>
         <html>
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
 
             <!-- Header -->
             <div style="background: #2C1A0E; padding: 28px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #C8A96E; font-size: 24px; font-family: Georgia, serif; letter-spacing: 0.5px;">PrayerBands</h1>
+              <h1 style="margin: 0; color: #C8A96E; font-size: 24px; font-family: Georgia, serif; letter-spacing: 0.5px;">Prayer Bands</h1>
               <p style="margin: 6px 0 0; color: #8B6914; font-size: 13px;">Your bands are on their way</p>
             </div>
 
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
               <p style="margin: 0 0 16px; font-size: 16px; color: #2C1A0E;">Dear ${customerName},</p>
 
               <p style="margin: 0 0 20px; font-size: 15px; color: #555; line-height: 1.6;">
-                Your PrayerBands order has been shipped! Each band carries a unique ID and a purpose — to travel, to be prayed over, and to connect lives across distances.
+                Your Prayer Bands order has been shipped! Each band carries a unique ID and a purpose — to travel, to be prayed over, and to connect lives across distances.
               </p>
 
               ${trackingSection}

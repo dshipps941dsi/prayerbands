@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────
--- PrayerBands Subscriptions Schema
+-- Prayer Bands Subscriptions Schema
 -- Run this in your Supabase SQL editor
 -- ─────────────────────────────────────────────
 

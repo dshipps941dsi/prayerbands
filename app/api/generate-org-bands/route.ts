@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
     const { Resend } = await import('resend')
     const resend = new Resend(process.env.RESEND_API_KEY)
     await resend.emails.send({
-      from: 'PrayerBands <bands@prayerbands.com>',
+      from: 'Prayer Bands <bands@prayerbands.com>',
       to: ['dshipps941@gmail.com'],
       subject: `✝ ${org.name} — ${quantity} Band IDs Generated (${org.prefix})`,
       html: `

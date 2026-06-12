@@ -6,7 +6,7 @@ import { THEME_OPTIONS } from '@/lib/themes'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
-// PrayerBands brand palette
+// Prayer Bands brand palette
 const C = {
   pageBg: '#F6F1E4',
   card: '#FFFDF8',

@@ -1,5 +1,5 @@
 // components/Icon.tsx
-// PrayerBands custom icon set — traced from original artwork
+// Prayer Bands custom icon set — traced from original artwork
 // Usage: <Icon name="shop-bag" size={24} color="#B8860B" bg="#FAF6EF" />
 // The `bg` prop sets the cutout color — match it to your background.
 // Defaults to "white" for light backgrounds. Use "transparent" on colored backgrounds

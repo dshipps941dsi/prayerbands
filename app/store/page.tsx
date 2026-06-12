@@ -258,7 +258,7 @@ function StorePageInner() {
         <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <Logo size={30} />
-            <span className="playfair" style={{ fontSize: 20, fontWeight: 600, color: "#15223B" }}>PrayerBands</span>
+            <span className="playfair" style={{ fontSize: 20, fontWeight: 600, color: "#15223B" }}>Prayer Bands</span>
           </a>
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
             <button onClick={() => setCartOpen(true)} style={{ position: "relative", background: "#0A1628", border: "none", borderRadius: 4, padding: "9px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
@@ -273,7 +273,7 @@ function StorePageInner() {
       {/* Referral discount banner — only when a valid ?ref was applied */}
       {referral && (
         <div style={{ background: "#F5EFE4", borderBottom: "1px solid rgba(200,169,110,0.34)", textAlign: "center", padding: "11px 20px", fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: "#9A7A35", letterSpacing: "0.02em" }}>
-          You&rsquo;re getting <strong style={{ color: "#5A3E12" }}>5% off</strong> — a gift from someone in the PrayerBands community 🙏
+          You&rsquo;re getting <strong style={{ color: "#5A3E12" }}>5% off</strong> — a gift from someone in the Prayer Bands community 🙏
         </div>
       )}
 

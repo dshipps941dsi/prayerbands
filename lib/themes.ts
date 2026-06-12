@@ -1,5 +1,5 @@
 // ============================================================
-// PrayerBands — Theme System
+// Prayer Bands — Theme System
 // /lib/themes.ts
 //
 // Each theme is derived from real band artwork.
@@ -78,7 +78,7 @@ export interface BandTheme {
 export const themes: Record<ThemeKey, BandTheme> = {
 
   // ----------------------------------------------------------
-  // DEFAULT  —  Parchment / Gold  (original PrayerBands look)
+  // DEFAULT  —  Parchment / Gold  (original Prayer Bands look)
   // ----------------------------------------------------------
   default: {
     label: 'Classic',

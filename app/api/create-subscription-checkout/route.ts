@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
               interval_count: plan.interval_months,
             },
             product_data: {
-              name: `${plan.name} — PrayerBands Subscription`,
+              name: `${plan.name} — Prayer Bands Subscription`,
             },
           },
         },

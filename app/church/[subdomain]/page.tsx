@@ -144,7 +144,7 @@ export default function ChurchPage({ params }: { params: { subdomain: string } }
             Every Band is a Prayer
           </h2>
           <p style={{ fontSize: 15, color: BODY_TEXT, lineHeight: 1.8, maxWidth: 500, margin: '0 auto 20px', fontFamily: 'Inter, sans-serif' }}>
-            {org.name} gives PrayerBands as acts of intercession.
+            {org.name} gives Prayer Bands as acts of intercession.
             Each band carries a unique ID — when someone receives one,
             their journey is tracked as a living testimony of prayer traveling the world.
           </p>

@@ -18,7 +18,7 @@ async function findAuthUserByEmail(admin: SupabaseClient, email: string) {
 }
 
 // Completes an invite: the recipient sets a password and joins the org. Works
-// whether or not they already had a PrayerBands account on this email.
+// whether or not they already had a Prayer Bands account on this email.
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
   const token = String(body.token || '')

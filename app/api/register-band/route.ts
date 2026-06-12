@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
         const location = [geoCity, geoState, geoCountry].filter(Boolean).join(', ')
         for (const email of alertEmails) {
           await resend.emails.send({
-            from: 'PrayerBands <bands@prayerbands.com>',
+            from: 'Prayer Bands <bands@prayerbands.com>',
             to: [email],
             subject: `✝ Your band ${bandId} just moved to ${location}`,
             html: `

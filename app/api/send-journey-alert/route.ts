@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     for (const email of emails) {
       const { data, error } = await resend.emails.send({
-        from: 'PrayerBands <bands@prayerbands.com>',
+        from: 'Prayer Bands <bands@prayerbands.com>',
         to: [email],
         subject: `✝ Your band ${bandId} just moved to ${location}`,
         html: `

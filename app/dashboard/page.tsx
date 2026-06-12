@@ -700,7 +700,7 @@ export default function Dashboard() {
         {!isViewingAs && profile?.referral_code && (
           <div style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #132544 100%)`, border: `1px solid ${GOLD}55`, borderRadius: 10, padding: isMobile ? '16px 16px' : '18px 22px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', boxShadow: '0 4px 18px rgba(10,22,40,0.18)' }}>
             <div style={{ flex: 1, minWidth: 220 }}>
-              <div style={{ fontFamily: 'Cinzel, serif', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: GOLD, marginBottom: 4 }}>🎁 Share PrayerBands</div>
+              <div style={{ fontFamily: 'Cinzel, serif', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: GOLD, marginBottom: 4 }}>🎁 Share Prayer Bands</div>
               <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 700, color: '#F5EDD8', marginBottom: 6 }}>Give friends 5% off — using your link</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <code style={{ fontFamily: 'monospace', fontSize: 13, color: '#F5EDD8', background: 'rgba(255,255,255,0.08)', border: `1px solid ${GOLD}44`, borderRadius: 6, padding: '6px 10px', wordBreak: 'break-all' }}>{shareUrl || `…/store?ref=${profile.referral_code}`}</code>
@@ -1061,7 +1061,7 @@ export default function Dashboard() {
   return (
     <div style={{ minHeight: '100vh', background: CREAM_BG, fontFamily: 'Inter, sans-serif', color: BODY_TEXT }}>
       <div style={{ background: NAVY, color: '#fff', display: 'flex', alignItems: 'center', padding: '0 16px', height: 56, gap: 12, boxShadow: '0 2px 12px rgba(10,22,40,0.25)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: GOLD, textDecoration: 'none', cursor: 'pointer', fontFamily: 'Cinzel, serif' }}><Logo size={26} color={GOLD} />PrayerBands</a>
+        <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: GOLD, textDecoration: 'none', cursor: 'pointer', fontFamily: 'Cinzel, serif' }}><Logo size={26} color={GOLD} />Prayer Bands</a>
         <div style={{ flex: 1 }} />
         <button onClick={async () => { const s = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); await s.auth.signOut(); window.location.href = '/signin' }} style={{ background: 'rgba(200,169,110,0.15)', border: `1px solid ${GOLD_BORDER}`, color: GOLD, padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>Sign out</button>
       </div>

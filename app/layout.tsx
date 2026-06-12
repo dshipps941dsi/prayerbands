@@ -21,7 +21,7 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 export const metadata: Metadata = {
-  title: "PrayerBands — Carry His Word Around the World",
+  title: "Prayer Bands — Carry His Word Around the World",
   description: "A global prayer movement. Every band carries a prayer. Track your band's journey, leave prayers, and watch intercession travel the world.",
 }
 

@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
       <nav style={{background:'rgba(246,241,228,0.97)',borderBottom:'1px solid rgba(201,207,214,0.60)',padding:'0 32px',height:60,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <a href="/" style={{display:'flex',alignItems:'center',gap:8,textDecoration:'none'}}>
           <Logo size={28} />
-          <span className="cormorant" style={{fontSize:18,fontWeight:600,color:'#15223B'}}>PrayerBands</span>
+          <span className="cormorant" style={{fontSize:18,fontWeight:600,color:'#15223B'}}>Prayer Bands</span>
         </a>
         <a href="/" className="cinzel" style={{fontSize:10,letterSpacing:'0.14em',textTransform:'uppercase',color:'#5C6573',textDecoration:'none'}}>← Back to Home</a>
       </nav>
@@ -80,7 +80,7 @@ export default function PrivacyPolicy() {
         </ul>
 
         <h2>Children</h2>
-        <p>PrayerBands is not directed at children under 13. We do not knowingly collect data from children under 13.</p>
+        <p>Prayer Bands is not directed at children under 13. We do not knowingly collect data from children under 13.</p>
 
         <h2>Changes to This Policy</h2>
         <p>We may update this policy from time to time. We will post the updated date at the top of this page.</p>
@@ -90,7 +90,7 @@ export default function PrivacyPolicy() {
 
         <div style={{marginTop:48,padding:'24px 28px',background:'#FFFDF8',borderRadius:12,borderLeft:'4px solid #C8A96E',boxShadow:'0 2px 12px rgba(10,22,40,0.06)'}}>
           <p className="cormorant" style={{fontSize:15,color:'#2A3344',fontStyle:'italic',margin:0,lineHeight:1.7}}>
-            ✝ PrayerBands is a ministry platform, not a data company. We collect only what is necessary to make the prayer journey work. Your privacy and your faith are both sacred to us.
+            ✝ Prayer Bands is a ministry platform, not a data company. We collect only what is necessary to make the prayer journey work. Your privacy and your faith are both sacred to us.
           </p>
         </div>
       </div>

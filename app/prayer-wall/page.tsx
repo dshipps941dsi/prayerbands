@@ -216,7 +216,7 @@ export default function PrayerWallPage() {
         <div style={{ maxWidth: 1160, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
           <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
             <Logo size={30} />
-            <span className="cormorant" style={{ fontSize: 20, fontWeight: 600, color: '#15223B' }}>PrayerBands</span>
+            <span className="cormorant" style={{ fontSize: 20, fontWeight: 600, color: '#15223B' }}>Prayer Bands</span>
           </a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             <a href="/store" className="cinzel" style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#5C6573', textDecoration: 'none' }}>Shop</a>
