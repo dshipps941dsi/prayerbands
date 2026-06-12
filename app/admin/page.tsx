@@ -932,7 +932,7 @@ export default function AdminPage() {
                         <div>
                           <div style={{ fontWeight: '600', fontSize: '16px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{s.customer_name || s.shipping_name || 'Subscriber'}</div>
                           <div style={{ fontSize: '13px', color: C.goldText }}>{s.customer_email}</div>
-                          <div style={{ fontSize: '12px', color: C.secondary, marginTop: '2px' }}>{new Date(s.created_at).toLocaleDateString()} &middot; {s.bands_quantity} band{s.bands_quantity > 1 ? 's' : ''} &middot; {s.band_color}</div>
+                          <div style={{ fontSize: '12px', color: C.secondary, marginTop: '2px' }}>{new Date(s.created_at).toLocaleDateString()} &middot; {s.bands_quantity} band{s.bands_quantity > 1 ? 's' : ''}{s.band_design ? ` · ${s.band_design}` : ''} &middot; {s.band_color}</div>
                         </div>
                         <span style={{ padding: '2px 10px', borderRadius: '12px', background: isShipped ? C.greenBg : needsAssign ? 'rgba(200,169,110,0.14)' : 'rgba(154,122,53,0.14)', color: isShipped ? C.green : needsAssign ? C.goldText : C.goldDark, fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>{s.status}</span>
                       </div>

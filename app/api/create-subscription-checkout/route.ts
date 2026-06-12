@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    const { planId, bandColor } = await req.json()
+    const { planId, bandColor, bandDesign } = await req.json()
 
     // Pull pricing from the DB so amounts can't be tampered with client-side.
     const { data: plan } = await supabase
@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
         kind: 'subscription',
         planId: plan.id,
         bandColor: color,
+        bandDesign: bandDesign || '',
         user_id: user.id,
       },
       // Mirror onto the subscription so renewal invoices carry the same context.
@@ -83,6 +84,7 @@ export async function POST(req: NextRequest) {
         metadata: {
           planId: plan.id,
           bandColor: color,
+          bandDesign: bandDesign || '',
           user_id: user.id,
         },
       },

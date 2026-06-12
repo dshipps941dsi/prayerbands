@@ -244,6 +244,7 @@ async function handleSubscriptionCheckout(
     const planId = session.metadata?.planId
     const userId = session.metadata?.user_id
     const bandColor = session.metadata?.bandColor || 'sky'
+    const bandDesign = session.metadata?.bandDesign || null
     if (!planId || !userId) {
       console.error('Subscription checkout missing planId/user_id metadata')
       return
@@ -272,6 +273,7 @@ async function handleSubscriptionCheckout(
           stripe_customer_id: typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id,
           status: 'active',
           band_color: bandColor,
+          band_design: bandDesign,
           ...ship,
           current_period_start: period.start,
           current_period_end: period.end,
@@ -298,6 +300,7 @@ async function handleSubscriptionCheckout(
           status: 'pending',
           bands_quantity: plan?.bands_per_cycle || 1,
           band_color: bandColor,
+          band_design: bandDesign,
           ...ship,
           stripe_invoice_id: typeof session.invoice === 'string' ? session.invoice : null,
         },
@@ -352,6 +355,7 @@ async function handleInvoicePaid(stripe: Stripe, supabase: any, invoice: Stripe.
           status: 'pending',
           bands_quantity: plan?.bands_per_cycle || 1,
           band_color: sub.band_color,
+          band_design: sub.band_design,
           shipping_name: sub.shipping_name,
           shipping_line1: sub.shipping_line1,
           shipping_line2: sub.shipping_line2,

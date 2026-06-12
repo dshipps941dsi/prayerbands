@@ -83,6 +83,8 @@ export default function SubscribePage() {
   const [loading, setLoading] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [plans, setPlans] = useState(PLANS);
+  const [bandDesigns, setBandDesigns] = useState([]);
+  const [bandDesign, setBandDesign] = useState('');
 
   // Anyone can browse plans; an account is only required at checkout so each
   // subscription can link to a profile.
@@ -117,8 +119,18 @@ export default function SubscribePage() {
     }).catch(() => {});
   }, []);
 
+  // Band designs come straight from the store catalog (individual bands).
+  useEffect(() => {
+    fetch('/api/products').then(r => r.json()).then(({ products }) => {
+      const bands = (products || []).filter(p => p.category === 'band');
+      setBandDesigns(bands);
+      if (bands.length) setBandDesign(prev => prev || bands[0].slug);
+    }).catch(() => {});
+  }, []);
+
   const plan = plans.find(p => p.id === selected);
   const color = BAND_COLORS.find(c => c.id === bandColor);
+  const selectedDesign = bandDesigns.find(d => d.slug === bandDesign);
 
   const handleCheckout = async () => {
     if (!authed) {
@@ -130,7 +142,7 @@ export default function SubscribePage() {
       const res = await fetch('/api/create-subscription-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId: selected, bandColor })
+        body: JSON.stringify({ planId: selected, bandColor, bandDesign })
       });
       const { url } = await res.json();
       if (url) window.location.href = url;
@@ -842,7 +854,7 @@ export default function SubscribePage() {
               <div className={`step-dot ${step >= 2 ? (step > 2 ? 'done' : 'active') : ''}`}>
                 {step > 2 ? '✓' : '2'}
               </div>
-              <span className={`step-label ${step === 2 ? 'active' : step > 2 ? 'done' : ''}`}>Color</span>
+              <span className={`step-label ${step === 2 ? 'active' : step > 2 ? 'done' : ''}`}>Band</span>
             </div>
             <div className="step-connector">
               <div className="step-line" />
@@ -913,50 +925,48 @@ export default function SubscribePage() {
 
               <div style={{ maxWidth: 480, margin: '40px auto 0', padding: '0 24px' }}>
                 <button className="btn-primary" onClick={() => setStep(2)}>
-                  Continue — Choose Your Band Color →
+                  Continue — Choose Your Band →
                 </button>
               </div>
             </>
           )}
 
-          {/* ── STEP 2: CHOOSE COLOR ── */}
+          {/* ── STEP 2: CHOOSE BAND DESIGN ── */}
           {step === 2 && (
             <div className="color-section">
-              <p className="section-title">Choose Your Band Color</p>
-              <p className="section-sub">This color will ship with every order in your subscription.</p>
+              <p className="section-title">Choose Your Band</p>
+              <p className="section-sub">Pick the band we&rsquo;ll ship with your subscription. You can set color &amp; size anytime from your dashboard.</p>
 
-              <div className="band-preview">
-                <div className="band-visual">
-                  <div
-                    className="band-ring"
-                    style={{ borderColor: color?.hex || '#7BB8D4' }}
-                  />
-                </div>
-                <p className="band-preview-label">{color?.label} Band</p>
-                <p className="band-preview-sub">Laser-engraved · NFC enabled</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, maxWidth: 760, margin: '0 auto 8px', textAlign: 'left' }}>
+                {bandDesigns.length === 0 && (
+                  <p className="section-sub" style={{ gridColumn: '1 / -1', textAlign: 'center' }}>Loading bands…</p>
+                )}
+                {bandDesigns.map(d => {
+                  const isSel = bandDesign === d.slug;
+                  const accent = d.color || '#C8A96E';
+                  return (
+                    <div key={d.slug} onClick={() => setBandDesign(d.slug)} style={{
+                      cursor: 'pointer',
+                      background: '#FFFDF8',
+                      border: `2px solid ${isSel ? accent : 'rgba(10,22,40,0.10)'}`,
+                      borderRadius: 14,
+                      padding: '20px 22px',
+                      boxShadow: isSel ? `0 8px 28px ${accent}44` : '0 2px 10px rgba(10,22,40,0.06)',
+                      transition: 'all 0.2s',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <span style={{ fontSize: 26 }}>{d.icon || '✝'}</span>
+                        {d.tag && <span style={{ fontSize: 10, fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase', color: accent, border: `1px solid ${accent}55`, borderRadius: 20, padding: '2px 10px' }}>{d.tag}</span>}
+                      </div>
+                      <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, fontWeight: 700, color: '#15223B', margin: '0 0 4px' }}>{d.name}</p>
+                      <p style={{ fontSize: 13, color: '#5C6573', lineHeight: 1.5, margin: '0 0 12px' }}>{d.description}</p>
+                      <div style={{ fontFamily: "'Cinzel', serif", fontSize: 12, fontWeight: 600, letterSpacing: '0.04em', color: accent }}>{isSel ? '✓ Selected' : 'Select'}</div>
+                    </div>
+                  );
+                })}
               </div>
 
-              <div className="color-grid">
-                {BAND_COLORS.map(c => (
-                  <div
-                    key={c.id}
-                    className={`color-card ${bandColor === c.id ? 'selected' : ''}`}
-                    style={bandColor === c.id ? { borderColor: c.hex } : {}}
-                    onClick={() => setBandColor(c.id)}
-                  >
-                    <div
-                      className="color-swatch"
-                      style={{
-                        background: c.hex,
-                        boxShadow: `0 4px 16px ${c.hex}66`
-                      }}
-                    />
-                    <p className="color-name">{c.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              <button className="btn-primary" onClick={() => setStep(3)}>
+              <button className="btn-primary" onClick={() => setStep(3)} disabled={!bandDesign}>
                 Continue — Review Your Order →
               </button>
               <button className="btn-secondary" onClick={() => setStep(1)}>
@@ -966,7 +976,7 @@ export default function SubscribePage() {
           )}
 
           {/* ── STEP 3: CONFIRM ── */}
-          {step === 3 && plan && color && (
+          {step === 3 && plan && (
             <div className="summary-card">
               <p className="section-title">Review Your Subscription</p>
               <p className="section-sub">Everything looks good? Let's get you set up.</p>
@@ -985,18 +995,8 @@ export default function SubscribePage() {
                   <span className="summary-value">{plan.bands}</span>
                 </div>
                 <div className="summary-row">
-                  <span className="summary-label">Band color</span>
-                  <span className="summary-value" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{
-                      display: 'inline-block',
-                      width: 14,
-                      height: 14,
-                      borderRadius: '50%',
-                      background: color.hex,
-                      boxShadow: `0 2px 6px ${color.hex}66`
-                    }} />
-                    {color.label}
-                  </span>
+                  <span className="summary-label">Band</span>
+                  <span className="summary-value">{selectedDesign ? selectedDesign.name : 'Standard Band'}</span>
                 </div>
                 <div className="summary-row">
                   <span className="summary-label">Band price</span>
@@ -1026,7 +1026,7 @@ export default function SubscribePage() {
                 {loading ? 'Redirecting to Checkout...' : `Subscribe for $${plan.total.toFixed(2)} / ${plan.intervalCount > 1 ? `${plan.intervalCount} mo` : 'mo'} →`}
               </button>
               <button className="btn-secondary" onClick={() => setStep(2)}>
-                ← Back to Color
+                ← Back to Band
               </button>
             </div>
           )}
