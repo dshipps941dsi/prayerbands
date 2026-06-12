@@ -82,6 +82,7 @@ export default function SubscribePage() {
   const [step, setStep] = useState(1); // 1 = plan, 2 = color, 3 = confirm
   const [loading, setLoading] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [plans, setPlans] = useState(PLANS);
 
   // Anyone can browse plans; an account is only required at checkout so each
   // subscription can link to a profile.
@@ -95,7 +96,28 @@ export default function SubscribePage() {
     });
   }, []);
 
-  const plan = PLANS.find(p => p.id === selected);
+  // Pull live prices from the DB so the page matches what Stripe charges.
+  // Presentational fields (color, icon, perks, shipping) stay local; the band
+  // price / retail are derived from the DB total so the breakdown always sums.
+  useEffect(() => {
+    fetch('/api/plans').then(r => r.json()).then(({ plans: db }) => {
+      if (!db || !db.length) return;
+      setPlans(prev => prev.map(p => {
+        const d = db.find(x => x.id === p.id);
+        if (!d) return p;
+        const total = Number(d.total_price);
+        const bands = d.bands_per_cycle ?? p.bands;
+        const intervalCount = d.interval_months ?? p.intervalCount;
+        const discount = d.discount_percent ?? p.discount;
+        const shipping = d.shipping_price != null ? Number(d.shipping_price) : p.shipping;
+        const bandPrice = bands > 0 ? Math.max(0, (total - shipping) / bands) : p.bandPrice;
+        const retailPrice = discount > 0 ? bandPrice / (1 - discount / 100) : bandPrice;
+        return { ...p, name: d.name ?? p.name, total, bands, intervalCount, discount, bandPrice, retailPrice };
+      }));
+    }).catch(() => {});
+  }, []);
+
+  const plan = plans.find(p => p.id === selected);
   const color = BAND_COLORS.find(c => c.id === bandColor);
 
   const handleCheckout = async () => {
@@ -844,7 +866,7 @@ export default function SubscribePage() {
               <p className="section-title">Choose Your Plan</p>
               <p className="section-sub">Every plan includes free cancellation, always.</p>
               <div className="plans-grid">
-                {PLANS.map(p => (
+                {plans.map(p => (
                   <div
                     key={p.id}
                     className={`plan-card ${selected === p.id ? 'selected' : ''}`}

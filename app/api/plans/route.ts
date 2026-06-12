@@ -7,7 +7,7 @@ export async function GET() {
   const admin = createServiceClient()
   const { data, error } = await admin
     .from('subscription_plans')
-    .select('id, name, total_price, interval_months, bands_per_cycle, discount_percent')
+    .select('id, name, total_price, shipping_price, interval_months, bands_per_cycle, discount_percent')
     .eq('is_active', true)
   if (error) return NextResponse.json({ plans: [] })
   return NextResponse.json({ plans: data ?? [] })

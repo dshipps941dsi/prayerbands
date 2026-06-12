@@ -79,6 +79,9 @@ export default function AdminPage() {
   const [bandLookup, setBandLookup] = useState('')
   const [bandPrayers, setBandPrayers] = useState<any[] | null>(null)
   const [lookingUp, setLookingUp] = useState(false)
+  const [subPlans, setSubPlans] = useState<any[]>([])
+  const [subPlanDraft, setSubPlanDraft] = useState<Record<string, { total_price: string; discount_percent: string }>>({})
+  const [savingPlan, setSavingPlan] = useState<string | null>(null)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -170,7 +173,7 @@ export default function AdminPage() {
   }
 
   async function loadAll() {
-    await Promise.all([loadOrders(), loadStats(), loadFlaggedPrayers(), loadContactSubmissions(), loadActivityFeed(), loadSiteConfig()])
+    await Promise.all([loadOrders(), loadStats(), loadFlaggedPrayers(), loadContactSubmissions(), loadActivityFeed(), loadSiteConfig(), loadSubPlans()])
     setLoading(false)
   }
 
@@ -184,6 +187,29 @@ export default function AdminPage() {
       rows.forEach((r: any) => { draft[r.key] = (Number(r.value) / 100).toFixed(2) })
       setConfigDraft(draft)
     }
+  }
+
+  async function loadSubPlans() {
+    const res = await fetch('/api/admin/subscription-plans')
+    if (!res.ok) return
+    const { plans } = await res.json()
+    setSubPlans(plans || [])
+    const draft: Record<string, { total_price: string; discount_percent: string }> = {}
+    ;(plans || []).forEach((p: any) => { draft[p.id] = { total_price: Number(p.total_price).toFixed(2), discount_percent: String(p.discount_percent ?? 0) } })
+    setSubPlanDraft(draft)
+  }
+
+  async function saveSubPlan(id: string) {
+    const d = subPlanDraft[id]
+    if (!d) return
+    setSavingPlan(id)
+    const res = await fetch('/api/admin/subscription-plans', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, total_price: parseFloat(d.total_price), discount_percent: parseInt(d.discount_percent || '0', 10) }),
+    })
+    if (res.ok) await loadSubPlans()
+    else { const j = await res.json().catch(() => ({})); alert(j.error || 'Could not save.') }
+    setSavingPlan(null)
   }
 
   async function saveConfig(key: string) {
@@ -857,6 +883,32 @@ export default function AdminPage() {
                   >
                     {savingKey === row.key ? 'Saving…' : 'Save'}
                   </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Subscription plans — drive /subscribe display + Stripe charge */}
+            <h2 style={{ margin: '32px 0 6px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Subscription Plans</h2>
+            <p style={{ fontSize: '13px', color: C.secondary, margin: '0 0 20px' }}>Total is what Stripe charges new subscribers (existing ones keep their rate) and what /subscribe shows. Discount % is the marketing label on the page.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '560px' }}>
+              {subPlans.length === 0 && (
+                <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '8px', padding: '20px', textAlign: 'center', color: C.secondary, fontSize: '13px' }}>No subscription plans found.</div>
+              )}
+              {subPlans.map(p => (
+                <div key={p.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '8px', padding: '14px 16px', display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap', boxShadow: '0 2px 8px rgba(10,22,40,0.06)' }}>
+                  <div style={{ flex: 1, minWidth: 140 }}>
+                    <div style={{ fontSize: '14px', color: C.heading, fontWeight: '600' }}>{p.name}</div>
+                    <div style={{ fontSize: '11px', color: C.secondary, fontFamily: 'monospace' }}>{p.id} · {p.bands_per_cycle} band{p.bands_per_cycle > 1 ? 's' : ''} / {p.interval_months} mo</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: 10, color: C.secondary, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Cinzel, serif' }}>Total $</span>
+                    <input type="number" step="0.01" min="0" value={subPlanDraft[p.id]?.total_price ?? ''} onChange={e => setSubPlanDraft(d => ({ ...d, [p.id]: { ...(d[p.id] || { total_price: '', discount_percent: '' }), total_price: e.target.value } }))} style={{ width: '90px', padding: '8px 10px', border: `1px solid ${C.borderNavy}`, borderRadius: '6px', fontSize: '14px', fontFamily: 'Inter, sans-serif', background: C.pageBg, color: C.body, outline: 'none' }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: 10, color: C.secondary, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Cinzel, serif' }}>Discount %</span>
+                    <input type="number" step="1" min="0" max="100" value={subPlanDraft[p.id]?.discount_percent ?? ''} onChange={e => setSubPlanDraft(d => ({ ...d, [p.id]: { ...(d[p.id] || { total_price: '', discount_percent: '' }), discount_percent: e.target.value } }))} style={{ width: '70px', padding: '8px 10px', border: `1px solid ${C.borderNavy}`, borderRadius: '6px', fontSize: '14px', fontFamily: 'Inter, sans-serif', background: C.pageBg, color: C.body, outline: 'none' }} />
+                  </div>
+                  <button onClick={() => saveSubPlan(p.id)} disabled={savingPlan === p.id} style={{ background: C.gold, color: C.navy, border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: '600' }}>{savingPlan === p.id ? 'Saving…' : 'Save'}</button>
                 </div>
               ))}
             </div>
