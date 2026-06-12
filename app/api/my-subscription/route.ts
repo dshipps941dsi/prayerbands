@@ -54,7 +54,17 @@ export async function GET(req: NextRequest) {
     .eq('id', effectiveId)
     .maybeSingle()
 
-  return NextResponse.json({ subscription: subscription || null, profile: profile || null })
+  // The next (pending) shipment, so the dashboard can edit its per-cycle gift note.
+  const { data: pendingShipment } = await admin
+    .from('subscription_shipments')
+    .select('*')
+    .eq('user_id', effectiveId)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  return NextResponse.json({ subscription: subscription || null, profile: profile || null, pendingShipment: pendingShipment || null })
 }
 
 // Update the signed-in user's shipment preferences (band color + size). Applies

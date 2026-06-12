@@ -61,7 +61,7 @@ export default function AdminPage() {
   const [userResults, setUserResults] = useState<any[]>([])
   const [searchingUsers, setSearchingUsers] = useState(false)
   const [contactSubmissions, setContactSubmissions] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<'orders' | 'sales' | 'prayers' | 'users' | 'contact' | 'activity' | 'pricing'>('orders')
+  const [activeTab, setActiveTab] = useState<'orders' | 'shipments' | 'sales' | 'prayers' | 'users' | 'contact' | 'activity' | 'pricing'>('orders')
   const [activityFeed, setActivityFeed] = useState<any[]>([])
   const [siteConfig, setSiteConfig] = useState<{ key: string; value: string; label: string | null }[]>([])
   const [configDraft, setConfigDraft] = useState<Record<string, string>>({})
@@ -73,6 +73,9 @@ export default function AdminPage() {
   const [dedNote, setDedNote] = useState('')
   const [dedSaving, setDedSaving] = useState(false)
   const [dedMsg, setDedMsg] = useState('')
+  const [shipments, setShipments] = useState<any[]>([])
+  const [shipTracking, setShipTracking] = useState<{ [id: string]: string }>({})
+  const [shipBusy, setShipBusy] = useState<string | null>(null)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -87,6 +90,11 @@ export default function AdminPage() {
     if (activeTab === 'sales' && authorized) loadSales()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, salesDays, authorized])
+
+  useEffect(() => {
+    if (activeTab === 'shipments' && authorized) loadShipments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, authorized])
 
   async function loadSales() {
     const res = await fetch('/api/admin/sales?days=' + salesDays)
@@ -106,6 +114,46 @@ export default function AdminPage() {
       else { const d = await res.json().catch(() => ({})); setDedMsg(d.error || 'Could not save.') }
     } catch { setDedMsg('Network error.') }
     setDedSaving(false)
+  }
+
+  async function loadShipments() {
+    const res = await fetch('/api/admin/subscription-shipments')
+    if (res.ok) { const d = await res.json(); setShipments(d.shipments || []) }
+  }
+
+  async function assignShipment(s: any) {
+    setShipBusy(s.id)
+    try {
+      const res = await fetch('/api/admin/subscription-shipments', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'assign', shipmentId: s.id }),
+      })
+      const d = await res.json()
+      if (!res.ok) { alert(d.error || 'Could not assign bands.'); return }
+      await loadShipments()
+    } finally { setShipBusy(null) }
+  }
+
+  async function shipShipment(s: any) {
+    const tracking = shipTracking[s.id]?.trim() || ''
+    if (!tracking) { alert('Enter a tracking number before marking as shipped.'); return }
+    setShipBusy(s.id)
+    try {
+      const res = await fetch('/api/admin/subscription-shipments', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'ship', shipmentId: s.id, tracking }),
+      })
+      const d = await res.json()
+      if (!res.ok) { alert(d.error || 'Could not mark shipped.'); return }
+      // Email the subscriber (reuses the order shipping confirmation).
+      if (s.customer_email) {
+        await fetch('/api/send-shipping-confirmation', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: s.id, customerEmail: s.customer_email, customerName: s.customer_name || 'Friend', bandIds: s.band_ids || d.shipment?.band_ids || [], trackingNumber: tracking }),
+        })
+      }
+      await loadShipments()
+    } finally { setShipBusy(null) }
   }
 
   async function checkAuth() {
@@ -373,7 +421,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '4px', padding: '20px 32px 0', borderBottom: `1px solid ${C.borderGold}`, marginTop: '8px' }}>
-        {(['orders', 'sales', 'prayers', 'users', 'contact', 'activity', 'pricing'] as const).map(tab => (
+        {(['orders', 'shipments', 'sales', 'prayers', 'users', 'contact', 'activity', 'pricing'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             padding: '8px 18px',
             background: activeTab === tab ? C.navy : 'transparent',
@@ -749,6 +797,84 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* SUBSCRIPTION SHIPMENTS TAB */}
+        {activeTab === 'shipments' && (
+          <div>
+            {shipments.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px', color: C.secondary, fontStyle: 'italic' }}>No subscription shipments yet.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {shipments.map(s => {
+                  const bands = s.band_ids || []
+                  const isShipped = s.status === 'shipped'
+                  const needsAssign = bands.length === 0 && s.status === 'pending'
+                  return (
+                    <div key={s.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '10px', padding: '20px 24px', borderLeft: `4px solid ${isShipped ? C.green : needsAssign ? C.gold : C.goldText}`, boxShadow: '0 2px 8px rgba(10,22,40,0.06)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                        <div>
+                          <div style={{ fontWeight: '600', fontSize: '16px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{s.customer_name || s.shipping_name || 'Subscriber'}</div>
+                          <div style={{ fontSize: '13px', color: C.goldText }}>{s.customer_email}</div>
+                          <div style={{ fontSize: '12px', color: C.secondary, marginTop: '2px' }}>{new Date(s.created_at).toLocaleDateString()} &middot; {s.bands_quantity} band{s.bands_quantity > 1 ? 's' : ''} &middot; {s.band_color}</div>
+                        </div>
+                        <span style={{ padding: '2px 10px', borderRadius: '12px', background: isShipped ? C.greenBg : needsAssign ? 'rgba(200,169,110,0.14)' : 'rgba(154,122,53,0.14)', color: isShipped ? C.green : needsAssign ? C.goldText : C.goldDark, fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>{s.status}</span>
+                      </div>
+
+                      <div style={{ fontSize: '13px', color: C.body, marginBottom: '12px', lineHeight: '1.6' }}>
+                        <strong>Ship to:</strong> {[s.shipping_line1, s.shipping_line2, s.shipping_city, s.shipping_state, s.shipping_zip].filter(Boolean).join(', ') || '—'}
+                      </div>
+
+                      {(s.dedication_note || s.dedication_recipient) && (
+                        <div style={{ marginBottom: '12px', padding: '12px 16px', background: 'rgba(200,169,110,0.10)', border: `1px solid ${C.borderGold}`, borderRadius: '6px', fontSize: '13px', lineHeight: '1.65', color: C.body }}>
+                          {s.dedication_recipient && <div><strong style={{ color: C.heading }}>For:</strong> {s.dedication_recipient}</div>}
+                          {s.dedication_note && (
+                            <div style={{ marginTop: s.dedication_recipient ? 5 : 0 }}>
+                              <strong style={{ color: C.heading }}>✍️ Gift message:</strong>{' '}
+                              <span style={{ fontStyle: 'italic', color: C.goldDark }}>&ldquo;{s.dedication_note}&rdquo;</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {bands.length > 0 && (
+                        <div style={{ marginBottom: '12px', padding: '10px 14px', background: C.silverBg, borderRadius: '6px', fontSize: '13px', border: `1px solid ${C.borderSilver}` }}>
+                          <strong style={{ color: C.heading }}>Bands:</strong>{' '}
+                          {bands.map((b: string) => (
+                            <span key={b} style={{ display: 'inline-block', margin: '2px 4px 2px 0', padding: '2px 8px', background: 'rgba(200,169,110,0.14)', border: `1px solid ${C.borderGold}`, borderRadius: '4px', fontFamily: 'monospace', fontSize: '12px', color: C.goldText }}>{b}</span>
+                          ))}
+                        </div>
+                      )}
+
+                      {isShipped && s.tracking_number && (
+                        <div style={{ padding: '10px 14px', background: C.greenBg, border: '1px solid rgba(74,138,106,0.28)', borderRadius: '6px', fontSize: '13px', color: C.green }}>
+                          <strong>Tracking:</strong> {s.tracking_number}
+                        </div>
+                      )}
+
+                      {!isShipped && (
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '14px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                          {needsAssign && (
+                            <button onClick={() => assignShipment(s)} disabled={shipBusy === s.id} style={{ padding: '8px 18px', background: C.gold, color: C.navy, border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontWeight: '600' }}>
+                              {shipBusy === s.id ? 'Assigning...' : `Assign ${s.bands_quantity} Band${s.bands_quantity > 1 ? 's' : ''} →`}
+                            </button>
+                          )}
+                          {bands.length > 0 && (
+                            <>
+                              <input value={shipTracking[s.id] || ''} onChange={e => setShipTracking(p => ({ ...p, [s.id]: e.target.value }))} placeholder="Tracking #" style={{ ...dedInput, width: 180 }} />
+                              <button onClick={() => shipShipment(s)} disabled={shipBusy === s.id} style={{ padding: '8px 18px', background: C.navy, color: C.gold, border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontWeight: '600' }}>
+                                {shipBusy === s.id ? '…' : 'Mark Shipped'}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 

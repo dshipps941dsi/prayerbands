@@ -441,6 +441,11 @@ export default function Dashboard() {
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([])
   const [stats, setStats] = useState({ bands: 0, prayers: 0, registrations: 0, countries: 0 })
   const [subscription, setSubscription] = useState<any>(null)
+  const [pendingShipment, setPendingShipment] = useState<any>(null)
+  const [dedRecipient, setDedRecipient] = useState('')
+  const [dedNote, setDedNote] = useState('')
+  const [savingNote, setSavingNote] = useState(false)
+  const [noteMsg, setNoteMsg] = useState('')
   const [portalLoading, setPortalLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [viewAsId, setViewAsId] = useState<string | null>(null)
@@ -508,6 +513,7 @@ export default function Dashboard() {
           .then(r => r.json())
           .then(d => {
             setSubscription(d.subscription)
+            setPendingShipment(d.pendingShipment || null)
             // In view-as mode the direct profiles read is RLS-blocked; use the
             // service-key profile from the route instead.
             if (d.profile) setProfile(d.profile)
@@ -597,6 +603,27 @@ export default function Dashboard() {
       setSubSize(String(subscription.band_size || 'M').toUpperCase())
     }
   }, [subscription])
+
+  // Keep the per-cycle gift-note editor in sync with the pending shipment.
+  useEffect(() => {
+    if (pendingShipment) {
+      setDedRecipient(pendingShipment.dedication_recipient || '')
+      setDedNote(pendingShipment.dedication_note || '')
+    }
+  }, [pendingShipment])
+
+  async function saveShipmentNote() {
+    setSavingNote(true); setNoteMsg('')
+    try {
+      const res = await fetch('/api/my-shipment-note', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dedication_recipient: dedRecipient, dedication_note: dedNote }),
+      })
+      const data = await res.json()
+      if (res.ok && data.shipment) { setPendingShipment(data.shipment); setNoteMsg('saved'); setTimeout(() => setNoteMsg(''), 2500) }
+      else setNoteMsg(data.error || 'Could not save.')
+    } catch { setNoteMsg('Network error.') } finally { setSavingNote(false) }
+  }
 
   async function savePrefs() {
     setSavingPrefs(true); setPrefsMsg('')
@@ -769,6 +796,24 @@ export default function Dashboard() {
                     {prefsMsg === 'saved'
                       ? <span style={{ color: GOLD_TEXT, fontSize: 12, fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>Saved ✓</span>
                       : prefsMsg && <span style={{ color: '#c0392b', fontSize: 12, fontFamily: 'Inter, sans-serif' }}>{prefsMsg}</span>}
+                  </div>
+                </div>
+              )}
+
+              {!isViewingAs && pendingShipment && (
+                <div style={{ borderTop: `1px solid ${GOLD_BORDER}`, marginTop: 14, paddingTop: 14 }}>
+                  <div style={{ fontSize: 10, color: SECONDARY_TEXT, marginBottom: 8, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                    Gift message <span style={{ textTransform: 'none', letterSpacing: 0, color: '#9A8A7A', fontFamily: 'Inter, sans-serif' }}>· optional · shown to the recipient on their first tap</span>
+                  </div>
+                  <input value={dedRecipient} onChange={e => setDedRecipient(e.target.value)} placeholder="Recipient's name (optional)" style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: `1px solid ${SILVER_BORDER}`, borderRadius: 8, fontSize: 13, fontFamily: 'Inter, sans-serif', color: BODY_TEXT, background: CARD_BG, marginBottom: 8, outline: 'none' }} />
+                  <textarea value={dedNote} onChange={e => setDedNote(e.target.value.slice(0, 300))} placeholder="A short message they'll read on their first tap…" style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: `1px solid ${SILVER_BORDER}`, borderRadius: 8, fontSize: 13, fontFamily: 'Inter, sans-serif', color: BODY_TEXT, background: CARD_BG, minHeight: 60, resize: 'vertical', outline: 'none' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10 }}>
+                    {(dedRecipient !== (pendingShipment.dedication_recipient || '') || dedNote !== (pendingShipment.dedication_note || '')) && (
+                      <button onClick={saveShipmentNote} disabled={savingNote} style={{ background: GOLD, color: NAVY, border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, fontWeight: 700, cursor: savingNote ? 'wait' : 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{savingNote ? 'Saving…' : 'Save Message'}</button>
+                    )}
+                    {noteMsg === 'saved'
+                      ? <span style={{ color: GOLD_TEXT, fontSize: 12, fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>Saved ✓</span>
+                      : noteMsg && <span style={{ color: '#c0392b', fontSize: 12, fontFamily: 'Inter, sans-serif' }}>{noteMsg}</span>}
                   </div>
                 </div>
               )}
