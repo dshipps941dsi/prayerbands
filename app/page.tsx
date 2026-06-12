@@ -36,12 +36,7 @@ const PLANS = [
   { name: "Bundle Sender", price: "$14.24", period: "/mo", desc: "Three bands every month — 25% off retail. For those called to spread prayer widely.", badge: "Most Impact" },
 ];
 
-const STATS = [
-  { value: "12,400+", label: "Prayers Recorded" },
-  { value: "38", label: "Countries Reached" },
-  { value: "5,200+", label: "Bands in the World" },
-  { value: "1", label: "God Glorified" },
-];
+// Home stats are computed live from /api/home-stats with an aspirational floor.
 
 // ─── Scroll Reveal Hook ───────────────────────────────────────────────────────
 function useReveal() {
@@ -100,7 +95,20 @@ const MAP_POINTS = [
 ];
 
 // Leaflet world map of sample band points; tapping a dot opens its prayer.
-function GlobalPrayerMap() {
+function timeAgo(ts?: string) {
+  if (!ts) return "recently";
+  const diff = Date.now() - new Date(ts).getTime();
+  const m = Math.floor(diff / 60000), h = Math.floor(diff / 3600000), d = Math.floor(diff / 86400000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  if (h < 24) return `${h}h ago`;
+  if (d === 1) return "Yesterday";
+  return `${d}d ago`;
+}
+
+type MapPoint = { lat: number; lng: number; name: string; loc: string; band: string; prayer: string };
+
+function GlobalPrayerMap({ points }: { points: MapPoint[] }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const instRef = useRef<any>(null);
   useEffect(() => {
@@ -113,7 +121,7 @@ function GlobalPrayerMap() {
       instRef.current = map;
       map.setView([22, 8], 2);
       L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
-      MAP_POINTS.forEach((p) => {
+      points.forEach((p) => {
         const dot = L.divIcon({ className: "", html: '<div class="pb-map-dot"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
         L.marker([p.lat, p.lng], { icon: dot }).addTo(map).bindPopup(
           `<div style="font-family:Georgia,serif;max-width:230px">
@@ -132,7 +140,7 @@ function GlobalPrayerMap() {
     if (!script) { script = document.createElement("script"); script.id = "leaflet-js"; script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"; document.head.appendChild(script); }
     script.addEventListener("load", render, { once: true });
     return () => { if (instRef.current) { instRef.current.remove(); instRef.current = null; } };
-  }, []);
+  }, [points]);
   return <div ref={mapRef} className="prayer-map" />;
 }
 
@@ -141,6 +149,7 @@ export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activePrayer, setActivePrayer] = useState(0);
+  const [live, setLive] = useState<any>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -149,9 +158,31 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const t = setInterval(() => setActivePrayer(p => (p + 1) % PRAYERS.length), 4000);
-    return () => clearInterval(t);
+    fetch("/api/home-stats").then(r => r.json()).then(setLive).catch(() => {});
   }, []);
+
+  // Stat numbers stay at an aspirational floor until real activity surpasses it.
+  const statValue = (real: number | undefined, floor: number) =>
+    (typeof real === "number" && real > floor) ? real.toLocaleString() : floor.toLocaleString() + "+";
+  const displayStats = [
+    { value: statValue(live?.stats?.prayers, 12400), label: "Prayers Recorded" },
+    { value: statValue(live?.stats?.countries, 38), label: "Countries Reached" },
+    { value: statValue(live?.stats?.bands, 5200), label: "Bands in the World" },
+    { value: "1", label: "God Glorified" },
+  ];
+  // Map + ticker switch from the curated sample to real prayers once there's enough.
+  const liveGeo = ((live?.prayers || []) as any[]).filter(p => p.lat != null && p.lng != null);
+  const mapPoints: MapPoint[] = liveGeo.length >= 12
+    ? liveGeo.map(p => ({ lat: p.lat, lng: p.lng, name: p.name, loc: p.location, band: p.band, prayer: p.prayer }))
+    : MAP_POINTS;
+  const tickerPrayers: Prayer[] = ((live?.prayers || []) as any[]).length >= 5
+    ? (live.prayers as any[]).slice(0, 6).map(p => ({ initials: p.initials, location: p.location, text: p.prayer, band: p.band, time: timeAgo(p.registered_at) }))
+    : PRAYERS;
+
+  useEffect(() => {
+    const t = setInterval(() => setActivePrayer(p => (p + 1) % tickerPrayers.length), 4000);
+    return () => clearInterval(t);
+  }, [tickerPrayers.length]);
 
   return (
     <>
@@ -950,7 +981,7 @@ export default function HomePage() {
       <div className="stats-bar section">
         <div className="container">
           <div className="stats-grid">
-            {STATS.map((s) => (
+            {displayStats.map((s) => (
               <Reveal key={s.label} className="stat-item">
                 <div className="stat-value">{s.value}</div>
                 <div className="stat-label">{s.label}</div>
@@ -972,7 +1003,7 @@ export default function HomePage() {
           </Reveal>
           <Reveal delay={150}>
             <div className="prayer-map-wrap">
-              <GlobalPrayerMap />
+              <GlobalPrayerMap points={mapPoints} />
             </div>
           </Reveal>
         </div>
@@ -1053,7 +1084,7 @@ export default function HomePage() {
                   <div className="live-dot" />
                   <div className="live-label">Live — Updating Now</div>
                 </div>
-                {PRAYERS.map((p, i) => (
+                {tickerPrayers.map((p, i) => (
                   <div
                     key={p.band}
                     className="prayer-item"
