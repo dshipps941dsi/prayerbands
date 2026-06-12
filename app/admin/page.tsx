@@ -76,6 +76,9 @@ export default function AdminPage() {
   const [shipments, setShipments] = useState<any[]>([])
   const [shipTracking, setShipTracking] = useState<{ [id: string]: string }>({})
   const [shipBusy, setShipBusy] = useState<string | null>(null)
+  const [bandLookup, setBandLookup] = useState('')
+  const [bandPrayers, setBandPrayers] = useState<any[] | null>(null)
+  const [lookingUp, setLookingUp] = useState(false)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -242,7 +245,7 @@ export default function AdminPage() {
   async function loadActivityFeed() {
     const { data } = await supabase
       .from('registrations')
-      .select('id, band_id, user_name, location_name, created_at, prayer_text')
+      .select('id, band_id, user_name, location_name, created_at, prayer')
       .order('created_at', { ascending: false })
       .limit(30)
     if (data) setActivityFeed(data)
@@ -339,8 +342,28 @@ export default function AdminPage() {
   }
 
   async function removePrayer(id: number) {
-    await supabase.from('registrations').update({ prayer_text: null, flagged: false }).eq('id', id)
+    await supabase.from('registrations').update({ prayer: null, flagged: true }).eq('id', id)
     setFlaggedPrayers(prev => prev.filter(p => p.id !== id))
+  }
+
+  async function lookupBandPrayers() {
+    const id = bandLookup.trim()
+    if (!id) return
+    setLookingUp(true)
+    const { data } = await supabase
+      .from('registrations')
+      .select('id, user_name, city, country, prayer, flagged, registered_at')
+      .eq('band_id', id)
+      .order('registered_at', { ascending: false })
+    setBandPrayers(data || [])
+    setLookingUp(false)
+  }
+
+  // Remove a specific prayer: clear its text and hide it from the public wall.
+  // The registration row stays so the band's journey/lineage is preserved.
+  async function removeBandPrayer(id: number) {
+    await supabase.from('registrations').update({ prayer: null, flagged: true }).eq('id', id)
+    setBandPrayers(prev => prev ? prev.map(p => p.id === id ? { ...p, prayer: null, flagged: true } : p) : prev)
   }
 
   async function promoteToFaq(submission: any) {
@@ -653,6 +676,40 @@ export default function AdminPage() {
         {/* PRAYERS TAB */}
         {activeTab === 'prayers' && (
           <div>
+            {/* Look up a band and remove a specific prayer */}
+            <div style={{ background: C.card, border: `1px solid ${C.borderGold}`, borderRadius: 10, padding: '18px 20px', marginBottom: 24 }}>
+              <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 700, color: C.heading, marginBottom: 4 }}>Look up a band</div>
+              <div style={{ fontSize: 12, color: C.secondary, marginBottom: 14, lineHeight: 1.5 }}>Find a band&rsquo;s prayers and remove a specific one (e.g. a test prayer). Removing clears the text and hides it from the wall; the band&rsquo;s journey is kept.</div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <input value={bandLookup} onChange={e => setBandLookup(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') lookupBandPrayers() }} placeholder="Band ID (e.g. PB-TEST1)" style={{ ...dedInput, maxWidth: 260 }} />
+                <button onClick={lookupBandPrayers} disabled={lookingUp} style={{ background: C.gold, color: C.navy, border: 'none', borderRadius: 6, padding: '9px 20px', fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, cursor: lookingUp ? 'wait' : 'pointer' }}>{lookingUp ? 'Looking…' : 'Look Up'}</button>
+              </div>
+              {bandPrayers !== null && (
+                bandPrayers.length === 0 ? (
+                  <p style={{ color: C.secondary, fontStyle: 'italic', marginTop: 14 }}>No prayers found for that band ID.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14 }}>
+                    {bandPrayers.map(p => (
+                      <div key={p.id} style={{ border: `1px solid ${C.borderNavy}`, borderRadius: 8, padding: '12px 14px', background: '#fff' }}>
+                        <div style={{ fontSize: 12, color: C.secondary, marginBottom: 6 }}>
+                          <strong style={{ color: C.heading }}>{p.user_name || 'Anonymous'}</strong>
+                          {(p.city || p.country) && <> &middot; {[p.city, p.country].filter(Boolean).join(', ')}</>}
+                          {' · '}{new Date(p.registered_at).toLocaleDateString()}
+                          {p.flagged && <span style={{ marginLeft: 8, color: C.red, fontSize: 11, fontWeight: 600 }}>hidden</span>}
+                        </div>
+                        {p.prayer
+                          ? <p style={{ margin: '0 0 10px', fontSize: 14, color: C.body, fontStyle: 'italic' }}>&ldquo;{p.prayer}&rdquo;</p>
+                          : <p style={{ margin: '0 0 10px', fontSize: 13, color: C.secondary, fontStyle: 'italic' }}>(prayer removed)</p>}
+                        {p.prayer && (
+                          <button onClick={() => removeBandPrayer(p.id)} style={{ padding: '6px 14px', background: C.red, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Remove Prayer</button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+            </div>
+
             <h2 style={{ margin: '0 0 16px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Flagged Prayers</h2>
             {flaggedPrayers.length === 0 ? (
               <p style={{ color: C.secondary, fontStyle: 'italic' }}>No flagged prayers. All clear.</p>
@@ -663,7 +720,7 @@ export default function AdminPage() {
                     <div style={{ fontSize: '13px', marginBottom: '8px', color: C.body }}>
                       <strong style={{ color: C.heading }}>{p.user_name || 'Anonymous'}</strong> &middot; Band {p.band_id}
                     </div>
-                    <p style={{ margin: '0 0 8px', color: C.body, fontSize: '14px' }}>{p.prayer_text}</p>
+                    <p style={{ margin: '0 0 8px', color: C.body, fontSize: '14px' }}>{p.prayer}</p>
                     {p.flagged_reason && <p style={{ margin: '0 0 12px', fontSize: '12px', color: C.secondary }}>Reason: {p.flagged_reason}</p>}
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button onClick={() => approvePrayer(p.id)} style={{ padding: '6px 14px', background: C.green, color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Approve</button>
@@ -750,7 +807,7 @@ export default function AdminPage() {
                       <strong style={{ color: C.heading }}>{a.user_name || 'Anonymous'}</strong> registered band <span style={{ fontFamily: 'monospace', color: C.goldText }}>{a.band_id}</span>
                       {a.location_name && <> in <em>{a.location_name}</em></>}
                     </div>
-                    {a.prayer_text && <p style={{ margin: '4px 0 0', fontSize: '13px', color: C.secondary, fontStyle: 'italic' }}>"{a.prayer_text}"</p>}
+                    {a.prayer && <p style={{ margin: '4px 0 0', fontSize: '13px', color: C.secondary, fontStyle: 'italic' }}>"{a.prayer}"</p>}
                     <div style={{ fontSize: '11px', color: C.secondary, marginTop: '4px' }}>{new Date(a.created_at).toLocaleString()}</div>
                   </div>
                 </div>
