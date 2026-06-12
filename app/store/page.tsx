@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Logo from "@/components/Logo";
 import Icon from "@/components/Icon";
@@ -168,6 +168,14 @@ function StorePageInner() {
   const bandProducts = products.filter(p => p.category === "band");
   const packProducts = products.filter(p => p.category === "pack");
 
+  // GA4: record item views once the catalog is on screen (once per load).
+  const viewedRef = useRef(false);
+  useEffect(() => {
+    if (viewedRef.current || !products.length) return;
+    viewedRef.current = true;
+    products.forEach(p => track('view_item', { currency: 'USD', value: p.price, items: [{ item_id: p.slug, item_name: p.name, price: p.price, item_category: p.category }] }));
+  }, [products.length]);
+
   // ── Automatic multi-band discount — percent tiers live on the product, so
   // they track the base price and never drift from a separate pricing table. ──
   const discountBase = bandProducts.find(p => p.multiDiscount);
@@ -193,9 +201,12 @@ function StorePageInner() {
       if (i >= 0) { const copy = [...prev]; copy[i] = { ...copy[i], qty: copy[i].qty + 1 }; return copy; }
       return [...prev, { ...item, qty: 1 }];
     });
+    track('add_to_cart', { currency: 'USD', value: item.price, items: [{ item_id: item.id, item_name: item.name, price: item.price, quantity: 1 }] });
     showToast(`${item.name} added to cart`);
   };
   const updateQty = (id: string, size: string | undefined, delta: number) => {
+    const it = cart.find(c => c.id === id && c.size === size);
+    if (it) track(delta < 0 ? 'remove_from_cart' : 'add_to_cart', { currency: 'USD', value: it.price, items: [{ item_id: it.id, item_name: it.name, price: it.price, quantity: 1 }] });
     setCart(prev => prev.map(c => (c.id === id && c.size === size) ? { ...c, qty: c.qty + delta } : c).filter(c => c.qty > 0));
   };
 
