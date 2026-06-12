@@ -225,12 +225,8 @@ export default function AdminPage() {
   }
 
   async function loadFlaggedPrayers() {
-    const { data } = await supabase
-      .from('registrations')
-      .select('*')
-      .eq('flagged', true)
-      .order('created_at', { ascending: false })
-    if (data) setFlaggedPrayers(data)
+    const res = await fetch('/api/admin/band-prayers?flagged=true')
+    if (res.ok) { const d = await res.json(); setFlaggedPrayers(d.prayers || []) }
   }
 
   async function loadContactSubmissions() {
@@ -337,41 +333,40 @@ export default function AdminPage() {
   }
 
   async function approvePrayer(id: number) {
-    await supabase.from('registrations').update({ flagged: false, flagged_reason: null }).eq('id', id)
-    setFlaggedPrayers(prev => prev.filter(p => p.id !== id))
+    const res = await fetch('/api/admin/band-prayers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'approve', id }) })
+    if (res.ok) setFlaggedPrayers(prev => prev.filter(p => p.id !== id))
   }
 
   async function removePrayer(id: number) {
-    await supabase.from('registrations').update({ prayer: null, flagged: true }).eq('id', id)
-    setFlaggedPrayers(prev => prev.filter(p => p.id !== id))
+    const res = await fetch('/api/admin/band-prayers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', id }) })
+    if (res.ok) setFlaggedPrayers(prev => prev.filter(p => p.id !== id))
   }
 
   async function lookupBandPrayers() {
     const id = bandLookup.trim()
     if (!id) return
     setLookingUp(true)
-    const { data } = await supabase
-      .from('registrations')
-      .select('id, user_name, city, country, prayer, flagged, registered_at')
-      .eq('band_id', id)
-      .order('registered_at', { ascending: false })
-    setBandPrayers(data || [])
+    const res = await fetch('/api/admin/band-prayers?bandId=' + encodeURIComponent(id))
+    const d = res.ok ? await res.json() : { prayers: [] }
+    setBandPrayers(d.prayers || [])
     setLookingUp(false)
   }
 
   // Remove a specific prayer: clear its text and hide it from the public wall.
   // The registration row stays so the band's journey/lineage is preserved.
   async function removeBandPrayer(id: number) {
-    await supabase.from('registrations').update({ prayer: null, flagged: true }).eq('id', id)
-    setBandPrayers(prev => prev ? prev.map(p => p.id === id ? { ...p, prayer: null, flagged: true } : p) : prev)
+    const res = await fetch('/api/admin/band-prayers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', id }) })
+    if (res.ok) setBandPrayers(prev => prev ? prev.map(p => p.id === id ? { ...p, prayer: null, flagged: true } : p) : prev)
+    else alert('Could not remove the prayer. Please try again.')
   }
 
   // Hard delete: removes the registration row entirely (prayer AND the band-journey
   // stop). Use for test data. Irreversible.
   async function deleteBandRegistration(id: number) {
     if (!confirm('Delete this entry entirely? This removes the prayer AND this stop from the band’s journey. This cannot be undone.')) return
-    await supabase.from('registrations').delete().eq('id', id)
-    setBandPrayers(prev => prev ? prev.filter(p => p.id !== id) : prev)
+    const res = await fetch('/api/admin/band-prayers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) })
+    if (res.ok) setBandPrayers(prev => prev ? prev.filter(p => p.id !== id) : prev)
+    else alert('Could not delete the entry. Please try again.')
   }
 
   async function promoteToFaq(submission: any) {
