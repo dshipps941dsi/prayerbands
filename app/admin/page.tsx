@@ -433,8 +433,23 @@ export default function AdminPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: C.pageBg, fontFamily: 'Inter, sans-serif', color: C.body }}>
+      {/* Mobile-responsive overrides. Inline styles can't be hit by media queries,
+          so these class hooks + !important collapse the desktop grids on phones. */}
+      <style>{`
+        @media (max-width: 720px) {
+          .pb-admin-header { padding: 14px 16px !important; flex-direction: column; align-items: flex-start !important; gap: 12px; }
+          .pb-admin-nav { gap: 14px 16px !important; }
+          .pb-admin-kpis { grid-template-columns: repeat(2, 1fr) !important; padding-left: 16px !important; padding-right: 16px !important; gap: 12px !important; }
+          .pb-admin-grid4 { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
+          .pb-admin-tabs { padding: 14px 16px 0 !important; flex-wrap: wrap !important; row-gap: 4px; }
+          .pb-admin-content { padding: 18px 16px !important; }
+          .pb-admin-grid2 { grid-template-columns: 1fr !important; }
+          .pb-admin-chartgrid { grid-template-columns: 1fr !important; }
+          .pb-admin-card { padding: 16px 16px !important; }
+        }
+      `}</style>
       {/* Header */}
-      <div style={{ background: C.navy, padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 12px rgba(10,22,40,0.25)' }}>
+      <div className="pb-admin-header" style={{ background: C.navy, padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 12px rgba(10,22,40,0.25)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <PrayerBandsLogo size={38} color={C.gold} />
           <div>
@@ -442,7 +457,7 @@ export default function AdminPage() {
             <p style={{ margin: '2px 0 0', color: C.silver, fontSize: '12px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Order Management &amp; Fulfillment</p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+        <div className="pb-admin-nav" style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
           <a href="/admin/products" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Products</a>
           <a href="/admin/bands" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Band Management</a>
           <a href="/admin/orgs" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Churches</a>
@@ -451,7 +466,7 @@ export default function AdminPage() {
       </div>
 
       {/* KPI Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', padding: '24px 32px 0' }}>
+      <div className="pb-admin-kpis" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', padding: '24px 32px 0' }}>
         {[
           { label: 'Total Orders', value: stats.total },
           { label: 'Pending', value: stats.pending, highlight: stats.pending > 0 },
@@ -472,7 +487,7 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '4px', padding: '20px 32px 0', borderBottom: `1px solid ${C.borderGold}`, marginTop: '8px' }}>
+      <div className="pb-admin-tabs" style={{ display: 'flex', gap: '4px', padding: '20px 32px 0', borderBottom: `1px solid ${C.borderGold}`, marginTop: '8px' }}>
         {(['orders', 'shipments', 'sales', 'prayers', 'users', 'contact', 'activity', 'pricing'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             padding: '8px 18px',
@@ -489,7 +504,7 @@ export default function AdminPage() {
         ))}
       </div>
 
-      <div style={{ padding: '24px 32px' }}>
+      <div className="pb-admin-content" style={{ padding: '24px 32px' }}>
 
         {/* ORDERS TAB */}
         {activeTab === 'orders' && (
@@ -498,7 +513,7 @@ export default function AdminPage() {
             <div style={{ background: C.card, border: `1px solid ${C.borderGold}`, borderRadius: 10, padding: '18px 20px', marginBottom: 20 }}>
               <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 700, color: C.heading, marginBottom: 4 }}>Pre-dedicate a Band</div>
               <div style={{ fontSize: 12, color: C.secondary, marginBottom: 14, lineHeight: 1.5 }}>Attach a recipient + message so the band shows a &ldquo;sent especially for you&rdquo; screen on the recipient&rsquo;s first tap.</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+              <div className="pb-admin-grid2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                 <input value={dedBandId} onChange={e => setDedBandId(e.target.value)} placeholder="Band ID (e.g. PB-1234)" style={dedInput} />
                 <input value={dedRecipient} onChange={e => setDedRecipient(e.target.value)} placeholder="Recipient name" style={dedInput} />
               </div>
@@ -541,7 +556,7 @@ export default function AdminPage() {
                   const isShipped = order.status === 'shipped'
 
                   return (
-                    <div key={order.id} style={{
+                    <div key={order.id} className="pb-admin-card" style={{
                       background: C.card,
                       border: `1px solid ${C.borderNavy}`,
                       borderRadius: '10px',
@@ -927,7 +942,7 @@ export default function AdminPage() {
                   const isShipped = s.status === 'shipped'
                   const needsAssign = bands.length === 0 && s.status === 'pending'
                   return (
-                    <div key={s.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '10px', padding: '20px 24px', borderLeft: `4px solid ${isShipped ? C.green : needsAssign ? C.gold : C.goldText}`, boxShadow: '0 2px 8px rgba(10,22,40,0.06)' }}>
+                    <div key={s.id} className="pb-admin-card" style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '10px', padding: '20px 24px', borderLeft: `4px solid ${isShipped ? C.green : needsAssign ? C.gold : C.goldText}`, boxShadow: '0 2px 8px rgba(10,22,40,0.06)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                         <div>
                           <div style={{ fontWeight: '600', fontSize: '16px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{s.customer_name || s.shipping_name || 'Subscriber'}</div>
@@ -1009,7 +1024,7 @@ export default function AdminPage() {
               <div style={{ textAlign: 'center', padding: 60, color: C.secondary, fontStyle: 'italic' }}>Loading sales…</div>
             ) : (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
+                <div className="pb-admin-grid4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
                   {[
                     { label: salesDays === 'all' ? 'Revenue (all time)' : `Revenue (${salesDays}d)`, value: money(sales.period.revenueCents) },
                     { label: 'Orders', value: sales.period.orders },
@@ -1019,7 +1034,7 @@ export default function AdminPage() {
                     <div key={c.label} style={kpiCard}><div style={kpiValue}>{c.value}</div><div style={kpiLabel}>{c.label}</div></div>
                   ))}
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+                <div className="pb-admin-grid4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
                   {[
                     { label: 'All-Time Revenue', value: money(sales.allTime.revenueCents) },
                     { label: 'Active Subscriptions', value: sales.subscriptions.active },
@@ -1030,7 +1045,7 @@ export default function AdminPage() {
                   ))}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 20 }}>
+                <div className="pb-admin-chartgrid" style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 20 }}>
                   <div style={panel}>
                     <div style={panelHead}>Revenue {salesDays === 'all' ? 'by month' : 'by day'}</div>
                     <div style={{ padding: '18px 16px' }}>
