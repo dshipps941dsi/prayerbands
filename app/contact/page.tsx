@@ -229,7 +229,6 @@ export default function ContactPage() {
       <div className="contact-hero">
         <div className="contact-hero-grid" />
         <div className="contact-hero-inner">
-          <div className="cross-ornament"><Icon name="mail" size={34} color="#C8A96E" /></div>
           <h1>Get in Touch</h1>
           <div className="contact-hero-rule" />
           <p className="contact-subtitle">
