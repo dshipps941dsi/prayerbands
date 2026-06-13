@@ -183,6 +183,17 @@ export default function AdminContactsPage() {
     setFaqEntries((prev) => prev.map((f) => f.id === entry.id ? updated : f));
   }
 
+  async function deleteFaqEntry(entry: FaqEntry) {
+    if (!confirm(`Delete this FAQ entry?\n\n"${entry.question}"\n\nThis can't be undone.`)) return;
+    const res = await api({ action: "faq_delete", id: entry.id });
+    if (res.ok) {
+      setFaqEntries((prev) => prev.filter((f) => f.id !== entry.id));
+      if (editingFaq?.id === entry.id) setEditingFaq(null);
+    } else {
+      alert("Could not delete the FAQ entry.");
+    }
+  }
+
   const faqCandidates = submissions.filter((s) => s.faq_candidate);
 
   if (!authorized) return (
@@ -422,6 +433,7 @@ export default function AdminContactsPage() {
                         {entry.published ? "✓ Published" : "Draft"}
                       </button>
                       <button className="edit-faq-btn" onClick={() => setEditingFaq(entry)}>Edit</button>
+                      <button className="delete-faq-btn" onClick={() => deleteFaqEntry(entry)}>Delete</button>
                     </div>
                   </>
                 )}
@@ -515,6 +527,8 @@ const adminStyles = `
   .publish-toggle { padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(200,169,110,0.34); background: none; font-family: 'Cinzel', serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: #9A7A35; cursor: pointer; white-space: nowrap; }
   .publish-toggle.published { background: rgba(74,138,106,0.14); color: #4A8A6A; border-color: rgba(74,138,106,0.35); }
   .edit-faq-btn { padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(10,22,40,0.12); background: none; font-family: 'Cinzel', serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: #5C6573; cursor: pointer; }
+  .delete-faq-btn { padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(192,57,43,0.4); background: none; font-family: 'Cinzel', serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: #c0392b; cursor: pointer; }
+  .delete-faq-btn:hover { background: rgba(192,57,43,0.08); }
 
   /* FAQ editor card */
   .faq-edit-card { background: #FFFDF8; border: 1.5px solid rgba(200,169,110,0.34); border-radius: 10px; padding: 20px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; width: 100%; box-shadow: 0 2px 10px rgba(10,22,40,0.06); }

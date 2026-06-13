@@ -132,6 +132,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  if (action === 'faq_delete') {
+    const { error } = await admin.from('faq_entries').delete().eq('id', body.id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
   if (action === 'faq_publish') {
     const { error } = await admin.from('faq_entries').update({ published: body.published }).eq('id', body.id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
