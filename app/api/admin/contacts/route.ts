@@ -48,6 +48,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  if (action === 'delete_submission') {
+    const { error } = await admin.from('contact_submissions').delete().eq('id', body.id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
   if (action === 'faq_candidate') {
     const { error } = await admin.from('contact_submissions').update({ faq_candidate: body.value }).eq('id', body.id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -106,6 +106,13 @@ export default function AdminContactsPage() {
     if (selected?.id === id) setSelected(null);
   }
 
+  async function deleteSubmission(id: string) {
+    if (!confirm("Delete this submission permanently? This can't be undone.")) return;
+    await api({ action: "delete_submission", id });
+    setSubmissions((prev) => prev.filter((s) => s.id !== id));
+    if (selected?.id === id) setSelected(null);
+  }
+
   async function toggleFaqCandidate(id: string, current: boolean) {
     await api({ action: "faq_candidate", id, value: !current });
     setSubmissions((prev) => prev.map((s) => s.id === id ? { ...s, faq_candidate: !current } : s));
@@ -264,6 +271,9 @@ export default function AdminContactsPage() {
                   </button>
                   <button className="action-btn action-btn--promote" onClick={() => promoteToFaq(selected)}>
                     + Add to FAQ
+                  </button>
+                  <button className="action-btn action-btn--delete" onClick={() => deleteSubmission(selected.id)}>
+                    🗑 Delete
                   </button>
                 </div>
               </>
@@ -428,6 +438,8 @@ const adminStyles = `
   .action-btn--faq { background: rgba(92,101,115,0.08); color: #5C6573; border-color: rgba(92,101,115,0.28); }
   .action-btn--faq-active { background: rgba(200,169,110,0.16); color: #9A7A35; border-color: rgba(200,169,110,0.5); font-weight: 700; }
   .action-btn--promote { background: #C8A96E; color: #0A1628; border-color: #C8A96E; font-weight: 700; }
+  .action-btn--delete { background: none; color: #c0392b; border-color: rgba(192,57,43,0.4); margin-left: auto; }
+  .action-btn--delete:hover { background: rgba(192,57,43,0.08); }
 
   /* FAQ manager */
   .faq-manager { background: #FFFDF8; border: 1px solid rgba(10,22,40,0.12); border-radius: 10px; padding: 28px; box-shadow: 0 2px 10px rgba(10,22,40,0.06); }
