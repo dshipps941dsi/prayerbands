@@ -60,8 +60,7 @@ export default function AdminPage() {
   const [userSearch, setUserSearch] = useState('')
   const [userResults, setUserResults] = useState<any[]>([])
   const [searchingUsers, setSearchingUsers] = useState(false)
-  const [contactSubmissions, setContactSubmissions] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<'orders' | 'shipments' | 'sales' | 'prayers' | 'users' | 'contact' | 'activity' | 'pricing'>('orders')
+  const [activeTab, setActiveTab] = useState<'orders' | 'shipments' | 'sales' | 'prayers' | 'users' | 'activity' | 'pricing'>('orders')
   const [activityFeed, setActivityFeed] = useState<any[]>([])
   const [siteConfig, setSiteConfig] = useState<{ key: string; value: string; label: string | null }[]>([])
   const [configDraft, setConfigDraft] = useState<Record<string, string>>({})
@@ -173,7 +172,7 @@ export default function AdminPage() {
   }
 
   async function loadAll() {
-    await Promise.all([loadOrders(), loadStats(), loadFlaggedPrayers(), loadContactSubmissions(), loadActivityFeed(), loadSiteConfig(), loadSubPlans()])
+    await Promise.all([loadOrders(), loadStats(), loadFlaggedPrayers(), loadActivityFeed(), loadSiteConfig(), loadSubPlans()])
     setLoading(false)
   }
 
@@ -253,12 +252,6 @@ export default function AdminPage() {
   async function loadFlaggedPrayers() {
     const res = await fetch('/api/admin/band-prayers?flagged=true')
     if (res.ok) { const d = await res.json(); setFlaggedPrayers(d.prayers || []) }
-  }
-
-  async function loadContactSubmissions() {
-    // RLS blocks the anon client from contact_submissions — read via service role.
-    const res = await fetch('/api/admin/contacts?status=new')
-    if (res.ok) { const d = await res.json(); setContactSubmissions(d.submissions || []) }
   }
 
   async function loadActivityFeed() {
@@ -392,15 +385,6 @@ export default function AdminPage() {
     else alert('Could not delete the entry. Please try again.')
   }
 
-  async function promoteToFaq(submission: any) {
-    const res = await fetch('/api/admin/contacts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'promote', submission }),
-    })
-    alert(res.ok ? 'Promoted to FAQ review queue.' : 'Could not promote to FAQ.')
-  }
-
   const filteredOrders = orders.filter(o => filter === 'all' ? true : o.status === filter)
 
   const shippingAddr = (order: Order) => {
@@ -486,7 +470,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div className="pb-admin-tabs" style={{ display: 'flex', gap: '4px', padding: '20px 32px 0', borderBottom: `1px solid ${C.borderGold}`, marginTop: '8px' }}>
-        {(['orders', 'shipments', 'sales', 'prayers', 'users', 'contact', 'activity', 'pricing'] as const).map(tab => (
+        {(['orders', 'shipments', 'sales', 'prayers', 'users', 'activity', 'pricing'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             padding: '8px 18px',
             background: activeTab === tab ? C.navy : 'transparent',
@@ -805,33 +789,6 @@ export default function AdminPage() {
                       <div style={{ fontSize: '12px', color: C.secondary }}>{u.band_count || 0} bands registered</div>
                     </div>
                     <a href={`/dashboard?viewAs=${u.id}`} style={{ padding: '7px 16px', background: C.gold, color: C.navy, borderRadius: '6px', textDecoration: 'none', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>View Dashboard</a>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* CONTACT TAB */}
-        {activeTab === 'contact' && (
-          <div>
-            <h2 style={{ margin: '0 0 16px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Contact Submissions</h2>
-            {contactSubmissions.length === 0 ? (
-              <p style={{ color: C.secondary, fontStyle: 'italic' }}>No submissions yet.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {contactSubmissions.map(s => (
-                  <div key={s.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '8px', padding: '16px 20px', boxShadow: '0 2px 8px rgba(10,22,40,0.06)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <div>
-                        <strong style={{ color: C.heading }}>{s.name}</strong> &middot; <span style={{ color: C.goldText, fontSize: '13px' }}>{s.email}</span>
-                      </div>
-                      <span style={{ fontSize: '12px', color: C.secondary }}>{new Date(s.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <p style={{ margin: '0 0 10px', fontSize: '14px', color: C.body }}>{s.message}</p>
-                    <button onClick={() => promoteToFaq(s)} style={{ padding: '5px 14px', background: 'transparent', border: `1px solid ${C.borderGold}`, color: C.goldText, borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Promote to FAQ
-                    </button>
                   </div>
                 ))}
               </div>
