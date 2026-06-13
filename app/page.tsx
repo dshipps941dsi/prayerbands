@@ -892,6 +892,7 @@ export default function HomePage() {
 
         /* ── Mission statement band ── */
         .creed {
+          padding: 130px 0;
           background:
             radial-gradient(ellipse 60% 90% at 50% 0%, rgba(200,169,110,0.12) 0%, transparent 60%),
             linear-gradient(180deg, var(--navy) 0%, var(--navy2) 55%, var(--navy) 100%);
@@ -915,7 +916,8 @@ export default function HomePage() {
         }
 
         /* ── Daily tap callout ── */
-        .daily-inner { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+        .daily { padding: 130px 0; }
+        .daily-inner { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 72px; align-items: center; }
         .daily-card {
           background: linear-gradient(165deg, var(--navy2), var(--navy));
           border: 1px solid rgba(200,169,110,0.32); border-radius: 22px;
@@ -947,6 +949,7 @@ export default function HomePage() {
           .hero { padding: 100px 20px 60px; }
           .footer-inner { grid-template-columns: 1fr; }
           .ministry-inner { padding: 32px; }
+          .daily, .creed { padding: 80px 0; }
         }
       `}</style>
 
