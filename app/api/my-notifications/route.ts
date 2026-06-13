@@ -102,21 +102,28 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // 4. Prayer requests from others you can pray for (quick-pray action).
+  // Community items (prayer requests + circles) can be high-volume, so they're
+  // limited to the recent window and circle activity is grouped per circle —
+  // otherwise a busy circle would bury the user's own band/order notifications.
+  const since = new Date(Date.now() - 14 * 86400000).toISOString()
+
+  // 4. A few recent public prayer requests you can pray for (quick-pray action).
   const { data: prs } = await admin
     .from('prayer_requests_with_counts')
     .select('id, title, body, total_intercessions, created_at, user_id')
     .eq('visibility', 'public')
     .eq('status', 'active')
     .neq('user_id', effectiveId)
+    .gte('created_at', since)
     .order('created_at', { ascending: false })
-    .limit(12)
+    .limit(6)
   for (const r of prs || []) {
     items.push({ id: `pr-${r.id}`, type: 'prayer_request', icon: '🙏', ts: r.created_at, requestId: r.id,
       title: r.title || 'Someone asked for prayer', detail: r.body || '', intercessions: r.total_intercessions || 0 })
   }
 
-  // 5. New prayer requests in circles you belong to (deep-link to the circle).
+  // 5. New prayer requests in circles you belong to — grouped into ONE summary
+  // per circle (deep-links to the circle), so a popular circle = one line.
   const { data: mems } = await admin.from('circle_members').select('circle_id').eq('user_id', effectiveId)
   const circleIds = [...new Set((mems || []).map((m: any) => m.circle_id))]
   if (circleIds.length) {
@@ -127,11 +134,23 @@ export async function GET(req: NextRequest) {
       .select('id, circle_id, user_id, request_text, created_at')
       .in('circle_id', circleIds)
       .neq('user_id', effectiveId)
+      .gte('created_at', since)
       .order('created_at', { ascending: false })
-      .limit(12)
+      .limit(60)
+    const byCircle = new Map<string, any[]>()
     for (const r of creqs || []) {
-      items.push({ id: `cr-${r.id}`, type: 'circle_request', icon: '✦', ts: r.created_at, circleId: r.circle_id,
-        title: `New prayer request in ${nameById[r.circle_id] || 'your circle'}`, detail: r.request_text || '' })
+      if (!byCircle.has(r.circle_id)) byCircle.set(r.circle_id, [])
+      byCircle.get(r.circle_id)!.push(r)
+    }
+    for (const [cid, list] of Array.from(byCircle.entries())) {
+      const latest = list[0]
+      const count = list.length
+      const name = nameById[cid] || 'your circle'
+      // id includes the latest request so dismissing hides the current batch;
+      // a newer request changes the id and the summary resurfaces.
+      items.push({ id: `cgrp-${cid}-${latest.id}`, type: 'circle_request', icon: '✦', ts: latest.created_at, circleId: cid,
+        title: count === 1 ? `New prayer request in ${name}` : `${count} new prayer requests in ${name}`,
+        detail: count === 1 ? (latest.request_text || '') : '' })
     }
   }
 
