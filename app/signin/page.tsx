@@ -39,7 +39,7 @@ export default function SignInChooser() {
         padding: '24px 16px',
       }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Logo size={44} color={BRAND.gold} /></div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><a href="/" aria-label="Prayer Bands home" style={{ display: 'inline-flex' }}><Logo size={44} color={BRAND.gold} /></a></div>
           <div style={{ fontSize: 13, letterSpacing: '0.14em', color: BRAND.gold, fontFamily: "'Cinzel', serif", textTransform: 'uppercase', marginBottom: 10 }}>Welcome</div>
           <h1 style={{ fontSize: 28, fontWeight: 600, color: BRAND.cream, margin: '0 0 8px', fontFamily: "'Cormorant Garamond', serif", lineHeight: 1.2 }}>
             Welcome to Prayer Bands

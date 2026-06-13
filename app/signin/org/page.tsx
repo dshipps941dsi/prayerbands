@@ -88,7 +88,7 @@ export default function SignInOrg() {
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BRAND.splash, fontFamily: "'Inter', sans-serif", padding: '24px 16px' }}>
         <div style={{ background: BRAND.cardBg, borderRadius: 16, padding: '40px 32px', maxWidth: 400, width: '100%', border: `1px solid ${BRAND.goldBorder}`, boxShadow: '0 4px 32px rgba(10,22,40,0.09)' }}>
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}><Logo size={40} /></div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}><a href="/" aria-label="Prayer Bands home" style={{ display: 'inline-flex' }}><Logo size={40} /></a></div>
             <div style={{ fontSize: 11, letterSpacing: '0.14em', color: BRAND.goldText, fontFamily: "'Cinzel', serif", textTransform: 'uppercase', marginBottom: 8 }}>Ministry Portal</div>
             <h1 style={{ fontSize: 24, fontWeight: 600, color: BRAND.navyMid, margin: '0 0 6px', fontFamily: "'Cormorant Garamond', serif" }}>Ministry Sign In</h1>
             <p style={{ fontSize: 13, color: BRAND.secondaryText, margin: 0 }}>Access your church or ministry dashboard</p>
