@@ -39,6 +39,26 @@ const GROUPS: { title: string; intro: string; entries: Entry[] }[] = [
     ],
   },
   {
+    title: "Dashboards & Account",
+    intro: "Require sign-in. Open while logged in to the matching account type.",
+    entries: [
+      { href: "/dashboard", label: "My Dashboard", desc: "Personal dashboard (individual account)." },
+      { href: "/org/dashboard", label: "Church Dashboard", desc: "Ministry dashboard (org account)." },
+      { href: "/settings", label: "Account Settings", desc: "Edit name, change password, sign out." },
+    ],
+  },
+  {
+    title: "Admin",
+    intro: "Admin login only (dshipps941@gmail.com).",
+    entries: [
+      { href: "/admin", label: "Admin Home", desc: "Orders, shipments, sales, prayers, pricing." },
+      { href: "/admin/orgs", label: "Churches", desc: "Manage organizations, generate & assign bands." },
+      { href: "/admin/bands", label: "Band Management", desc: "Inventory and band records." },
+      { href: "/admin/products", label: "Products", desc: "Store product catalog." },
+      { href: "/admin/contacts", label: "Contacts", desc: "Contact-form submissions." },
+    ],
+  },
+  {
     title: "Needs a Real ID / Token",
     intro: "These render off a band ID, subdomain, or token — open one from real data; the example paths below won't resolve on their own.",
     entries: [
@@ -103,7 +123,7 @@ export default function SiteMapPage() {
       <div className="sm-hero">
         <div className="sm-eyebrow">For Testing</div>
         <h1 className="sm-title">Site Map</h1>
-        <p className="sm-sub">Every public-facing page in one place. Tap through to test each one — no sign-in required.</p>
+        <p className="sm-sub">Every page in one place — public, account, and admin. Tap through to test each one.</p>
       </div>
 
       <div className="sm-wrap">
