@@ -85,6 +85,9 @@ export async function PATCH(req: NextRequest) {
   if (typeof body.band_color === 'string' && body.band_color.trim()) {
     updates.band_color = body.band_color.trim()
   }
+  if (typeof body.band_design === 'string' && body.band_design.trim()) {
+    updates.band_design = body.band_design.trim()
+  }
   if (typeof body.band_size === 'string' && ['S', 'M', 'L'].includes(body.band_size.toUpperCase())) {
     updates.band_size = body.band_size.toUpperCase()
   }

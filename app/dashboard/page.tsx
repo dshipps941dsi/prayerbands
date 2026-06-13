@@ -462,8 +462,9 @@ export default function Dashboard() {
   const [shareUrl, setShareUrl] = useState('')
   const [copied, setCopied] = useState(false)
   const [hoveredKpi, setHoveredKpi] = useState<string | null>(null)
-  const [subColor, setSubColor] = useState('')
   const [subSize, setSubSize] = useState('M')
+  const [subDesign, setSubDesign] = useState('')
+  const [bandDesigns, setBandDesigns] = useState<{ slug: string; name: string }[]>([])
   const [savingPrefs, setSavingPrefs] = useState(false)
   const [prefsMsg, setPrefsMsg] = useState('')
 
@@ -596,10 +597,21 @@ export default function Dashboard() {
     setPortalLoading(false)
   }
 
+  // Load the band designs (store catalog) for the shipment-preference picker.
+  useEffect(() => {
+    fetch('/api/products')
+      .then(r => r.json())
+      .then(({ products }) => {
+        const bands = (products || []).filter((p: any) => p.category === 'band').map((p: any) => ({ slug: p.slug, name: p.name }))
+        setBandDesigns(bands)
+      })
+      .catch(() => {})
+  }, [])
+
   // Keep the shipment-preference editor in sync with the loaded subscription.
   useEffect(() => {
     if (subscription) {
-      setSubColor(subscription.band_color || 'sky')
+      setSubDesign(subscription.band_design || '')
       setSubSize(String(subscription.band_size || 'M').toUpperCase())
     }
   }, [subscription])
@@ -630,7 +642,7 @@ export default function Dashboard() {
     try {
       const res = await fetch('/api/my-subscription', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ band_color: subColor, band_size: subSize }),
+        body: JSON.stringify({ band_design: subDesign, band_size: subSize }),
       })
       const data = await res.json()
       if (res.ok && data.subscription) { setSubscription(data.subscription); setPrefsMsg('saved'); setTimeout(() => setPrefsMsg(''), 2500) }
@@ -761,10 +773,9 @@ export default function Dashboard() {
                   <div style={{ fontSize: 14, fontWeight: 600, color: BODY_TEXT, fontFamily: 'Inter, sans-serif' }}>{bands}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, color: SECONDARY_TEXT, marginBottom: 2, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Band color</div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: BODY_TEXT, fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', gap: 6, textTransform: 'capitalize' }}>
-                    <span style={{ width: 14, height: 14, borderRadius: '50%', background: hex, boxShadow: `0 1px 4px ${hex}88`, flexShrink: 0 }} />
-                    {subscription.band_color}
+                  <div style={{ fontSize: 10, color: SECONDARY_TEXT, marginBottom: 2, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Band design</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: BODY_TEXT, fontFamily: 'Inter, sans-serif' }}>
+                    {bandDesigns.find(d => d.slug === subscription.band_design)?.name || subscription.band_design || 'Standard Band'}
                   </div>
                 </div>
                 <div>
@@ -779,13 +790,14 @@ export default function Dashboard() {
                     Shipment preferences <span style={{ textTransform: 'none', letterSpacing: 0, color: '#9A8A7A', fontFamily: 'Inter, sans-serif' }}>· applies to your next shipment</span>
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, alignItems: 'flex-end' }}>
-                    <div>
-                      <div style={{ fontSize: 10, color: SECONDARY_TEXT, marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>Color</div>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {BAND_COLOR_OPTIONS.map(c => (
-                          <button key={c.id} title={c.name} onClick={() => setSubColor(c.id)} aria-label={c.name} style={{ width: 26, height: 26, borderRadius: '50%', background: BAND_HEX[c.id], border: subColor === c.id ? `2px solid ${NAVY}` : '2px solid #fff', boxShadow: '0 1px 4px rgba(10,22,40,0.2)', cursor: 'pointer', padding: 0 }} />
+                    <div style={{ minWidth: 200 }}>
+                      <div style={{ fontSize: 10, color: SECONDARY_TEXT, marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>Band design</div>
+                      <select value={subDesign} onChange={e => setSubDesign(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: `1px solid ${SILVER_BORDER}`, background: CARD_BG, color: BODY_TEXT, fontSize: 13, fontFamily: 'Inter, sans-serif', cursor: 'pointer', outline: 'none' }}>
+                        {bandDesigns.length === 0 && <option value="">Loading designs…</option>}
+                        {bandDesigns.map(d => (
+                          <option key={d.slug} value={d.slug}>{d.name}</option>
                         ))}
-                      </div>
+                      </select>
                     </div>
                     <div>
                       <div style={{ fontSize: 10, color: SECONDARY_TEXT, marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>Size</div>
@@ -795,7 +807,7 @@ export default function Dashboard() {
                         ))}
                       </div>
                     </div>
-                    {(subColor !== subscription.band_color || subSize !== String(subscription.band_size || 'M').toUpperCase()) && (
+                    {(subDesign !== (subscription.band_design || '') || subSize !== String(subscription.band_size || 'M').toUpperCase()) && (
                       <button onClick={savePrefs} disabled={savingPrefs} style={{ background: GOLD, color: NAVY, border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, fontWeight: 700, cursor: savingPrefs ? 'wait' : 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{savingPrefs ? 'Saving…' : 'Save'}</button>
                     )}
                     {prefsMsg === 'saved'
