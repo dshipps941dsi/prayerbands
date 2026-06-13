@@ -60,6 +60,11 @@ export default function AdminContactsPage() {
   const [selected, setSelected] = useState<Submission | null>(null);
   const [statusFilter, setStatusFilter] = useState("new");
 
+  // Reply composer state
+  const [replyText, setReplyText] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
+  const [replyMsg, setReplyMsg] = useState("");
+
   // FAQ editor state
   const [editingFaq, setEditingFaq] = useState<FaqEntry | null>(null);
   const [newFaq, setNewFaq] = useState({ question: "", answer: "", category: "general" });
@@ -80,6 +85,9 @@ export default function AdminContactsPage() {
   useEffect(() => {
     if (authorized) loadData();
   }, [statusFilter, authorized]);
+
+  // Reset the reply composer whenever a different submission is opened.
+  useEffect(() => { setReplyText(""); setReplyMsg(""); }, [selected?.id]);
 
   async function loadData() {
     setLoading(true);
@@ -104,6 +112,25 @@ export default function AdminContactsPage() {
     await api({ action: "submission_status", id, status });
     setSubmissions((prev) => prev.filter((s) => s.id !== id));
     if (selected?.id === id) setSelected(null);
+  }
+
+  async function sendReply() {
+    if (!selected || !replyText.trim()) return;
+    setSendingReply(true); setReplyMsg("");
+    const res = await api({ action: "reply", id: selected.id, to: selected.email, message: replyText.trim() });
+    if (res.ok) {
+      setReplyText(""); setReplyMsg("sent");
+      // It was bumped to in_progress server-side; reflect that locally.
+      if (selected.status === "new" && statusFilter === "new") {
+        setSubmissions((prev) => prev.filter((s) => s.id !== selected.id));
+        setSelected(null);
+      }
+      setTimeout(() => setReplyMsg(""), 3000);
+    } else {
+      const d = await res.json().catch(() => ({}));
+      setReplyMsg(d.error || "Could not send the reply.");
+    }
+    setSendingReply(false);
   }
 
   async function deleteSubmission(id: string) {
@@ -252,6 +279,26 @@ export default function AdminContactsPage() {
                 </div>
 
                 <div className="detail-message">{selected.message}</div>
+
+                {/* Reply composer — emails the sender directly via Resend */}
+                <div className="reply-box">
+                  <label className="reply-label">Reply to {selected.name}</label>
+                  <textarea
+                    className="reply-input"
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    rows={4}
+                    placeholder={`Write your reply… it will be emailed to ${selected.email} (their replies come back to you).`}
+                  />
+                  <div className="reply-actions">
+                    <button className="reply-send" onClick={sendReply} disabled={sendingReply || !replyText.trim()}>
+                      {sendingReply ? "Sending…" : "✉ Send Reply"}
+                    </button>
+                    {replyMsg === "sent"
+                      ? <span className="reply-ok">Reply sent ✓</span>
+                      : replyMsg && <span className="reply-err">{replyMsg}</span>}
+                  </div>
+                </div>
 
                 <div className="detail-actions">
                   <button className="action-btn action-btn--resolve" onClick={() => updateStatus(selected.id, "resolved")}>
@@ -430,6 +477,15 @@ const adminStyles = `
   .status-badge { padding: 4px 12px; border-radius: 20px; color: white; font-size: 0.75rem; font-family: 'Cinzel', serif; text-transform: uppercase; letter-spacing: 0.05em; }
   .detail-meta-row { font-size: 0.82rem; color: #5C6573; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 6px; }
   .detail-message { background: #F6F1E4; border: 1px solid rgba(10,22,40,0.12); border-radius: 8px; padding: 16px; font-size: 0.92rem; line-height: 1.65; white-space: pre-wrap; margin-bottom: 20px; color: #2A3344; }
+  .reply-box { background: #F6F1E4; border: 1px solid rgba(200,169,110,0.34); border-radius: 10px; padding: 16px; margin-bottom: 20px; }
+  .reply-label { display: block; font-size: 0.72rem; font-weight: 600; color: #9A7A35; text-transform: uppercase; letter-spacing: 0.07em; font-family: 'Cinzel', serif; margin-bottom: 8px; }
+  .reply-input { width: 100%; box-sizing: border-box; border: 1px solid rgba(10,22,40,0.12); border-radius: 7px; padding: 10px 12px; font-family: 'Inter', sans-serif; font-size: 0.9rem; color: #2A3344; background: #fffdf8; outline: none; resize: vertical; }
+  .reply-input:focus { border-color: #C8A96E; }
+  .reply-actions { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+  .reply-send { background: #0A1628; color: #F5EDD8; border: 1px solid rgba(200,169,110,0.45); border-radius: 7px; padding: 9px 18px; font-family: 'Cinzel', serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; cursor: pointer; }
+  .reply-send:disabled { opacity: 0.55; cursor: default; }
+  .reply-ok { color: #2E7D52; font-size: 0.82rem; font-weight: 600; }
+  .reply-err { color: #c0392b; font-size: 0.82rem; }
   .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .action-btn { padding: 8px 14px; border-radius: 7px; border: 1px solid transparent; font-family: 'Cinzel', serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; transition: all 0.15s; }
   .action-btn--resolve { background: rgba(74,138,106,0.1); color: #4A8A6A; border-color: rgba(74,138,106,0.3); }
