@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 // Attach an UNOWNED band to the signed-in user's account (sets bands.owner_id).
 // Refuses if the band is already owned by someone else.
@@ -9,6 +10,17 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Please sign in to claim this band.' }, { status: 401 })
+    }
+
+    // Throttle claim attempts so a scraped wall of band IDs can't be mass-claimed
+    // by a script. Limit per signed-in user AND per IP (5 / minute each).
+    const ip = getClientIp(req)
+    const [userOk, ipOk] = await Promise.all([
+      checkRateLimit(`claim:user:${user.id}`, 5, 60),
+      checkRateLimit(`claim:ip:${ip}`, 5, 60),
+    ])
+    if (!userOk || !ipOk) {
+      return NextResponse.json({ error: 'Too many attempts. Please wait a minute and try again.' }, { status: 429 })
     }
 
     const { bandId } = await req.json()

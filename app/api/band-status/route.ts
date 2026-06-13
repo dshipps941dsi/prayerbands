@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export async function GET(req: NextRequest) {
   const supabase = createClient(
@@ -12,6 +13,13 @@ export async function GET(req: NextRequest) {
 
   if (!bandId) {
     return NextResponse.json({ error: 'No band ID' }, { status: 400 })
+  }
+
+  // Lenient per-IP throttle: real users tap a handful of bands a minute, but a
+  // script sweeping IDs to find unclaimed ones gets choked off (60 / minute).
+  const ip = getClientIp(req)
+  if (!(await checkRateLimit(`status:ip:${ip}`, 60, 60))) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
   }
 
   // Fetch band
