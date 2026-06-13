@@ -75,7 +75,7 @@ function BandCarousel({ images, color, icon, tag }: { images: string[]; color: s
   }, [ok.length]);
   const cur = ok.length ? idx % ok.length : 0;
   return (
-    <div style={{ height: 200, position: "relative", background: `linear-gradient(135deg, ${color}22, ${color}44)`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+    <div style={{ height: 260, position: "relative", background: `linear-gradient(135deg, ${color}22, ${color}44)`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
       {tag && <div className="lato" style={{ position: "absolute", top: 16, right: 16, zIndex: 3, background: color, color: "#fff", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", padding: "4px 12px", borderRadius: 20, fontWeight: 700 }}>{tag}</div>}
       {images.map(src => broken[src] ? null : (
         <img key={src} src={src} alt="" onError={() => setBroken(b => ({ ...b, [src]: true }))} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: ok[cur] === src ? 1 : 0, transition: "opacity 0.5s" }} />

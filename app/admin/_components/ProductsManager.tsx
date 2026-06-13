@@ -74,9 +74,9 @@ export default function ProductsManager() {
         id: p.id, slug: p.slug, name: p.name, description: p.description, category: p.category,
         theme: p.theme, color: p.color, icon: p.icon, tag: p.tag,
         price_cents: p.price_cents, bands_per_unit: p.bands_per_unit,
-        features: p.features, sizes: p.sizes, has_sizes: p.has_sizes, multi_discount: p.multi_discount,
+        features: p.features.map(s => s.trim()).filter(Boolean), sizes: p.sizes, has_sizes: p.has_sizes, multi_discount: p.multi_discount,
         discount_tiers: p.discount_tiers,
-        image_urls: p.image_urls, active: p.active, sort_order: p.sort_order,
+        image_urls: p.image_urls.map(s => s.trim()).filter(Boolean), active: p.active, sort_order: p.sort_order,
         variants: p.variants,
       }),
     })
@@ -189,7 +189,7 @@ export default function ProductsManager() {
           </div>
 
           {field('Description', <textarea style={{ ...input, minHeight: 54 }} value={p.description} onChange={e => edit(p.id, { description: e.target.value })} />)}
-          {field('Features (one per line)', <textarea style={{ ...input, minHeight: 70 }} value={p.features.join('\n')} onChange={e => edit(p.id, { features: e.target.value.split('\n').map(s => s.trim()).filter(Boolean) })} />)}
+          {field('Features (one per line)', <textarea style={{ ...input, minHeight: 70 }} value={p.features.join('\n')} onChange={e => edit(p.id, { features: e.target.value.split('\n') })} />)}
 
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 12 }}>
             <label style={{ fontSize: 13, color: C.body, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -230,7 +230,7 @@ export default function ProductsManager() {
           </div>
 
           {/* Images */}
-          {field('Image URLs (one per line)', <textarea style={{ ...input, minHeight: 54 }} value={p.image_urls.join('\n')} onChange={e => edit(p.id, { image_urls: e.target.value.split('\n').map(s => s.trim()).filter(Boolean) })} placeholder="/products/beach-1.jpg" />)}
+          {field('Image URLs (one per line)', <textarea style={{ ...input, minHeight: 54 }} value={p.image_urls.join('\n')} onChange={e => edit(p.id, { image_urls: e.target.value.split('\n') })} placeholder="/products/beach-1.jpg" />)}
           <label style={{ display: 'inline-block', fontSize: 12, color: C.goldText, cursor: 'pointer', marginBottom: 14, textDecoration: 'underline', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             + Upload image
             <input type="file" accept="image/png,image/jpeg,image/webp" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadImage(p, f) }} />
