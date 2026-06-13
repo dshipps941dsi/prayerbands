@@ -375,7 +375,7 @@ export default function AdminPage() {
       {/* Header */}
       <div className="pb-admin-header" style={{ background: C.navy, padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 12px rgba(10,22,40,0.25)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <PrayerBandsLogo size={38} color={C.gold} />
+          <a href="/" aria-label="Prayer Bands home" style={{ display: 'inline-flex' }}><PrayerBandsLogo size={38} color={C.gold} /></a>
           <div>
             <h1 style={{ margin: 0, color: C.gold, fontSize: '22px', fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Prayer Bands Admin</h1>
             <p style={{ margin: '2px 0 0', color: C.silver, fontSize: '12px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Order Management &amp; Fulfillment</p>
