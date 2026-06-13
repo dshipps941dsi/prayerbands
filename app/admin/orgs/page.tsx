@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
-import { THEME_OPTIONS } from '@/lib/themes'
+import { THEME_OPTIONS, loadThemes, getThemeOptions } from '@/lib/themes'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
@@ -13,11 +13,14 @@ export default function AdminOrgs() {
   const [bandInput, setBandInput] = useState('')
   const [generateQty, setGenerateQty] = useState(100)
   const [bandTheme, setBandTheme] = useState('default')
+  const [themeOptions, setThemeOptions] = useState<{ id: string; label: string }[]>(THEME_OPTIONS)
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [message, setMessage] = useState('')
+
+  useEffect(() => { loadThemes().then(() => setThemeOptions(getThemeOptions())) }, [])
 
   useEffect(() => {
     async function load() {
@@ -226,12 +229,12 @@ export default function AdminOrgs() {
                       onChange={e => setBandTheme(e.target.value)}
                       style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: `1px solid ${C.borderNavy}`, background: C.pageBg, color: C.body, fontSize: 13, fontFamily: 'Inter, sans-serif', marginBottom: 16, cursor: 'pointer', outline: 'none' }}
                     >
-                      {THEME_OPTIONS.map(t => (
+                      {themeOptions.map(t => (
                         <option key={t.id} value={t.id}>{t.label}</option>
                       ))}
                     </select>
                     <div style={{ fontSize: 12, color: C.secondary, marginBottom: 16, lineHeight: 1.5 }}>
-                      Generates {generateQty} unique {selectedOrg.prefix}-XXXXX IDs in the <strong style={{ color: C.body }}>{THEME_OPTIONS.find(t => t.id === bandTheme)?.label}</strong> theme, seeds them into Supabase, and emails you the supplier NFC CSV.
+                      Generates {generateQty} unique {selectedOrg.prefix}-XXXXX IDs in the <strong style={{ color: C.body }}>{themeOptions.find(t => t.id === bandTheme)?.label}</strong> theme, seeds them into Supabase, and emails you the supplier NFC CSV.
                     </div>
                     <button
                       onClick={generateBands}

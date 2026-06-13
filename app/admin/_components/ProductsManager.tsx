@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { THEME_OPTIONS } from '@/lib/themes'
+import { THEME_OPTIONS, loadThemes, getThemeOptions } from '@/lib/themes'
 
 // Product catalog editor (band designs + packs, prices, sizes, stock,
 // backorder, images). Self-contained; the parent screen handles admin auth.
@@ -35,6 +35,8 @@ export default function ProductsManager() {
   const [newSlug, setNewSlug] = useState('')
   const [newName, setNewName] = useState('')
   const [filterId, setFilterId] = useState('')
+  // Theme dropdown options, including admin-created themes from the DB.
+  const [themeOptions, setThemeOptions] = useState<{ id: string; label: string }[]>(THEME_OPTIONS)
 
   function load() {
     fetch('/api/admin/products').then(r => r.json()).then(d => {
@@ -52,6 +54,7 @@ export default function ProductsManager() {
   }
 
   useEffect(() => { load() }, [])
+  useEffect(() => { loadThemes().then(() => setThemeOptions(getThemeOptions())) }, [])
 
   function edit(id: string, patch: Partial<P>) {
     setProducts(prev => prev.map(p => p.id === id ? { ...p, ...patch } : p))
@@ -181,7 +184,7 @@ export default function ProductsManager() {
             {field('Slug · URL id (avoid changing once live)', <input style={input} value={p.slug} onChange={e => edit(p.id, { slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') })} />)}
             {field('Price ($)', <input style={input} type="number" step="0.01" value={(p.price_cents / 100).toString()} onChange={e => edit(p.id, { price_cents: Math.round((parseFloat(e.target.value) || 0) * 100) })} />)}
             {field('Category', <select style={input} value={p.category} onChange={e => edit(p.id, { category: e.target.value })}><option value="band">band</option><option value="pack">pack</option></select>)}
-            {field('Theme', <select style={input} value={p.theme} onChange={e => edit(p.id, { theme: e.target.value })}>{THEME_OPTIONS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</select>)}
+            {field('Theme', <select style={input} value={p.theme} onChange={e => edit(p.id, { theme: e.target.value })}>{themeOptions.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</select>)}
             {field('Card color', <input style={input} value={p.color} onChange={e => edit(p.id, { color: e.target.value })} />)}
             {field('Badge / tag', <input style={input} value={p.tag || ''} onChange={e => edit(p.id, { tag: e.target.value })} placeholder="e.g. Most Popular" />)}
             {field('Bands per unit', <input style={input} type="number" value={p.bands_per_unit.toString()} onChange={e => edit(p.id, { bands_per_unit: parseInt(e.target.value) || 1 })} />)}

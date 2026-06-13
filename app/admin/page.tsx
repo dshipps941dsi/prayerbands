@@ -5,6 +5,7 @@ import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 import BandsManager from './_components/BandsManager'
 import ProductsManager from './_components/ProductsManager'
 import PricingManager from './_components/PricingManager'
+import ThemesManager from './_components/ThemesManager'
 
 // Prayer Bands brand palette
 const C = {
@@ -64,7 +65,7 @@ export default function AdminPage() {
   const [userResults, setUserResults] = useState<any[]>([])
   const [searchingUsers, setSearchingUsers] = useState(false)
   const [activeTab, setActiveTab] = useState<'orders' | 'shipments' | 'sales' | 'catalog' | 'prayers' | 'users'>('orders')
-  const [catalogSub, setCatalogSub] = useState<'bands' | 'products' | 'pricing'>('bands')
+  const [catalogSub, setCatalogSub] = useState<'bands' | 'products' | 'pricing' | 'themes'>('bands')
   const [sales, setSales] = useState<any>(null)
   const [salesDays, setSalesDays] = useState('30')
   const [dedBandId, setDedBandId] = useState('')
@@ -92,7 +93,7 @@ export default function AdminPage() {
     if (tab === 'catalog') {
       setActiveTab('catalog')
       const sub = params.get('sub')
-      if (sub === 'products' || sub === 'pricing' || sub === 'bands') setCatalogSub(sub)
+      if (sub === 'products' || sub === 'pricing' || sub === 'bands' || sub === 'themes') setCatalogSub(sub)
     }
   }, [])
 
@@ -743,7 +744,7 @@ export default function AdminPage() {
         {activeTab === 'catalog' && (
           <div>
             <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${C.borderGold}`, marginBottom: 24 }}>
-              {(['bands', 'products', 'pricing'] as const).map(s => (
+              {(['bands', 'products', 'pricing', 'themes'] as const).map(s => (
                 <button key={s} onClick={() => setCatalogSub(s)} style={{
                   padding: '8px 18px',
                   background: catalogSub === s ? C.navy : 'transparent',
@@ -756,6 +757,7 @@ export default function AdminPage() {
             {catalogSub === 'bands' && <BandsManager />}
             {catalogSub === 'products' && <ProductsManager />}
             {catalogSub === 'pricing' && <PricingManager />}
+            {catalogSub === 'themes' && <ThemesManager />}
           </div>
         )}
 

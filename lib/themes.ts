@@ -79,7 +79,10 @@ export interface BandTheme {
 // Theme definitions
 // ============================================================
 
-export const themes: Record<ThemeKey, BandTheme> = {
+// Built-in themes shipped in code. Always available, even if the DB table is
+// empty or unreachable. Admin-created / overridden themes are merged on top at
+// runtime via loadThemes() (see bottom of file).
+export const BUILTIN_THEMES: Record<ThemeKey, BandTheme> = {
 
   // ----------------------------------------------------------
   // DEFAULT  —  Parchment / Gold  (original Prayer Bands look)
@@ -350,13 +353,52 @@ export const themes: Record<ThemeKey, BandTheme> = {
 };
 
 // ============================================================
+// Runtime registry — built-ins, with DB themes merged on top
+// once loadThemes() has run (client-side). getTheme() reads this
+// so custom/overridden themes resolve everywhere getTheme is used.
+// ============================================================
+let REGISTRY: Record<string, BandTheme> = { ...BUILTIN_THEMES };
+let hydrated = false;
+let inflight: Promise<Record<string, BandTheme>> | null = null;
+
+// Merge a set of themes (from the DB) over the built-ins. DB wins on key clash.
+export function mergeThemes(extra: Record<string, BandTheme>) {
+  REGISTRY = { ...BUILTIN_THEMES, ...extra };
+}
+
+// Fetch DB themes once and merge into the registry. Safe to call repeatedly;
+// only the first call hits the network. Falls back silently to built-ins.
+export async function loadThemes(): Promise<Record<string, BandTheme>> {
+  if (hydrated) return REGISTRY;
+  if (inflight) return inflight;
+  inflight = (async () => {
+    try {
+      const res = await fetch('/api/themes');
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.themes) mergeThemes(json.themes as Record<string, BandTheme>);
+      }
+    } catch {
+      /* offline / error — keep built-ins */
+    }
+    hydrated = true;
+    inflight = null;
+    return REGISTRY;
+  })();
+  return inflight;
+}
+
+// ============================================================
 // Helper — resolves a theme safely, falls back to default
 // ============================================================
 export function getTheme(key?: string | null): BandTheme {
-  if (key && key in themes) {
-    return themes[key as ThemeKey];
-  }
-  return themes.default;
+  if (key && REGISTRY[key]) return REGISTRY[key];
+  return REGISTRY.default ?? BUILTIN_THEMES.default;
+}
+
+// Current dropdown options from the live registry (built-ins + any loaded DB themes).
+export function getThemeOptions(): { id: string; label: string }[] {
+  return Object.keys(REGISTRY).map((id) => ({ id, label: REGISTRY[id].label }));
 }
 
 // ============================================================
@@ -404,8 +446,88 @@ export function themeToVars(theme: BandTheme): Record<string, string> {
 
 // ============================================================
 // For admin dropdowns: [{ id: 'beach', label: 'Beach' }, ...]
+// Static built-in list (SSR-safe fallback). For the live list including
+// admin-created themes, use getThemeOptions() after loadThemes().
 // ============================================================
-export const THEME_OPTIONS = (Object.keys(themes) as ThemeKey[]).map((id) => ({
+export const THEME_OPTIONS = (Object.keys(BUILTIN_THEMES) as ThemeKey[]).map((id) => ({
   id,
-  label: themes[id].label,
+  label: BUILTIN_THEMES[id].label,
 }));
+
+export const BUILTIN_THEME_KEYS = Object.keys(BUILTIN_THEMES);
+
+// ============================================================
+// Color helpers + auto-derivation
+// The admin "simple" editor collects four key colors; we derive the rest.
+// ============================================================
+function clamp(n: number) { return Math.max(0, Math.min(255, Math.round(n))); }
+
+function parseHex(hex: string): [number, number, number] {
+  const h = (hex || '').replace('#', '').trim();
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h.padEnd(6, '0').slice(0, 6);
+  const n = parseInt(full, 16) || 0;
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function toHex(r: number, g: number, b: number): string {
+  return '#' + [r, g, b].map((v) => clamp(v).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
+// Linear blend of two hex colors. t=0 → a, t=1 → b.
+function mix(a: string, b: string, t: number): string {
+  const [r1, g1, b1] = parseHex(a);
+  const [r2, g2, b2] = parseHex(b);
+  return toHex(r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t);
+}
+
+// Perceived luminance (0 dark – 1 light).
+function luminance(hex: string): number {
+  const [r, g, b] = parseHex(hex);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+// White or near-black, whichever reads better on the given background.
+export function idealTextOn(hex: string): string {
+  return luminance(hex) > 0.6 ? '#0F0D09' : '#FFFFFF';
+}
+
+export interface SimpleThemeInput {
+  label: string;
+  primary: string;
+  background: string;
+  accent: string;
+  text: string;
+  verseText?: string;
+  verseReference?: string;
+  backgroundImage?: string;
+  backgroundImageWash?: number;
+}
+
+// Build a full BandTheme from the four key colors, deriving the remaining
+// palette with sensible tints/contrasts. The admin "Advanced" panel can then
+// override any individual field on top of this.
+export function deriveTheme(input: SimpleThemeInput): BandTheme {
+  const { primary, background, accent, text } = input;
+  const theme: BandTheme = {
+    label: input.label,
+    primary,
+    background,
+    surface: '#FFFFFF',
+    surfaceAlt: mix(background, primary, 0.14),
+    text,
+    textMuted: mix(text, background, 0.45),
+    textOnPrimary: idealTextOn(primary),
+    accent,
+    accentAlt: mix(primary, '#000000', 0.25),
+    tabBar: text,
+    tabActive: accent,
+    border: mix(background, text, 0.18),
+    cardAccent: primary,
+  };
+  if (input.verseText && input.verseReference) {
+    theme.defaultVerse = { text: input.verseText, reference: input.verseReference };
+  }
+  if (input.backgroundImage) theme.backgroundImage = input.backgroundImage;
+  if (input.backgroundImageWash !== undefined) theme.backgroundImageWash = input.backgroundImageWash;
+  return theme;
+}
