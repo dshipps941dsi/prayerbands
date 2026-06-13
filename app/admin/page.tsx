@@ -2,6 +2,9 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
+import BandsManager from './_components/BandsManager'
+import ProductsManager from './_components/ProductsManager'
+import PricingManager from './_components/PricingManager'
 
 // Prayer Bands brand palette
 const C = {
@@ -60,8 +63,8 @@ export default function AdminPage() {
   const [userSearch, setUserSearch] = useState('')
   const [userResults, setUserResults] = useState<any[]>([])
   const [searchingUsers, setSearchingUsers] = useState(false)
-  const [activeTab, setActiveTab] = useState<'orders' | 'shipments' | 'sales' | 'prayers' | 'users' | 'activity'>('orders')
-  const [activityFeed, setActivityFeed] = useState<any[]>([])
+  const [activeTab, setActiveTab] = useState<'orders' | 'shipments' | 'sales' | 'catalog' | 'prayers' | 'users'>('orders')
+  const [catalogSub, setCatalogSub] = useState<'bands' | 'products' | 'pricing'>('bands')
   const [sales, setSales] = useState<any>(null)
   const [salesDays, setSalesDays] = useState('30')
   const [dedBandId, setDedBandId] = useState('')
@@ -83,6 +86,14 @@ export default function AdminPage() {
 
   useEffect(() => {
     checkAuth()
+    // Deep links from old standalone pages: /admin?tab=catalog&sub=products
+    const params = new URLSearchParams(window.location.search)
+    const tab = params.get('tab')
+    if (tab === 'catalog') {
+      setActiveTab('catalog')
+      const sub = params.get('sub')
+      if (sub === 'products' || sub === 'pricing' || sub === 'bands') setCatalogSub(sub)
+    }
   }, [])
 
   useEffect(() => {
@@ -166,7 +177,7 @@ export default function AdminPage() {
   }
 
   async function loadAll() {
-    await Promise.all([loadOrders(), loadStats(), loadFlaggedPrayers(), loadActivityFeed()])
+    await Promise.all([loadOrders(), loadStats(), loadFlaggedPrayers()])
     setLoading(false)
   }
 
@@ -195,15 +206,6 @@ export default function AdminPage() {
   async function loadFlaggedPrayers() {
     const res = await fetch('/api/admin/band-prayers?flagged=true')
     if (res.ok) { const d = await res.json(); setFlaggedPrayers(d.prayers || []) }
-  }
-
-  async function loadActivityFeed() {
-    const { data } = await supabase
-      .from('registrations')
-      .select('id, band_id, user_name, location_name, created_at, prayer')
-      .order('created_at', { ascending: false })
-      .limit(30)
-    if (data) setActivityFeed(data)
   }
 
   async function assignBands(order: Order) {
@@ -382,7 +384,6 @@ export default function AdminPage() {
           </div>
         </div>
         <div className="pb-admin-nav" style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-          <a href="/admin/catalog" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Band Management</a>
           <a href="/admin/orgs" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Churches</a>
           <a href="/admin/contacts" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Contacts</a>
           <a href="/dashboard" style={{ color: C.silver, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Dashboard</a>
@@ -412,7 +413,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div className="pb-admin-tabs" style={{ display: 'flex', gap: '4px', padding: '20px 32px 0', borderBottom: `1px solid ${C.borderGold}`, marginTop: '8px' }}>
-        {(['orders', 'shipments', 'sales', 'prayers', 'users', 'activity'] as const).map(tab => (
+        {(['orders', 'shipments', 'sales', 'catalog', 'prayers', 'users'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             padding: '8px 18px',
             background: activeTab === tab ? C.navy : 'transparent',
@@ -424,7 +425,7 @@ export default function AdminPage() {
             fontFamily: 'Cinzel, serif',
             textTransform: 'uppercase',
             letterSpacing: '0.07em',
-          }}>{tab}{tab === 'prayers' && flaggedPrayers.length > 0 ? ` (${flaggedPrayers.length})` : ''}</button>
+          }}>{tab === 'catalog' ? 'Band Mgmt' : tab}{tab === 'prayers' && flaggedPrayers.length > 0 ? ` (${flaggedPrayers.length})` : ''}</button>
         ))}
       </div>
 
@@ -738,25 +739,23 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ACTIVITY TAB */}
-        {activeTab === 'activity' && (
+        {/* BAND MANAGEMENT TAB — bands, products, pricing */}
+        {activeTab === 'catalog' && (
           <div>
-            <h2 style={{ margin: '0 0 16px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Live Activity Feed</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {activityFeed.map(a => (
-                <div key={a.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '8px', padding: '12px 16px', display: 'flex', gap: '12px', alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(10,22,40,0.05)' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: C.green, marginTop: '6px', flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '13px', color: C.body }}>
-                      <strong style={{ color: C.heading }}>{a.user_name || 'Anonymous'}</strong> registered band <span style={{ fontFamily: 'monospace', color: C.goldText }}>{a.band_id}</span>
-                      {a.location_name && <> in <em>{a.location_name}</em></>}
-                    </div>
-                    {a.prayer && <p style={{ margin: '4px 0 0', fontSize: '13px', color: C.secondary, fontStyle: 'italic' }}>"{a.prayer}"</p>}
-                    <div style={{ fontSize: '11px', color: C.secondary, marginTop: '4px' }}>{new Date(a.created_at).toLocaleString()}</div>
-                  </div>
-                </div>
+            <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${C.borderGold}`, marginBottom: 24 }}>
+              {(['bands', 'products', 'pricing'] as const).map(s => (
+                <button key={s} onClick={() => setCatalogSub(s)} style={{
+                  padding: '8px 18px',
+                  background: catalogSub === s ? C.navy : 'transparent',
+                  color: catalogSub === s ? C.gold : C.secondary,
+                  border: 'none', borderRadius: '6px 6px 0 0', cursor: 'pointer',
+                  fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.07em',
+                }}>{s}</button>
               ))}
             </div>
+            {catalogSub === 'bands' && <BandsManager />}
+            {catalogSub === 'products' && <ProductsManager />}
+            {catalogSub === 'pricing' && <PricingManager />}
           </div>
         )}
 
