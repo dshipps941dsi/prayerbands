@@ -189,6 +189,10 @@ function StorePageInner() {
   const standardUnitFor = (qty: number) => single * (1 - tierPct(qty) / 100);
   const tier3 = standardUnitFor(3);
   const tier5 = standardUnitFor(5);
+  // Per-product discount — each card reflects ITS OWN price + tiers set in
+  // admin (Band Mgmt → Products), not a shared/representative product.
+  const prodPct = (p: Product, qty: number) => (p.discountTiers ?? []).filter(t => qty >= t.min_qty).reduce((m, t) => Math.max(m, t.percent), 0);
+  const prodUnit = (p: Product, qty: number) => p.price * (1 - prodPct(p, qty) / 100);
 
   // ── Availability ──
   const variantFor = (p: Product, size: string): Variant => {
@@ -363,9 +367,9 @@ function StorePageInner() {
                   </div>
                   <p className="lato" style={{ fontSize: 14, lineHeight: 1.75, color: "#5C6573", fontWeight: 300, marginBottom: 20 }}>{product.description}</p>
 
-                  {product.multiDiscount && (
+                  {product.multiDiscount && (prodPct(product, 3) > 0 || prodPct(product, 5) > 0) && (
                     <div className="lato" style={{ fontSize: 12, color: "#9A7A35", fontWeight: 600, marginBottom: 18, letterSpacing: "0.02em" }}>
-                      Buy 3+ for ${tier3.toFixed(2)} ea · 5+ for ${tier5.toFixed(2)} ea — applied automatically
+                      Buy 3+ for ${prodUnit(product, 3).toFixed(2)} ea · 5+ for ${prodUnit(product, 5).toFixed(2)} ea — applied automatically
                     </div>
                   )}
 
