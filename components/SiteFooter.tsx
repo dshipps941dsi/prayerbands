@@ -47,6 +47,8 @@ export default function SiteFooter() {
           gap: 16px; flex-wrap: wrap;
         }
         .pbf-copy { font-size: 0.78rem; color: rgba(245,237,216,0.3); }
+        .pbf-copy a { color: rgba(245,237,216,0.45); text-decoration: none; }
+        .pbf-copy a:hover { color: #E2C98A; }
         .pbf-verse {
           font-family: 'Cormorant Garamond', Georgia, serif;
           font-style: italic; font-size: 0.85rem; color: rgba(200,169,110,0.5);
@@ -84,7 +86,7 @@ export default function SiteFooter() {
           </div>
         </div>
         <div className="pbf-bottom">
-          <div className="pbf-copy">© {new Date().getFullYear()} Prayer Bands. All rights reserved.</div>
+          <div className="pbf-copy">© {new Date().getFullYear()} Prayer Bands. All rights reserved. &nbsp;·&nbsp; <Link href="/site-map">Site Map</Link></div>
           <div className="pbf-verse">&ldquo;Pray without ceasing.&rdquo; — 1 Thessalonians 5:17</div>
         </div>
       </div>
