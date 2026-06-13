@@ -34,6 +34,7 @@ export default function ProductsManager() {
   const [msg, setMsg] = useState('')
   const [newSlug, setNewSlug] = useState('')
   const [newName, setNewName] = useState('')
+  const [filterId, setFilterId] = useState('')
 
   function load() {
     fetch('/api/admin/products').then(r => r.json()).then(d => {
@@ -152,7 +153,21 @@ export default function ProductsManager() {
         <button onClick={addProduct} disabled={!newSlug.trim() || !newName.trim()} style={{ background: C.gold, color: C.navy, border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>+ Add</button>
       </div>
 
-      {products.map(p => (
+      {/* Jump to a product by name instead of scrolling. */}
+      {products.length > 1 && (
+        <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <label style={{ ...label, marginBottom: 0 }}>Jump to</label>
+          <select value={filterId} onChange={e => setFilterId(e.target.value)} style={{ ...input, width: 'auto', minWidth: 220, flex: '0 1 320px' }}>
+            <option value="">All products ({products.length})</option>
+            {[...products].sort((a, b) => a.name.localeCompare(b.name)).map(p => (
+              <option key={p.id} value={p.id}>{p.name}{p.active ? '' : ' — inactive'}</option>
+            ))}
+          </select>
+          {filterId && <button onClick={() => setFilterId('')} style={{ background: 'transparent', border: `1px solid ${C.borderNavy}`, color: C.body, borderRadius: 8, padding: '8px 14px', fontSize: 11, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Show all</button>}
+        </div>
+      )}
+
+      {(filterId ? products.filter(p => p.id === filterId) : products).map(p => (
         <div key={p.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 12, padding: '20px 22px', marginBottom: 20, opacity: p.active ? 1 : 0.7, boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <h2 style={{ fontSize: 20, fontWeight: 600, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{p.name} <span style={{ fontSize: 12, color: C.secondary, fontWeight: 400 }}>/{p.slug}</span></h2>
