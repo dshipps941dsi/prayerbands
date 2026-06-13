@@ -256,12 +256,9 @@ export default function AdminPage() {
   }
 
   async function loadContactSubmissions() {
-    const { data } = await supabase
-      .from('contact_submissions')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50)
-    if (data) setContactSubmissions(data)
+    // RLS blocks the anon client from contact_submissions — read via service role.
+    const res = await fetch('/api/admin/contacts?status=new')
+    if (res.ok) { const d = await res.json(); setContactSubmissions(d.submissions || []) }
   }
 
   async function loadActivityFeed() {
@@ -396,12 +393,12 @@ export default function AdminPage() {
   }
 
   async function promoteToFaq(submission: any) {
-    await fetch('/api/admin/promote-faq', {
+    const res = await fetch('/api/admin/contacts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ submissionId: submission.id, question: submission.message }),
+      body: JSON.stringify({ action: 'promote', submission }),
     })
-    alert('Promoted to FAQ review queue.')
+    alert(res.ok ? 'Promoted to FAQ review queue.' : 'Could not promote to FAQ.')
   }
 
   const filteredOrders = orders.filter(o => filter === 'all' ? true : o.status === filter)
@@ -461,6 +458,7 @@ export default function AdminPage() {
           <a href="/admin/products" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Products</a>
           <a href="/admin/bands" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Band Management</a>
           <a href="/admin/orgs" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Churches</a>
+          <a href="/admin/contacts" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Contacts</a>
           <a href="/dashboard" style={{ color: C.silver, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Dashboard</a>
         </div>
       </div>

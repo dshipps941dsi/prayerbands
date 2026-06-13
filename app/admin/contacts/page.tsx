@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import PrayerBandsLogo from "@/components/PrayerBandsLogo";
 
-// Use service role only on server; this page should be protected by admin auth
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! // Admin route should be behind middleware/auth check
-);
+const ADMIN_EMAIL = "dshipps941@gmail.com";
+
+// All reads/writes go through /api/admin/contacts (service role) because RLS
+// blocks the anon client from contact_submissions and faq_entries.
 
 const CATEGORIES = {
   order: "Order & Shipping",
@@ -57,6 +56,7 @@ export default function AdminContactsPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [faqEntries, setFaqEntries] = useState<FaqEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
   const [selected, setSelected] = useState<Submission | null>(null);
   const [statusFilter, setStatusFilter] = useState("new");
 
@@ -65,91 +65,97 @@ export default function AdminContactsPage() {
   const [newFaq, setNewFaq] = useState({ question: "", answer: "", category: "general" });
   const [showNewFaq, setShowNewFaq] = useState(false);
 
+  // Gate the page to the admin account, mirroring the other /admin pages.
   useEffect(() => {
-    loadData();
-  }, [statusFilter]);
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email === ADMIN_EMAIL) setAuthorized(true);
+      else { window.location.href = "/signin"; }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (authorized) loadData();
+  }, [statusFilter, authorized]);
 
   async function loadData() {
     setLoading(true);
-    const [subRes, faqRes] = await Promise.all([
-      supabase
-        .from("contact_submissions")
-        .select("*")
-        .eq("status", statusFilter)
-        .order("created_at", { ascending: false })
-        .limit(50),
-      supabase
-        .from("faq_entries")
-        .select("*")
-        .order("sort_order", { ascending: true }),
-    ]);
-
-    if (subRes.data) setSubmissions(subRes.data);
-    if (faqRes.data) setFaqEntries(faqRes.data);
+    const res = await fetch(`/api/admin/contacts?status=${encodeURIComponent(statusFilter)}`);
+    if (res.ok) {
+      const { submissions, faqEntries } = await res.json();
+      setSubmissions(submissions || []);
+      setFaqEntries(faqEntries || []);
+    }
     setLoading(false);
   }
 
+  async function api(body: any) {
+    return fetch("/api/admin/contacts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
   async function updateStatus(id: string, status: string) {
-    await supabase.from("contact_submissions").update({ status }).eq("id", id);
+    await api({ action: "submission_status", id, status });
     setSubmissions((prev) => prev.filter((s) => s.id !== id));
     if (selected?.id === id) setSelected(null);
   }
 
   async function toggleFaqCandidate(id: string, current: boolean) {
-    await supabase.from("contact_submissions").update({ faq_candidate: !current }).eq("id", id);
+    await api({ action: "faq_candidate", id, value: !current });
     setSubmissions((prev) => prev.map((s) => s.id === id ? { ...s, faq_candidate: !current } : s));
     if (selected?.id === id) setSelected((s) => s ? { ...s, faq_candidate: !current } : null);
   }
 
   async function promoteToFaq(submission: Submission) {
-    const { data } = await supabase.from("faq_entries").insert({
-      question: submission.subject || submission.message.slice(0, 100),
-      answer: "",
-      category: submission.category,
-      published: false,
-      source_submission_id: submission.id,
-    }).select().single();
-
-    if (data) {
-      setFaqEntries((prev) => [...prev, data]);
-      setEditingFaq(data);
-      setTab("faq");
+    const res = await api({ action: "promote", submission });
+    if (res.ok) {
+      const { entry } = await res.json();
+      if (entry) {
+        setFaqEntries((prev) => [...prev, entry]);
+        setEditingFaq(entry);
+        setTab("faq");
+      }
     }
   }
 
   async function saveFaqEntry(entry: FaqEntry) {
-    await supabase.from("faq_entries").update({
-      question: entry.question,
-      answer: entry.answer,
-      category: entry.category,
-      published: entry.published,
-      sort_order: entry.sort_order,
-    }).eq("id", entry.id);
+    await api({ action: "faq_update", entry });
     setFaqEntries((prev) => prev.map((f) => f.id === entry.id ? entry : f));
     setEditingFaq(null);
   }
 
   async function createFaqEntry() {
-    const { data } = await supabase.from("faq_entries").insert({
-      ...newFaq,
-      published: false,
-      sort_order: 100,
-    }).select().single();
-    if (data) {
-      setFaqEntries((prev) => [...prev, data]);
-      setNewFaq({ question: "", answer: "", category: "general" });
-      setShowNewFaq(false);
-      setEditingFaq(data);
+    const res = await api({ action: "faq_create", ...newFaq });
+    if (res.ok) {
+      const { entry } = await res.json();
+      if (entry) {
+        setFaqEntries((prev) => [...prev, entry]);
+        setNewFaq({ question: "", answer: "", category: "general" });
+        setShowNewFaq(false);
+        setEditingFaq(entry);
+      }
     }
   }
 
   async function togglePublished(entry: FaqEntry) {
     const updated = { ...entry, published: !entry.published };
-    await supabase.from("faq_entries").update({ published: updated.published }).eq("id", entry.id);
+    await api({ action: "faq_publish", id: entry.id, published: updated.published });
     setFaqEntries((prev) => prev.map((f) => f.id === entry.id ? updated : f));
   }
 
   const faqCandidates = submissions.filter((s) => s.faq_candidate);
+
+  if (!authorized) return (
+    <div style={{ minHeight: "100vh", background: "#F6F1E4", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Inter, sans-serif", color: "#9A7A35" }}>
+      Checking access…
+    </div>
+  );
 
   return (
     <div className="admin-contacts">
