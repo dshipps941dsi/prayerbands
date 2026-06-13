@@ -102,21 +102,70 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  items.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime())
-  const trimmed = items.slice(0, 40)
+  // 4. Prayer requests from others you can pray for (quick-pray action).
+  const { data: prs } = await admin
+    .from('prayer_requests_with_counts')
+    .select('id, title, body, total_intercessions, created_at, user_id')
+    .eq('visibility', 'public')
+    .eq('status', 'active')
+    .neq('user_id', effectiveId)
+    .order('created_at', { ascending: false })
+    .limit(12)
+  for (const r of prs || []) {
+    items.push({ id: `pr-${r.id}`, type: 'prayer_request', icon: '🙏', ts: r.created_at, requestId: r.id,
+      title: r.title || 'Someone asked for prayer', detail: r.body || '', intercessions: r.total_intercessions || 0 })
+  }
 
-  const { data: profile } = await admin.from('profiles').select('notifications_last_seen').eq('id', effectiveId).maybeSingle()
+  // 5. New prayer requests in circles you belong to (deep-link to the circle).
+  const { data: mems } = await admin.from('circle_members').select('circle_id').eq('user_id', effectiveId)
+  const circleIds = [...new Set((mems || []).map((m: any) => m.circle_id))]
+  if (circleIds.length) {
+    const { data: circles } = await admin.from('prayer_circles').select('id, name').in('id', circleIds)
+    const nameById: Record<string, string> = Object.fromEntries((circles || []).map((c: any) => [c.id, c.name]))
+    const { data: creqs } = await admin
+      .from('circle_prayer_requests')
+      .select('id, circle_id, user_id, request_text, created_at')
+      .in('circle_id', circleIds)
+      .neq('user_id', effectiveId)
+      .order('created_at', { ascending: false })
+      .limit(12)
+    for (const r of creqs || []) {
+      items.push({ id: `cr-${r.id}`, type: 'circle_request', icon: '✦', ts: r.created_at, circleId: r.circle_id,
+        title: `New prayer request in ${nameById[r.circle_id] || 'your circle'}`, detail: r.request_text || '' })
+    }
+  }
+
+  const { data: profile } = await admin.from('profiles').select('notifications_last_seen, dismissed_notifications').eq('id', effectiveId).maybeSingle()
+  const dismissed = new Set(Array.isArray(profile?.dismissed_notifications) ? profile.dismissed_notifications : [])
+
+  const visible = items.filter(n => !dismissed.has(n.id))
+  visible.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime())
+  const trimmed = visible.slice(0, 40)
+
   const lastSeen = profile?.notifications_last_seen ? new Date(profile.notifications_last_seen).getTime() : 0
   const unread = trimmed.filter(n => new Date(n.ts).getTime() > lastSeen).length
 
   return NextResponse.json({ notifications: trimmed, unread })
 }
 
-// Mark the inbox as seen (resets the unread badge). Self only.
-export async function POST() {
+// POST { action: 'dismiss', id } — hide one notification (self only).
+// POST (no action) — mark the inbox seen, resetting the unread badge.
+export async function POST(req: NextRequest) {
   const user = await resolveUser()
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   const admin = svc()
+  const body = await req.json().catch(() => ({}))
+
+  if (body.action === 'dismiss' && body.id) {
+    const { data: prof } = await admin.from('profiles').select('dismissed_notifications').eq('id', user.id).maybeSingle()
+    const cur: string[] = Array.isArray(prof?.dismissed_notifications) ? prof!.dismissed_notifications : []
+    if (!cur.includes(body.id)) cur.push(body.id)
+    const next = cur.slice(-500) // cap growth — older dismissals age out of the feed anyway
+    const { error } = await admin.from('profiles').update({ dismissed_notifications: next }).eq('id', user.id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
   const { error } = await admin.from('profiles').update({ notifications_last_seen: new Date().toISOString() }).eq('id', user.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })

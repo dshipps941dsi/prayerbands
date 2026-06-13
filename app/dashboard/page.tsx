@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import LivingPrayerList from '@/components/LivingPrayerList'
 import Logo from '@/components/Logo'
+import Icon, { type IconName } from '@/components/Icon'
 import PrayerTabs from '@/components/PrayerTabs'
 
 // Brand font import (injected once client-side)
@@ -50,6 +51,15 @@ const TAB_ICONS: Record<string, string> = {
   Map: '🌍',
   Shop: '🛍',
   Account: '👤',
+}
+// SVG line icons for the mobile footer — matches the band page's footer menu.
+const MOBILE_TAB_ICON: Record<string, IconName> = {
+  Overview: 'church-home',
+  Inbox: 'mail',
+  Prayers: 'prayer-hands',
+  Map: 'map-pin',
+  Shop: 'shop-bag',
+  Account: 'user',
 }
 // Brand palette tokens
 const CREAM_BG = '#F6F1E4'
@@ -471,6 +481,7 @@ export default function Dashboard() {
   const [notifications, setNotifications] = useState<any[]>([])
   const [unread, setUnread] = useState(0)
   const [inboxNew, setInboxNew] = useState(0)
+  const [prayedReq, setPrayedReq] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700)
@@ -609,6 +620,23 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
+  // Inbox actions.
+  async function dismissNotif(id: string) {
+    setNotifications(prev => prev.filter(n => n.id !== id))
+    if (!isViewingAs) {
+      fetch('/api/my-notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'dismiss', id }) }).catch(() => {})
+    }
+  }
+
+  async function prayForRequest(requestId: string) {
+    if (prayedReq.has(requestId) || isViewingAs) return
+    setPrayedReq(prev => new Set([...prev, requestId]))
+    fetch('/api/prayer-requests/intercede', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestId, intercessorId: user?.id }),
+    }).catch(() => {})
+  }
+
   async function openBillingPortal() {
     setPortalLoading(true)
     try {
@@ -693,7 +721,9 @@ export default function Dashboard() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {notifications.map((n, i) => (
+            {notifications.map((n, i) => {
+              const isPrayerLike = n.type === 'prayer' || n.type === 'prayer_request'
+              return (
               <div key={n.id} style={{ background: CARD_BG, border: `1px solid ${i < inboxNew ? GOLD_BORDER : NAVY_BORDER}`, borderLeft: i < inboxNew ? `3px solid ${GOLD}` : `1px solid ${NAVY_BORDER}`, borderRadius: 10, padding: '13px 16px', display: 'flex', gap: 12, alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(10,22,40,0.05)' }}>
                 <div style={{ width: 34, height: 34, borderRadius: 8, flexShrink: 0, background: `${GOLD}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{n.icon}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -701,12 +731,28 @@ export default function Dashboard() {
                     {n.title}
                     {i < inboxNew && <span style={{ marginLeft: 8, fontSize: 9, background: GOLD, color: NAVY, borderRadius: 8, padding: '1px 7px', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', verticalAlign: 'middle' }}>NEW</span>}
                   </div>
-                  {n.detail && <div style={{ fontSize: 13, color: n.type === 'prayer' ? BODY_TEXT : SECONDARY_TEXT, fontStyle: n.type === 'prayer' ? 'italic' : 'normal', marginTop: 2, fontFamily: n.type === 'prayer' ? 'Cormorant Garamond, Georgia, serif' : 'Inter, sans-serif' }}>{n.type === 'prayer' ? `“${n.detail}”` : n.detail}</div>}
+                  {n.detail && <div style={{ fontSize: 13, color: isPrayerLike ? BODY_TEXT : SECONDARY_TEXT, fontStyle: isPrayerLike ? 'italic' : 'normal', marginTop: 2, fontFamily: isPrayerLike ? 'Cormorant Garamond, Georgia, serif' : 'Inter, sans-serif' }}>{isPrayerLike ? `“${n.detail}”` : n.detail}</div>}
                   {n.band_id && <div style={{ fontSize: 11, color: GOLD_TEXT, fontFamily: 'monospace', marginTop: 3 }}>{n.band_id}</div>}
+                  {/* Quick actions */}
+                  {!isViewingAs && (n.type === 'prayer_request' || n.type === 'circle_request') && (
+                    <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                      {n.type === 'prayer_request' && (
+                        <button onClick={() => prayForRequest(n.requestId)} disabled={prayedReq.has(n.requestId)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: prayedReq.has(n.requestId) ? `${GOLD}22` : GOLD, color: prayedReq.has(n.requestId) ? GOLD_TEXT : NAVY, fontSize: 11, fontWeight: 700, cursor: prayedReq.has(n.requestId) ? 'default' : 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>{prayedReq.has(n.requestId) ? '✓ Prayed' : '🙏 Pray'}</button>
+                      )}
+                      {n.type === 'circle_request' && (
+                        <a href={`/circles/${n.circleId}`} style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${GOLD_BORDER}`, background: CARD_BG, color: GOLD_TEXT, fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>Open circle →</a>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div style={{ fontSize: 11, color: SECONDARY_TEXT, flexShrink: 0, fontFamily: 'Inter, sans-serif' }}>{timeAgo(n.ts)}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+                  <div style={{ fontSize: 11, color: SECONDARY_TEXT, fontFamily: 'Inter, sans-serif' }}>{timeAgo(n.ts)}</div>
+                  {!isViewingAs && (
+                    <button onClick={() => dismissNotif(n.id)} aria-label="Dismiss" title="Dismiss" style={{ background: 'none', border: 'none', color: SECONDARY_TEXT, fontSize: 15, lineHeight: 1, cursor: 'pointer', padding: 2, opacity: 0.6 }}>✕</button>
+                  )}
+                </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
       </div>
@@ -1154,7 +1200,7 @@ export default function Dashboard() {
 
       {!isMobile && (
         <div style={{ background: CARD_BG, borderBottom: `1px solid ${NAVY_BORDER}`, padding: '0 32px', display: 'flex', gap: 4, justifyContent: 'center', boxShadow: '0 1px 4px rgba(10,22,40,0.05)' }}>
-          {TABS.map(t => (
+          {TABS.filter(t => t !== 'Inbox' || !!user).map(t => (
             <button key={t} onClick={() => setActiveTab(t)} style={{ padding: '14px 18px', border: 'none', borderBottom: activeTab === t ? `2px solid ${GOLD}` : '2px solid transparent', background: 'transparent', color: activeTab === t ? GOLD_TEXT : SECONDARY_TEXT, fontSize: 12, fontWeight: activeTab === t ? 700 : 400, cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase', position: 'relative' }}>
               {t}
               {t === 'Inbox' && unread > 0 && <span style={{ marginLeft: 6, background: GOLD, color: NAVY, borderRadius: 10, padding: '1px 7px', fontSize: 10, fontWeight: 700, verticalAlign: 'middle' }}>{unread}</span>}
@@ -1169,14 +1215,14 @@ export default function Dashboard() {
 
       {isMobile && (
         <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: NAVY, borderTop: `1px solid rgba(200,169,110,0.2)`, display: 'flex', zIndex: 200, paddingBottom: 'env(safe-area-inset-bottom, 0px)', boxShadow: '0 -2px 12px rgba(10,22,40,0.2)' }}>
-          {MOBILE_NAV.map(item => {
+          {MOBILE_NAV.filter(item => item !== 'Inbox' || !!user).map(item => {
             const active = activeTab === item
             return (
               <button key={item} onClick={() => { if (item === 'Shop') { window.location.href = '/store' } else { setActiveTab(item) } }} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 2px 8px', border: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', minWidth: 0 }}>
                 {active && <div style={{ position: 'absolute', top: 0, width: 36, height: 3, background: GOLD, borderRadius: '0 0 3px 3px' }} />}
-                <span style={{ fontSize: 16, lineHeight: 1, position: 'relative' }}>
-                  {TAB_ICONS[item]}
-                  {item === 'Inbox' && unread > 0 && <span style={{ position: 'absolute', top: -4, right: -10, background: GOLD, color: NAVY, borderRadius: 8, minWidth: 15, height: 15, fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>{unread}</span>}
+                <span style={{ position: 'relative', display: 'inline-flex', lineHeight: 1 }}>
+                  <Icon name={MOBILE_TAB_ICON[item]} size={22} color={active ? GOLD : 'rgba(255,255,255,0.45)'} bg={NAVY} />
+                  {item === 'Inbox' && unread > 0 && <span style={{ position: 'absolute', top: -6, right: -10, background: GOLD, color: NAVY, borderRadius: 8, minWidth: 15, height: 15, fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>{unread}</span>}
                 </span>
                 <span style={{ fontSize: 9, color: active ? GOLD : 'rgba(200,169,110,0.45)', fontFamily: 'Cinzel, serif', fontWeight: active ? 700 : 400, marginTop: 3, letterSpacing: '0.03em' }}>{item}</span>
               </button>
