@@ -117,6 +117,7 @@ function StorePageInner() {
   const [replaces, setReplaces] = useState("");
   const [sizes, setSizes] = useState<Record<string, string>>({});
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [bandFilter, setBandFilter] = useState<'all' | 'themed' | 'solid'>('all');
 
   useEffect(() => {
     fetch("/api/pricing").then(r => r.json()).then(d => { if (d.pricing) setPricing(d.pricing); }).catch(() => {});
@@ -166,6 +167,10 @@ function StorePageInner() {
 
   const products = catalog.length ? catalog : fallback;
   const bandProducts = products.filter(p => p.category === "band");
+  // "Solid" = no decorative theme (theme 'default' or unset); "Themed" = anything else.
+  const isSolid = (p: Product) => !p.theme || p.theme === "default";
+  const shownBands = bandFilter === "all" ? bandProducts : bandProducts.filter(p => bandFilter === "solid" ? isSolid(p) : !isSolid(p));
+  const hasThemed = bandProducts.some(p => !isSolid(p));
   const packProducts = products.filter(p => p.category === "pack");
 
   // GA4: record item views once the catalog is on screen (once per load).
@@ -320,14 +325,29 @@ function StorePageInner() {
 
         {/* INDIVIDUAL BANDS */}
         <div style={{ marginBottom: 80 }}>
-          <div style={{ marginBottom: 40 }}>
+          <div style={{ marginBottom: 28 }}>
             <span className="section-label">Individual Bands</span>
             <h2 className="playfair" style={{ fontSize: 36, fontWeight: 600, color: "#15223B" }}>For Personal Giving</h2>
             <div style={{ width: 40, height: 1, background: "#C9CFD6", marginTop: 14 }} />
           </div>
 
+          {/* Filter: themed vs solid color bands */}
+          {hasThemed && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 28, flexWrap: "wrap" }}>
+              {([["all", "All Bands"], ["themed", "Themed"], ["solid", "Solid Color"]] as const).map(([val, label]) => (
+                <button key={val} onClick={() => setBandFilter(val)} className="lato" style={{
+                  padding: "8px 18px", borderRadius: 24, cursor: "pointer", fontSize: 12, letterSpacing: "0.04em",
+                  border: `1px solid ${bandFilter === val ? "#C8A96E" : "#C9CFD6"}`,
+                  background: bandFilter === val ? "#C8A96E" : "transparent",
+                  color: bandFilter === val ? "#0A1628" : "#5C6573",
+                  fontWeight: bandFilter === val ? 700 : 400,
+                }}>{label}</button>
+              ))}
+            </div>
+          )}
+
           <div className="products-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>
-            {bandProducts.map(product => {
+            {shownBands.map(product => {
               const price = product.price;
               const size = sizes[product.slug] || (product.sizes[0] || "M");
               const sizeLabel = SIZES.find(s => s.id === size)?.label || size;
@@ -402,6 +422,9 @@ function StorePageInner() {
               );
             })}
           </div>
+          {shownBands.length === 0 && (
+            <div className="lato" style={{ padding: "32px 0", color: "#5C6573", fontStyle: "italic" }}>No {bandFilter} bands available right now.</div>
+          )}
         </div>
         </>)}
 
