@@ -55,7 +55,7 @@ const TAB_ICONS: Record<string, string> = {
 // SVG line icons for the mobile footer — matches the band page's footer menu.
 const MOBILE_TAB_ICON: Record<string, IconName> = {
   Overview: 'church-home',
-  Inbox: 'mail',
+  Inbox: 'bell',
   Prayers: 'prayer-hands',
   Map: 'map-pin',
   Shop: 'shop-bag',
@@ -482,6 +482,8 @@ export default function Dashboard() {
   const [unread, setUnread] = useState(0)
   const [inboxNew, setInboxNew] = useState(0)
   const [prayedReq, setPrayedReq] = useState<Set<string>>(new Set())
+  const [notifDays, setNotifDays] = useState(7)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700)
@@ -620,6 +622,18 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
+  // Widen the inbox window: 7 → 30 → 90 → all.
+  const NOTIF_TIERS = [7, 30, 90, 0]
+  async function loadMoreNotifs() {
+    const idx = NOTIF_TIERS.indexOf(notifDays)
+    const next = NOTIF_TIERS[Math.min(idx + 1, NOTIF_TIERS.length - 1)]
+    setLoadingMore(true)
+    try {
+      const res = await fetch(`/api/my-notifications?days=${next}` + (viewAsId ? `&viewAs=${viewAsId}` : ''))
+      if (res.ok) { const d = await res.json(); setNotifications(d.notifications || []); setNotifDays(d.days ?? next) }
+    } finally { setLoadingMore(false) }
+  }
+
   // Inbox actions.
   async function dismissNotif(id: string) {
     setNotifications(prev => prev.filter(n => n.id !== id))
@@ -753,7 +767,17 @@ export default function Dashboard() {
                 </div>
               </div>
             )})}
+            {notifDays !== 0 && (
+              <button onClick={loadMoreNotifs} disabled={loadingMore} style={{ marginTop: 6, alignSelf: 'center', background: 'none', border: `1px solid ${NAVY_BORDER}`, borderRadius: 8, padding: '8px 18px', fontSize: 12, color: SECONDARY_TEXT, cursor: loadingMore ? 'wait' : 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>
+                {loadingMore ? 'Loading…' : notifDays === 7 ? 'Load last 30 days' : notifDays === 30 ? 'Load last 90 days' : 'Load all'}
+              </button>
+            )}
           </div>
+        )}
+        {notifications.length > 0 && (
+          <p style={{ fontSize: 11, color: SECONDARY_TEXT, marginTop: 14, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>
+            Showing {notifDays === 0 ? 'all activity' : `the last ${notifDays} days`}.
+          </p>
         )}
       </div>
     )
@@ -1201,9 +1225,13 @@ export default function Dashboard() {
       {!isMobile && (
         <div style={{ background: CARD_BG, borderBottom: `1px solid ${NAVY_BORDER}`, padding: '0 32px', display: 'flex', gap: 4, justifyContent: 'center', boxShadow: '0 1px 4px rgba(10,22,40,0.05)' }}>
           {TABS.filter(t => t !== 'Inbox' || !!user).map(t => (
-            <button key={t} onClick={() => setActiveTab(t)} style={{ padding: '14px 18px', border: 'none', borderBottom: activeTab === t ? `2px solid ${GOLD}` : '2px solid transparent', background: 'transparent', color: activeTab === t ? GOLD_TEXT : SECONDARY_TEXT, fontSize: 12, fontWeight: activeTab === t ? 700 : 400, cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase', position: 'relative' }}>
-              {t}
-              {t === 'Inbox' && unread > 0 && <span style={{ marginLeft: 6, background: GOLD, color: NAVY, borderRadius: 10, padding: '1px 7px', fontSize: 10, fontWeight: 700, verticalAlign: 'middle' }}>{unread}</span>}
+            <button key={t} onClick={() => setActiveTab(t)} title={t === 'Inbox' ? 'Notifications' : undefined} style={{ padding: '14px 18px', border: 'none', borderBottom: activeTab === t ? `2px solid ${GOLD}` : '2px solid transparent', background: 'transparent', color: activeTab === t ? GOLD_TEXT : SECONDARY_TEXT, fontSize: 12, fontWeight: activeTab === t ? 700 : 400, cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase', position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              {t === 'Inbox' ? (
+                <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                  <Icon name="bell" size={18} color={activeTab === 'Inbox' ? GOLD_TEXT : SECONDARY_TEXT} bg={CARD_BG} />
+                  {unread > 0 && <span style={{ position: 'absolute', top: -7, right: -11, background: GOLD, color: NAVY, borderRadius: 10, minWidth: 16, height: 16, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{unread}</span>}
+                </span>
+              ) : t}
             </button>
           ))}
         </div>

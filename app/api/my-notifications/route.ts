@@ -33,6 +33,10 @@ export async function GET(req: NextRequest) {
   const effectiveId = viewAs && user.email === ADMIN_EMAIL ? viewAs : user.id
   const admin = svc()
 
+  // Recency window (days). Default 7; "Load more" widens it. 0 = all time.
+  const days = parseInt(req.nextUrl.searchParams.get('days') || '7', 10)
+  const since = new Date(days > 0 ? Date.now() - days * 86400000 : 0).toISOString()
+
   // Whose email do we match orders against? (self, or the viewed-as account)
   let email = user.email
   if (effectiveId !== user.id) {
@@ -50,6 +54,7 @@ export async function GET(req: NextRequest) {
       .from('registrations')
       .select('id, band_id, user_name, city, country, prayer, registered_at')
       .in('band_id', bandIds)
+      .gte('registered_at', since)
       .order('registered_at', { ascending: false })
       .limit(40)
     for (const r of regs || []) {
@@ -72,6 +77,7 @@ export async function GET(req: NextRequest) {
       .select('id, status, tracking_number, created_at')
       .eq('customer_email', email)
       .in('status', ['processing', 'shipped'])
+      .gte('created_at', since)
       .order('created_at', { ascending: false })
       .limit(20)
     for (const o of orders || []) {
@@ -94,6 +100,7 @@ export async function GET(req: NextRequest) {
       .select('id, status, tracking_number, created_at')
       .in('subscription_id', subIds)
       .eq('status', 'shipped')
+      .gte('created_at', since)
       .order('created_at', { ascending: false })
       .limit(20)
     for (const s of ships || []) {
@@ -102,10 +109,9 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Community items (prayer requests + circles) can be high-volume, so they're
-  // limited to the recent window and circle activity is grouped per circle —
-  // otherwise a busy circle would bury the user's own band/order notifications.
-  const since = new Date(Date.now() - 14 * 86400000).toISOString()
+  // Community items (prayer requests + circles) can be high-volume, so circle
+  // activity is grouped per circle and public requests are capped — otherwise a
+  // busy circle would bury the user's own band/order notifications.
 
   // 4. A few recent public prayer requests you can pray for (quick-pray action).
   const { data: prs } = await admin
@@ -164,7 +170,7 @@ export async function GET(req: NextRequest) {
   const lastSeen = profile?.notifications_last_seen ? new Date(profile.notifications_last_seen).getTime() : 0
   const unread = trimmed.filter(n => new Date(n.ts).getTime() > lastSeen).length
 
-  return NextResponse.json({ notifications: trimmed, unread })
+  return NextResponse.json({ notifications: trimmed, unread, days })
 }
 
 // POST { action: 'dismiss', id } — hide one notification (self only).
