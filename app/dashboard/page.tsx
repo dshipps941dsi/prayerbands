@@ -5,6 +5,7 @@ import LivingPrayerList from '@/components/LivingPrayerList'
 import Logo from '@/components/Logo'
 import Icon, { type IconName } from '@/components/Icon'
 import PrayerTabs from '@/components/PrayerTabs'
+import ShareSheet from '@/components/ShareSheet'
 
 // Brand font import (injected once client-side)
 if (typeof document !== 'undefined' && !document.getElementById('pb-brand-fonts')) {
@@ -164,6 +165,13 @@ function ActivePrayerPreview({ currentUserId, readOnly }: { currentUserId: strin
   const [mine, setMine] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [prayedIds, setPrayedIds] = useState<Set<string>>(new Set())
+  // Answered-prayer flow: open a small modal to capture an optional testimony
+  // and let the owner opt in to sharing it publicly.
+  const [answering, setAnswering] = useState<any | null>(null)
+  const [answerText, setAnswerText] = useState('')
+  const [answerPublic, setAnswerPublic] = useState(false)
+  const [submittingAnswer, setSubmittingAnswer] = useState(false)
+  const [answeredShare, setAnsweredShare] = useState<{ id: string; title: string } | null>(null)
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -206,13 +214,32 @@ function ActivePrayerPreview({ currentUserId, readOnly }: { currentUserId: strin
     ))
   }
 
-  const handleAnswered = async (requestId: string) => {
+  const openAnswered = (req: any) => {
+    setAnswering(req)
+    setAnswerText('')
+    setAnswerPublic(false)
+    setAnsweredShare(null)
+  }
+
+  const submitAnswered = async () => {
+    if (!answering) return
+    const req = answering
+    const testimony = answerText.trim()
+    const makePublic = answerPublic && !!testimony
+    setSubmittingAnswer(true)
     await fetch('/api/prayer-requests/answer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requestId, userId: currentUserId, testimony: '' }),
+      body: JSON.stringify({ requestId: req.id, userId: currentUserId, testimony, makePublic }),
     })
-    setMine(prev => prev.filter(r => r.id !== requestId))
+    setSubmittingAnswer(false)
+    setMine(prev => prev.filter(r => r.id !== req.id))
+    if (makePublic) {
+      // Keep the modal open and surface the share controls.
+      setAnsweredShare({ id: req.id, title: req.title })
+    } else {
+      setAnswering(null)
+    }
   }
 
   const requests = tab === 'others' ? others : mine
@@ -260,7 +287,7 @@ function ActivePrayerPreview({ currentUserId, readOnly }: { currentUserId: strin
               )}
               {tab === 'mine' && !readOnly && (
                 <button
-                  onClick={() => handleAnswered(req.id)}
+                  onClick={() => openAnswered(req)}
                   style={{ flexShrink: 0, padding: '6px 12px', borderRadius: 8, border: `1px solid ${GOLD_BORDER}`, background: CARD_BG, color: GOLD_TEXT, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', whiteSpace: 'nowrap', letterSpacing: '0.04em' }}
                 >
                   ✨ Answered
@@ -275,6 +302,61 @@ function ActivePrayerPreview({ currentUserId, readOnly }: { currentUserId: strin
           View all in Prayer List &rarr;
         </span>
       </div>
+
+      {answering && (
+        <div
+          onClick={() => !submittingAnswer && setAnswering(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(10,22,40,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+        >
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fffdf7', borderRadius: 16, maxWidth: 440, width: '100%', padding: 28, boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            {!answeredShare ? (
+              <>
+                <div style={{ fontSize: 30, textAlign: 'center' }}>✨</div>
+                <h3 style={{ fontFamily: 'Cinzel, serif', color: NAVY_HEADING, fontSize: 19, textAlign: 'center', margin: '6px 0 4px' }}>Prayer answered!</h3>
+                <p style={{ fontFamily: 'Inter, sans-serif', color: SECONDARY_TEXT, fontSize: 13, textAlign: 'center', margin: '0 0 6px' }}>{answering.title}</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', color: SECONDARY_TEXT, fontSize: 12, textAlign: 'center', margin: '0 0 16px' }}>
+                  Share a short testimony to encourage those who prayed (optional).
+                </p>
+                <textarea
+                  value={answerText}
+                  onChange={e => setAnswerText(e.target.value)}
+                  placeholder="How did God move in this?"
+                  rows={4}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: 12, borderRadius: 10, border: `1px solid ${SILVER_BORDER}`, fontFamily: 'Georgia, serif', fontSize: 14, resize: 'vertical', marginBottom: 12 }}
+                />
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 9, cursor: answerText.trim() ? 'pointer' : 'not-allowed', opacity: answerText.trim() ? 1 : 0.5, marginBottom: 18 }}>
+                  <input type="checkbox" checked={answerPublic} disabled={!answerText.trim()} onChange={e => setAnswerPublic(e.target.checked)} style={{ marginTop: 2 }} />
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: NAVY_HEADING }}>
+                    Share this testimony publicly so others can be encouraged — creates a shareable page (no last name shown).
+                  </span>
+                </label>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={() => setAnswering(null)} disabled={submittingAnswer} style={{ flex: 1, padding: '11px', borderRadius: 10, border: `1px solid ${SILVER_BORDER}`, background: 'transparent', color: SECONDARY_TEXT, fontFamily: 'Cinzel, serif', fontSize: 12, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.04em' }}>Cancel</button>
+                  <button onClick={submitAnswered} disabled={submittingAnswer} style={{ flex: 1, padding: '11px', borderRadius: 10, border: 'none', background: GOLD, color: NAVY, fontFamily: 'Cinzel, serif', fontSize: 12, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.04em', textTransform: 'uppercase' }}>{submittingAnswer ? 'Saving…' : 'Save'}</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 30, textAlign: 'center' }}>🙏</div>
+                <h3 style={{ fontFamily: 'Cinzel, serif', color: NAVY_HEADING, fontSize: 19, textAlign: 'center', margin: '6px 0 4px' }}>Testimony saved</h3>
+                <p style={{ fontFamily: 'Inter, sans-serif', color: SECONDARY_TEXT, fontSize: 13, textAlign: 'center', margin: '0 0 18px' }}>
+                  Share it to bring others into the story.
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                  <ShareSheet
+                    url={`https://prayerbands.com/testimony/${answeredShare.id}`}
+                    title={answeredShare.title}
+                    text={`Answered prayer: "${answeredShare.title}" 🙏 — a testimony from the Prayer Bands community.`}
+                    label="Share testimony"
+                    variant="gold"
+                  />
+                </div>
+                <button onClick={() => setAnswering(null)} style={{ width: '100%', padding: '11px', borderRadius: 10, border: `1px solid ${SILVER_BORDER}`, background: 'transparent', color: SECONDARY_TEXT, fontFamily: 'Cinzel, serif', fontSize: 12, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.04em' }}>Done</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

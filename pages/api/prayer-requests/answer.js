@@ -9,10 +9,10 @@ export default async function handler(req, res) {
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
   );
 
-  const { requestId, userId, testimony } = req.body;
+  const { requestId, userId, testimony, makePublic } = req.body;
 
   if (!requestId || !userId) {
     return res.status(400).json({ error: 'requestId and userId are required' });
@@ -25,6 +25,7 @@ export default async function handler(req, res) {
       status: 'answered',
       answered_testimony: testimony || null,
       answered_at: new Date().toISOString(),
+      testimony_public: !!makePublic && !!(testimony || '').trim(),
     })
     .eq('id', requestId)
     .eq('user_id', userId) // security: only owner can close

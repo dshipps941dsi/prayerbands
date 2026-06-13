@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ShareSheet from "@/components/ShareSheet";
 
 // Shared site footer — self-contained navy + gold styling so it renders
 // correctly on any page regardless of that page's own CSS. Used across the
@@ -87,6 +88,13 @@ export default function SiteFooter() {
         </div>
         <div className="pbf-bottom">
           <div className="pbf-copy">© {new Date().getFullYear()} Prayer Bands. All rights reserved. &nbsp;·&nbsp; <Link href="/site-map">Site Map</Link></div>
+          <ShareSheet
+            url="https://prayerbands.com"
+            title="Prayer Bands"
+            text="Carry His Word around the world — join the Prayer Bands movement. 🙏"
+            label="Share Prayer Bands"
+            variant="ghost"
+          />
           <div className="pbf-verse">&ldquo;Pray without ceasing.&rdquo; — 1 Thessalonians 5:17</div>
         </div>
       </div>

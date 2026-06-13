@@ -21,8 +21,21 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 export const metadata: Metadata = {
+  metadataBase: new URL("https://prayerbands.com"),
   title: "Prayer Bands — Carry His Word Around the World",
   description: "A global prayer movement. Every band carries a prayer. Track your band's journey, leave prayers, and watch intercession travel the world.",
+  openGraph: {
+    type: "website",
+    siteName: "Prayer Bands",
+    url: "https://prayerbands.com",
+    title: "Prayer Bands — Carry His Word Around the World",
+    description: "A global prayer movement. Every band carries a prayer. Track your band's journey, leave prayers, and watch intercession travel the world.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Prayer Bands — Carry His Word Around the World",
+    description: "A global prayer movement. Every band carries a prayer.",
+  },
 }
 
 export default function RootLayout({

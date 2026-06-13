@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
+import ShareSheet from '@/components/ShareSheet'
 
 interface CircleData {
   id: string
@@ -719,8 +720,18 @@ export default function CirclePage() {
               >
                 {codeCopied ? 'Copied!' : '📤 Share Join Code'}
               </button>
+              <div style={{ marginBottom: '8px' }}>
+                <ShareSheet
+                  block
+                  url={`https://prayerbands.com/circle/${circle.id}`}
+                  title={circle.name}
+                  text={`Join our Prayer Circle "${circle.name}" on Prayer Bands 🙏`}
+                  label="Share invite page"
+                  variant="navy"
+                />
+              </div>
               <p style={{ fontSize: '12px', color: '#5C6573', margin: 0, fontFamily: "'Inter', sans-serif" }}>
-                prayerbands.com/circles → enter code <strong>{circle.join_code}</strong>
+                The invite page shows the circle publicly (no prayer details) and brings people back to join.
               </p>
             </div>
 
