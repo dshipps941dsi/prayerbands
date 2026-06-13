@@ -71,7 +71,7 @@ export default function ProductsManager() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        id: p.id, name: p.name, description: p.description, category: p.category,
+        id: p.id, slug: p.slug, name: p.name, description: p.description, category: p.category,
         theme: p.theme, color: p.color, icon: p.icon, tag: p.tag,
         price_cents: p.price_cents, bands_per_unit: p.bands_per_unit,
         features: p.features, sizes: p.sizes, has_sizes: p.has_sizes, multi_discount: p.multi_discount,
@@ -178,6 +178,7 @@ export default function ProductsManager() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {field('Name', <input style={input} value={p.name} onChange={e => edit(p.id, { name: e.target.value })} />)}
+            {field('Slug · URL id (avoid changing once live)', <input style={input} value={p.slug} onChange={e => edit(p.id, { slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') })} />)}
             {field('Price ($)', <input style={input} type="number" step="0.01" value={(p.price_cents / 100).toString()} onChange={e => edit(p.id, { price_cents: Math.round((parseFloat(e.target.value) || 0) * 100) })} />)}
             {field('Category', <select style={input} value={p.category} onChange={e => edit(p.id, { category: e.target.value })}><option value="band">band</option><option value="pack">pack</option></select>)}
             {field('Theme', <select style={input} value={p.theme} onChange={e => edit(p.id, { theme: e.target.value })}>{THEME_OPTIONS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</select>)}
