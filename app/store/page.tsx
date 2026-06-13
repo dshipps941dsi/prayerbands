@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useRef, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import Logo from "@/components/Logo";
 import Icon from "@/components/Icon";
@@ -67,6 +68,7 @@ const SIZE_CHART = [
 function BandCarousel({ images, color, icon, tag }: { images: string[]; color: string; icon: string; tag?: string | null }) {
   const [broken, setBroken] = useState<Record<string, boolean>>({});
   const [idx, setIdx] = useState(0);
+  const [zoom, setZoom] = useState(false);
   const ok = images.filter(src => !broken[src]);
   useEffect(() => {
     if (ok.length <= 1) return;
@@ -74,12 +76,23 @@ function BandCarousel({ images, color, icon, tag }: { images: string[]; color: s
     return () => clearInterval(t);
   }, [ok.length]);
   const cur = ok.length ? idx % ok.length : 0;
+  const curSrc = ok[cur];
   return (
     <div style={{ height: 260, position: "relative", background: `linear-gradient(135deg, ${color}22, ${color}44)`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
       {tag && <div className="lato" style={{ position: "absolute", top: 16, right: 16, zIndex: 3, background: color, color: "#fff", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", padding: "4px 12px", borderRadius: 20, fontWeight: 700 }}>{tag}</div>}
       {images.map(src => broken[src] ? null : (
-        <img key={src} src={src} alt="" onError={() => setBroken(b => ({ ...b, [src]: true }))} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: ok[cur] === src ? 1 : 0, transition: "opacity 0.5s" }} />
+        <img key={src} className="pb-band-img" src={src} alt="" onError={() => setBroken(b => ({ ...b, [src]: true }))} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: ok[cur] === src ? 1 : 0, transition: "opacity 0.5s" }} />
       ))}
+      {curSrc && (
+        <button className="pb-zoom-btn" onClick={() => setZoom(true)} aria-label="View full image" title="View full image">⤢</button>
+      )}
+      {zoom && curSrc && typeof document !== "undefined" && createPortal(
+        <div className="pb-lightbox" onClick={() => setZoom(false)} role="dialog" aria-modal="true">
+          <button className="pb-lightbox-close" onClick={() => setZoom(false)} aria-label="Close">×</button>
+          <img src={curSrc} alt="" onClick={e => e.stopPropagation()} />
+        </div>,
+        document.body
+      )}
       {ok.length === 0 && (
         <div style={{ position: "relative", width: 120, height: 120 }}>
           <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `18px solid ${color}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -263,6 +276,14 @@ function StorePageInner() {
         @media (max-width: 600px) { .store-tabs { gap: 4px; padding: 5px; } .store-tab { padding: 10px 16px; font-size: 11px; letter-spacing: 0.04em; } }
         @media (max-width: 768px) { .products-grid { grid-template-columns: 1fr !important; } .packs-grid { grid-template-columns: 1fr !important; } .cart-drawer { width: 100vw; } }
         @media (max-width: 600px) { .nav-extra { display: none !important; } .store-nav { padding: 0 16px !important; } }
+        /* Band card image: fill on desktop, but show the WHOLE band on mobile (no crop). */
+        .pb-band-img { object-fit: cover; }
+        @media (max-width: 768px) { .pb-band-img { object-fit: contain !important; padding: 14px; } }
+        .pb-zoom-btn { position: absolute; bottom: 10px; right: 12px; z-index: 4; width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer; background: rgba(10,22,40,0.55); color: #fff; font-size: 14px; display: flex; align-items: center; justify-content: center; line-height: 1; }
+        .pb-zoom-btn:hover { background: rgba(10,22,40,0.78); }
+        .pb-lightbox { position: fixed; inset: 0; z-index: 1000; background: rgba(8,12,22,0.92); display: flex; align-items: center; justify-content: center; padding: 24px; cursor: zoom-out; }
+        .pb-lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
+        .pb-lightbox-close { position: absolute; top: 18px; right: 22px; background: none; border: none; color: #fff; font-size: 30px; cursor: pointer; line-height: 1; }
       `}</style>
 
       {toast && <div className="toast">✝ {toast}</div>}
