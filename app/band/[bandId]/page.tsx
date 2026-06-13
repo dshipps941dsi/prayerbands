@@ -149,6 +149,7 @@ export default function BandPage() {
   const [prayerSubmitting, setPrayerSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState<'home' | 'prayers' | 'journey' | 'purchase' | 'account'>('home')
   const [claimingOwnership, setClaimingOwnership] = useState(false)
+  const [unread, setUnread] = useState(0)
 
   // Apply this band's color theme (CSS variables on :root).
   useApplyTheme(status.band?.theme)
@@ -157,6 +158,15 @@ export default function BandPage() {
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     supabase.auth.getUser().then(({ data }) => setUserId(data?.user?.id ?? null))
   }, [])
+
+  // Unread notification count for the bell (signed-in account holders only).
+  useEffect(() => {
+    if (!userId) { setUnread(0); return }
+    fetch('/api/my-notifications')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setUnread(d.unread || 0) })
+      .catch(() => {})
+  }, [userId])
 
   // Returning from sign-up after choosing "Create Free Account" on the
   // pass-on save prompt — auto-open the transfer flow.
@@ -295,11 +305,21 @@ export default function BandPage() {
         <a href="/" aria-label="Prayer Bands home" style={{ display: 'inline-flex', textDecoration: 'none' }}>
           <Logo size={28} withName nameColor={DARK} nameSize={18} />
         </a>
-        <div style={{ textAlign: 'right' }}>
-          {status.screen === 'personal_space' && currentHolder?.user_name && (
-            <div style={{ fontFamily: serif, fontSize: 13, fontWeight: 600, color: DARK }}>{currentHolder.user_name}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          {userId ? (
+            <a href="/dashboard" aria-label="Notifications" title="Notifications" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+              <Icon name="bell" size={22} color={GOLD} bg="#FAF6EF" />
+              {unread > 0 && <span style={{ position: 'absolute', top: -7, right: -9, background: GOLD, color: DARK, borderRadius: 10, minWidth: 16, height: 16, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{unread}</span>}
+            </a>
+          ) : (
+            <a href={`/signin?redirect=${encodeURIComponent(`/band/${bandId}`)}`} style={{ fontFamily: serif, fontSize: 13, fontWeight: 700, color: GOLD, textDecoration: 'none', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '6px 14px', whiteSpace: 'nowrap' }}>Sign in</a>
           )}
-          <div style={{ fontFamily: body, fontSize: 11, color: GRAY, fontStyle: 'italic' }}>{bandId}</div>
+          <div style={{ textAlign: 'right' }}>
+            {status.screen === 'personal_space' && currentHolder?.user_name && (
+              <div style={{ fontFamily: serif, fontSize: 13, fontWeight: 600, color: DARK }}>{currentHolder.user_name}</div>
+            )}
+            <div style={{ fontFamily: body, fontSize: 11, color: GRAY, fontStyle: 'italic' }}>{bandId}</div>
+          </div>
         </div>
       </nav>
     )
