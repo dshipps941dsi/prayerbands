@@ -667,6 +667,11 @@ export default function Dashboard() {
             <a href="/subscribe" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: '10px 16px', fontSize: 12, textDecoration: 'none', color: BODY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', fontWeight: 600, boxShadow: '0 1px 4px rgba(10,22,40,0.06)', whiteSpace: 'nowrap' }}>
               🔁 Subscribe
             </a>
+            {!isViewingAs && (
+              <a href="/settings" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: '10px 16px', fontSize: 12, textDecoration: 'none', color: BODY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', fontWeight: 600, boxShadow: '0 1px 4px rgba(10,22,40,0.06)', whiteSpace: 'nowrap' }}>
+                ⚙ Settings
+              </a>
+            )}
           </div>
         </div>
 
@@ -930,7 +935,14 @@ export default function Dashboard() {
 
     if (activeTab === 'Account') return (
       <div>
-        <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 20, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Account</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Account</h1>
+          {!isViewingAs && (
+            <a href="/settings" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: '9px 16px', fontSize: 12, textDecoration: 'none', color: BODY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', fontWeight: 600, boxShadow: '0 1px 4px rgba(10,22,40,0.06)', whiteSpace: 'nowrap' }}>
+              ⚙ Settings
+            </a>
+          )}
+        </div>
 
         {/* Recent Activity */}
         <div style={{ marginBottom: 32 }}>
