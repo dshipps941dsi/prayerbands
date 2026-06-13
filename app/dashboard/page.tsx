@@ -40,11 +40,12 @@ type MapPoint = {
   prayer?: string
 }
 
-const TABS = ['Overview', 'Prayers', 'Map', 'Account']
+const TABS = ['Overview', 'Inbox', 'Prayers', 'Map', 'Account']
 // Mobile bottom nav mirrors the band page: includes a Shop/purchase link.
-const MOBILE_NAV = ['Overview', 'Prayers', 'Map', 'Shop', 'Account']
+const MOBILE_NAV = ['Overview', 'Inbox', 'Prayers', 'Map', 'Account']
 const TAB_ICONS: Record<string, string> = {
   Overview: '◎',
+  Inbox: '🔔',
   Prayers: '🙏',
   Map: '🌍',
   Shop: '🛍',
@@ -467,6 +468,9 @@ export default function Dashboard() {
   const [bandDesigns, setBandDesigns] = useState<{ slug: string; name: string }[]>([])
   const [savingPrefs, setSavingPrefs] = useState(false)
   const [prefsMsg, setPrefsMsg] = useState('')
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [unread, setUnread] = useState(0)
+  const [inboxNew, setInboxNew] = useState(0)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700)
@@ -507,6 +511,12 @@ export default function Dashboard() {
 
         const { data: prof } = await supabase.from('profiles').select('*').eq('id', effectiveId).single()
         setProfile(prof)
+
+        // Notifications inbox feed (derived server-side from band/order/sub events).
+        fetch('/api/my-notifications' + (viewAs ? `?viewAs=${viewAs}` : ''))
+          .then(r => r.json())
+          .then(d => { setNotifications(d.notifications || []); setUnread(d.unread || 0) })
+          .catch(() => {})
 
         // Active subscription (read through an API route so it works in admin
         // view-as mode, where owner-only RLS would otherwise hide it).
@@ -587,6 +597,18 @@ export default function Dashboard() {
   const isViewingAs = !!viewAsId
   const effectiveId = viewAsId || user?.id
 
+  // Opening the inbox clears the unread badge (remembering how many were new so
+  // the list can highlight them). Don't mark seen while viewing as another user.
+  useEffect(() => {
+    if (activeTab !== 'Inbox') return
+    setInboxNew(unread)
+    if (unread > 0) {
+      setUnread(0)
+      if (!isViewingAs) fetch('/api/my-notifications', { method: 'POST' }).catch(() => {})
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab])
+
   async function openBillingPortal() {
     setPortalLoading(true)
     try {
@@ -660,6 +682,36 @@ export default function Dashboard() {
   )
 
   const renderContent = () => {
+    if (activeTab === 'Inbox') return (
+      <div>
+        <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Notifications</h1>
+        <p style={{ color: SECONDARY_TEXT, marginBottom: 20, fontSize: 14, fontFamily: 'Inter, sans-serif' }}>Updates about your bands, orders, and subscription — newest first.</p>
+        {notifications.length === 0 ? (
+          <div style={{ background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: '48px 20px', textAlign: 'center', color: SECONDARY_TEXT }}>
+            <div style={{ fontSize: 32, marginBottom: 10, color: GOLD_TEXT }}>🔔</div>
+            <div style={{ fontSize: 14, fontFamily: 'Inter, sans-serif' }}>No notifications yet. As your bands travel and orders ship, they’ll show up here.</div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {notifications.map((n, i) => (
+              <div key={n.id} style={{ background: CARD_BG, border: `1px solid ${i < inboxNew ? GOLD_BORDER : NAVY_BORDER}`, borderLeft: i < inboxNew ? `3px solid ${GOLD}` : `1px solid ${NAVY_BORDER}`, borderRadius: 10, padding: '13px 16px', display: 'flex', gap: 12, alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(10,22,40,0.05)' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 8, flexShrink: 0, background: `${GOLD}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{n.icon}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: NAVY_HEADING, fontFamily: 'Inter, sans-serif' }}>
+                    {n.title}
+                    {i < inboxNew && <span style={{ marginLeft: 8, fontSize: 9, background: GOLD, color: NAVY, borderRadius: 8, padding: '1px 7px', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', verticalAlign: 'middle' }}>NEW</span>}
+                  </div>
+                  {n.detail && <div style={{ fontSize: 13, color: n.type === 'prayer' ? BODY_TEXT : SECONDARY_TEXT, fontStyle: n.type === 'prayer' ? 'italic' : 'normal', marginTop: 2, fontFamily: n.type === 'prayer' ? 'Cormorant Garamond, Georgia, serif' : 'Inter, sans-serif' }}>{n.type === 'prayer' ? `“${n.detail}”` : n.detail}</div>}
+                  {n.band_id && <div style={{ fontSize: 11, color: GOLD_TEXT, fontFamily: 'monospace', marginTop: 3 }}>{n.band_id}</div>}
+                </div>
+                <div style={{ fontSize: 11, color: SECONDARY_TEXT, flexShrink: 0, fontFamily: 'Inter, sans-serif' }}>{timeAgo(n.ts)}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+
     if (activeTab === 'Overview') return (
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, gap: 12, flexWrap: 'wrap' }}>
@@ -1103,7 +1155,10 @@ export default function Dashboard() {
       {!isMobile && (
         <div style={{ background: CARD_BG, borderBottom: `1px solid ${NAVY_BORDER}`, padding: '0 32px', display: 'flex', gap: 4, justifyContent: 'center', boxShadow: '0 1px 4px rgba(10,22,40,0.05)' }}>
           {TABS.map(t => (
-            <button key={t} onClick={() => setActiveTab(t)} style={{ padding: '14px 18px', border: 'none', borderBottom: activeTab === t ? `2px solid ${GOLD}` : '2px solid transparent', background: 'transparent', color: activeTab === t ? GOLD_TEXT : SECONDARY_TEXT, fontSize: 12, fontWeight: activeTab === t ? 700 : 400, cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{t}</button>
+            <button key={t} onClick={() => setActiveTab(t)} style={{ padding: '14px 18px', border: 'none', borderBottom: activeTab === t ? `2px solid ${GOLD}` : '2px solid transparent', background: 'transparent', color: activeTab === t ? GOLD_TEXT : SECONDARY_TEXT, fontSize: 12, fontWeight: activeTab === t ? 700 : 400, cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase', position: 'relative' }}>
+              {t}
+              {t === 'Inbox' && unread > 0 && <span style={{ marginLeft: 6, background: GOLD, color: NAVY, borderRadius: 10, padding: '1px 7px', fontSize: 10, fontWeight: 700, verticalAlign: 'middle' }}>{unread}</span>}
+            </button>
           ))}
         </div>
       )}
@@ -1119,7 +1174,10 @@ export default function Dashboard() {
             return (
               <button key={item} onClick={() => { if (item === 'Shop') { window.location.href = '/store' } else { setActiveTab(item) } }} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 2px 8px', border: 'none', background: 'transparent', cursor: 'pointer', position: 'relative', minWidth: 0 }}>
                 {active && <div style={{ position: 'absolute', top: 0, width: 36, height: 3, background: GOLD, borderRadius: '0 0 3px 3px' }} />}
-                <span style={{ fontSize: 16, lineHeight: 1 }}>{TAB_ICONS[item]}</span>
+                <span style={{ fontSize: 16, lineHeight: 1, position: 'relative' }}>
+                  {TAB_ICONS[item]}
+                  {item === 'Inbox' && unread > 0 && <span style={{ position: 'absolute', top: -4, right: -10, background: GOLD, color: NAVY, borderRadius: 8, minWidth: 15, height: 15, fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>{unread}</span>}
+                </span>
                 <span style={{ fontSize: 9, color: active ? GOLD : 'rgba(200,169,110,0.45)', fontFamily: 'Cinzel, serif', fontWeight: active ? 700 : 400, marginTop: 3, letterSpacing: '0.03em' }}>{item}</span>
               </button>
             )
