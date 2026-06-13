@@ -13,7 +13,11 @@ export type ThemeKey =
   | 'default'
   | 'mountain'
   | 'beach'
-  | 'military';
+  | 'military'
+  | 'breast-cancer'
+  | 'baseball'
+  | 'golf'
+  | 'volleyball';
 
 export interface BandTheme {
   /** Human-readable label shown in admin dropdown */
@@ -208,6 +212,138 @@ export const themes: Record<ThemeKey, BandTheme> = {
     defaultVerse: {
       text:      'Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.',
       reference: 'Joshua 1:9',
+    },
+  },
+
+  // ----------------------------------------------------------
+  // BREAST CANCER AWARENESS  —  Ribbon Pink / Plum / Rose
+  // ----------------------------------------------------------
+  'breast-cancer': {
+    label: 'Breast Cancer Awareness',
+
+    primary:       '#D6457F',  // ribbon pink
+    background:    '#FDEEF4',  // soft blush
+    surface:       '#FFFFFF',  // white
+    surfaceAlt:    '#F8D7E5',  // light petal
+
+    text:          '#3A1226',  // deep plum
+    textMuted:     '#9C5C79',  // muted rose
+    textOnPrimary: '#FFFFFF',  // white on pink buttons
+
+    accent:        '#E5639E',  // bright rose
+    accentAlt:     '#7A2E52',  // dark plum
+
+    tabBar:        '#3A1226',  // deep plum
+    tabActive:     '#E5639E',  // bright rose
+
+    border:        '#F2C9DC',  // soft pink border
+
+    cardAccent:    '#D6457F',  // ribbon pink left-border
+
+    backgroundImage: '/themes/breast-cancer.jpg',
+
+    defaultVerse: {
+      text:      'So do not fear, for I am with you; do not be dismayed, for I am your God. I will strengthen you and help you; I will uphold you with my righteous right hand.',
+      reference: 'Isaiah 41:10',
+    },
+  },
+
+  // ----------------------------------------------------------
+  // BASEBALL  —  Classic Navy / Stitch Red / Leather Cream
+  // ----------------------------------------------------------
+  baseball: {
+    label: 'Baseball',
+
+    primary:       '#13315C',  // classic navy
+    background:    '#F6F3EA',  // leather cream
+    surface:       '#FFFFFF',  // white
+    surfaceAlt:    '#E7E0CE',  // worn leather
+
+    text:          '#14213D',  // dark navy
+    textMuted:     '#5A6B85',  // dugout blue-grey
+    textOnPrimary: '#FFFFFF',  // white on dark buttons
+
+    accent:        '#C0392B',  // stitch red
+    accentAlt:     '#2E6B3E',  // outfield green
+
+    tabBar:        '#14213D',  // dark navy
+    tabActive:     '#C0392B',  // stitch red
+
+    border:        '#D8CFB8',  // cream border
+
+    cardAccent:    '#C0392B',  // stitch red left-border
+
+    backgroundImage: '/themes/baseball.jpg',
+
+    defaultVerse: {
+      text:      'Therefore, since we are surrounded by such a great cloud of witnesses, let us throw off everything that hinders and run with perseverance the race marked out for us.',
+      reference: 'Hebrews 12:1',
+    },
+  },
+
+  // ----------------------------------------------------------
+  // GOLF  —  Fairway Green / Bunker Sand / Sky Blue
+  // ----------------------------------------------------------
+  golf: {
+    label: 'Golf',
+
+    primary:       '#2C6E49',  // fairway green
+    background:    '#EEF5EC',  // morning fairway
+    surface:       '#FFFFFF',  // white
+    surfaceAlt:    '#D8E9D4',  // light green
+
+    text:          '#14271A',  // deep green
+    textMuted:     '#5E7A60',  // muted green
+    textOnPrimary: '#FFFFFF',  // white on green buttons
+
+    accent:        '#D4A94C',  // bunker sand gold
+    accentAlt:     '#5B9BD5',  // sky blue
+
+    tabBar:        '#14271A',  // deep green
+    tabActive:     '#D4A94C',  // bunker sand gold
+
+    border:        '#C4DBC0',  // soft green border
+
+    cardAccent:    '#2C6E49',  // fairway green left-border
+
+    backgroundImage: '/themes/golf.jpg',
+
+    defaultVerse: {
+      text:      'I press on toward the goal to win the prize for which God has called me heavenward in Christ Jesus.',
+      reference: 'Philippians 3:14',
+    },
+  },
+
+  // ----------------------------------------------------------
+  // VOLLEYBALL  —  Court Blue / Sand Gold / Deep Navy
+  // ----------------------------------------------------------
+  volleyball: {
+    label: 'Volleyball',
+
+    primary:       '#2A6FB0',  // court blue
+    background:    '#EAF3FB',  // sea breeze
+    surface:       '#FFFFFF',  // white
+    surfaceAlt:    '#D2E6F6',  // light court
+
+    text:          '#0E2A47',  // deep navy
+    textMuted:     '#4E7398',  // muted blue
+    textOnPrimary: '#FFFFFF',  // white on blue buttons
+
+    accent:        '#E0A23C',  // sand gold
+    accentAlt:     '#16314E',  // deep navy
+
+    tabBar:        '#0E2A47',  // deep navy
+    tabActive:     '#E0A23C',  // sand gold
+
+    border:        '#BBD8EF',  // soft blue border
+
+    cardAccent:    '#2A6FB0',  // court blue left-border
+
+    backgroundImage: '/themes/volleyball.jpg',
+
+    defaultVerse: {
+      text:      'Two are better than one, because they have a good return for their labor: If either of them falls down, one can help the other up.',
+      reference: 'Ecclesiastes 4:9–10',
     },
   },
 

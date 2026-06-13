@@ -3,9 +3,13 @@
 Drop theme background images here. Each theme in `lib/themes.ts` points to a file
 in this folder via its `backgroundImage` field:
 
-- `mountain.jpg` → Mountain theme
-- `beach.jpg`    → Beach theme
-- `military.jpg` → Military theme
+- `mountain.jpg`      → Mountain theme
+- `beach.jpg`         → Beach theme
+- `military.jpg`      → Military theme
+- `breast-cancer.jpg` → Breast Cancer Awareness theme
+- `baseball.jpg`      → Baseball theme
+- `golf.jpg`          → Golf theme
+- `volleyball.jpg`    → Volleyball theme
 
 Guidance:
 - Large, soft, low-contrast images work best — the band page lays a translucent
