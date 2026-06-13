@@ -16,6 +16,8 @@ export default function SettingsPage() {
   const [pw2, setPw2] = useState("");
   const [savingPw, setSavingPw] = useState(false);
   const [pwMsg, setPwMsg] = useState("");
+  const [emailNotif, setEmailNotif] = useState(true);
+  const [savingNotif, setSavingNotif] = useState(false);
 
   const supabase = () =>
     createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
@@ -29,8 +31,9 @@ export default function SettingsPage() {
         return;
       }
       setEmail(user.email || "");
-      const { data: profile } = await sb.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+      const { data: profile } = await sb.from("profiles").select("full_name, email_notifications").eq("id", user.id).maybeSingle();
       setName(profile?.full_name || user.user_metadata?.full_name || "");
+      setEmailNotif(profile?.email_notifications !== false);
       setLoading(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -45,6 +48,18 @@ export default function SettingsPage() {
     if (!error) { await sb.auth.updateUser({ data: { full_name: name.trim() } }); setNameMsg("saved"); setTimeout(() => setNameMsg(""), 2500); }
     else setNameMsg(error.message || "Could not save.");
     setSavingName(false);
+  }
+
+  async function toggleNotif() {
+    const next = !emailNotif;
+    setEmailNotif(next); // optimistic
+    setSavingNotif(true);
+    const sb = supabase();
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = "/signin"; return; }
+    const { error } = await sb.from("profiles").update({ email_notifications: next }).eq("id", user.id);
+    if (error) setEmailNotif(!next); // revert on failure
+    setSavingNotif(false);
   }
 
   async function changePassword() {
@@ -90,6 +105,14 @@ export default function SettingsPage() {
         .set-signout { width: 100%; background: white; border: 1px solid rgba(192,57,43,0.4); color: #C0392B; border-radius: 10px; padding: 14px; font-family: 'Cinzel', serif; font-size: 13px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; }
         .set-link { color: #9A7A35; font-weight: 600; text-decoration: none; }
         .set-link:hover { text-decoration: underline; }
+        .set-toggle-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+        .set-toggle-copy { font-size: 14px; color: #5C6573; line-height: 1.6; max-width: 380px; }
+        .set-switch { position: relative; width: 50px; height: 28px; flex-shrink: 0; border: none; border-radius: 999px; cursor: pointer; transition: background 0.2s; padding: 0; }
+        .set-switch[data-on="true"] { background: #2E7D52; }
+        .set-switch[data-on="false"] { background: #C9CFD6; }
+        .set-switch:disabled { opacity: 0.6; cursor: default; }
+        .set-knob { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform 0.2s; }
+        .set-switch[data-on="true"] .set-knob { transform: translateX(22px); }
       `}</style>
 
       <SiteHeader />
@@ -128,6 +151,26 @@ export default function SettingsPage() {
                 {pwMsg === "saved" && <span className="set-msg-ok">Updated ✓</span>}
               </div>
               {pwMsg && pwMsg !== "saved" && <div className="set-msg-err">{pwMsg}</div>}
+            </div>
+
+            <div className="set-card">
+              <div className="set-card-title">Notifications</div>
+              <div className="set-toggle-row">
+                <div className="set-toggle-copy">
+                  Email me when one of my bands is registered or passed on to someone new. Turn this off to take a break from notifications — you can turn it back on anytime.
+                </div>
+                <button
+                  className="set-switch"
+                  data-on={emailNotif}
+                  onClick={toggleNotif}
+                  disabled={savingNotif}
+                  aria-label="Toggle band notification emails"
+                  role="switch"
+                  aria-checked={emailNotif}
+                >
+                  <span className="set-knob" />
+                </button>
+              </div>
             </div>
 
             <div className="set-card">

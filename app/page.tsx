@@ -890,9 +890,48 @@ export default function HomePage() {
         .section--gold .testi-author { color: var(--navy); }
         .section--gold .testi-place { color: rgba(10,22,40,0.5); }
 
+        /* ── Mission statement band ── */
+        .creed {
+          background:
+            radial-gradient(ellipse 60% 90% at 50% 0%, rgba(200,169,110,0.12) 0%, transparent 60%),
+            linear-gradient(180deg, var(--navy) 0%, var(--navy2) 55%, var(--navy) 100%);
+          border-top: 1px solid rgba(200,169,110,0.18);
+          border-bottom: 1px solid rgba(200,169,110,0.18);
+          text-align: center;
+        }
+        .creed .container { max-width: 860px; }
+        .creed-eyebrow {
+          font-family: 'Cinzel', serif; font-size: 11px; font-weight: 600;
+          letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 26px;
+        }
+        .creed-line {
+          font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 300;
+          font-size: clamp(25px, 3.8vw, 40px); line-height: 1.35; color: var(--cream);
+        }
+        .creed-line b { font-weight: 600; color: var(--gold2); }
+        .creed-closer {
+          margin-top: 20px; font-family: 'Cormorant Garamond', Georgia, serif;
+          font-size: clamp(23px, 3.4vw, 34px); color: var(--gold2); font-weight: 600;
+        }
+
+        /* ── Daily tap callout ── */
+        .daily-inner { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+        .daily-card {
+          background: linear-gradient(165deg, var(--navy2), var(--navy));
+          border: 1px solid rgba(200,169,110,0.32); border-radius: 22px;
+          padding: 38px 34px; box-shadow: 0 24px 70px rgba(10,22,40,0.20);
+        }
+        .daily-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .daily-pulse { width: 11px; height: 11px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 0 rgba(200,169,110,0.6); animation: dailyPulse 2.4s infinite; }
+        @keyframes dailyPulse { 0% { box-shadow: 0 0 0 0 rgba(200,169,110,0.5);} 70% { box-shadow: 0 0 0 12px rgba(200,169,110,0);} 100% { box-shadow: 0 0 0 0 rgba(200,169,110,0);} }
+        .daily-card-label { font-family: 'Cinzel', serif; font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+        .daily-verse { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: clamp(22px, 2.8vw, 28px); line-height: 1.5; color: var(--cream); margin: 0 0 16px; }
+        .daily-ref { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.08em; color: var(--gold2); }
+        .daily-tapnote { margin-top: 26px; padding-top: 20px; border-top: 1px solid rgba(200,169,110,0.18); font-size: 13px; color: rgba(245,237,216,0.55); display: flex; align-items: center; gap: 8px; }
+
         /* ── Responsive ── */
         @media (max-width: 900px) {
-          .mission-inner, .wall-inner, .ministry-inner { grid-template-columns: 1fr; gap: 48px; }
+          .mission-inner, .wall-inner, .ministry-inner, .daily-inner { grid-template-columns: 1fr; gap: 48px; }
           .steps-grid, .plans-grid { grid-template-columns: 1fr 1fr; }
           .testi-grid { grid-template-columns: 1fr; }
           .stats-grid { grid-template-columns: 1fr 1fr; }
@@ -994,6 +1033,20 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* ── Mission statement ── */}
+      <section className="creed section">
+        <div className="container">
+          <Reveal>
+            <div className="creed-eyebrow">Why We Exist</div>
+            <div className="creed-line">
+              We believe in the power of <b>prayer</b>.<br />
+              We believe in the power of <b>community</b>.
+            </div>
+            <div className="creed-closer">That&rsquo;s why we created Prayer Bands.</div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ── Global Prayer Map ── */}
       <section className="globe section">
         <div className="container">
@@ -1063,6 +1116,38 @@ export default function HomePage() {
                 </div>
               </Reveal>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Daily Tap ── */}
+      <section id="daily" className="daily section">
+        <div className="container">
+          <div className="daily-inner">
+            <Reveal>
+              <div className="section-label">A Daily Rhythm</div>
+              <h2 className="section-title">Tap Your Band<br /><em>Every Day</em></h2>
+              <p className="section-body" style={{ marginTop: "24px" }}>
+                Your band isn&rsquo;t only for the day you pass it on. Tap it each morning and it opens to a fresh verse and a moment to pray — a small, steady habit that anchors your day in scripture.
+              </p>
+              <p className="section-body" style={{ marginTop: "16px" }}>
+                Day after day, those quiet taps add up: a rhythm of prayer that grows your faith and keeps you connected to everyone holding a band alongside you.
+              </p>
+              <div style={{ marginTop: "36px" }}>
+                <Link href="/store" className="btn-primary">Start Your Daily Habit</Link>
+              </div>
+            </Reveal>
+            <Reveal delay={200}>
+              <div className="daily-card">
+                <div className="daily-card-top">
+                  <div className="daily-pulse" />
+                  <div className="daily-card-label">Today&rsquo;s Verse</div>
+                </div>
+                <p className="daily-verse">&ldquo;This is the day that the Lord has made; let us rejoice and be glad in it.&rdquo;</p>
+                <div className="daily-ref">Psalm 118:24</div>
+                <div className="daily-tapnote">✝ &nbsp;A new verse and a moment of prayer, every time you tap.</div>
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>

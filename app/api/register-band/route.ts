@@ -93,7 +93,18 @@ export async function POST(req: NextRequest) {
       .update({ status: 'registered' })
       .eq('band_id', bandId)
 
-    const alertEmails = (prevRegs || []).map((r: any) => r.email).filter(Boolean)
+    let alertEmails = (prevRegs || []).map((r: any) => r.email).filter(Boolean)
+    // Respect notification opt-outs: drop any prior holder whose account has
+    // turned band emails off.
+    if (alertEmails.length > 0) {
+      const { data: optedOut } = await supabase
+        .from('profiles')
+        .select('email')
+        .in('email', alertEmails)
+        .eq('email_notifications', false)
+      const muted = new Set((optedOut || []).map((p: any) => (p.email || '').toLowerCase()))
+      if (muted.size > 0) alertEmails = alertEmails.filter((e: string) => !muted.has(e.toLowerCase()))
+    }
     if (alertEmails.length > 0) {
       try {
         const resend = new Resend(process.env.RESEND_API_KEY)
@@ -120,6 +131,7 @@ export async function POST(req: NextRequest) {
                     <a href="https://prayerbands.com/band/${bandId}" style="display:inline-block;background:#2b7bc4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700">View Full Journey ✝</a>
                   </div>
                   <p style="font-size:13px;color:#8896a8;text-align:center;font-style:italic;margin:0">"Go into all the world and preach the gospel." — Mark 16:15</p>
+                  <p style="font-size:11px;color:#b3bccb;text-align:center;margin:18px 0 0">Don't want these emails? <a href="https://prayerbands.com/settings" style="color:#8896a8">Manage notifications</a>.</p>
                 </div>
               </div>
             `
@@ -140,11 +152,11 @@ export async function POST(req: NextRequest) {
       if (bandData?.owner_id) {
         const { data: ownerProfile } = await supabase
           .from('profiles')
-          .select('email, display_name')
+          .select('email, display_name, email_notifications')
           .eq('id', bandData.owner_id)
           .single()
 
-        if (ownerProfile?.email) {
+        if (ownerProfile?.email && ownerProfile.email_notifications !== false) {
           await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/send-band-passed-on`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

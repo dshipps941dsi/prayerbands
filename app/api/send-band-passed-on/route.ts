@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
           </div>
           <div style="background:#f5efe0;padding:16px 32px;text-align:center;border-top:1px solid #e2d5b8">
             <p style="font-size:12px;color:#a0aec0;margin:0">PrayerBands.com</p>
+            <p style="font-size:11px;color:#b3bccb;margin:8px 0 0">Don't want these emails? <a href="https://prayerbands.com/settings" style="color:#a0aec0">Manage notifications</a>.</p>
           </div>
         </div>
       `
