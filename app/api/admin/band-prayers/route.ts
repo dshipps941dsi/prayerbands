@@ -22,6 +22,7 @@ function svc() {
 
 // GET ?bandId=PB-XXXX  -> every prayer/registration for that band (incl. hidden)
 // GET ?flagged=true    -> all flagged prayers (moderation queue)
+// GET ?search=term     -> prayers matching text / name / city / band id (no band ID needed)
 export async function GET(req: NextRequest) {
   if (!(await requireAdmin())) return NextResponse.json({ error: 'Not authorized' }, { status: 401 })
   const admin = svc()
@@ -30,9 +31,24 @@ export async function GET(req: NextRequest) {
   if (bandId) {
     const { data } = await admin
       .from('registrations')
-      .select('id, user_name, city, country, prayer, flagged, registered_at')
+      .select('id, band_id, user_name, city, country, prayer, flagged, registered_at')
       .eq('band_id', bandId.trim())
       .order('registered_at', { ascending: false })
+    return NextResponse.json({ prayers: data || [] })
+  }
+
+  const search = (req.nextUrl.searchParams.get('search') || '').trim()
+  if (search) {
+    // Find a wall prayer without its band ID — match across prayer text, name,
+    // city, or band id. Strip PostgREST-significant chars so the term is literal.
+    const safe = search.replace(/[%,()]/g, ' ').trim()
+    const like = `%${safe}%`
+    const { data } = await admin
+      .from('registrations')
+      .select('id, band_id, user_name, city, country, prayer, flagged, registered_at')
+      .or(`prayer.ilike.${like},user_name.ilike.${like},city.ilike.${like},band_id.ilike.${like}`)
+      .order('registered_at', { ascending: false })
+      .limit(50)
     return NextResponse.json({ prayers: data || [] })
   }
 
@@ -45,7 +61,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ prayers: data || [] })
   }
 
-  return NextResponse.json({ error: 'Specify bandId or flagged' }, { status: 400 })
+  return NextResponse.json({ error: 'Specify bandId, search, or flagged' }, { status: 400 })
 }
 
 // POST { action: 'remove' | 'delete' | 'approve', id }

@@ -79,6 +79,10 @@ export default function AdminPage() {
   const [bandLookup, setBandLookup] = useState('')
   const [bandPrayers, setBandPrayers] = useState<any[] | null>(null)
   const [lookingUp, setLookingUp] = useState(false)
+  // Search prayers by text / name / city — find a wall prayer without its band ID.
+  const [prayerSearch, setPrayerSearch] = useState('')
+  const [searchResults, setSearchResults] = useState<any[] | null>(null)
+  const [searchingPrayers, setSearchingPrayers] = useState(false)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -328,6 +332,30 @@ export default function AdminPage() {
     if (!confirm('Delete this entry entirely? This removes the prayer AND this stop from the band’s journey. This cannot be undone.')) return
     const res = await fetch('/api/admin/band-prayers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) })
     if (res.ok) setBandPrayers(prev => prev ? prev.filter(p => p.id !== id) : prev)
+    else alert('Could not delete the entry. Please try again.')
+  }
+
+  // Search prayers across all bands by text / name / city / band id.
+  async function searchPrayers() {
+    const q = prayerSearch.trim()
+    if (!q) return
+    setSearchingPrayers(true)
+    const res = await fetch('/api/admin/band-prayers?search=' + encodeURIComponent(q))
+    const d = res.ok ? await res.json() : { prayers: [] }
+    setSearchResults(d.prayers || [])
+    setSearchingPrayers(false)
+  }
+
+  // Remove / delete acting on the search results list.
+  async function removeSearchPrayer(id: number) {
+    const res = await fetch('/api/admin/band-prayers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', id }) })
+    if (res.ok) setSearchResults(prev => prev ? prev.map(p => p.id === id ? { ...p, prayer: null, flagged: true } : p) : prev)
+    else alert('Could not remove the prayer. Please try again.')
+  }
+  async function deleteSearchRegistration(id: number) {
+    if (!confirm('Delete this entry entirely? This removes the prayer AND this stop from the band’s journey. This cannot be undone.')) return
+    const res = await fetch('/api/admin/band-prayers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) })
+    if (res.ok) setSearchResults(prev => prev ? prev.filter(p => p.id !== id) : prev)
     else alert('Could not delete the entry. Please try again.')
   }
 
@@ -646,6 +674,45 @@ export default function AdminPage() {
         {/* PRAYERS TAB */}
         {activeTab === 'prayers' && (
           <div>
+            {/* Search prayers (by text / name / city) and remove without the band ID */}
+            <div style={{ background: C.card, border: `1px solid ${C.borderGold}`, borderRadius: 10, padding: '18px 20px', marginBottom: 24 }}>
+              <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 700, color: C.heading, marginBottom: 4 }}>Search prayers</div>
+              <div style={{ fontSize: 12, color: C.secondary, marginBottom: 14, lineHeight: 1.5 }}>Find any wall prayer by its words, the person&rsquo;s name, city, or band ID — no band ID required. Then remove (hide) or delete it.</div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <input value={prayerSearch} onChange={e => setPrayerSearch(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') searchPrayers() }} placeholder="e.g. healing, Maria, Dallas, PB-…" style={{ ...dedInput, maxWidth: 320 }} />
+                <button onClick={searchPrayers} disabled={searchingPrayers} style={{ background: C.gold, color: C.navy, border: 'none', borderRadius: 6, padding: '9px 20px', fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, cursor: searchingPrayers ? 'wait' : 'pointer' }}>{searchingPrayers ? 'Searching…' : 'Search'}</button>
+              </div>
+              {searchResults !== null && (
+                searchResults.length === 0 ? (
+                  <p style={{ color: C.secondary, fontStyle: 'italic', marginTop: 14 }}>No prayers match that search.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14 }}>
+                    <div style={{ fontSize: 12, color: C.secondary }}>{searchResults.length} match{searchResults.length === 1 ? '' : 'es'}{searchResults.length === 50 ? ' (showing first 50 — narrow your search)' : ''}</div>
+                    {searchResults.map(p => (
+                      <div key={p.id} style={{ border: `1px solid ${C.borderNavy}`, borderRadius: 8, padding: '12px 14px', background: '#fff' }}>
+                        <div style={{ fontSize: 12, color: C.secondary, marginBottom: 6 }}>
+                          <strong style={{ color: C.heading }}>{p.user_name || 'Anonymous'}</strong>
+                          {' · '}<a href={`/band/${p.band_id}`} target="_blank" rel="noopener noreferrer" style={{ color: C.goldText, textDecoration: 'none', fontFamily: 'monospace' }}>{p.band_id}</a>
+                          {(p.city || p.country) && <> &middot; {[p.city, p.country].filter(Boolean).join(', ')}</>}
+                          {' · '}{new Date(p.registered_at).toLocaleDateString()}
+                          {p.flagged && <span style={{ marginLeft: 8, color: C.red, fontSize: 11, fontWeight: 600 }}>hidden</span>}
+                        </div>
+                        {p.prayer
+                          ? <p style={{ margin: '0 0 10px', fontSize: 14, color: C.body, fontStyle: 'italic' }}>&ldquo;{p.prayer}&rdquo;</p>
+                          : <p style={{ margin: '0 0 10px', fontSize: 13, color: C.secondary, fontStyle: 'italic' }}>(prayer removed)</p>}
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          {p.prayer && (
+                            <button onClick={() => removeSearchPrayer(p.id)} style={{ padding: '6px 14px', background: C.red, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Remove Prayer</button>
+                          )}
+                          <button onClick={() => deleteSearchRegistration(p.id)} style={{ padding: '6px 14px', background: 'transparent', color: C.red, border: `1px solid ${C.red}`, borderRadius: 6, cursor: 'pointer', fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Delete Entirely</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+            </div>
+
             {/* Look up a band and remove a specific prayer */}
             <div style={{ background: C.card, border: `1px solid ${C.borderGold}`, borderRadius: 10, padding: '18px 20px', marginBottom: 24 }}>
               <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 700, color: C.heading, marginBottom: 4 }}>Look up a band</div>
