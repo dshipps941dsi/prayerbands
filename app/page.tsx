@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import PrayerBandsLogo from "@/components/PrayerBandsLogo";
 import SiteFooter from "@/components/SiteFooter";
@@ -158,7 +158,13 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/home-stats").then(r => r.json()).then(setLive).catch(() => {});
+    const load = () => fetch("/api/home-stats").then(r => r.json()).then(setLive).catch(() => {});
+    load();
+    // Refresh the live data only every 30 minutes — the map is expensive to
+    // rebuild, so we don't want it churning on a short interval (especially on
+    // mobile). Memoized below so it only re-renders when the data changes.
+    const t = setInterval(load, 30 * 60 * 1000);
+    return () => clearInterval(t);
   }, []);
 
   // Stat numbers stay at an aspirational floor until real activity surpasses it.
@@ -170,14 +176,21 @@ export default function HomePage() {
     { value: statValue(live?.stats?.bands, 5200), label: "Bands in the World" },
     { value: "1", label: "God Glorified" },
   ];
-  // Map + ticker switch from the curated sample to real prayers once there's enough.
-  const liveGeo = ((live?.prayers || []) as any[]).filter(p => p.lat != null && p.lng != null);
-  const mapPoints: MapPoint[] = liveGeo.length >= 12
-    ? liveGeo.map(p => ({ lat: p.lat, lng: p.lng, name: p.name, loc: p.location, band: p.band, prayer: p.prayer }))
-    : MAP_POINTS;
-  const tickerPrayers: Prayer[] = ((live?.prayers || []) as any[]).length >= 5
-    ? (live.prayers as any[]).slice(0, 6).map(p => ({ initials: p.initials, location: p.location, text: p.prayer, band: p.band, time: timeAgo(p.registered_at) }))
-    : PRAYERS;
+  // Map + ticker switch from the curated sample to real prayers once there's
+  // enough. Memoized on `live` so the page re-rendering (e.g. the 4s ticker
+  // highlight) doesn't hand the map a new array each time and force a full,
+  // flickery rebuild — it now only rebuilds when the data actually changes.
+  const mapPoints: MapPoint[] = useMemo(() => {
+    const liveGeo = ((live?.prayers || []) as any[]).filter(p => p.lat != null && p.lng != null);
+    return liveGeo.length >= 12
+      ? liveGeo.map(p => ({ lat: p.lat, lng: p.lng, name: p.name, loc: p.location, band: p.band, prayer: p.prayer }))
+      : MAP_POINTS;
+  }, [live]);
+  const tickerPrayers: Prayer[] = useMemo(() => (
+    ((live?.prayers || []) as any[]).length >= 5
+      ? (live.prayers as any[]).slice(0, 6).map(p => ({ initials: p.initials, location: p.location, text: p.prayer, band: p.band, time: timeAgo(p.registered_at) }))
+      : PRAYERS
+  ), [live]);
 
   useEffect(() => {
     const t = setInterval(() => setActivePrayer(p => (p + 1) % tickerPrayers.length), 4000);
