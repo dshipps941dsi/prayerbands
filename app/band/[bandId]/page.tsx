@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
 import Icon, { type IconName } from '@/components/Icon'
+import NotificationsPanel from '@/components/NotificationsPanel'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
 import PrayerTabs from '@/components/PrayerTabs'
 import PurchaseTab from '@/components/PurchaseTab'
@@ -148,6 +149,7 @@ export default function BandPage() {
   const [activeTab, setActiveTab] = useState<'home' | 'prayers' | 'journey' | 'purchase' | 'account'>('home')
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
+  const [notifOpen, setNotifOpen] = useState(false)
 
   // Apply this band's color theme (CSS variables on :root).
   useApplyTheme(status.band?.theme)
@@ -319,14 +321,15 @@ export default function BandPage() {
             <div style={{ fontFamily: serif, fontSize: 13, fontWeight: 600, color: DARK, textAlign: 'right' }}>{currentHolder.user_name}</div>
           )}
           {userId ? (
-            <a href="/dashboard" aria-label="Notifications" title="Notifications" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+            <button onClick={() => setNotifOpen(true)} aria-label="Notifications" title="Notifications" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
               <Icon name="bible" size={22} color={GOLD} bg="#FAF6EF" />
               {unread > 0 && <span style={{ position: 'absolute', top: -7, right: -9, background: GOLD, color: DARK, borderRadius: 10, minWidth: 16, height: 16, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{unread}</span>}
-            </a>
+            </button>
           ) : (
             <a href={`/signin?redirect=${encodeURIComponent(`/band/${bandId}`)}`} style={{ fontFamily: serif, fontSize: 13, fontWeight: 700, color: GOLD, textDecoration: 'none', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '6px 14px', whiteSpace: 'nowrap' }}>Sign in</a>
           )}
         </div>
+        <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} userId={userId} onSeen={() => setUnread(0)} />
       </nav>
     )
   }
