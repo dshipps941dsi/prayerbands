@@ -315,12 +315,9 @@ export default function BandPage() {
           <Logo size={28} withName nameColor={DARK} nameSize={18} />
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ textAlign: 'right' }}>
-            {status.screen === 'personal_space' && currentHolder?.user_name && (
-              <div style={{ fontFamily: serif, fontSize: 13, fontWeight: 600, color: DARK }}>{currentHolder.user_name}</div>
-            )}
-            <div style={{ fontFamily: body, fontSize: 11, color: GRAY, fontStyle: 'italic' }}>{bandId}</div>
-          </div>
+          {status.screen === 'personal_space' && currentHolder?.user_name && (
+            <div style={{ fontFamily: serif, fontSize: 13, fontWeight: 600, color: DARK, textAlign: 'right' }}>{currentHolder.user_name}</div>
+          )}
           {userId ? (
             <a href="/dashboard" aria-label="Notifications" title="Notifications" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
               <Icon name="bell" size={22} color={GOLD} bg="#FAF6EF" />
@@ -674,7 +671,7 @@ export default function BandPage() {
             <div style={{ padding: '24px 20px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700 }}>Your Band</div>
+                  <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700 }}>{bandId}</div>
                   <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginTop: 2 }}>{regs.length === 0 ? 'Just arrived' : 'Held by you'}</div>
                 </div>
                 {transferStep === 'idle' && !transferComplete && (
