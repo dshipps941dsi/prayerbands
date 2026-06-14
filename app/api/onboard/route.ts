@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     await supabase.from('profiles').insert({
       id: userId,
       master_id: masterId,
-      display_name: pastor,
+      full_name: pastor,
       email,
     });
 

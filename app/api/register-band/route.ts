@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
       if (bandData?.owner_id) {
         const { data: ownerProfile } = await supabase
           .from('profiles')
-          .select('email, display_name, email_notifications')
+          .select('email, full_name, email_notifications')
           .eq('id', bandData.owner_id)
           .single()
 
@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               ownerEmail: ownerProfile.email,
-              ownerName: ownerProfile.display_name,
+              ownerName: ownerProfile.full_name,
               bandId,
               newHolderName: name,
               city: geoCity,

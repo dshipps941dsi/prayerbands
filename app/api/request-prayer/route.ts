@@ -17,11 +17,11 @@ export async function POST(req: NextRequest) {
 
     const { data: sender } = await supabase
       .from('profiles')
-      .select('display_name, email')
+      .select('full_name, email')
       .eq('id', userId)
       .single()
 
-    const senderName = anonymous ? 'Someone in your Prayer Bands network' : (sender?.display_name || 'A friend')
+    const senderName = anonymous ? 'Someone in your Prayer Bands network' : (sender?.full_name || 'A friend')
     const senderEmail = sender?.email
 
     const { data: senderBands } = await supabase

@@ -82,14 +82,14 @@ export async function POST(req: NextRequest) {
 
   if (existingProfile) {
     await admin.from('profiles')
-      .update({ org_id: invite.org_id, display_name: name, email })
+      .update({ org_id: invite.org_id, full_name: name, email })
       .eq('id', userId)
   } else {
     const masterId = 'M-' + randomBytes(4).toString('hex').toUpperCase()
     const { error: profErr } = await admin.from('profiles').insert({
       id: userId,
       master_id: masterId,
-      display_name: name,
+      full_name: name,
       email,
       org_id: invite.org_id,
     })

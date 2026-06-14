@@ -19,13 +19,13 @@ export async function GET() {
 
   const { data: profiles } = await admin
     .from('profiles')
-    .select('id, display_name, email, created_at')
+    .select('id, full_name, email, created_at')
     .eq('org_id', orgId)
     .order('created_at', { ascending: true })
 
   const members = (profiles || []).map(p => ({
     id: p.id,
-    display_name: p.display_name,
+    display_name: p.full_name,
     email: p.email,
     created_at: p.created_at,
     is_owner: p.id === org?.admin_id,
