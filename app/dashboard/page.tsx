@@ -47,7 +47,7 @@ const TABS = ['Overview', 'Inbox', 'Prayers', 'Map', 'Account']
 const MOBILE_NAV = ['Overview', 'Inbox', 'Prayers', 'Map', 'Account']
 const TAB_ICONS: Record<string, string> = {
   Overview: '◎',
-  Inbox: '🔔',
+  Inbox: '📖',
   Prayers: '🙏',
   Map: '🌍',
   Shop: '🛍',
@@ -56,7 +56,7 @@ const TAB_ICONS: Record<string, string> = {
 // SVG line icons for the mobile footer — matches the band page's footer menu.
 const MOBILE_TAB_ICON: Record<string, IconName> = {
   Overview: 'church-home',
-  Inbox: 'bell',
+  Inbox: 'bible',
   Prayers: 'prayer-hands',
   Map: 'map-pin',
   Shop: 'shop-bag',
@@ -812,7 +812,7 @@ export default function Dashboard() {
         <p style={{ color: SECONDARY_TEXT, marginBottom: 20, fontSize: 14, fontFamily: 'Inter, sans-serif' }}>Updates about your bands, orders, and subscription — newest first.</p>
         {notifications.length === 0 ? (
           <div style={{ background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: '48px 20px', textAlign: 'center', color: SECONDARY_TEXT }}>
-            <div style={{ fontSize: 32, marginBottom: 10, color: GOLD_TEXT }}>🔔</div>
+            <div style={{ fontSize: 32, marginBottom: 10, color: GOLD_TEXT }}>📖</div>
             <div style={{ fontSize: 14, fontFamily: 'Inter, sans-serif' }}>No notifications yet. As your bands travel and orders ship, they’ll show up here.</div>
           </div>
         ) : (
@@ -1315,7 +1315,7 @@ export default function Dashboard() {
           {user && (
             <button onClick={() => setActiveTab('Inbox')} title="Notifications" style={{ position: 'absolute', right: 32, top: 0, bottom: 0, padding: '0 4px', border: 'none', borderBottom: activeTab === 'Inbox' ? `2px solid ${GOLD}` : '2px solid transparent', background: 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
               <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                <Icon name="bell" size={18} color={activeTab === 'Inbox' ? GOLD_TEXT : SECONDARY_TEXT} bg={CARD_BG} />
+                <Icon name="bible" size={18} color={activeTab === 'Inbox' ? GOLD_TEXT : SECONDARY_TEXT} bg={CARD_BG} />
                 {unread > 0 && <span style={{ position: 'absolute', top: -7, right: -11, background: GOLD, color: NAVY, borderRadius: 10, minWidth: 16, height: 16, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{unread}</span>}
               </span>
             </button>

@@ -320,7 +320,7 @@ export default function BandPage() {
           )}
           {userId ? (
             <a href="/dashboard" aria-label="Notifications" title="Notifications" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-              <Icon name="bell" size={22} color={GOLD} bg="#FAF6EF" />
+              <Icon name="bible" size={22} color={GOLD} bg="#FAF6EF" />
               {unread > 0 && <span style={{ position: 'absolute', top: -7, right: -9, background: GOLD, color: DARK, borderRadius: 10, minWidth: 16, height: 16, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{unread}</span>}
             </a>
           ) : (
