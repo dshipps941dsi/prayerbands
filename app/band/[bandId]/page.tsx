@@ -50,8 +50,6 @@ const GRAY  = 'var(--pb-text-muted, #7A6A5A)'
 // Text on primary/gold buttons — dark on the gold default theme, white on the
 // dark-primary themes (beach/mountain/military), via the theme token.
 const INK   = 'var(--pb-text-on-primary, #0f0d09)'
-// Full-screen page background — theme color, or a subtle themed image when set.
-const PAGEBG = 'var(--pb-page, #FAF6EF)'
 const serif = "'Playfair Display', Georgia, serif"
 // Body/UI text uses a sans stack — serif (above) is reserved for large
 // headings/verses; small serif body text was hard to read.
@@ -153,6 +151,17 @@ export default function BandPage() {
 
   // Apply this band's color theme (CSS variables on :root).
   useApplyTheme(status.band?.theme)
+
+  // Fixed theme backdrop: a viewport-pinned layer behind the content so the
+  // theme background stays put while the page scrolls. Done with a position:fixed
+  // element rather than `background-attachment: fixed`, which iOS Safari ignores.
+  useEffect(() => {
+    const el = document.createElement('div')
+    el.setAttribute('aria-hidden', 'true')
+    el.style.cssText = 'position:fixed;inset:0;z-index:-1;background:var(--pb-page,#FAF6EF);pointer-events:none'
+    document.body.appendChild(el)
+    return () => { el.remove() }
+  }, [])
 
   useEffect(() => {
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -306,6 +315,12 @@ export default function BandPage() {
           <Logo size={28} withName nameColor={DARK} nameSize={18} />
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ textAlign: 'right' }}>
+            {status.screen === 'personal_space' && currentHolder?.user_name && (
+              <div style={{ fontFamily: serif, fontSize: 13, fontWeight: 600, color: DARK }}>{currentHolder.user_name}</div>
+            )}
+            <div style={{ fontFamily: body, fontSize: 11, color: GRAY, fontStyle: 'italic' }}>{bandId}</div>
+          </div>
           {userId ? (
             <a href="/dashboard" aria-label="Notifications" title="Notifications" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
               <Icon name="bell" size={22} color={GOLD} bg="#FAF6EF" />
@@ -314,12 +329,6 @@ export default function BandPage() {
           ) : (
             <a href={`/signin?redirect=${encodeURIComponent(`/band/${bandId}`)}`} style={{ fontFamily: serif, fontSize: 13, fontWeight: 700, color: GOLD, textDecoration: 'none', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '6px 14px', whiteSpace: 'nowrap' }}>Sign in</a>
           )}
-          <div style={{ textAlign: 'right' }}>
-            {status.screen === 'personal_space' && currentHolder?.user_name && (
-              <div style={{ fontFamily: serif, fontSize: 13, fontWeight: 600, color: DARK }}>{currentHolder.user_name}</div>
-            )}
-            <div style={{ fontFamily: body, fontSize: 11, color: GRAY, fontStyle: 'italic' }}>{bandId}</div>
-          </div>
         </div>
       </nav>
     )
@@ -627,12 +636,12 @@ export default function BandPage() {
   }
 
   if (status.screen === 'loading') {
-    return <div style={{ background: PAGEBG, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ fontFamily: body, color: GRAY, fontStyle: 'italic' }}>Loading band journey...</div></div>
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ fontFamily: body, color: GRAY, fontStyle: 'italic' }}>Loading band journey...</div></div>
   }
 
   if (status.screen === 'not_found') {
     return (
-      <div style={{ background: PAGEBG, minHeight: '100vh' }}>
+      <div style={{ minHeight: '100vh' }}>
         <Nav />
         <div style={{ padding: '60px 24px', textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>✝</div>
@@ -647,7 +656,7 @@ export default function BandPage() {
 
   if (status.screen === 'personal_space') {
     return (
-      <div style={{ background: PAGEBG, minHeight: '100vh', fontFamily: body, color: DARK }}>
+      <div style={{ minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
         <StatsStrip regs={regs} />
 
@@ -853,7 +862,7 @@ export default function BandPage() {
 
   if (status.screen === 'incoming_transfer') {
     return (
-      <div style={{ background: PAGEBG, minHeight: '100vh', fontFamily: body, color: DARK }}>
+      <div style={{ minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
         <StatsStrip regs={regs} />
         {claimStep === 'prompt' && (
@@ -876,7 +885,7 @@ export default function BandPage() {
 
   if (status.screen === 'first_tap_gift') {
     return (
-      <div style={{ background: PAGEBG, minHeight: '100vh', fontFamily: body, color: DARK }}>
+      <div style={{ minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
         {claimStep === 'prompt' && (
           <div style={{ margin: '24px 20px', background: 'linear-gradient(135deg, #1a4a3a, #2E7D6B)', borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
@@ -898,7 +907,7 @@ export default function BandPage() {
 
   if (status.screen === 'journey') {
     return (
-      <div style={{ background: PAGEBG, minHeight: '100vh', fontFamily: body, color: DARK }}>
+      <div style={{ minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
         <StatsStrip regs={regs} />
         <div style={{ padding: '24px 20px 0', textAlign: 'center' }}>

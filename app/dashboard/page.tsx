@@ -1305,17 +1305,21 @@ export default function Dashboard() {
       )}
 
       {!isMobile && (
-        <div style={{ background: CARD_BG, borderBottom: `1px solid ${NAVY_BORDER}`, padding: '0 32px', display: 'flex', gap: 4, justifyContent: 'center', boxShadow: '0 1px 4px rgba(10,22,40,0.05)' }}>
-          {TABS.filter(t => t !== 'Inbox' || !!user).map(t => (
-            <button key={t} onClick={() => setActiveTab(t)} title={t === 'Inbox' ? 'Notifications' : undefined} style={{ padding: '14px 18px', border: 'none', borderBottom: activeTab === t ? `2px solid ${GOLD}` : '2px solid transparent', background: 'transparent', color: activeTab === t ? GOLD_TEXT : SECONDARY_TEXT, fontSize: 12, fontWeight: activeTab === t ? 700 : 400, cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase', position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              {t === 'Inbox' ? (
-                <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                  <Icon name="bell" size={18} color={activeTab === 'Inbox' ? GOLD_TEXT : SECONDARY_TEXT} bg={CARD_BG} />
-                  {unread > 0 && <span style={{ position: 'absolute', top: -7, right: -11, background: GOLD, color: NAVY, borderRadius: 10, minWidth: 16, height: 16, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{unread}</span>}
-                </span>
-              ) : t}
+        <div style={{ background: CARD_BG, borderBottom: `1px solid ${NAVY_BORDER}`, padding: '0 32px', display: 'flex', gap: 4, justifyContent: 'center', boxShadow: '0 1px 4px rgba(10,22,40,0.05)', position: 'relative' }}>
+          {TABS.filter(t => t !== 'Inbox').map(t => (
+            <button key={t} onClick={() => setActiveTab(t)} style={{ padding: '14px 18px', border: 'none', borderBottom: activeTab === t ? `2px solid ${GOLD}` : '2px solid transparent', background: 'transparent', color: activeTab === t ? GOLD_TEXT : SECONDARY_TEXT, fontSize: 12, fontWeight: activeTab === t ? 700 : 400, cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              {t}
             </button>
           ))}
+          {/* Notification bell pinned to the far right of the nav bar */}
+          {user && (
+            <button onClick={() => setActiveTab('Inbox')} title="Notifications" style={{ position: 'absolute', right: 32, top: 0, bottom: 0, padding: '0 4px', border: 'none', borderBottom: activeTab === 'Inbox' ? `2px solid ${GOLD}` : '2px solid transparent', background: 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
+              <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                <Icon name="bell" size={18} color={activeTab === 'Inbox' ? GOLD_TEXT : SECONDARY_TEXT} bg={CARD_BG} />
+                {unread > 0 && <span style={{ position: 'absolute', top: -7, right: -11, background: GOLD, color: NAVY, borderRadius: 10, minWidth: 16, height: 16, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{unread}</span>}
+              </span>
+            </button>
+          )}
         </div>
       )}
 
