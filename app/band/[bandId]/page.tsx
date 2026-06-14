@@ -526,6 +526,14 @@ export default function BandPage() {
             </div>
             {authMode === null && (
               <div>
+                <button onClick={() => { if (ageConsent) setAuthMode('email') }} disabled={!ageConsent} style={{ display: 'block', width: '100%', padding: '13px', marginBottom: 10, background: ageConsent ? GOLD : '#ccc', color: ageConsent ? INK : 'white', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: ageConsent ? 'pointer' : 'not-allowed', boxSizing: 'border-box' }}>
+                  Create with email &amp; password
+                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '14px 0' }}>
+                  <span style={{ flex: 1, height: 1, background: 'rgba(44,24,16,0.12)' }} />
+                  <span style={{ fontFamily: body, fontSize: 12, color: GRAY, letterSpacing: '0.06em' }}>or continue with</span>
+                  <span style={{ flex: 1, height: 1, background: 'rgba(44,24,16,0.12)' }} />
+                </div>
                 <button onClick={handleGoogleSignIn} disabled={!ageConsent} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '13px', marginBottom: 10, background: ageConsent ? DARK : '#ccc', color: 'white', border: 'none', borderRadius: 10, fontFamily: body, fontSize: 15, fontWeight: 600, cursor: ageConsent ? 'pointer' : 'not-allowed', boxSizing: 'border-box' }}>
                   <span style={{ fontSize: 18 }}>G</span> Continue with Google
                 </button>
@@ -542,9 +550,6 @@ export default function BandPage() {
                   boxSizing: 'border-box',
                 }}>
                   <span style={{ fontSize: 18, fontWeight: 700 }}>f</span> Continue with Facebook
-                </button>
-                <button onClick={() => { if (ageConsent) setAuthMode('email') }} disabled={!ageConsent} style={{ display: 'block', width: '100%', padding: '13px', background: 'transparent', color: ageConsent ? DARK : '#ccc', border: `1px solid ${ageConsent ? 'rgba(44,24,16,0.2)' : '#eee'}`, borderRadius: 10, fontFamily: body, fontSize: 15, cursor: ageConsent ? 'pointer' : 'not-allowed', boxSizing: 'border-box' }}>
-                  Create with email & password
                 </button>
               </div>
             )}
