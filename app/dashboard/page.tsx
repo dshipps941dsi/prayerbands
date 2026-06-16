@@ -888,6 +888,11 @@ export default function Dashboard() {
                 ⚙ Settings
               </a>
             )}
+            {!isViewingAs && user?.email === ADMIN_EMAIL && (
+              <a href="/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: NAVY, border: `1px solid ${NAVY}`, borderRadius: 10, padding: '10px 16px', fontSize: 12, textDecoration: 'none', color: GOLD, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', fontWeight: 600, boxShadow: '0 1px 4px rgba(10,22,40,0.06)', whiteSpace: 'nowrap' }}>
+                🛠 Admin
+              </a>
+            )}
           </div>
         </div>
 
@@ -1153,11 +1158,18 @@ export default function Dashboard() {
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Account</h1>
-          {!isViewingAs && (
-            <a href="/settings" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: '9px 16px', fontSize: 12, textDecoration: 'none', color: BODY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', fontWeight: 600, boxShadow: '0 1px 4px rgba(10,22,40,0.06)', whiteSpace: 'nowrap' }}>
-              ⚙ Settings
-            </a>
-          )}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {!isViewingAs && (
+              <a href="/settings" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: '9px 16px', fontSize: 12, textDecoration: 'none', color: BODY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', fontWeight: 600, boxShadow: '0 1px 4px rgba(10,22,40,0.06)', whiteSpace: 'nowrap' }}>
+                ⚙ Settings
+              </a>
+            )}
+            {!isViewingAs && user?.email === ADMIN_EMAIL && (
+              <a href="/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: NAVY, border: `1px solid ${NAVY}`, borderRadius: 10, padding: '9px 16px', fontSize: 12, textDecoration: 'none', color: GOLD, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', fontWeight: 600, boxShadow: '0 1px 4px rgba(10,22,40,0.06)', whiteSpace: 'nowrap' }}>
+                🛠 Admin
+              </a>
+            )}
+          </div>
         </div>
 
         {/* Recent Activity */}
