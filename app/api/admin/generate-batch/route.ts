@@ -28,11 +28,16 @@ export async function POST(req: NextRequest) {
   if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))
+  // Each row is either a theme (e.g. 'baseball') OR a solid color (e.g. 'Black').
   const clean = (Array.isArray(body.items) ? body.items : [])
-    .map((it: any) => ({ theme: String(it.theme || '').trim(), quantity: Math.max(0, Math.round(Number(it.quantity) || 0)) }))
-    .filter((it: { theme: string; quantity: number }) => it.theme && it.quantity > 0)
+    .map((it: any) => ({
+      theme: String(it.theme || '').trim(),
+      color: String(it.color || '').trim(),
+      quantity: Math.max(0, Math.round(Number(it.quantity) || 0)),
+    }))
+    .filter((it: { theme: string; color: string; quantity: number }) => (it.theme || it.color) && it.quantity > 0)
 
-  if (!clean.length) return NextResponse.json({ error: 'Add at least one theme with a quantity.' }, { status: 400 })
+  if (!clean.length) return NextResponse.json({ error: 'Add at least one theme or color with a quantity.' }, { status: 400 })
   const total = clean.reduce((s: number, it: { quantity: number }) => s + it.quantity, 0)
   if (total > MAX_TOTAL) return NextResponse.json({ error: `Total ${total} exceeds the ${MAX_TOTAL}-per-batch limit.` }, { status: 400 })
 
@@ -57,7 +62,9 @@ export async function POST(req: NextRequest) {
       const id = genId(existing)
       rows.push({
         band_id: id,
-        theme: it.theme,
+        // Solid-color rows are the classic ('default') design in a physical color.
+        theme: it.theme || 'default',
+        color: it.color || null,
         status: 'unregistered',
         nfc_url: `https://prayerbands.com/r/${id}`,
         outside_text: 'PrayerBands.com ✝',
@@ -77,6 +84,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     batch,
     total: rows.length,
-    bands: rows.map(r => ({ band_id: r.band_id, theme: r.theme, nfc_url: r.nfc_url, outside_text: r.outside_text, inside_text: r.inside_text })),
+    bands: rows.map(r => ({ band_id: r.band_id, theme: r.theme, color: r.color || '', nfc_url: r.nfc_url, outside_text: r.outside_text, inside_text: r.inside_text })),
   })
 }
