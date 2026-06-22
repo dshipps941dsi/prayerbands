@@ -11,6 +11,8 @@ import PurchaseTab from '@/components/PurchaseTab'
 import { useApplyTheme } from '@/components/ThemeProvider'
 import { track } from '@/lib/analytics'
 import { CATEGORIES, getVerseForCategory } from '@/lib/verses'
+import { recordVerseView, type VerseWalk } from '@/lib/verseWalk'
+import WalkLine from '@/components/band/WalkLine'
 import IncomingGiftScreen from './screens/IncomingGiftScreen'
 
 type Registration = {
@@ -150,6 +152,7 @@ export default function BandPage() {
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
   const [notifOpen, setNotifOpen] = useState(false)
+  const [walk, setWalk] = useState<VerseWalk>({ total: 0, run: 0, returning: false })
 
   // Apply this band's color theme (CSS variables on :root).
   useApplyTheme(status.band?.theme)
@@ -178,6 +181,17 @@ export default function BandPage() {
       .then(d => { if (d) setUnread(d.unread || 0) })
       .catch(() => {})
   }, [userId])
+
+  // "Your walk": record today's verse view and load the day count. Cross-device
+  // for signed-in users (Supabase); localStorage fallback for accountless holders
+  // that merges in on sign-up. Only counts when the owner is viewing their band.
+  useEffect(() => {
+    if (status.screen !== 'personal_space' || !bandId) return
+    let alive = true
+    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+    recordVerseView({ bandId, userId, supabase }).then(w => { if (alive) setWalk(w) }).catch(() => {})
+    return () => { alive = false }
+  }, [status.screen, bandId, userId])
 
   // Returning from sign-up after choosing "Create Free Account" on the
   // pass-on save prompt — auto-open the transfer flow.
@@ -362,8 +376,14 @@ export default function BandPage() {
 
   function VerseEngine() {
     const verse = getVerseForCategory(verseCategory)
+    const hour = new Date().getHours()
+    const greeting = walk.returning ? 'Welcome back'
+      : hour < 12 ? 'Good morning'
+      : hour < 18 ? 'Good afternoon' : 'Good evening'
     return (
       <div style={{ margin: '20px 20px 0' }}>
+        <div style={{ textAlign: 'center', fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK, marginBottom: 2 }}>{greeting}</div>
+        <WalkLine total={walk.total} run={walk.run} onOpenJourney={() => setActiveTab('journey')} />
         <div style={{ background: `linear-gradient(135deg, ${NAVY}, ${NAVY_LT})`, borderRadius: 14, padding: '24px 20px', color: 'white', textAlign: 'center' }}>
           <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.6, marginBottom: 12 }}>
             {verseCategory === 'all' ? "Today's Verse" : CATEGORIES.find(c => c.id === verseCategory)?.label}
@@ -658,7 +678,6 @@ export default function BandPage() {
     return (
       <div style={{ minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
-        <StatsStrip regs={regs} />
 
         {activeTab === 'home' && (
           <>
