@@ -37,7 +37,6 @@ export async function POST(req: NextRequest) {
 
     const ownsBand = !!(ownedBands && ownedBands.length)
     const hasRegistration = !!(registeredBands && registeredBands.length)
-    console.log('[circles/create] band check', { userId: user.id, ownsBand, hasRegistration })
 
     if (!ownsBand && !hasRegistration) {
       return NextResponse.json(

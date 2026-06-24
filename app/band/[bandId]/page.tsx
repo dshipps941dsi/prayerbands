@@ -238,11 +238,12 @@ export default function BandPage() {
     if (!claimName.trim()) return
     setSubmitting(true)
     try {
-      await fetch('/api/register-band', {
+      const res = await fetch('/api/register-band', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bandId, name: claimName, city: claimCity, state: claimState, country: claimCountry, prayer: claimPrayer, userId: userId ?? null }),
       })
+      if (!res.ok) throw new Error('register-band failed')
       localStorage.setItem(`holder_${bandId}`, 'true')
       setClaimStep('done')
       setTimeout(() => { window.location.reload() }, 8000)
@@ -304,11 +305,14 @@ export default function BandPage() {
     setSubmitting(true)
     try {
       const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-      await fetch('/api/register-band', {
+      const res = await fetch('/api/register-band', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bandId, name: claimName, city: claimCity, state: claimState, country: claimCountry, prayer: claimPrayer, userId: userId ?? null }),
       })
+      // Only complete the transfer once the new holder's registration actually saved,
+      // otherwise the chain loses a link (band marked registered with no new row).
+      if (!res.ok) throw new Error('register-band failed')
       await supabase.from('band_transfers')
         .update({ status: 'completed', completed_at: new Date().toISOString() })
         .eq('band_id', bandId).eq('status', 'pending')

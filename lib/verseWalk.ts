@@ -14,8 +14,10 @@ const today = () => {
 const dayDiff = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000)
 
 function advance(prev: Raw, t: string) {
-  if (prev.last_seen === t) return { row: prev, returning: false, changed: false }
   const gap = prev.last_seen ? dayDiff(prev.last_seen, t) : null
+  // Already counted today (gap 0) or a future last_seen from clock skew (gap < 0):
+  // leave the walk untouched so we never double-increment in a single day.
+  if (gap !== null && gap <= 0) return { row: prev, returning: false, changed: false }
   const run = gap === 1 ? prev.run + 1 : 1 // consecutive → +1; else gentle reset
   const total = prev.total + 1 // never decreases
   return { row: { total, run, last_seen: t } as Raw, returning: gap !== null && gap >= WELCOME_BACK_DAYS, changed: true }
@@ -54,14 +56,13 @@ export async function recordVerseView(opts: {
     ? { total: data.total ?? 0, run: data.run ?? 0, last_seen: data.last_seen ?? null }
     : { total: 0, run: 0, last_seen: null }
 
-  // one-time merge of a walk earned while logged out — keep the higher values
+  // One-time seed of a walk earned while logged out: only when this user has no
+  // DB row yet (brand-new account). Once a server row exists it's authoritative —
+  // merging by max() would double-count days recorded on both, or silently drop
+  // the local walk. localStorage is cleared below either way.
   const local = readLocal(bandId)
-  const merged = local.total > base.total || local.run > base.run
-  if (merged) base = {
-    total: Math.max(base.total, local.total),
-    run: Math.max(base.run, local.run),
-    last_seen: [base.last_seen, local.last_seen].filter(Boolean).sort().pop() ?? null,
-  }
+  const merged = !data && (local.total > 0 || local.run > 0)
+  if (merged) base = { total: local.total, run: local.run, last_seen: local.last_seen }
 
   const { row, returning, changed } = advance(base, t)
   if (changed || merged) {

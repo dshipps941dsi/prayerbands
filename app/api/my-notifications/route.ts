@@ -168,9 +168,11 @@ export async function GET(req: NextRequest) {
   const trimmed = visible.slice(0, 40)
 
   const lastSeen = profile?.notifications_last_seen ? new Date(profile.notifications_last_seen).getTime() : 0
-  const unread = trimmed.filter(n => new Date(n.ts).getTime() > lastSeen).length
+  // Count unread over everything visible, not just the trimmed page, so the badge
+  // doesn't under-report when there are more than 40 items.
+  const unread = visible.filter(n => new Date(n.ts).getTime() > lastSeen).length
 
-  return NextResponse.json({ notifications: trimmed, unread, days })
+  return NextResponse.json({ notifications: trimmed, unread, days, lastSeen })
 }
 
 // POST { action: 'dismiss', id } — hide one notification (self only).

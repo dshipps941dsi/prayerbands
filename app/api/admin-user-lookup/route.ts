@@ -27,6 +27,9 @@ export async function GET(req: NextRequest) {
 
   const q = (req.nextUrl.searchParams.get('q') || '').trim()
   if (!q) return NextResponse.json({ profile: null })
+  // Strip PostgREST-significant chars so the value can't break out of the
+  // .or() filter below (same guard as admin/band-prayers).
+  const safe = q.replace(/[%,()]/g, '')
 
   // Service key bypasses the owner-only RLS on profiles.
   const admin = createClient(
@@ -38,7 +41,7 @@ export async function GET(req: NextRequest) {
   const { data: profiles } = await admin
     .from('profiles')
     .select('*')
-    .or(`email.ilike.%${q}%,full_name.ilike.%${q}%`)
+    .or(`email.ilike.%${safe}%,full_name.ilike.%${safe}%`)
     .limit(1)
 
   let profile: any = profiles?.[0] || null

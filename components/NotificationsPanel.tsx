@@ -62,7 +62,10 @@ export default function NotificationsPanel({
   const [notifs, setNotifs] = useState<Notif[]>([])
   const [loading, setLoading] = useState(false)
   const [days, setDays] = useState(7)
-  const [newCount, setNewCount] = useState(0)
+  // Timestamp the inbox was last seen, captured from the first open fetch (before
+  // we mark it seen). "NEW" is derived per-item from ts > seenTs, so it stays
+  // correct after dismissing or widening the window — unlike an index cutoff.
+  const [seenTs, setSeenTs] = useState(0)
   const [prayed, setPrayed] = useState<Set<string>>(new Set())
   const [loadingMore, setLoadingMore] = useState(false)
 
@@ -81,7 +84,7 @@ export default function NotificationsPanel({
     fetchNotifs(7).then(data => {
       if (cancelled || !data) { setLoading(false); return }
       setNotifs(data.notifications || [])
-      setNewCount(data.unread || 0)
+      setSeenTs(data.lastSeen || 0)
       setLoading(false)
       if ((data.unread || 0) > 0) {
         fetch('/api/my-notifications', { method: 'POST' }).catch(() => {})
@@ -150,9 +153,9 @@ export default function NotificationsPanel({
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {notifs.map((n, i) => {
+              {notifs.map((n) => {
                 const isPrayerLike = n.type === 'prayer' || n.type === 'prayer_request'
-                const isNew = i < newCount
+                const isNew = !!n.ts && new Date(n.ts).getTime() > seenTs
                 return (
                   <div key={n.id} style={{ background: CARD, border: `1px solid ${isNew ? GOLD_BORDER : BORDER}`, borderLeft: isNew ? `3px solid ${GOLD}` : `1px solid ${BORDER}`, borderRadius: 10, padding: '11px 13px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                     <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, background: `${GOLD}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>{n.icon || '✝'}</div>

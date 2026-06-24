@@ -1,9 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 
+// Standardize on SUPABASE_SERVICE_KEY (repo convention) but fall back to the
+// older SUPABASE_SERVICE_ROLE_KEY so this works whichever name is set in Vercel.
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!
+
 export async function getOrgBySubdomain(subdomain: string) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    SERVICE_KEY
   )
   const { data, error } = await supabase
     .from('organizations')
@@ -17,7 +21,7 @@ export async function getOrgBySubdomain(subdomain: string) {
 export async function getOrgForUser(userId: string) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    SERVICE_KEY
   )
   const { data, error } = await supabase
     .from('profiles')
@@ -31,7 +35,7 @@ export async function getOrgForUser(userId: string) {
 export async function getOrgStats(orgId: string) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    SERVICE_KEY
   )
   const { data } = await supabase.rpc('get_org_stats', { org_uuid: orgId })
   return data
@@ -40,7 +44,7 @@ export async function getOrgStats(orgId: string) {
 export async function getOrgBands(orgId: string, limit = 50) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    SERVICE_KEY
   )
   const { data } = await supabase
     .from('bands')
@@ -59,7 +63,7 @@ export async function getOrgBands(orgId: string, limit = 50) {
 export async function getOrgPrayers(orgId: string, limit = 20) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    SERVICE_KEY
   )
   const { data } = await supabase
     .from('registrations')
@@ -73,7 +77,7 @@ export async function getOrgPrayers(orgId: string, limit = 20) {
 export async function getOrgOrders(orgId: string) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    SERVICE_KEY
   )
   const { data } = await supabase
     .from('orders')

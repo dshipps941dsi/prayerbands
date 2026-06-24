@@ -11,6 +11,13 @@ create table if not exists verse_walks (
   updated_at timestamptz not null default now()
 );
 alter table verse_walks enable row level security;
+
+-- Drop-then-create so this file is safe to re-run.
+drop policy if exists "own walk select" on verse_walks;
+drop policy if exists "own walk insert" on verse_walks;
+drop policy if exists "own walk update" on verse_walks;
 create policy "own walk select" on verse_walks for select using (auth.uid() = user_id);
 create policy "own walk insert" on verse_walks for insert with check (auth.uid() = user_id);
 create policy "own walk update" on verse_walks for update using (auth.uid() = user_id);
+
+notify pgrst, 'reload schema';

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 import ShareSheet from '@/components/ShareSheet'
@@ -35,7 +35,7 @@ interface PrayerRequest {
 
 type Tab = 'prayers' | 'members' | 'about'
 
-export default function CirclePage() {
+function CirclePageInner() {
   const router = useRouter()
   const params = useParams()
   const searchParams = useSearchParams()
@@ -1090,5 +1090,14 @@ function PrayerRequestCard({
         )}
       </div>
     </div>
+  )
+}
+
+// useSearchParams() must be inside a Suspense boundary in this build.
+export default function CirclePage() {
+  return (
+    <Suspense fallback={null}>
+      <CirclePageInner />
+    </Suspense>
   )
 }
