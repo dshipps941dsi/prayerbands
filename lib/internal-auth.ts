@@ -9,7 +9,7 @@ const ADMIN_EMAIL = 'dshipps941@gmail.com'
 // from another route (shared secret header) — never by anonymous public callers.
 // Fail closed: with no secret configured and no admin session, access is denied.
 export async function isInternalOrAdmin(req: NextRequest): Promise<boolean> {
-  const secret = process.env.INTERNAL_API_SECRET
+  const secret = process.env.INTERNAL_API_SECRET || process.env.INTERNAL_API_SECRET_KEY
   if (secret && req.headers.get('x-internal-secret') === secret) return true
 
   const cookieStore = await cookies()

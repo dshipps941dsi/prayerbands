@@ -197,7 +197,7 @@ export default function AdminPage() {
 
   async function loadStats() {
     const { data: ordersData } = await supabase.from('orders').select('status, amount_total')
-    const { count: bandCount } = await supabase.from('bands').select('*', { count: 'exact', head: true }).eq('status', 'available')
+    const { count: bandCount } = await supabase.from('bands').select('band_id', { count: 'exact', head: true }).eq('status', 'available')
 
     if (ordersData) {
       const total = ordersData.length
