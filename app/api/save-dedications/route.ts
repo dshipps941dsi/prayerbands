@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionOrg } from '@/lib/org-auth'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
@@ -61,26 +62,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true })
   }
 
-  // ── Array path: existing checkout/order flow (links owner + dedication). ──
-  const { dedications, userId } = body
+  // ── Array path: checkout/order flow (links owner + dedication). ──
+  const { dedications } = body
 
   if (!dedications || !Array.isArray(dedications)) {
     return NextResponse.json({ error: 'Invalid dedications' }, { status: 400 })
   }
 
+  // Owner is taken from the session, never the body, so a caller can't link a
+  // band to someone else. Updates are restricted to UN-OWNED bands (owner_id is
+  // null), so this can never claim or overwrite a band that already belongs to
+  // someone — the original threat was an anon caller passing any band_id + uid.
+  const { userId: authUserId } = await getSessionOrg()
+
   for (const d of dedications) {
-    if (d.bandId && (d.recipientName?.trim() || d.note?.trim())) {
-      await supabase.from('bands').update({
-        dedication_recipient: d.recipientName?.trim() || null,
-        dedication_note: d.note?.trim() || null,
-        owner_id: userId ?? null,
-      }).eq('band_id', d.bandId)
-    } else if (d.bandId && userId) {
-      // Still link owner even if no dedication text
-      await supabase.from('bands').update({
-        owner_id: userId,
-      }).eq('band_id', d.bandId)
+    if (!d.bandId) continue
+    const hasText = !!(d.recipientName?.trim() || d.note?.trim())
+    if (!hasText && !authUserId) continue
+    const patch: Record<string, string | null> = {}
+    if (hasText) {
+      patch.dedication_recipient = d.recipientName?.trim() || null
+      patch.dedication_note = d.note?.trim() || null
     }
+    if (authUserId) patch.owner_id = authUserId
+    await supabase.from('bands').update(patch).eq('band_id', d.bandId).is('owner_id', null)
   }
 
   return NextResponse.json({ success: true })

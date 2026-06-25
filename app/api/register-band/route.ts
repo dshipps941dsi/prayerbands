@@ -159,7 +159,10 @@ export async function POST(req: NextRequest) {
         if (ownerProfile?.email && ownerProfile.email_notifications !== false) {
           await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/send-band-passed-on`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'x-internal-secret': process.env.INTERNAL_API_SECRET || '',
+            },
             body: JSON.stringify({
               ownerEmail: ownerProfile.email,
               ownerName: ownerProfile.full_name,

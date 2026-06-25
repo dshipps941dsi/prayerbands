@@ -42,3 +42,6 @@ next-env.d.ts
 
 # throwaway local setup note (never commit)
 _SUPABASE_MCP_SETUP.local.md
+
+# local MCP config (contains a Supabase token — never commit)
+.mcp.json

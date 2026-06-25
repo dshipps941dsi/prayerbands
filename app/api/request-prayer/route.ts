@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { getSessionOrg } from '@/lib/org-auth'
 
 export async function POST(req: NextRequest) {
   const supabase = createClient(
@@ -10,8 +11,12 @@ export async function POST(req: NextRequest) {
   const resend = new Resend(process.env.RESEND_API_KEY!)
 
   try {
-    const { userId, prayerText, anonymous, excludedEmails = [] } = await req.json()
-    if (!userId || !prayerText) {
+    // Identify the sender from the session, never from the body — otherwise any
+    // caller could impersonate another user and spam that user's network.
+    const { userId } = await getSessionOrg()
+    if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    const { prayerText, anonymous, excludedEmails = [] } = await req.json()
+    if (!prayerText) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -122,7 +127,8 @@ export async function POST(req: NextRequest) {
       sent++
     }
 
-    return NextResponse.json({ success: true, sent, network: networkEmails, excluded: excludedEmails.length })
+    // Do not echo the network (which contains recipients' email addresses).
+    return NextResponse.json({ success: true, sent })
 
   } catch (err: any) {
     console.error('Prayer request error:', err)

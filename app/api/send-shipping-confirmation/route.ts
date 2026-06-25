@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
+import { isInternalOrAdmin } from '@/lib/internal-auth'
 
 export async function POST(req: NextRequest) {
+  if (!(await isInternalOrAdmin(req))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
     const { orderId, customerEmail, customerName, bandIds, trackingNumber } = await req.json()
 

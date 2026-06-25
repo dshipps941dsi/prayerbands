@@ -22,9 +22,11 @@ export default function BlessingPage() {
   useEffect(() => {
     if (!bandId) return
     async function load() {
+      // Only band_id is used here; avoid select('*') so anon never pulls the
+      // dedication_token (which is column-revoked from anon/authenticated).
       const { data: band } = await supabase
         .from('bands')
-        .select('*')
+        .select('band_id')
         .eq('band_id', bandId)
         .single()
 

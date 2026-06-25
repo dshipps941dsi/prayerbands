@@ -19,11 +19,18 @@ export async function POST(req: NextRequest) {
     // Get the prayer request details
     const { data: prayer } = await supabase
       .from('chain_prayers')
-      .select('prayer_text, requester_user_id, requester_name, sender_contact')
+      .select('prayer_text, requester_user_id, requester_name, sender_contact, targets')
       .eq('id', chainPrayerId)
       .single()
 
     if (!prayer) return NextResponse.json({ error: 'Prayer not found' }, { status: 404 })
+
+    // The ack link carries the recipient's email; only allow acknowledgements
+    // from an address this prayer was actually sent to, so the endpoint can't be
+    // used to forge prayers or spam the requester with arbitrary names.
+    const targets = Array.isArray(prayer.targets) ? prayer.targets : []
+    const isRecipient = targets.some((t: { email?: string }) => (t?.email || '').toLowerCase() === String(acknowledgerEmail).toLowerCase())
+    if (!isRecipient) return NextResponse.json({ error: 'Not a recipient of this prayer' }, { status: 403 })
 
     // Save acknowledgment
     await supabase.from('prayer_acknowledgments').insert({

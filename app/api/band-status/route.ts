@@ -33,6 +33,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ screen: 'not_found' })
   }
 
+  // The dedication token gates dedication writes — never hand it to a public client.
+  delete (band as { dedication_token?: string }).dedication_token
+
   // Fetch registrations in order
   const { data: registrations } = await supabase
     .from('registrations')

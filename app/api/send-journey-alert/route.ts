@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { isInternalOrAdmin } from '@/lib/internal-auth'
 
 export async function POST(req: NextRequest) {
+  if (!(await isInternalOrAdmin(req))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const resend = new Resend(process.env.RESEND_API_KEY)
   try {
     const { bandId, newHolder, city, state, country, prayer, emails } = await req.json()
