@@ -437,8 +437,7 @@ export default function HomePage() {
       <section className="gift">
         <div className="container gift-inner">
           <Reveal className="gift-visual">
-            {/* Image slot: gift box + band photo. */}
-            <div className="gift-box"><div className="gift-band">✝ Pray. Trust. Believe.</div></div>
+            <img className="gift-box-img" src="/home/prayer-band-box.webp" alt="A Prayer Band in a kraft gift box that reads Pray. Wear. Share." />
             <div className="gift-note">
               <div className="gift-note-label">A message, just for you</div>
               <div className="gift-note-to">To John</div>
@@ -717,8 +716,7 @@ const styles = `
   .gift { background:linear-gradient(180deg,var(--navy2),var(--navy)); padding:96px 0; }
   .gift-inner { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; }
   .gift-visual { position:relative; }
-  .gift-box { height:280px; border-radius:16px; background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(200,169,110,0.12),transparent 70%),linear-gradient(145deg,#13243f,#0a1628); border:1px solid var(--lineG); display:flex; align-items:center; justify-content:center; box-shadow:0 26px 60px rgba(0,0,0,0.4); }
-  .gift-band { width:74%; height:64px; border-radius:34px; background:linear-gradient(145deg,#0e1f3a,#070f1e); border:1px solid var(--lineG); display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-size:0.7rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold2); }
+  .gift-box-img { display:block; width:100%; max-width:470px; height:auto; margin:0 auto; filter:drop-shadow(0 28px 56px rgba(0,0,0,0.55)); }
   .gift-note { position:absolute; right:-12px; bottom:-28px; width:230px; background:#fffdf8; border-radius:12px; padding:18px 20px; box-shadow:0 20px 50px rgba(0,0,0,0.35); transform:rotate(3deg); }
   .gift-note-label { font-family:'Cinzel',serif; font-size:0.56rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--goldT); margin-bottom:8px; }
   .gift-note-to { font-family:'Cormorant Garamond',serif; font-weight:700; font-size:1.1rem; color:var(--ink); }
