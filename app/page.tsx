@@ -26,11 +26,11 @@ const TOP_COUNTRIES_SAMPLE = [
 ];
 
 const STEPS = [
-  { num: "1", title: "Wear Your Band", desc: "A daily reminder of your faith on your wrist." },
-  { num: "2", title: "Tap Your Phone", desc: "NFC technology makes it simple. Just tap & go." },
-  { num: "3", title: "Connect", desc: "Join prayer circles and encourage others." },
-  { num: "4", title: "Receive Daily Verses", desc: "Get a new, personalized verse every day." },
-  { num: "5", title: "See Your Impact", desc: "Track where your band has traveled and the lives it's touched." },
+  { num: "1", img: "/home/step-1.png", title: "Wear Your Band", desc: "A daily reminder of your faith on your wrist." },
+  { num: "2", img: "/home/step-2.png", title: "Tap Your Phone", desc: "NFC technology makes it simple. Just tap & go." },
+  { num: "3", img: "/home/step-3.png", title: "Connect", desc: "Join prayer circles and encourage others." },
+  { num: "4", img: "/home/step-4.png", title: "Receive Daily Verses", desc: "Get a new, personalized verse every day." },
+  { num: "5", img: "/home/step-5.png", title: "See Your Impact", desc: "Track where your band has traveled and the lives it's touched." },
 ];
 
 const TOPICS = [
@@ -317,7 +317,7 @@ export default function HomePage() {
           <div className="steps">
             {STEPS.map((s, i) => (
               <Reveal key={s.num} delay={i * 90} className="step">
-                <div className="step-num">{s.num}</div>
+                {s.img ? <img className="step-img" src={s.img} alt={`Step ${s.num}: ${s.title}`} /> : <div className="step-num">{s.num}</div>}
                 <div className="step-title">{s.title}</div>
                 <div className="step-desc">{s.desc}</div>
               </Reveal>
@@ -647,6 +647,7 @@ const styles = `
   .steps { display:grid; grid-template-columns:repeat(5,1fr); gap:24px; margin-top:56px; position:relative; }
   .step { text-align:center; }
   .step-num { width:62px; height:62px; margin:0 auto 20px; border-radius:50%; background:linear-gradient(145deg,var(--gold2),var(--gold)); color:var(--navy); font-family:'Cinzel',serif; font-weight:700; font-size:1.4rem; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 24px rgba(200,169,110,0.3); }
+  .step-img { display:block; width:120px; height:120px; object-fit:contain; margin:0 auto 20px; }
   .step-title { font-family:'Cormorant Garamond',serif; font-weight:600; font-size:1.3rem; color:var(--ink); margin-bottom:8px; }
   .step-desc { font-size:0.85rem; color:var(--ink2); line-height:1.7; max-width:200px; margin:0 auto; }
   @media (max-width:880px){ .steps { grid-template-columns:repeat(2,1fr); gap:40px 24px; } }
