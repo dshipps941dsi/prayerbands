@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import SiteHeader from "../components/SiteHeader";
+import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
 
 declare global {
@@ -222,7 +222,7 @@ export default function ContactPage() {
         />
       )}
 
-      <SiteHeader />
+      <SiteNav />
 
       {/* Navy + gold hero band — carries the home-page identity onto this page */}
       <div className="contact-hero">
@@ -426,10 +426,10 @@ export default function ContactPage() {
                 />
               </div>
             </div>
-          </div>
 
-          {/* Static FAQ section */}
-          <FaqSection />
+            {/* FAQ — beside the form */}
+            <FaqSection />
+          </div>
         </div>
       </div>
 
@@ -591,10 +591,17 @@ const styles = `
     font-style: italic;
   }
 
-  /* Layout — single centered column (better on mobile, suggestions in context) */
+  /* Layout — form + FAQ side by side, stacking on smaller screens */
   .contact-layout {
-    max-width: 680px;
+    max-width: 1180px;
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 44px;
+    align-items: start;
+  }
+  @media (max-width: 920px) {
+    .contact-layout { grid-template-columns: 1fr; max-width: 680px; gap: 52px; }
   }
 
   /* Main form card */
@@ -1199,12 +1206,15 @@ const styles = `
 
   /* ── FAQ section ── */
   .faq-section {
-    margin-top: 64px;
+    margin-top: 0;
+  }
+  @media (max-width: 920px) {
+    .faq-section { margin-top: 8px; }
   }
 
   .faq-section-head {
-    text-align: center;
-    margin-bottom: 32px;
+    text-align: left;
+    margin-bottom: 22px;
   }
 
   .faq-section-head h2 {
@@ -1220,13 +1230,13 @@ const styles = `
     color: #5C6573;
     font-style: italic;
     max-width: 460px;
-    margin: 0 auto;
+    margin: 0;
     line-height: 1.6;
   }
 
   .faq-list {
-    max-width: 760px;
-    margin: 0 auto;
+    max-width: none;
+    margin: 0;
     display: flex;
     flex-direction: column;
     gap: 12px;
