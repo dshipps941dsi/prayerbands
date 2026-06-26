@@ -345,7 +345,6 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-            <Link href="/store" className="btn-primary sm" style={{ marginTop: 28 }}>Explore All Verses</Link>
           </Reveal>
         </div>
       </section>
@@ -654,8 +653,8 @@ const styles = `
   .daily-inner { display:grid; grid-template-columns:0.82fr 1.18fr; gap:56px; align-items:end; padding:92px clamp(24px,5vw,80px) 0; }
   .daily-phone { display:flex; justify-content:center; align-items:flex-end; }
   .daily-phone-img { display:block; width:330px; max-width:34vw; height:auto; filter:drop-shadow(0 30px 60px rgba(0,0,0,0.55)); }
-  .daily-copy { max-width:720px; padding-bottom:92px; }
-  .topic-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:28px 0 0; max-width:560px; }
+  .daily-copy { max-width:900px; padding-bottom:92px; }
+  .topic-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:28px 0 0; }
   .topic-card { background:rgba(200,169,110,0.06); border:1px solid var(--lineG); border-radius:10px; padding:18px 20px; }
   .topic-label { font-family:'Cinzel',serif; font-size:0.66rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold2); margin-bottom:8px; }
   .topic-verse { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1rem; color:var(--cream); line-height:1.4; }
@@ -666,6 +665,7 @@ const styles = `
     .daily-copy .lead, .topic-grid { margin-left:auto; margin-right:auto; }
     .daily-phone { order:2; }
     .daily-phone-img { width:280px; max-width:72vw; }
+    .topic-grid { grid-template-columns:repeat(2,1fr); max-width:520px; }
   }
   @media (max-width:460px){ .topic-grid { grid-template-columns:1fr; } }
 
