@@ -329,19 +329,7 @@ export default function HomePage() {
       {/* ── Daily encouragement ── */}
       <section id="daily" className="daily">
         <div className="container daily-inner">
-          <Reveal className="daily-phone">
-            <div className="hero-phone static">
-              <div className="hero-phone-notch" />
-              <div className="hero-phone-screen">
-                <div className="hp-label">Daily Verse · Today</div>
-                <div className="hp-verse">"I can do all things through Christ who strengthens me."</div>
-                <div className="hp-ref">Philippians 4:13</div>
-                <div className="hp-tap">Tap for new verse</div>
-                <div className="hp-chips">{TOPICS.map(t => <span key={t.label}>{t.label}</span>)}</div>
-              </div>
-            </div>
-          </Reveal>
-          <Reveal delay={120} className="daily-copy">
+          <Reveal className="daily-copy">
             <div className="eyebrow gold">Daily Encouragement</div>
             <h2 className="h2 light">A New Verse Every Day. <em>Right When You Need It.</em></h2>
             <p className="lead">Tap your band and receive personalized scripture for whatever you're facing. Filter by topic and let God's Word meet you where you are.</p>
@@ -355,6 +343,9 @@ export default function HomePage() {
               ))}
             </div>
             <Link href="/store" className="btn-primary sm" style={{ marginTop: 28 }}>Explore All Verses</Link>
+          </Reveal>
+          <Reveal delay={120} className="daily-phone">
+            <img className="daily-phone-img" src="/home/phone-1.png" alt="Prayer Bands daily verse app screen with topics to browse" />
           </Reveal>
         </div>
       </section>
@@ -659,15 +650,19 @@ const styles = `
   @media (max-width:480px){ .steps { grid-template-columns:1fr; } }
 
   /* Daily */
-  .daily { background:linear-gradient(180deg,var(--navy),var(--navy2)); padding:96px 0; }
-  .daily-inner { display:grid; grid-template-columns:0.85fr 1.15fr; gap:64px; align-items:center; }
-  .daily-phone { display:flex; justify-content:center; }
-  .topic-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:28px; max-width:520px; }
+  .daily { background:linear-gradient(180deg,var(--navy),var(--navy2)); padding:96px 0 0; }
+  .daily-inner { display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .daily-copy { max-width:780px; }
+  .daily-copy .lead { margin-left:auto; margin-right:auto; }
+  .daily-phone { display:flex; justify-content:center; margin-top:48px; }
+  .daily-phone-img { display:block; width:300px; max-width:78vw; height:auto; filter:drop-shadow(0 30px 60px rgba(0,0,0,0.5)); }
+  .topic-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:30px auto 0; max-width:780px; width:100%; }
   .topic-card { background:rgba(200,169,110,0.06); border:1px solid var(--lineG); border-radius:10px; padding:18px 20px; }
   .topic-label { font-family:'Cinzel',serif; font-size:0.66rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold2); margin-bottom:8px; }
   .topic-verse { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1rem; color:var(--cream); line-height:1.4; }
   .topic-ref { font-size:0.72rem; color:rgba(245,237,216,0.5); margin-top:8px; }
-  @media (max-width:880px){ .daily-inner { grid-template-columns:1fr; gap:44px; } }
+  @media (max-width:880px){ .topic-grid { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:460px){ .topic-grid { grid-template-columns:1fr; } }
 
   /* Circles */
   .circles { background:linear-gradient(180deg,var(--navy2),var(--navy)); padding:96px 0; }
