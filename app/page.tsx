@@ -55,11 +55,14 @@ const STORIES = [
   { q: "This band started in the U.S. and has traveled across the world. God is truly moving.", a: "Ryan, Missionary" },
 ];
 
+// Feature chips under the hero — rendered in HTML (not baked into the photo) so
+// they stay crisp and reflow on mobile. Matches the 5 icons in the hero art.
 const FEATURES = [
-  { ico: "tap", title: "Tap & Go", desc: "No apps. No codes. Just tap." },
-  { ico: "people", title: "Pray Together", desc: "Join circles and lift each other up." },
-  { ico: "book", title: "Daily Verses", desc: "New every day, just for you." },
-  { ico: "chart", title: "See Your Impact", desc: "Track your band's journey and impact." },
+  { ico: "tap", title: "Tap & Go", desc: "No app. No codes. Just tap." },
+  { ico: "people", title: "Pray Together", desc: "Join circles and encourage others." },
+  { ico: "book", title: "Daily Verses", desc: "A new, personalized verse every day." },
+  { ico: "chart", title: "See Your Impact", desc: "Track your band's journey and the lives it touches." },
+  { ico: "heart", title: "Be Encouraged", desc: "Receive prayers, messages and reminders." },
 ];
 
 // ─── Inline icon set ────────────────────────────────────────────────────────────
@@ -268,47 +271,32 @@ export default function HomePage() {
         )}
       </nav>
 
-      {/* ── Hero ── */}
+      {/* ── Hero ── (clean photo: band + phone + mountains; headline overlaid) */}
       <header className="hero">
-        <div className="hero-bg" />
-        <div className="hero-grid" />
-        <div className="container hero-inner">
-          <div className="hero-copy">
-            <div className="hero-eyebrow">One Band · Endless Reach</div>
-            <h1 className="hero-title">One Tap.<br />Endless Prayers.<br /><em>Countless Lives Touched.</em></h1>
-            <p className="hero-sub">Tap your Prayer Band to unlock daily scripture, join prayer circles, encourage others, and see the lives your band has touched.</p>
-            <div className="hero-actions">
-              <Link href="/store" className="btn-primary">Start Your Journey</Link>
-              <Link href="/store" className="btn-ghost-light">Shop Bands</Link>
-            </div>
-            <div className="hero-features">
-              {FEATURES.map(f => (
-                <div key={f.title} className="hero-feature">
-                  <div className="hero-feature-ico"><Ico name={f.ico} size={22} /></div>
-                  <div>
-                    <div className="hero-feature-title">{f.title}</div>
-                    <div className="hero-feature-desc">{f.desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="hero-visual">
-            {/* Image slot: hero wrist + phone photo. CSS mock stands in until art is dropped. */}
-            <div className="hero-band"><span>✝ Pray. Trust. Believe.</span><div className="hero-nfc"><i /><i /><i /></div></div>
-            <div className="hero-phone">
-              <div className="hero-phone-notch" />
-              <div className="hero-phone-screen">
-                <div className="hp-label">Today's Verse</div>
-                <div className="hp-verse">"Fear not, for I am with you."</div>
-                <div className="hp-ref">Isaiah 41:10</div>
-                <div className="hp-tap">Tap for new verse</div>
-              </div>
-            </div>
+        <img className="hero-img" src="/home/hero.jpg" alt="A hand wearing a Prayer Band taps a phone showing today's verse, mountains behind" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+        <div className="hero-copy">
+          <div className="hero-eyebrow">One Band · Endless Reach</div>
+          <h1 className="hero-title">One Tap.<br />Endless Prayers.<br /><em>Countless Lives Touched.</em></h1>
+          <p className="hero-sub">Tap your Prayer Band to unlock daily scripture, join prayer circles, encourage others, and see the lives your band has touched.</p>
+          <div className="hero-actions">
+            <Link href="/store" className="btn-primary">Start Your Journey</Link>
+            <Link href="/store" className="btn-ghost-light">Shop Bands</Link>
           </div>
         </div>
       </header>
+
+      {/* ── Feature bar (HTML so it's crisp + reflows on mobile) ── */}
+      <section className="featurebar">
+        <div className="container featurebar-grid">
+          {FEATURES.map(f => (
+            <div key={f.title} className="feat">
+              <div className="feat-ico"><Ico name={f.ico} size={24} /></div>
+              <div className="feat-title">{f.title}</div>
+              <div className="feat-desc">{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* ── Stats strip ── */}
       <section className="stats">
@@ -598,28 +586,24 @@ const styles = `
   @media (min-width:981px){ .nav-mobile { display:none !important; } }
 
   /* Hero */
-  .hero { position:relative; background:linear-gradient(160deg,#0A1628 0%,#0E1E38 55%,#0A1628 100%); color:var(--cream); overflow:hidden; }
-  .hero-bg { position:absolute; inset:0; background:radial-gradient(ellipse 60% 50% at 78% 30%,rgba(200,169,110,0.14),transparent 60%),radial-gradient(ellipse 50% 60% at 10% 90%,rgba(123,174,142,0.06),transparent 60%); }
-  .hero-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(200,169,110,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(200,169,110,0.05) 1px,transparent 1px); background-size:74px 74px; mask-image:radial-gradient(ellipse 80% 80% at 60% 40%,#000,transparent 80%); }
-  .hero-inner { position:relative; z-index:1; display:grid; grid-template-columns:1.05fr 0.95fr; gap:56px; align-items:center; padding:84px 32px 96px; }
+  .hero { position:relative; isolation:isolate; background:linear-gradient(160deg,#0A1628,#0E1E38 55%,#0A1628); color:var(--cream); }
+  .hero-img { display:block; width:100%; height:auto; position:relative; z-index:0; }
+  .hero::after { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(100deg,rgba(7,13,26,0.8) 0%,rgba(7,13,26,0.45) 30%,rgba(7,13,26,0) 54%); }
+  .hero-copy { position:absolute; z-index:2; top:0; left:0; max-width:540px; padding:clamp(40px,6vw,88px) 0 0 clamp(24px,5vw,72px); }
+
+  /* Feature bar */
+  .featurebar { background:linear-gradient(180deg,var(--navy2),var(--navy)); border-bottom:1px solid var(--lineG); }
+  .featurebar-grid { display:grid; grid-template-columns:repeat(5,1fr); }
+  .feat { text-align:center; padding:34px 18px; border-right:1px solid var(--lineG); }
+  .feat:last-child { border-right:none; }
+  .feat-ico { color:var(--gold2); display:inline-flex; width:48px; height:48px; align-items:center; justify-content:center; border:1px solid var(--lineG); border-radius:12px; margin-bottom:14px; }
+  .feat-title { font-family:'Cinzel',serif; font-size:0.74rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#fff; margin-bottom:6px; }
+  .feat-desc { font-size:0.8rem; color:rgba(245,237,216,0.55); line-height:1.5; max-width:200px; margin:0 auto; }
   .hero-eyebrow { font-family:'Cinzel',serif; font-size:0.66rem; font-weight:600; letter-spacing:0.26em; text-transform:uppercase; color:var(--gold); margin-bottom:22px; }
   .hero-title { font-family:'Cormorant Garamond',serif; font-weight:600; font-size:clamp(2.6rem,5.2vw,4.4rem); line-height:1.05; color:#fff; letter-spacing:-0.01em; }
   .hero-title em { font-style:italic; font-weight:500; color:var(--gold2); }
   .hero-sub { font-size:1.02rem; color:rgba(245,237,216,0.72); line-height:1.8; margin:22px 0 32px; max-width:480px; }
   .hero-actions { display:flex; gap:14px; flex-wrap:wrap; }
-  .hero-features { display:grid; grid-template-columns:1fr 1fr; gap:18px 28px; margin-top:48px; max-width:520px; }
-  .hero-feature { display:flex; gap:12px; align-items:flex-start; }
-  .hero-feature-ico { color:var(--gold2); flex-shrink:0; width:40px; height:40px; border:1px solid var(--lineG); border-radius:10px; display:flex; align-items:center; justify-content:center; }
-  .hero-feature-title { font-family:'Cinzel',serif; font-size:0.72rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#fff; }
-  .hero-feature-desc { font-size:0.8rem; color:rgba(245,237,216,0.55); line-height:1.5; }
-
-  .hero-visual { position:relative; display:flex; align-items:center; justify-content:center; min-height:440px; }
-  .hero-band { position:absolute; left:0; bottom:40px; width:300px; height:74px; border-radius:38px; background:linear-gradient(145deg,#10203c,#0a1628); border:1px solid var(--lineG); box-shadow:0 30px 60px rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; transform:rotate(-8deg); }
-  .hero-band span { font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.18em; color:var(--gold2); text-transform:uppercase; }
-  .hero-nfc { position:absolute; right:-10px; top:-14px; display:flex; gap:3px; }
-  .hero-nfc i { display:block; width:7px; height:7px; border:2px solid var(--gold); border-left:none; border-bottom:none; border-radius:0 7px 0 0; opacity:.8; animation:nfc 1.8s infinite; }
-  .hero-nfc i:nth-child(2){ width:11px; height:11px; animation-delay:.2s; } .hero-nfc i:nth-child(3){ width:15px; height:15px; animation-delay:.4s; }
-  @keyframes nfc { 0%,100%{opacity:.25;} 50%{opacity:1;} }
   .hero-phone { position:relative; width:230px; height:430px; border-radius:34px; background:linear-gradient(165deg,#16294a,#0a1628); border:1px solid var(--lineG); box-shadow:0 40px 80px rgba(0,0,0,0.5); padding:14px; margin-left:90px; }
   .hero-phone.static { margin-left:0; }
   .hero-phone-notch { position:absolute; top:16px; left:50%; transform:translateX(-50%); width:80px; height:6px; border-radius:4px; background:rgba(255,255,255,0.12); }
@@ -630,8 +614,20 @@ const styles = `
   .hp-tap { margin-top:26px; font-size:0.66rem; letter-spacing:0.14em; text-transform:uppercase; color:rgba(245,237,216,0.5); border:1px solid var(--lineG); border-radius:20px; padding:8px 18px; }
   .hp-chips { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:20px; }
   .hp-chips span { font-size:0.6rem; color:var(--gold2); border:1px solid var(--lineG); border-radius:12px; padding:3px 10px; }
-  @media (max-width:920px){ .hero-inner { grid-template-columns:1fr; gap:8px; padding:60px 32px 72px; } .hero-visual { min-height:420px; margin-top:24px; } .hero-features { max-width:none; } }
-  @media (max-width:520px){ .hero-phone { width:200px; height:380px; margin-left:50px; } .hero-band { width:240px; } }
+  @media (max-width:820px){
+    .hero::after { display:none; }
+    .hero-copy { position:static; max-width:none; text-align:center; padding:38px 20px 46px; background:linear-gradient(180deg,var(--navy),var(--navy2)); }
+    .hero-actions { justify-content:center; }
+    .featurebar-grid { grid-template-columns:repeat(2,1fr); }
+    .feat { border-right:none; border-bottom:1px solid var(--lineG); }
+    .feat:nth-child(odd){ border-right:1px solid var(--lineG); }
+    .feat:last-child { grid-column:1 / -1; border-bottom:none; }
+  }
+  @media (max-width:480px){
+    .featurebar-grid { grid-template-columns:1fr; }
+    .feat:nth-child(odd){ border-right:none; }
+    .hero-phone { width:200px; height:380px; }
+  }
 
   /* Stats */
   .stats { background:var(--navy3); border-top:1px solid var(--lineG); border-bottom:1px solid var(--lineG); }
