@@ -313,8 +313,8 @@ export default function HomePage() {
             <h2 className="h2 light">No One Should <em>Pray Alone.</em></h2>
             <p className="lead">Create private prayer circles for anything you're going through. Invite family, friends, or your community to pray with you and receive real-time updates.</p>
             <div className="circ-cta">
-              <Link href="/prayer-circles" className="btn-primary sm">Create a Prayer Circle</Link>
-              <Link href="/circles" className="circ-learn">Learn more →</Link>
+              <Link href="/circles" className="btn-primary sm">Create a Prayer Circle</Link>
+              <Link href="/prayer-circles" className="circ-learn">Learn more →</Link>
             </div>
           </Reveal>
           <Reveal delay={120} className="circles-diagram">
