@@ -19,14 +19,33 @@ export async function GET() {
     .from('bands')
     .select('*', { count: 'exact', head: true })
 
-  const { data: countryRows } = await supabase
+  // Every registration is a person a band has reached ("lives impacted").
+  const { count: people } = await supabase
     .from('registrations')
-    .select('country')
+    .select('*', { count: 'exact', head: true })
+
+  // One pass over city/country gives us distinct countries, distinct cities,
+  // and a top-countries leaderboard for the map section.
+  const { data: geoRows } = await supabase
+    .from('registrations')
+    .select('city, country')
     .not('country', 'is', null)
     .limit(5000)
-  const countries = new Set(
-    (countryRows || []).map((r: any) => (r.country || '').trim()).filter(Boolean)
-  ).size
+  const countrySet = new Set<string>()
+  const citySet = new Set<string>()
+  const countryCounts: Record<string, number> = {}
+  for (const r of geoRows || []) {
+    const c = ((r as any).country || '').trim()
+    const city = ((r as any).city || '').trim()
+    if (c) { countrySet.add(c); countryCounts[c] = (countryCounts[c] || 0) + 1 }
+    if (city) citySet.add(`${city.toLowerCase()}|${c.toLowerCase()}`)
+  }
+  const countries = countrySet.size
+  const cities = citySet.size
+  const topCountries = Object.entries(countryCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([country, count]) => ({ country, count }))
 
   const { data: recent } = await supabase
     .from('registrations')
@@ -62,7 +81,8 @@ export async function GET() {
   }))
 
   return NextResponse.json({
-    stats: { prayers: prayers || 0, countries, bands: bands || 0 },
+    stats: { prayers: prayers || 0, people: people || 0, countries, cities, bands: bands || 0 },
     prayers: prayersList,
+    topCountries,
   })
 }
