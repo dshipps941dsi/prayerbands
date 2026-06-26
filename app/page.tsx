@@ -650,7 +650,7 @@ const styles = `
   @media (max-width:480px){ .steps { grid-template-columns:1fr; } }
 
   /* Daily */
-  .daily { background:linear-gradient(180deg,var(--navy),var(--navy2)); padding:96px 0 0; }
+  .daily { background:linear-gradient(180deg,rgba(10,22,40,0.92) 0%,rgba(10,22,40,0.55) 28%,rgba(10,22,40,0.5) 68%,rgba(10,22,40,0.96) 100%),url('/home/daily-topic-bg.jpg') center/cover no-repeat,var(--navy); padding:96px 0 0; }
   .daily-inner { display:flex; flex-direction:column; align-items:center; text-align:center; }
   .daily-copy { max-width:780px; }
   .daily-copy .lead { margin-left:auto; margin-right:auto; }
