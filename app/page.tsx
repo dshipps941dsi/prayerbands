@@ -588,7 +588,7 @@ const styles = `
   /* Hero */
   .hero { position:relative; isolation:isolate; background:linear-gradient(160deg,#0A1628,#0E1E38 55%,#0A1628); color:var(--cream); }
   .hero-img { display:block; width:100%; height:auto; position:relative; z-index:0; }
-  .hero::after { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(100deg,rgba(7,13,26,0.8) 0%,rgba(7,13,26,0.45) 30%,rgba(7,13,26,0) 54%); }
+  .hero::after { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(103deg,rgba(7,13,26,0.86) 0%,rgba(7,13,26,0.5) 34%,rgba(7,13,26,0) 60%),linear-gradient(180deg,rgba(7,13,26,0.35) 0%,transparent 32%); }
   .hero-copy { position:absolute; z-index:2; top:0; left:0; max-width:540px; padding:clamp(40px,6vw,88px) 0 0 clamp(24px,5vw,72px); }
 
   /* Feature bar */
