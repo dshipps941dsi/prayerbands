@@ -664,7 +664,7 @@ const styles = `
 
   /* Circles — full-width, praying figure on the right via the bg */
   .circles { background:linear-gradient(90deg,rgba(7,13,26,0.96) 0%,rgba(7,13,26,0.84) 40%,rgba(7,13,26,0.5) 68%,rgba(7,13,26,0.6) 100%),url('/home/prayer-circles-bg.jpg') center right/cover no-repeat,var(--navy); padding:96px 0; }
-  .circles-inner { display:grid; grid-template-columns:1fr 0.9fr 1fr; gap:48px; align-items:center; padding:0 clamp(24px,5vw,72px); }
+  .circles-inner { display:grid; grid-template-columns:1fr 0.85fr 0.95fr; gap:28px; align-items:center; max-width:1320px; margin:0 auto; padding:0 clamp(24px,4vw,56px); }
   .circ-feat-t { text-shadow:0 1px 6px rgba(0,0,0,0.6); }
   .circ-feat-d { text-shadow:0 1px 6px rgba(0,0,0,0.6); }
   .circles-diagram { display:flex; justify-content:center; }
@@ -673,7 +673,7 @@ const styles = `
   .circ-center-title { font-family:'Cormorant Garamond',serif; font-weight:700; font-size:1rem; line-height:1.2; }
   .circ-center-sub { font-size:0.66rem; margin-top:6px; opacity:.8; }
   .circ-node { position:absolute; top:50%; left:50%; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%; background:var(--navy3); border:1px solid var(--lineG); color:var(--gold2); display:flex; align-items:center; justify-content:center; }
-  .circ-feat { display:flex; gap:13px; align-items:flex-start; margin-bottom:24px; }
+  .circ-feat { display:flex; gap:13px; align-items:flex-start; margin-bottom:18px; }
   .circ-feat-ico { flex-shrink:0; width:42px; height:42px; border-radius:10px; border:1px solid var(--lineG); color:var(--gold2); display:flex; align-items:center; justify-content:center; }
   .circ-feat-t { font-family:'Cinzel',serif; font-size:0.74rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#fff; }
   .circ-feat-d { font-size:0.82rem; color:rgba(245,237,216,0.55); }
