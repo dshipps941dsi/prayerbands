@@ -59,10 +59,10 @@ const STORIES = [
 // they stay crisp and reflow on mobile. Matches the 5 icons in the hero art.
 const FEATURES: { ico: string; title: string; desc: string; img?: string }[] = [
   { ico: "tap", title: "Tap & Go", desc: "No app. No codes. Just tap.", img: "/home/tap-icon.png" },
-  { ico: "people", title: "Pray Together", desc: "Join circles and encourage others." },
-  { ico: "book", title: "Daily Verses", desc: "A new, personalized verse every day." },
-  { ico: "chart", title: "See Your Impact", desc: "Track your band's journey and the lives it touches." },
-  { ico: "heart", title: "Be Encouraged", desc: "Receive prayers, messages and reminders." },
+  { ico: "people", title: "Pray Together", desc: "Join circles and encourage others.", img: "/home/pray-icon.png" },
+  { ico: "book", title: "Daily Verses", desc: "A new, personalized verse every day.", img: "/home/verses-icon.png" },
+  { ico: "chart", title: "See Your Impact", desc: "Track your band's journey and the lives it touches.", img: "/home/impact-icon.png" },
+  { ico: "heart", title: "Be Encouraged", desc: "Receive prayers, messages and reminders.", img: "/home/encouraged-icon.png" },
 ];
 
 // ─── Inline icon set ────────────────────────────────────────────────────────────
