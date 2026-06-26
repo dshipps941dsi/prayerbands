@@ -362,13 +362,13 @@ export default function HomePage() {
           </Reveal>
           <Reveal delay={200} className="circles-feats">
             {[
-              { ico: "share", t: "Share your request", d: "Invite others to pray" },
-              { ico: "bell", t: "Get notified", d: "When someone prays" },
-              { ico: "chat", t: "Encourage each other", d: "Leave messages of hope" },
-              { ico: "celebrate", t: "Celebrate answered prayers", d: "Praise reports & milestones" },
+              { img: "/home/paper-airplane-icon.png", t: "Share your request", d: "Invite others to pray" },
+              { img: "/home/bell-icon.png", t: "Get notified", d: "When someone prays" },
+              { img: "/home/speech-bubble-icon.png", t: "Encourage each other", d: "Leave messages of hope" },
+              { img: "/home/praying-hands-icon.png", t: "Celebrate answered prayers", d: "Praise reports & milestones" },
             ].map(f => (
               <div key={f.t} className="circ-feat">
-                <div className="circ-feat-ico"><Ico name={f.ico} size={20} /></div>
+                <div className="circ-feat-ico"><img src={f.img} alt="" className="circ-feat-img" /></div>
                 <div><div className="circ-feat-t">{f.t}</div><div className="circ-feat-d">{f.d}</div></div>
               </div>
             ))}
@@ -675,6 +675,7 @@ const styles = `
   .circ-node { position:absolute; top:50%; left:50%; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%; background:var(--navy3); border:1px solid var(--lineG); color:var(--gold2); display:flex; align-items:center; justify-content:center; }
   .circ-feat { display:flex; gap:13px; align-items:flex-start; margin-bottom:18px; }
   .circ-feat-ico { flex-shrink:0; width:42px; height:42px; border-radius:10px; border:1px solid var(--lineG); color:var(--gold2); display:flex; align-items:center; justify-content:center; }
+  .circ-feat-img { width:24px; height:24px; object-fit:contain; }
   .circ-feat-t { font-family:'Cinzel',serif; font-size:0.74rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#fff; }
   .circ-feat-d { font-size:0.82rem; color:rgba(245,237,216,0.55); }
   @media (max-width:980px){
