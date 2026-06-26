@@ -624,7 +624,7 @@ const styles = `
   @media (max-width:460px){ .topic-grid { grid-template-columns:1fr; } }
 
   /* Circles — full-width, praying figure on the right via the bg */
-  .circles { background:url('/home/prayer-circles-bg.jpg') center right/cover no-repeat,#101114; padding:96px 0; }
+  .circles { background:url('/home/prayer-circles-bg.jpg') center right/cover no-repeat,#101114; background-attachment:fixed; padding:96px 0; }
   .circles-inner { display:grid; grid-template-columns:0.9fr 1.5fr 0.95fr; gap:28px; align-items:center; max-width:1300px; margin:0; padding:0 clamp(24px,4vw,48px); }
   .circ-feat-t { text-shadow:0 1px 8px rgba(0,0,0,0.7); }
   .circ-feat-d { text-shadow:0 1px 8px rgba(0,0,0,0.7); }
@@ -644,7 +644,7 @@ const styles = `
   .circ-feat-t { font-family:'Cinzel',serif; font-size:0.74rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#fff; }
   .circ-feat-d { font-size:0.82rem; color:rgba(245,237,216,0.55); }
   @media (max-width:980px){
-    .circles { background:linear-gradient(180deg,rgba(0,0,0,0.5),rgba(0,0,0,0.58)),url('/home/prayer-circles-bg.jpg') center/cover no-repeat,#101114; }
+    .circles { background:linear-gradient(180deg,rgba(0,0,0,0.5),rgba(0,0,0,0.58)),url('/home/prayer-circles-bg.jpg') center/cover no-repeat,#101114; background-attachment:scroll; }
     .circles-inner { grid-template-columns:1fr; gap:48px; }
     .circles-feats { max-width:420px; margin:0 auto; }
   }
