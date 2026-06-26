@@ -230,13 +230,12 @@ export default function HomePage() {
   ), [live]);
 
   const navLinks = [
-    { href: "/store", label: "Shop" },
-    { href: "/prayer-circles", label: "Prayer Circles" },
-    { href: "/prayer-wall", label: "Prayer Feed" },
+    { href: "/about", label: "About" },
     { href: "#map", label: "The Map" },
-    { href: "#daily", label: "Daily Verses" },
+    { href: "/prayer-circles", label: "Prayer Circles" },
     { href: "#stories", label: "Stories" },
-    { href: "/about", label: "About Us" },
+    { href: "/store", label: "Shop" },
+    { href: "/contact", label: "Contact" },
   ];
 
   return (
