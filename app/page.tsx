@@ -713,7 +713,7 @@ const styles = `
   @media (max-width:880px){ .map-layout { grid-template-columns:1fr; } .prayer-map { height:380px; } }
 
   /* Gift */
-  .gift { background:linear-gradient(180deg,var(--navy2),var(--navy)); padding:96px 0; }
+  .gift { background:linear-gradient(180deg,rgba(10,22,40,0.7) 0%,rgba(10,22,40,0.78) 100%),url('/home/more-than-a-gift-bg.jpg') center/cover no-repeat,var(--navy); padding:96px 0; }
   .gift-inner { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; }
   .gift-visual { position:relative; }
   .gift-box-img { display:block; width:100%; max-width:470px; height:auto; margin:0 auto; filter:drop-shadow(0 28px 56px rgba(0,0,0,0.55)); }
