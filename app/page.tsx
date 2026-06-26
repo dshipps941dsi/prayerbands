@@ -57,8 +57,8 @@ const STORIES = [
 
 // Feature chips under the hero — rendered in HTML (not baked into the photo) so
 // they stay crisp and reflow on mobile. Matches the 5 icons in the hero art.
-const FEATURES = [
-  { ico: "tap", title: "Tap & Go", desc: "No app. No codes. Just tap." },
+const FEATURES: { ico: string; title: string; desc: string; img?: string }[] = [
+  { ico: "tap", title: "Tap & Go", desc: "No app. No codes. Just tap.", img: "/home/tap-icon.png" },
   { ico: "people", title: "Pray Together", desc: "Join circles and encourage others." },
   { ico: "book", title: "Daily Verses", desc: "A new, personalized verse every day." },
   { ico: "chart", title: "See Your Impact", desc: "Track your band's journey and the lives it touches." },
@@ -290,7 +290,7 @@ export default function HomePage() {
         <div className="container featurebar-grid">
           {FEATURES.map(f => (
             <div key={f.title} className="feat">
-              <div className="feat-ico"><Ico name={f.ico} size={24} /></div>
+              <div className="feat-ico">{f.img ? <img src={f.img} alt="" className="feat-ico-img" /> : <Ico name={f.ico} size={24} />}</div>
               <div className="feat-title">{f.title}</div>
               <div className="feat-desc">{f.desc}</div>
             </div>
@@ -597,6 +597,7 @@ const styles = `
   .feat { text-align:center; padding:34px 18px; border-right:1px solid var(--lineG); }
   .feat:last-child { border-right:none; }
   .feat-ico { color:var(--gold2); display:inline-flex; width:48px; height:48px; align-items:center; justify-content:center; border:1px solid var(--lineG); border-radius:12px; margin-bottom:14px; }
+  .feat-ico-img { width:28px; height:28px; object-fit:contain; }
   .feat-title { font-family:'Cinzel',serif; font-size:0.74rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#fff; margin-bottom:6px; }
   .feat-desc { font-size:0.8rem; color:rgba(245,237,216,0.55); line-height:1.5; max-width:200px; margin:0 auto; }
   .hero-eyebrow { font-family:'Cinzel',serif; font-size:0.66rem; font-weight:600; letter-spacing:0.26em; text-transform:uppercase; color:var(--gold); margin-bottom:22px; }
