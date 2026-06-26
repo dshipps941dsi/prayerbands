@@ -1,5 +1,5 @@
 import Link from "next/link";
-import SiteHeader from "../components/SiteHeader";
+import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata = {
@@ -82,7 +82,7 @@ export default function PrayerCirclesPage() {
         @media (max-width: 760px) { .pc-values, .pc-steps { grid-template-columns: 1fr; } }
       `}</style>
 
-      <SiteHeader />
+      <SiteNav />
 
       <section className="pc-hero">
         <div className="pc-eyebrow">✝ Prayer Circles</div>
