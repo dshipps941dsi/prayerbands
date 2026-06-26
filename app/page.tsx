@@ -358,12 +358,7 @@ export default function HomePage() {
             <Link href="/prayer-circles" className="btn-primary sm">Create a Prayer Circle</Link>
           </Reveal>
           <Reveal delay={120} className="circles-diagram">
-            <div className="circ-center"><div className="circ-center-title">Mike's Prayer Circle</div><div className="circ-center-sub">12 members · 18 prayers</div></div>
-            {[0, 1, 2, 3, 4, 5, 6, 7].map(i => (
-              <div key={i} className="circ-node" style={{ transform: `rotate(${i * 45}deg) translate(140px) rotate(-${i * 45}deg)` }}>
-                <Ico name="user" size={18} />
-              </div>
-            ))}
+            <img className="circles-infographic" src="/home/prayer-circle-infographic.webp" alt="Mike's Prayer Circle — 12 members, 8 prayers, updated 2 hours ago" />
           </Reveal>
           <Reveal delay={200} className="circles-feats">
             {[
@@ -672,7 +667,8 @@ const styles = `
   .circles-inner { display:grid; grid-template-columns:1fr 0.9fr 1fr; gap:48px; align-items:center; padding:0 clamp(24px,5vw,72px); }
   .circ-feat-t { text-shadow:0 1px 6px rgba(0,0,0,0.6); }
   .circ-feat-d { text-shadow:0 1px 6px rgba(0,0,0,0.6); }
-  .circles-diagram { position:relative; width:340px; height:340px; margin:0 auto; }
+  .circles-diagram { display:flex; justify-content:center; }
+  .circles-infographic { display:block; width:100%; max-width:440px; height:auto; filter:drop-shadow(0 20px 50px rgba(0,0,0,0.5)); }
   .circ-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:150px; height:150px; border-radius:50%; background:linear-gradient(145deg,var(--gold2),var(--gold)); color:var(--navy); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:14px; box-shadow:0 16px 40px rgba(200,169,110,0.35); z-index:2; }
   .circ-center-title { font-family:'Cormorant Garamond',serif; font-weight:700; font-size:1rem; line-height:1.2; }
   .circ-center-sub { font-size:0.66rem; margin-top:6px; opacity:.8; }
