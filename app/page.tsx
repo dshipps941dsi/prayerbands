@@ -715,7 +715,7 @@ const styles = `
   /* Gift */
   .gift { background:linear-gradient(180deg,rgba(10,22,40,0.7) 0%,rgba(10,22,40,0.78) 100%),url('/home/more-than-a-gift-bg.jpg') center/cover no-repeat,var(--navy); padding:96px 0; }
   .gift-inner { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; }
-  .gift-visual { position:relative; }
+  .gift-visual { position:relative; align-self:start; }
   .gift-box-img { display:block; width:100%; max-width:470px; height:auto; margin:0 auto; filter:drop-shadow(0 28px 56px rgba(0,0,0,0.55)); }
   .gift-note { position:absolute; right:-12px; bottom:-28px; width:230px; background:#fffdf8; border-radius:12px; padding:18px 20px; box-shadow:0 20px 50px rgba(0,0,0,0.35); transform:rotate(3deg); }
   .gift-note-label { font-family:'Cinzel',serif; font-size:0.56rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--goldT); margin-bottom:8px; }
