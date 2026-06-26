@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
-import PrayerBandsLogo from "@/components/PrayerBandsLogo";
+import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -178,15 +178,7 @@ function GlobalPrayerMap({ points }: { points: MapPoint[] }) {
 
 // ─── Page ────────────────────────────────────────────────────────────────────────
 export default function HomePage() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [live, setLive] = useState<any>(null);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => {
     const load = () => fetch("/api/home-stats").then(r => r.json()).then(setLive).catch(() => {});
@@ -229,46 +221,11 @@ export default function HomePage() {
     ((live?.topCountries || []) as any[]).length >= 3 ? live.topCountries : TOP_COUNTRIES_SAMPLE
   ), [live]);
 
-  const navLinks = [
-    { href: "/about", label: "About" },
-    { href: "#map", label: "The Map" },
-    { href: "/prayer-circles", label: "Prayer Circles" },
-    { href: "#stories", label: "Stories" },
-    { href: "/store", label: "Shop" },
-    { href: "/contact", label: "Contact" },
-  ];
-
   return (
     <>
       <style>{styles}</style>
 
-      {/* ── Announcement bar ── */}
-      <div className="topbar">
-        <span><span className="dot" /> NFC Technology · Just Tap &amp; Go</span>
-        <span className="topbar-sep">Free Shipping on Orders $35+</span>
-        <span>Designed in the USA 🇺🇸</span>
-      </div>
-
-      {/* ── Nav ── */}
-      <nav className={`nav${scrolled ? " scrolled" : ""}`}>
-        <div className="nav-inner">
-          <Link href="/" className="nav-logo"><PrayerBandsLogo size={30} color="#0A1628" />Prayer&nbsp;<span>Bands</span></Link>
-          <div className="nav-links">
-            {navLinks.map(l => <Link key={l.label} href={l.href} className="nav-link">{l.label}</Link>)}
-          </div>
-          <div className="nav-actions">
-            <Link href="/signin" className="nav-ico" aria-label="Account"><Ico name="user" size={20} /></Link>
-            <Link href="/store" className="nav-ico" aria-label="Shop"><Ico name="cart" size={20} /></Link>
-            <button className={`nav-toggle${menuOpen ? " open" : ""}`} aria-label="Menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}><span /><span /><span /></button>
-          </div>
-        </div>
-        {menuOpen && (
-          <div className="nav-mobile">
-            {navLinks.map(l => <Link key={l.label} href={l.href} className="nav-mobile-link" onClick={() => setMenuOpen(false)}>{l.label}</Link>)}
-            <Link href="/signin" className="nav-mobile-link" onClick={() => setMenuOpen(false)}>Sign In</Link>
-          </div>
-        )}
-      </nav>
+      <SiteNav />
 
       {/* ── Hero ── (clean photo: band + phone + mountains; headline overlaid) */}
       <header className="hero">

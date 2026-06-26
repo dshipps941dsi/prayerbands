@@ -2,8 +2,7 @@
 import { useEffect, useState, useRef, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
-import Logo from "@/components/Logo";
-import Icon from "@/components/Icon";
+import SiteNav from "@/components/SiteNav";
 import { track } from "@/lib/analytics";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -294,22 +293,8 @@ function StorePageInner() {
         </div>
       )}
 
-      {/* NAV */}
-      <nav className="store-nav" style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(246,241,228,0.97)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(10,22,40,0.12)", padding: "0 32px" }}>
-        <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
-          <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-            <Logo size={30} />
-            <span className="playfair" style={{ fontSize: 20, fontWeight: 600, color: "#15223B" }}>Prayer Bands</span>
-          </a>
-          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-            <button onClick={() => setCartOpen(true)} style={{ position: "relative", background: "#0A1628", border: "none", borderRadius: 4, padding: "9px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-              <Icon name="shop-bag" size={16} color="#F6F1E4" bg="#0A1628" />
-              <span style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#F6F1E4", fontWeight: 600 }}>Cart</span>
-              {totalItems > 0 && <span style={{ position: "absolute", top: -8, right: -8, width: 20, height: 20, borderRadius: "50%", background: "#C8A96E", color: "#0A1628", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Inter, sans-serif", fontWeight: 700 }}>{totalItems}</span>}
-            </button>
-          </div>
-        </div>
-      </nav>
+      {/* NAV — shared site navigation; cart icon opens the drawer here */}
+      <SiteNav onCartClick={() => setCartOpen(true)} cartCount={totalItems} />
 
       {/* Referral discount banner — only when a valid ?ref was applied */}
       {referral && (
