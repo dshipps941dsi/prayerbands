@@ -746,8 +746,8 @@ const styles = `
   @media (max-width:880px){ .impact-inner { grid-template-columns:1fr; gap:40px; } }
 
   /* Stories */
-  .stories { position:relative; background:linear-gradient(180deg,var(--navy),#070f1e); padding:96px 0; overflow:hidden; }
-  .stories-overlay { position:absolute; inset:0; background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(200,169,110,0.1),transparent 60%); }
+  .stories { position:relative; background:url('/home/real-stories-bg.jpg') center/cover no-repeat,#070f1e; padding:96px 0; overflow:hidden; }
+  .stories-overlay { position:absolute; inset:0; background:linear-gradient(180deg,rgba(7,13,26,0.86) 0%,rgba(7,13,26,0.72) 42%,rgba(7,13,26,0.9) 100%); }
   .stories .container { position:relative; z-index:1; }
   .stories-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-top:52px; }
   .story-card { background:rgba(200,169,110,0.05); border:1px solid var(--lineG); border-radius:12px; padding:26px 22px; }
