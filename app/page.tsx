@@ -328,8 +328,11 @@ export default function HomePage() {
 
       {/* ── Daily encouragement ── */}
       <section id="daily" className="daily">
-        <div className="container daily-inner">
-          <Reveal className="daily-copy">
+        <div className="daily-inner">
+          <Reveal className="daily-phone">
+            <img className="daily-phone-img" src="/home/phone-1.png" alt="Prayer Bands daily verse app screen with topics to browse" />
+          </Reveal>
+          <Reveal delay={120} className="daily-copy">
             <div className="eyebrow gold">Daily Encouragement</div>
             <h2 className="h2 light">A New Verse Every Day. <em>Right When You Need It.</em></h2>
             <p className="lead">Tap your band and receive personalized scripture for whatever you're facing. Filter by topic and let God's Word meet you where you are.</p>
@@ -343,9 +346,6 @@ export default function HomePage() {
               ))}
             </div>
             <Link href="/store" className="btn-primary sm" style={{ marginTop: 28 }}>Explore All Verses</Link>
-          </Reveal>
-          <Reveal delay={120} className="daily-phone">
-            <img className="daily-phone-img" src="/home/phone-1.png" alt="Prayer Bands daily verse app screen with topics to browse" />
           </Reveal>
         </div>
       </section>
@@ -649,19 +649,24 @@ const styles = `
   @media (max-width:880px){ .steps { grid-template-columns:repeat(2,1fr); gap:40px 24px; } }
   @media (max-width:480px){ .steps { grid-template-columns:1fr; } }
 
-  /* Daily */
-  .daily { background:linear-gradient(180deg,rgba(10,22,40,0.92) 0%,rgba(10,22,40,0.55) 28%,rgba(10,22,40,0.5) 68%,rgba(10,22,40,0.96) 100%),url('/home/daily-topic-bg.jpg') center/cover no-repeat,var(--navy); padding:96px 0 0; }
-  .daily-inner { display:flex; flex-direction:column; align-items:center; text-align:center; }
-  .daily-copy { max-width:780px; }
-  .daily-copy .lead { margin-left:auto; margin-right:auto; }
-  .daily-phone { display:flex; justify-content:center; margin-top:48px; }
-  .daily-phone-img { display:block; width:300px; max-width:78vw; height:auto; filter:drop-shadow(0 30px 60px rgba(0,0,0,0.5)); }
-  .topic-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:30px auto 0; max-width:780px; width:100%; }
+  /* Daily — phone bottom-left, copy right, full-width over the mountain bg */
+  .daily { background:linear-gradient(180deg,rgba(10,22,40,0.92) 0%,rgba(10,22,40,0.5) 30%,rgba(10,22,40,0.5) 70%,rgba(10,22,40,0.96) 100%),url('/home/daily-topic-bg.jpg') center/cover no-repeat,var(--navy); }
+  .daily-inner { display:grid; grid-template-columns:0.82fr 1.18fr; gap:56px; align-items:end; padding:92px clamp(24px,5vw,80px) 0; }
+  .daily-phone { display:flex; justify-content:center; align-items:flex-end; }
+  .daily-phone-img { display:block; width:330px; max-width:34vw; height:auto; filter:drop-shadow(0 30px 60px rgba(0,0,0,0.55)); }
+  .daily-copy { max-width:720px; padding-bottom:92px; }
+  .topic-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:28px 0 0; max-width:560px; }
   .topic-card { background:rgba(200,169,110,0.06); border:1px solid var(--lineG); border-radius:10px; padding:18px 20px; }
   .topic-label { font-family:'Cinzel',serif; font-size:0.66rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold2); margin-bottom:8px; }
   .topic-verse { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1rem; color:var(--cream); line-height:1.4; }
   .topic-ref { font-size:0.72rem; color:rgba(245,237,216,0.5); margin-top:8px; }
-  @media (max-width:880px){ .topic-grid { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:880px){
+    .daily-inner { grid-template-columns:1fr; gap:36px; padding:72px 24px 0; }
+    .daily-copy { order:1; text-align:center; max-width:none; padding-bottom:0; }
+    .daily-copy .lead, .topic-grid { margin-left:auto; margin-right:auto; }
+    .daily-phone { order:2; }
+    .daily-phone-img { width:280px; max-width:72vw; }
+  }
   @media (max-width:460px){ .topic-grid { grid-template-columns:1fr; } }
 
   /* Circles */
