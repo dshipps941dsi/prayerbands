@@ -596,8 +596,8 @@ const styles = `
   .featurebar-grid { display:grid; grid-template-columns:repeat(5,1fr); }
   .feat { text-align:center; padding:34px 18px; border-right:1px solid var(--lineG); }
   .feat:last-child { border-right:none; }
-  .feat-ico { color:var(--gold2); display:inline-flex; width:48px; height:48px; align-items:center; justify-content:center; border:1px solid var(--lineG); border-radius:12px; margin-bottom:14px; }
-  .feat-ico-img { width:28px; height:28px; object-fit:contain; }
+  .feat-ico { color:var(--gold2); display:inline-flex; width:44px; height:44px; align-items:center; justify-content:center; margin-bottom:14px; }
+  .feat-ico-img { width:40px; height:40px; object-fit:contain; }
   .feat-title { font-family:'Cinzel',serif; font-size:0.74rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#fff; margin-bottom:6px; }
   .feat-desc { font-size:0.8rem; color:rgba(245,237,216,0.55); line-height:1.5; max-width:200px; margin:0 auto; }
   .hero-eyebrow { font-family:'Cinzel',serif; font-size:0.66rem; font-weight:600; letter-spacing:0.26em; text-transform:uppercase; color:var(--gold); margin-bottom:22px; }
