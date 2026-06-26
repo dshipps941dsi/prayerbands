@@ -642,7 +642,7 @@ const styles = `
   @media (max-width:480px){ .steps { grid-template-columns:1fr; } }
 
   /* Daily — phone bottom-left, copy right, full-width over the mountain bg */
-  .daily { background:linear-gradient(180deg,rgba(10,22,40,0.92) 0%,rgba(10,22,40,0.5) 30%,rgba(10,22,40,0.5) 70%,rgba(10,22,40,0.96) 100%),url('/home/daily-topic-bg.jpg') center/cover no-repeat,var(--navy); }
+  .daily { background:linear-gradient(180deg,rgba(0,0,0,0.9) 0%,rgba(0,0,0,0.48) 30%,rgba(0,0,0,0.48) 70%,rgba(0,0,0,0.94) 100%),url('/home/daily-topic-bg.jpg') center/cover no-repeat,#101114; }
   .daily-inner { display:grid; grid-template-columns:0.82fr 1.18fr; gap:56px; align-items:end; padding:92px clamp(24px,5vw,80px) 0; }
   .daily-phone { display:flex; justify-content:center; align-items:flex-end; }
   .daily-phone-img { display:block; width:330px; max-width:34vw; height:auto; filter:drop-shadow(0 30px 60px rgba(0,0,0,0.55)); }
@@ -745,8 +745,8 @@ const styles = `
   @media (max-width:880px){ .impact-inner { grid-template-columns:1fr; gap:40px; } }
 
   /* Stories */
-  .stories { position:relative; background:url('/home/real-stories-bg.jpg') center/cover no-repeat,#070f1e; padding:96px 0; overflow:hidden; }
-  .stories-overlay { position:absolute; inset:0; background:linear-gradient(180deg,rgba(7,13,26,0.86) 0%,rgba(7,13,26,0.72) 42%,rgba(7,13,26,0.9) 100%); }
+  .stories { position:relative; background:url('/home/real-stories-bg.jpg') center/cover no-repeat,#0a0b0d; padding:96px 0; overflow:hidden; }
+  .stories-overlay { position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,0.82) 0%,rgba(0,0,0,0.66) 42%,rgba(0,0,0,0.86) 100%); }
   .stories .container { position:relative; z-index:1; }
   .stories-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-top:52px; }
   .story-card { background:rgba(200,169,110,0.05); border:1px solid var(--lineG); border-radius:12px; padding:26px 22px; }
