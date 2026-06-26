@@ -306,13 +306,16 @@ export default function HomePage() {
       </section>
 
       {/* ── Prayer circles ── */}
-      <section className="circles">
+      <section id="circles" className="circles">
         <div className="circles-inner">
           <Reveal className="circles-copy">
             <div className="eyebrow gold">Prayer Circles</div>
             <h2 className="h2 light">No One Should <em>Pray Alone.</em></h2>
             <p className="lead">Create private prayer circles for anything you're going through. Invite family, friends, or your community to pray with you and receive real-time updates.</p>
-            <Link href="/prayer-circles" className="btn-primary sm">Create a Prayer Circle</Link>
+            <div className="circ-cta">
+              <Link href="/prayer-circles" className="btn-primary sm">Create a Prayer Circle</Link>
+              <Link href="/circles" className="circ-learn">Learn more →</Link>
+            </div>
           </Reveal>
           <Reveal delay={120} className="circles-diagram">
             <img className="circles-infographic" src="/home/prayer-circle-infographic.webp" alt="Mike's Prayer Circle — 12 members, 8 prayers, updated 2 hours ago" />
@@ -475,6 +478,7 @@ const styles = `
     --lineG:rgba(200,169,110,0.22);
   }
   html { scroll-behavior: smooth; }
+  section[id] { scroll-margin-top: 84px; }
   body { background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; font-weight: 300; line-height: 1.7; overflow-x: hidden; }
   .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
   @media (max-width:600px){ .container { padding: 0 20px; } }
@@ -634,6 +638,9 @@ const styles = `
   .circ-feat { display:flex; gap:13px; align-items:flex-start; margin-bottom:18px; }
   .circ-feat-ico { flex-shrink:0; width:40px; height:40px; color:var(--gold2); display:flex; align-items:center; justify-content:center; }
   .circ-feat-img { width:36px; height:36px; object-fit:contain; filter:drop-shadow(0 2px 5px rgba(0,0,0,0.45)); }
+  .circ-cta { display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+  .circ-learn { font-family:'Cinzel',serif; font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold2); text-decoration:none; transition:color .2s; text-shadow:0 1px 10px rgba(0,0,0,0.5); }
+  .circ-learn:hover { color:var(--gold); }
   .circ-feat-t { font-family:'Cinzel',serif; font-size:0.74rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#fff; }
   .circ-feat-d { font-size:0.82rem; color:rgba(245,237,216,0.55); }
   @media (max-width:980px){

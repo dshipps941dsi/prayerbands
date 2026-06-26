@@ -11,7 +11,7 @@ import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 const NAV_LINKS = [
   { href: '/about', label: 'About' },
   { href: '/#map', label: 'The Map' },
-  { href: '/prayer-circles', label: 'Prayer Circles' },
+  { href: '/#circles', label: 'Prayer Circles' },
   { href: '/#stories', label: 'Stories' },
   { href: '/store', label: 'Shop' },
   { href: '/contact', label: 'Contact' },
