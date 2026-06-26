@@ -1,5 +1,5 @@
 import Link from "next/link";
-import SiteHeader from "../components/SiteHeader";
+import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata = {
@@ -63,7 +63,7 @@ export default function AboutPage() {
         @media (max-width: 760px) { .ab-values { grid-template-columns: 1fr; } }
       `}</style>
 
-      <SiteHeader />
+      <SiteNav />
 
       <section className="ab-hero">
         <div className="ab-eyebrow">✝ Our Story</div>
