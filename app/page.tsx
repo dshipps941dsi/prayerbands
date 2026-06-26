@@ -645,7 +645,12 @@ const styles = `
   /* How */
   .how { background:var(--paper); padding:90px 0; }
   .steps { display:grid; grid-template-columns:repeat(5,1fr); gap:24px; margin-top:56px; position:relative; }
-  .step { text-align:center; }
+  .step { text-align:center; position:relative; }
+  /* Dashed connector + chevron from each badge to the next (5-across desktop only) */
+  @media (min-width:881px){
+    .step:not(:last-child)::after { content:''; position:absolute; top:60px; left:calc(50% + 72px); right:calc(-50% + 44px); border-top:2px dashed rgba(200,169,110,0.5); }
+    .step:not(:last-child)::before { content:''; position:absolute; z-index:1; top:55px; right:calc(-50% + 38px); width:9px; height:9px; border-top:2px solid rgba(200,169,110,0.8); border-right:2px solid rgba(200,169,110,0.8); transform:rotate(45deg); }
+  }
   .step-num { width:62px; height:62px; margin:0 auto 20px; border-radius:50%; background:linear-gradient(145deg,var(--gold2),var(--gold)); color:var(--navy); font-family:'Cinzel',serif; font-weight:700; font-size:1.4rem; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 24px rgba(200,169,110,0.3); }
   .step-img { display:block; width:120px; height:120px; object-fit:contain; margin:0 auto 20px; }
   .step-title { font-family:'Cormorant Garamond',serif; font-weight:600; font-size:1.3rem; color:var(--ink); margin-bottom:8px; }
