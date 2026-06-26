@@ -30,11 +30,13 @@ export const metadata: Metadata = {
     url: "https://prayerbands.com",
     title: "Prayer Bands — Carry His Word Around the World",
     description: "A global prayer movement. Every band carries a prayer. Track your band's journey, leave prayers, and watch intercession travel the world.",
+    images: [{ url: "/home/og.jpg", width: 1200, height: 630, alt: "Prayer Bands — One Tap. Endless Prayers. Countless Lives Touched." }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Prayer Bands — Carry His Word Around the World",
     description: "A global prayer movement. Every band carries a prayer.",
+    images: ["/home/og.jpg"],
   },
 }
 
