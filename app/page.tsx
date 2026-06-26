@@ -283,20 +283,20 @@ export default function HomePage() {
             <Link href="/store" className="btn-ghost-light">Shop Bands</Link>
           </div>
         </div>
-      </header>
 
-      {/* ── Feature bar (HTML so it's crisp + reflows on mobile) ── */}
-      <section className="featurebar">
-        <div className="container featurebar-grid">
-          {FEATURES.map(f => (
-            <div key={f.title} className="feat">
-              <div className="feat-ico">{f.img ? <img src={f.img} alt="" className="feat-ico-img" /> : <Ico name={f.ico} size={24} />}</div>
-              <div className="feat-title">{f.title}</div>
-              <div className="feat-desc">{f.desc}</div>
-            </div>
-          ))}
+        {/* Feature bar — translucent strip over the bottom of the hero photo (stacks below on mobile) */}
+        <div className="featurebar">
+          <div className="container featurebar-grid">
+            {FEATURES.map(f => (
+              <div key={f.title} className="feat">
+                <div className="feat-ico">{f.img ? <img src={f.img} alt="" className="feat-ico-img" /> : <Ico name={f.ico} size={24} />}</div>
+                <div className="feat-title">{f.title}</div>
+                <div className="feat-desc">{f.desc}</div>
+              </div>
+            ))}
+          </div>
         </div>
-      </section>
+      </header>
 
       {/* ── Stats strip ── */}
       <section className="stats">
@@ -591,15 +591,15 @@ const styles = `
   .hero::after { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(103deg,rgba(7,13,26,0.86) 0%,rgba(7,13,26,0.5) 34%,rgba(7,13,26,0) 60%),linear-gradient(180deg,rgba(7,13,26,0.35) 0%,transparent 32%); }
   .hero-copy { position:absolute; z-index:2; top:0; left:0; max-width:540px; padding:clamp(40px,6vw,88px) 0 0 clamp(24px,5vw,72px); }
 
-  /* Feature bar */
-  .featurebar { background:linear-gradient(180deg,var(--navy2),var(--navy)); border-bottom:1px solid var(--lineG); }
+  /* Feature bar — translucent strip overlaid on the bottom of the hero photo */
+  .featurebar { position:absolute; left:0; right:0; bottom:0; z-index:3; background:linear-gradient(180deg,rgba(7,13,26,0.10),rgba(7,13,26,0.62)); backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); border-top:1px solid rgba(255,255,255,0.10); }
   .featurebar-grid { display:grid; grid-template-columns:repeat(5,1fr); }
-  .feat { text-align:center; padding:34px 18px; border-right:1px solid var(--lineG); }
+  .feat { text-align:center; padding:22px 18px; border-right:1px solid rgba(255,255,255,0.10); }
   .feat:last-child { border-right:none; }
-  .feat-ico { color:var(--gold2); display:inline-flex; width:44px; height:44px; align-items:center; justify-content:center; margin-bottom:14px; }
-  .feat-ico-img { width:40px; height:40px; object-fit:contain; }
-  .feat-title { font-family:'Cinzel',serif; font-size:0.74rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#fff; margin-bottom:6px; }
-  .feat-desc { font-size:0.8rem; color:rgba(245,237,216,0.55); line-height:1.5; max-width:200px; margin:0 auto; }
+  .feat-ico { color:var(--gold2); display:inline-flex; width:42px; height:42px; align-items:center; justify-content:center; margin-bottom:12px; }
+  .feat-ico-img { width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.45)); }
+  .feat-title { font-family:'Cinzel',serif; font-size:0.74rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#fff; margin-bottom:6px; text-shadow:0 1px 6px rgba(0,0,0,0.55); }
+  .feat-desc { font-size:0.8rem; color:rgba(245,237,216,0.72); line-height:1.5; max-width:200px; margin:0 auto; text-shadow:0 1px 6px rgba(0,0,0,0.55); }
   .hero-eyebrow { font-family:'Cinzel',serif; font-size:0.66rem; font-weight:600; letter-spacing:0.26em; text-transform:uppercase; color:var(--gold); margin-bottom:22px; }
   .hero-title { font-family:'Cormorant Garamond',serif; font-weight:600; font-size:clamp(2.6rem,5.2vw,4.4rem); line-height:1.05; color:#fff; letter-spacing:-0.01em; }
   .hero-title em { font-style:italic; font-weight:500; color:var(--gold2); }
@@ -619,8 +619,11 @@ const styles = `
     .hero::after { display:none; }
     .hero-copy { position:static; max-width:none; text-align:center; padding:38px 20px 46px; background:linear-gradient(180deg,var(--navy),var(--navy2)); }
     .hero-actions { justify-content:center; }
+    .featurebar { position:static; background:var(--navy); backdrop-filter:none; -webkit-backdrop-filter:none; border-top:1px solid var(--lineG); }
+    .feat-title, .feat-desc { text-shadow:none; }
+    .feat-ico-img { filter:none; }
     .featurebar-grid { grid-template-columns:repeat(2,1fr); }
-    .feat { border-right:none; border-bottom:1px solid var(--lineG); }
+    .feat { border-right:none; border-bottom:1px solid var(--lineG); padding:28px 18px; }
     .feat:nth-child(odd){ border-right:1px solid var(--lineG); }
     .feat:last-child { grid-column:1 / -1; border-bottom:none; }
   }
