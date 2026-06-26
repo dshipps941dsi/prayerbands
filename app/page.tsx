@@ -435,6 +435,9 @@ export default function HomePage() {
                 <div key={i} className="impact-row"><span className="impact-dot" /><span className="impact-date">{e.d}</span><span className="impact-event">{e.t}</span></div>
               ))}
             </div>
+          </Reveal>
+          <Reveal delay={220} className="impact-stats-card">
+            <div className="impact-stats-head">This band so far</div>
             <div className="impact-stats">
               {[{ n: "18", l: "Times Prayed" }, { n: "4", l: "States" }, { n: "11", l: "Encouraged" }, { n: "3", l: "Circles" }].map(s => (
                 <div key={s.l} className="impact-stat"><div className="impact-stat-n">{s.n}</div><div className="impact-stat-l">{s.l}</div></div>
@@ -697,18 +700,24 @@ const styles = `
 
   /* Impact */
   .impact { background:var(--paper); padding:90px 0; }
-  .impact-inner { display:grid; grid-template-columns:0.9fr 1.1fr; gap:56px; align-items:center; }
+  .impact-inner { display:grid; grid-template-columns:0.82fr 1fr 0.5fr; gap:40px; align-items:center; }
   .impact-card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:32px; box-shadow:0 14px 40px rgba(10,22,40,0.06); }
   .impact-timeline { position:relative; padding-left:8px; }
+  /* connecting line linking each dot to the next */
+  .impact-timeline::before { content:''; position:absolute; left:12px; top:18px; bottom:18px; width:2px; background:linear-gradient(180deg,rgba(200,169,110,0.25),var(--gold) 12%,var(--gold) 88%,rgba(200,169,110,0.25)); border-radius:2px; }
   .impact-row { display:flex; align-items:center; gap:14px; padding:9px 0; }
-  .impact-dot { width:10px; height:10px; border-radius:50%; background:var(--gold); flex-shrink:0; box-shadow:0 0 0 4px rgba(200,169,110,0.15); }
+  .impact-dot { position:relative; z-index:1; width:10px; height:10px; border-radius:50%; background:var(--gold); flex-shrink:0; box-shadow:0 0 0 3px #fff, 0 0 0 6px rgba(200,169,110,0.18); }
   .impact-date { font-family:'Cinzel',serif; font-size:0.66rem; letter-spacing:0.06em; color:var(--goldT); width:48px; flex-shrink:0; }
   .impact-event { font-size:0.86rem; color:var(--ink); }
-  .impact-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:24px; padding-top:24px; border-top:1px solid var(--line); }
-  .impact-stat { text-align:center; }
-  .impact-stat-n { font-family:'Cormorant Garamond',serif; font-weight:600; font-size:1.9rem; color:var(--goldT); line-height:1; }
-  .impact-stat-l { font-size:0.62rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink2); margin-top:6px; }
-  @media (max-width:880px){ .impact-inner { grid-template-columns:1fr; gap:40px; } }
+  .impact-stats-card { background:linear-gradient(180deg,#0E1E38,#0A1628); border:1px solid rgba(200,169,110,0.30); border-radius:16px; padding:28px 24px; box-shadow:0 14px 40px rgba(10,22,40,0.10); align-self:stretch; }
+  .impact-stats-head { font-family:'Cinzel',serif; font-size:0.66rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); text-align:center; margin-bottom:18px; }
+  .impact-stats { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .impact-stat { text-align:center; background:rgba(255,255,255,0.04); border:1px solid rgba(200,169,110,0.18); border-radius:12px; padding:16px 10px; }
+  .impact-stat-n { font-family:'Cormorant Garamond',serif; font-weight:600; font-size:2.1rem; color:#E2C98A; line-height:1; }
+  .impact-stat-l { font-size:0.6rem; letter-spacing:0.08em; text-transform:uppercase; color:rgba(245,237,216,0.65); margin-top:6px; }
+  @media (max-width:1040px){ .impact-inner { grid-template-columns:1fr 1fr; } .impact-copy { grid-column:1 / -1; } }
+  @media (max-width:880px){ .impact-inner { grid-template-columns:1fr; gap:32px; } .impact-copy { grid-column:auto; } .impact-stats { grid-template-columns:repeat(4,1fr); } }
+  @media (max-width:460px){ .impact-stats { grid-template-columns:1fr 1fr; } }
 
   /* Stories */
   .stories { position:relative; background:url('/home/real-stories-bg.jpg') center/cover no-repeat,#0a0b0d; padding:96px 0; overflow:hidden; }
