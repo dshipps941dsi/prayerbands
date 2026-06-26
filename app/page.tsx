@@ -664,7 +664,7 @@ const styles = `
 
   /* Circles — full-width, praying figure on the right via the bg */
   .circles { background:linear-gradient(90deg,rgba(7,13,26,0.96) 0%,rgba(7,13,26,0.84) 40%,rgba(7,13,26,0.5) 68%,rgba(7,13,26,0.6) 100%),url('/home/prayer-circles-bg.jpg') center right/cover no-repeat,var(--navy); padding:96px 0; }
-  .circles-inner { display:grid; grid-template-columns:1fr 0.85fr 0.95fr; gap:28px; align-items:center; max-width:1320px; margin:0 auto; padding:0 clamp(24px,4vw,56px); }
+  .circles-inner { display:grid; grid-template-columns:1fr 0.85fr 0.95fr; gap:28px; align-items:center; max-width:1180px; margin:0; padding:0 clamp(24px,5vw,72px); }
   .circ-feat-t { text-shadow:0 1px 6px rgba(0,0,0,0.6); }
   .circ-feat-d { text-shadow:0 1px 6px rgba(0,0,0,0.6); }
   .circles-diagram { display:flex; justify-content:center; }
