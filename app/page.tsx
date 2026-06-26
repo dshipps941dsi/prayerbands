@@ -350,7 +350,7 @@ export default function HomePage() {
 
       {/* ── Prayer circles ── */}
       <section className="circles">
-        <div className="container circles-inner">
+        <div className="circles-inner">
           <Reveal className="circles-copy">
             <div className="eyebrow gold">Prayer Circles</div>
             <h2 className="h2 light">No One Should <em>Pray Alone.</em></h2>
@@ -667,9 +667,11 @@ const styles = `
   }
   @media (max-width:460px){ .topic-grid { grid-template-columns:1fr; } }
 
-  /* Circles */
-  .circles { background:linear-gradient(180deg,var(--navy2),var(--navy)); padding:96px 0; }
-  .circles-inner { display:grid; grid-template-columns:1fr 0.9fr 1fr; gap:48px; align-items:center; }
+  /* Circles — full-width, praying figure on the right via the bg */
+  .circles { background:linear-gradient(90deg,rgba(7,13,26,0.96) 0%,rgba(7,13,26,0.84) 40%,rgba(7,13,26,0.5) 68%,rgba(7,13,26,0.6) 100%),url('/home/prayer-circles-bg.jpg') center right/cover no-repeat,var(--navy); padding:96px 0; }
+  .circles-inner { display:grid; grid-template-columns:1fr 0.9fr 1fr; gap:48px; align-items:center; padding:0 clamp(24px,5vw,72px); }
+  .circ-feat-t { text-shadow:0 1px 6px rgba(0,0,0,0.6); }
+  .circ-feat-d { text-shadow:0 1px 6px rgba(0,0,0,0.6); }
   .circles-diagram { position:relative; width:340px; height:340px; margin:0 auto; }
   .circ-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:150px; height:150px; border-radius:50%; background:linear-gradient(145deg,var(--gold2),var(--gold)); color:var(--navy); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:14px; box-shadow:0 16px 40px rgba(200,169,110,0.35); z-index:2; }
   .circ-center-title { font-family:'Cormorant Garamond',serif; font-weight:700; font-size:1rem; line-height:1.2; }
@@ -679,7 +681,11 @@ const styles = `
   .circ-feat-ico { flex-shrink:0; width:42px; height:42px; border-radius:10px; border:1px solid var(--lineG); color:var(--gold2); display:flex; align-items:center; justify-content:center; }
   .circ-feat-t { font-family:'Cinzel',serif; font-size:0.74rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#fff; }
   .circ-feat-d { font-size:0.82rem; color:rgba(245,237,216,0.55); }
-  @media (max-width:980px){ .circles-inner { grid-template-columns:1fr; gap:48px; } .circles-feats { max-width:420px; margin:0 auto; } }
+  @media (max-width:980px){
+    .circles { background:linear-gradient(180deg,rgba(7,13,26,0.9),rgba(7,13,26,0.93)),url('/home/prayer-circles-bg.jpg') center/cover no-repeat,var(--navy); }
+    .circles-inner { grid-template-columns:1fr; gap:48px; }
+    .circles-feats { max-width:420px; margin:0 auto; }
+  }
 
   /* Feed */
   .feed { background:var(--paper2); padding:90px 0; }
