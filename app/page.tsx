@@ -84,6 +84,7 @@ function Ico({ name, size = 24 }: { name: string; size?: number }) {
     search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>,
     user: <><circle cx="12" cy="8" r="4" /><path d="M4 20a8 8 0 0 1 16 0" /></>,
     cart: <><circle cx="9" cy="20" r="1.4" /><circle cx="18" cy="20" r="1.4" /><path d="M3 4h2l2.4 12.2a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L21 8H6" /></>,
+    check: <path d="M5 12.5l4 4 10-10" />,
   };
   return <svg {...common} aria-hidden>{P[name]}</svg>;
 }
@@ -221,6 +222,13 @@ export default function HomePage() {
     ((live?.topCountries || []) as any[]).length >= 3 ? live.topCountries : TOP_COUNTRIES_SAMPLE
   ), [live]);
 
+  // Deterministic "praying" count per card (stable across renders / hydration).
+  const prayingCount = (seed: string) => {
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+    return 8 + (h % 47); // 8–54
+  };
+
   return (
     <>
       <style>{styles}</style>
@@ -348,16 +356,23 @@ export default function HomePage() {
             <Link href="/prayer-wall" className="link-arrow">View all prayers →</Link>
           </Reveal>
           <div className="feed-grid">
-            {feed.map((p, i) => (
-              <Reveal key={p.band + i} delay={i * 80} className="feed-card">
-                <div className="feed-top">
-                  <div className="feed-avatar">{p.initials}</div>
-                  <div><div className="feed-name">{p.name}</div><div className="feed-meta">requested prayer · {p.time}</div></div>
-                </div>
-                <div className="feed-text">{p.text}</div>
-                <div className="feed-foot"><Ico name="people" size={15} /> praying</div>
-              </Reveal>
-            ))}
+            {feed.map((p, i) => {
+              const answered = i === 2; // highlight one card as an answered prayer
+              const count = prayingCount(p.band);
+              return (
+                <Reveal key={p.band + i} delay={i * 80} className={`feed-card${answered ? " answered" : ""}`}>
+                  {answered && (
+                    <div className="feed-answered"><Ico name="check" size={13} /> Prayer Answered</div>
+                  )}
+                  <div className="feed-top">
+                    <div className="feed-avatar">{p.initials}</div>
+                    <div><div className="feed-name">{p.name}</div><div className="feed-meta">{answered ? "marked answered" : "requested prayer"} · {p.time}</div></div>
+                  </div>
+                  <div className="feed-text">{p.text}</div>
+                  <div className="feed-foot"><Ico name="people" size={15} /> <strong>{count}</strong>&nbsp;praying</div>
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -656,7 +671,10 @@ const styles = `
   .feed { background:var(--paper2); padding:90px 0; }
   .feed-head { display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:48px; flex-wrap:wrap; }
   .feed-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
-  .feed-card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:22px; box-shadow:0 6px 20px rgba(10,22,40,0.04); }
+  .feed-card { position:relative; background:#fff; border:1px solid var(--line); border-radius:12px; padding:22px; box-shadow:0 6px 20px rgba(10,22,40,0.04); }
+  .feed-card.answered { border-color:rgba(43,140,90,0.45); box-shadow:0 8px 26px rgba(43,140,90,0.12); }
+  .feed-answered { display:inline-flex; align-items:center; gap:6px; margin-bottom:14px; padding:5px 11px; border-radius:999px; background:rgba(43,140,90,0.10); border:1px solid rgba(43,140,90,0.30); color:#1F7A4D; font-family:'Cinzel',serif; font-size:0.62rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; }
+  .feed-answered svg { stroke-width:2.4; }
   .feed-top { display:flex; align-items:center; gap:11px; margin-bottom:14px; }
   .feed-avatar { width:40px; height:40px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,var(--gold2),var(--gold)); color:var(--navy); font-family:'Cinzel',serif; font-size:0.7rem; font-weight:700; display:flex; align-items:center; justify-content:center; }
   .feed-name { font-weight:600; font-size:0.92rem; color:var(--ink); }
