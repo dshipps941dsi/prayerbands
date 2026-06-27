@@ -644,8 +644,8 @@ const styles = `
   .circ-cta { display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
   .circ-learn { font-family:'Cinzel',serif; font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold2); text-decoration:none; transition:color .2s; text-shadow:0 1px 10px rgba(0,0,0,0.5); }
   .circ-learn:hover { color:var(--gold); }
-  .circ-feat-t { font-family:'Cinzel',serif; font-size:0.74rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#fff; }
-  .circ-feat-d { font-size:0.82rem; color:rgba(245,237,216,0.55); }
+  .circ-feat-t { font-family:'Inter',sans-serif; font-size:0.92rem; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:#fff; }
+  .circ-feat-d { font-size:0.92rem; line-height:1.55; color:rgba(245,237,216,0.62); }
   @media (max-width:980px){
     .circles { background:linear-gradient(180deg,rgba(0,0,0,0.5),rgba(0,0,0,0.58)),url('/home/prayer-circles-bg.jpg') center/cover no-repeat,#101114; background-attachment:scroll; }
     .circles-inner { grid-template-columns:1fr; gap:48px; }
