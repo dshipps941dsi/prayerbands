@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -49,6 +50,17 @@ export async function GET(
     }
     const code = (req.nextUrl.searchParams.get('code') || '').trim().toUpperCase()
     const codeValid = !!code && !!circle.join_code && code === String(circle.join_code).toUpperCase()
+
+    // Throttle code-based (non-member) reads — this path treats the join code as
+    // a view credential, so without a limit it's a brute-force oracle for the
+    // whole circle (members + request text). Members reading their own circle
+    // skip the limit entirely.
+    if (!membership) {
+      const ip = getClientIp(req)
+      if (!(await checkRateLimit(`circle-read:${ip}`, 15, 60))) {
+        return NextResponse.json({ error: 'Too many attempts. Please wait a moment.' }, { status: 429 })
+      }
+    }
 
     if (!membership && !codeValid) {
       return NextResponse.json(

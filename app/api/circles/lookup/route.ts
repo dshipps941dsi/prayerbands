@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export async function GET(req: NextRequest) {
   try {
@@ -8,6 +9,15 @@ export async function GET(req: NextRequest) {
 
     if (!code) {
       return NextResponse.json({ error: 'Join code is required' }, { status: 400 })
+    }
+
+    // Throttle code guessing — this is an unauthenticated lookup over a 6-char
+    // code space, so without a limit it's a brute-force oracle for enumerating
+    // every private circle. 10 attempts/min/IP is plenty for a real person
+    // typing one code.
+    const ip = getClientIp(req)
+    if (!(await checkRateLimit(`circle-lookup:${ip}`, 10, 60))) {
+      return NextResponse.json({ error: 'Too many attempts. Please wait a moment.' }, { status: 429 })
     }
 
     const supabase = createServiceClient()
@@ -20,8 +30,7 @@ export async function GET(req: NextRequest) {
         description,
         join_code,
         is_closed,
-        created_at,
-        created_by
+        created_at
       `)
       .eq('join_code', code)
       .eq('is_closed', false)

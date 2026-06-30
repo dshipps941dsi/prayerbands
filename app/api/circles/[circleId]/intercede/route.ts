@@ -36,6 +36,20 @@ export async function POST(
       return NextResponse.json({ error: 'Not a member of this circle' }, { status: 403 })
     }
 
+    // The request must belong to THIS circle. Without this check a member of
+    // one circle could toggle intercessions on requests in circles they can't
+    // access (the service client bypasses the RLS WITH CHECK that would bind
+    // request_id -> membership). Also closes a request-UUID existence oracle.
+    const { data: reqRow } = await admin
+      .from('circle_prayer_requests')
+      .select('circle_id')
+      .eq('id', request_id)
+      .maybeSingle()
+
+    if (!reqRow || reqRow.circle_id !== circleId) {
+      return NextResponse.json({ error: 'Request not found in this circle' }, { status: 404 })
+    }
+
     // Check if already interceding
     const { data: existing } = await admin
       .from('circle_intercessions')

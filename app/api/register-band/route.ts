@@ -2,6 +2,7 @@ import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { isFlaggable, AUTO_FLAG_REASON } from '@/lib/moderation'
+import { escapeHtml } from '@/lib/escape-html'
 
 export async function POST(req: NextRequest) {
   const supabase = createClient(
@@ -109,6 +110,11 @@ export async function POST(req: NextRequest) {
       try {
         const resend = new Resend(process.env.RESEND_API_KEY)
         const location = [geoCity, geoState, geoCountry].filter(Boolean).join(', ')
+        // Escape every user-controlled value before it enters the email HTML.
+        const eName = escapeHtml(name)
+        const eLocation = escapeHtml(location)
+        const ePrayer = escapeHtml(prayer)
+        const eBandId = escapeHtml(bandId)
         for (const email of alertEmails) {
           await resend.emails.send({
             from: 'Prayer Bands <bands@prayerbands.com>',
@@ -119,16 +125,16 @@ export async function POST(req: NextRequest) {
                 <div style="background:#0d3d6e;padding:32px;text-align:center">
                   <div style="font-size:36px;color:#f5a623;margin-bottom:8px">✝</div>
                   <h1 style="font-family:Georgia,serif;font-size:24px;color:#fff;margin:0;font-weight:400">Your Band is Traveling</h1>
-                  <p style="color:rgba(255,255,255,0.6);font-size:14px;margin:8px 0 0;font-style:italic">${bandId} just reached a new person</p>
+                  <p style="color:rgba(255,255,255,0.6);font-size:14px;margin:8px 0 0;font-style:italic">${eBandId} just reached a new person</p>
                 </div>
                 <div style="padding:32px">
                   <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 20px">
-                    <strong style="color:#1a5fa0">${name}</strong> just received your band in
-                    <strong style="color:#1aabaa">${location}</strong>. Your prayer is continuing its journey. ✝
+                    <strong style="color:#1a5fa0">${eName}</strong> just received your band in
+                    <strong style="color:#1aabaa">${eLocation}</strong>. Your prayer is continuing its journey. ✝
                   </p>
-                  ${prayer ? `<div style="background:#fff;border-left:3px solid #f5a623;padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0"><p style="font-family:Georgia,serif;font-size:17px;font-style:italic;color:#4a5568;line-height:1.75;margin:0">"${prayer}"</p></div>` : ''}
+                  ${prayer ? `<div style="background:#fff;border-left:3px solid #f5a623;padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0"><p style="font-family:Georgia,serif;font-size:17px;font-style:italic;color:#4a5568;line-height:1.75;margin:0">"${ePrayer}"</p></div>` : ''}
                   <div style="text-align:center;margin:28px 0">
-                    <a href="https://prayerbands.com/band/${bandId}" style="display:inline-block;background:#2b7bc4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700">View Full Journey ✝</a>
+                    <a href="https://prayerbands.com/band/${eBandId}" style="display:inline-block;background:#2b7bc4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700">View Full Journey ✝</a>
                   </div>
                   <p style="font-size:13px;color:#8896a8;text-align:center;font-style:italic;margin:0">"Go into all the world and preach the gospel." — Mark 16:15</p>
                   <p style="font-size:11px;color:#b3bccb;text-align:center;margin:18px 0 0">Don't want these emails? <a href="https://prayerbands.com/settings" style="color:#8896a8">Manage notifications</a>.</p>

@@ -1,14 +1,16 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { createClient as createServerClient, createServiceClient } from '@/lib/supabase/server'
 
-export async function GET(req: NextRequest) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_KEY!
-  )
+export async function GET() {
+  // The caller may only ever read THEIR OWN network. Derive the user from the
+  // session cookie — never from a client-supplied `uid` (that was an IDOR that
+  // let anyone dump any user's friends + emails).
+  const authed = await createServerClient()
+  const { data: { user } } = await authed.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const userId = req.nextUrl.searchParams.get('uid')
-  if (!userId) return NextResponse.json({ network: [] })
+  const userId = user.id
+  const supabase = createServiceClient()
 
   const { data: sender } = await supabase
     .from('profiles')
