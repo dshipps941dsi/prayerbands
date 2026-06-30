@@ -16,7 +16,9 @@
 > - **T-M6 (upline lineage).** The prayer chain is derived from `registrations` ordered by time — the working source of truth. `upline_user_id` on `bands` is an unused denormalized column; populating it on every registration would create a second source that can drift. Treated as vestigial/reserved; the chain stays registrations-based.
 > - **C-M5 (leader role).** Leadership == `prayer_circles.created_by`, enforced server-side everywhere. The `circle_members.role` column is cosmetic; don't wire it into auth unless co-leaders are added.
 >
-> **Still open (low):** N-M4 (intercede on already-answered request), profanity filter weakness, inline geocode timeout, M5 server-side unsubscribe (tied to the H3 legacy-network decision above).
+> **Low items — done (2026-06-30):** geocode timeouts (no hung spinner), stronger profanity normalization (leetspeak/spacing), bounded transfer poll. Server-side unsubscribe + per-person/global opt-out shipped (H3 decision: keep the auto-network, make it respectful). N-M4 (intercede on an answered request) left as-is by decision — praying over an answered prayer is legitimate thanksgiving.
+>
+> **Net:** all High/Critical fixed and verified; all Medium done or resolved-by-decision; Low items done. Remaining audit notes are intentional product behavior, documented inline above.
 
 
 Audit of the four adoption-critical flows: **registration / first-tap**, **transfer / gifting / dedication**, **prayer circles**, and **prayer network (tap-to-add-friend)**. Findings below; ✅ = personally verified against the code, ◻ = reported by audit, consistent with verified patterns but not individually re-read.
