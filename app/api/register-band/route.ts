@@ -138,6 +138,15 @@ export async function POST(req: NextRequest) {
       .eq('band_id', bandId)
       .eq('dedication_viewed', false)
 
+    // If this registration is the recipient accepting a hand-off, complete the
+    // pending transfer here — server-side and atomic with the registration —
+    // rather than via forgeable client writes that RLS now blocks anyway.
+    await supabase
+      .from('band_transfers')
+      .update({ status: 'completed', completed_at: new Date().toISOString() })
+      .eq('band_id', bandId)
+      .eq('status', 'pending')
+
     let alertEmails = (prevRegs || []).map((r: any) => r.email).filter(Boolean)
     // Respect notification opt-outs: drop any prior holder whose account has
     // turned band emails off.

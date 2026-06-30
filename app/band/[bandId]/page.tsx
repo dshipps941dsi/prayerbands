@@ -282,9 +282,14 @@ export default function BandPage() {
       const res = await fetch('/api/initiate-transfer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bandId, userId, note: transferNote }),
+        body: JSON.stringify({ bandId, note: transferNote }),
       })
-      if (!res.ok) throw new Error('Transfer failed')
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        if (res.status === 401) { router.push(`/signin?redirect=/band/${bandId}`); return }
+        alert(data.error || 'Something went wrong. Please try again.')
+        return
+      }
       setTransferStep('pending')
     } catch {
       alert('Something went wrong. Please try again.')
@@ -294,29 +299,35 @@ export default function BandPage() {
   }
 
   async function handleCancelTransfer() {
-    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-    await supabase.from('band_transfers').update({ status: 'cancelled' }).eq('band_id', bandId).eq('status', 'pending')
-    await supabase.from('bands').update({ status: 'registered' }).eq('band_id', bandId)
-    setTransferStep('idle')
+    try {
+      const res = await fetch('/api/cancel-transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bandId }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || 'Could not cancel the transfer.')
+        return
+      }
+      setTransferStep('idle')
+    } catch {
+      alert('Something went wrong. Please try again.')
+    }
   }
 
   async function handleAcceptTransfer() {
     if (!claimName.trim()) return
     setSubmitting(true)
     try {
-      const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      // register-band completes the pending transfer server-side (atomic with
+      // the new holder's registration) — no client-side band/transfer writes.
       const res = await fetch('/api/register-band', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bandId, name: claimName, city: claimCity, state: claimState, country: claimCountry, prayer: claimPrayer, userId: userId ?? null }),
+        body: JSON.stringify({ bandId, name: claimName, city: claimCity, state: claimState, country: claimCountry, prayer: claimPrayer }),
       })
-      // Only complete the transfer once the new holder's registration actually saved,
-      // otherwise the chain loses a link (band marked registered with no new row).
       if (!res.ok) throw new Error('register-band failed')
-      await supabase.from('band_transfers')
-        .update({ status: 'completed', completed_at: new Date().toISOString() })
-        .eq('band_id', bandId).eq('status', 'pending')
-      await supabase.from('bands').update({ status: 'registered' }).eq('band_id', bandId)
       localStorage.setItem(`holder_${bandId}`, 'true')
       setClaimStep('done')
       setTimeout(() => { window.location.reload() }, 8000)

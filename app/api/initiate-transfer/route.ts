@@ -1,33 +1,60 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient as createServerClient, createServiceClient } from '@/lib/supabase/server'
 
+// Begin passing a band on to someone else. The sender is taken from the SESSION
+// (never the body), and we verify they actually hold the band — otherwise anyone
+// could spoof the sender or force a stranger's band into "pending transfer".
 export async function POST(req: NextRequest) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_KEY!
-  )
+  const authed = await createServerClient()
+  const { data: { user } } = await authed.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Please sign in to pass on your band.' }, { status: 401 })
+  }
 
-  const { bandId, userId, note } = await req.json()
-
+  const { bandId, note } = await req.json()
   if (!bandId) {
     return NextResponse.json({ error: 'Missing band ID' }, { status: 400 })
   }
 
-  // Insert transfer record
-  const { error: transferError } = await supabase
-    .from('band_transfers')
-    .insert({ band_id: bandId, from_user_id: userId, note, status: 'pending' })
+  const admin = createServiceClient()
 
+  const { data: band } = await admin
+    .from('bands')
+    .select('band_id, owner_id, status')
+    .eq('band_id', bandId)
+    .maybeSingle()
+  if (!band) {
+    return NextResponse.json({ error: 'Band not found' }, { status: 404 })
+  }
+  if (band.status === 'pending_transfer') {
+    return NextResponse.json({ error: 'This band is already being passed on.' }, { status: 409 })
+  }
+
+  // The caller must be the owner OR the current holder (latest registrant).
+  const { data: latest } = await admin
+    .from('registrations')
+    .select('user_id')
+    .eq('band_id', bandId)
+    .order('registered_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const isOwner = !!band.owner_id && band.owner_id === user.id
+  const isHolder = !!latest?.user_id && latest.user_id === user.id
+  if (!isOwner && !isHolder) {
+    return NextResponse.json({ error: 'You can only pass on a band you currently hold.' }, { status: 403 })
+  }
+
+  const { error: transferError } = await admin
+    .from('band_transfers')
+    .insert({ band_id: bandId, from_user_id: user.id, note: (note || '').toString().slice(0, 500) || null, status: 'pending' })
   if (transferError) {
     return NextResponse.json({ error: transferError.message }, { status: 500 })
   }
 
-  // Update band status
-  const { error: bandError } = await supabase
+  const { error: bandError } = await admin
     .from('bands')
     .update({ status: 'pending_transfer' })
     .eq('band_id', bandId)
-
   if (bandError) {
     return NextResponse.json({ error: bandError.message }, { status: 500 })
   }
