@@ -2,6 +2,12 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { getSessionOrg } from '@/lib/org-auth'
+import { escapeHtml } from '@/lib/escape-html'
+import { checkRateLimit } from '@/lib/rate-limit'
+
+// Cap how many people one prayer request fans out to (a band that's been
+// mass-registered could otherwise turn this into a bulk mailer).
+const MAX_RECIPIENTS = 200
 
 export async function POST(req: NextRequest) {
   const supabase = createClient(
@@ -15,10 +21,17 @@ export async function POST(req: NextRequest) {
     // caller could impersonate another user and spam that user's network.
     const { userId } = await getSessionOrg()
     if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+    // One person should not be blasting their network on a loop.
+    if (!(await checkRateLimit(`request-prayer:user:${userId}`, 5, 3600))) {
+      return NextResponse.json({ error: 'You’ve sent several prayer requests recently. Please wait a bit before sending more.' }, { status: 429 })
+    }
+
     const { prayerText, anonymous, excludedEmails = [] } = await req.json()
-    if (!prayerText) {
+    if (!prayerText || !String(prayerText).trim()) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
+    const cleanPrayer = String(prayerText).trim().slice(0, 2000)
 
     const { data: sender } = await supabase
       .from('profiles')
@@ -66,7 +79,9 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const recipients = networkEmails.filter(r => !excludedEmails.includes(r.email))
+    const recipients = networkEmails
+      .filter(r => !excludedEmails.includes(r.email))
+      .slice(0, MAX_RECIPIENTS)
 
     if (recipients.length === 0) {
       return NextResponse.json({ success: true, sent: 0, message: 'No contacts found in your network yet. Share bands with people to build your prayer network.' })
@@ -76,7 +91,7 @@ export async function POST(req: NextRequest) {
       .from('chain_prayers')
       .insert({
         band_id: senderBandIds[0] || null,
-        prayer_text: prayerText,
+        prayer_text: cleanPrayer,
         sender_contact: senderEmail,
         sender_contact_type: 'email',
         targets: recipients.map(r => ({ email: r.email, name: r.name })),
@@ -89,8 +104,13 @@ export async function POST(req: NextRequest) {
     const chainPrayerId = chainPrayer?.id
     let sent = 0
 
+    const eSenderName = escapeHtml(senderName)
+    const ePrayer = escapeHtml(cleanPrayer)
+
     for (const recipient of recipients) {
       const ackUrl = `https://prayerbands.com/pray-ack?id=${chainPrayerId}&name=${encodeURIComponent(recipient.name)}&email=${encodeURIComponent(recipient.email)}`
+      const eRecipientName = escapeHtml(recipient.name)
+      const eRelationship = escapeHtml(recipient.relationship)
 
       await resend.emails.send({
         from: 'Prayer Bands <bands@prayerbands.com>',
@@ -101,21 +121,21 @@ export async function POST(req: NextRequest) {
             <div style="background:#1a6b4a;padding:32px;text-align:center">
               <div style="font-size:36px;color:#f5a623;margin-bottom:8px">🙏</div>
               <h1 style="font-family:Georgia,serif;font-size:24px;color:#fff;margin:0;font-weight:400">A Prayer Request</h1>
-              <p style="color:rgba(255,255,255,0.7);font-size:14px;margin:8px 0 0">${senderName} needs your prayers</p>
+              <p style="color:rgba(255,255,255,0.7);font-size:14px;margin:8px 0 0">${eSenderName} needs your prayers</p>
             </div>
             <div style="padding:32px">
               <p style="font-size:15px;color:#4a5568;line-height:1.7;margin:0 0 20px">
-                Hi ${recipient.name}, <strong>${senderName}</strong> — who ${recipient.relationship} — is reaching out through Prayer Bands to ask for prayer.
+                Hi ${eRecipientName}, <strong>${eSenderName}</strong> — who ${eRelationship} — is reaching out through Prayer Bands to ask for prayer.
               </p>
               <div style="background:#fff;border-left:4px solid #1a6b4a;padding:20px 24px;border-radius:0 10px 10px 0;margin:20px 0">
                 <div style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#1a6b4a;margin-bottom:10px">Their Prayer Request</div>
-                <p style="font-family:Georgia,serif;font-size:17px;font-style:italic;color:#4a5568;line-height:1.75;margin:0">"${prayerText}"</p>
+                <p style="font-family:Georgia,serif;font-size:17px;font-style:italic;color:#4a5568;line-height:1.75;margin:0">"${ePrayer}"</p>
               </div>
               <div style="text-align:center;margin:28px 0">
                 <a href="${ackUrl}" style="display:inline-block;background:#1a6b4a;color:#fff;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:16px;font-weight:700;font-family:Georgia,serif">✝ I'm Praying for You</a>
               </div>
               <p style="font-size:13px;color:#8896a8;text-align:center;font-style:italic;margin:0">
-                Click the button to let ${senderName} know you're standing with them in prayer. ✝
+                Click the button to let ${eSenderName} know you're standing with them in prayer. ✝
               </p>
               <div style="background:#f0f7f3;border-radius:10px;padding:16px 20px;margin:24px 0;text-align:center">
                 <p style="font-size:14px;color:#5a4f42;margin:0;font-style:italic">"Carry each other's burdens, and in this way you will fulfill the law of Christ." — Galatians 6:2</p>

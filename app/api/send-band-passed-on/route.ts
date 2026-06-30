@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { isInternalOrAdmin } from '@/lib/internal-auth'
+import { escapeHtml } from '@/lib/escape-html'
 
 export async function POST(req: NextRequest) {
   if (!(await isInternalOrAdmin(req))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -11,6 +12,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, message: 'No owner email' })
     }
     const location = [city, country].filter(Boolean).join(', ')
+    const eOwnerName = escapeHtml(ownerName || 'friend')
+    const eNewHolder = escapeHtml(newHolderName || 'Someone')
+    const eLocation = escapeHtml(location)
+    const eBandId = escapeHtml(bandId)
     const { data, error } = await resend.emails.send({
       from: 'Prayer Bands <bands@prayerbands.com>',
       to: [ownerEmail],
@@ -20,13 +25,13 @@ export async function POST(req: NextRequest) {
           <div style="background:#0d3d6e;padding:32px;text-align:center">
             <div style="font-size:36px;color:#f5a623;margin-bottom:8px">✝</div>
             <h1 style="font-family:Georgia,serif;font-size:24px;color:#fff;margin:0;font-weight:400">Your Band Was Passed On</h1>
-            <p style="color:rgba(255,255,255,0.6);font-size:14px;margin:8px 0 0;font-style:italic">${bandId} just reached someone new</p>
+            <p style="color:rgba(255,255,255,0.6);font-size:14px;margin:8px 0 0;font-style:italic">${eBandId} just reached someone new</p>
           </div>
           <div style="padding:32px">
-            <p style="font-size:16px;color:#4a5568;line-height:1.8;margin:0 0 20px">Hi ${ownerName || 'friend'},</p>
+            <p style="font-size:16px;color:#4a5568;line-height:1.8;margin:0 0 20px">Hi ${eOwnerName},</p>
             <p style="font-size:16px;color:#4a5568;line-height:1.8;margin:0 0 20px">
-              <strong style="color:#1a5fa0">${newHolderName || 'Someone'}</strong> just registered your band
-              <strong>${bandId}</strong>${location ? ` in <strong style="color:#1aabaa">${location}</strong>` : ''}.
+              <strong style="color:#1a5fa0">${eNewHolder}</strong> just registered your band
+              <strong>${eBandId}</strong>${location ? ` in <strong style="color:#1aabaa">${eLocation}</strong>` : ''}.
               Your prayer is continuing its journey. ✝
             </p>
             <p style="font-size:16px;color:#4a5568;line-height:1.8;margin:0 0 28px">

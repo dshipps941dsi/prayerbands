@@ -47,6 +47,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, alreadyOwned: true })
     }
 
+    // Don't let someone claim ownership of a band that is actively held by a
+    // DIFFERENT account. Blank bands (no registrations) and accountless-held
+    // bands (latest holder has no user_id — e.g. the holder is signing in now to
+    // attach it) remain claimable; a band whose latest holder is another signed-
+    // in user does not.
+    const { data: latest } = await admin
+      .from('registrations')
+      .select('user_id')
+      .eq('band_id', bandId)
+      .order('registered_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (latest?.user_id && latest.user_id !== user.id) {
+      return NextResponse.json({ error: 'This band is currently held by someone else.' }, { status: 403 })
+    }
+
     const { error } = await admin
       .from('bands')
       .update({ owner_id: user.id })

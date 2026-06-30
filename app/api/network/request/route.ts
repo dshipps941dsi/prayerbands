@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { resolveBandRecipient, isBandHolder, nameFromProfile } from '@/lib/network'
+import { escapeHtml } from '@/lib/escape-html'
 
 // POST /api/network/request  { band_id }
 // Sends a connection request from the viewer to the band's holder.
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest) {
         admin.from('profiles').select('full_name, email').eq('id', user.id).single(),
       ])
       const requesterName = nameFromProfile(sprofile)
+      const eRequesterName = escapeHtml(requesterName)
       if (rprofile?.email) {
         const resend = new Resend(process.env.RESEND_API_KEY!)
         await resend.emails.send({
@@ -71,11 +73,11 @@ export async function POST(req: NextRequest) {
               <div style="background:#1a6b4a;padding:32px;text-align:center">
                 <div style="font-size:36px;color:#f5a623;margin-bottom:8px">🙏</div>
                 <h1 style="font-family:Georgia,serif;font-size:24px;color:#fff;margin:0;font-weight:400">A Prayer Connection</h1>
-                <p style="color:rgba(255,255,255,0.7);font-size:14px;margin:8px 0 0">${requesterName} would like to join you in prayer</p>
+                <p style="color:rgba(255,255,255,0.7);font-size:14px;margin:8px 0 0">${eRequesterName} would like to join you in prayer</p>
               </div>
               <div style="padding:32px">
                 <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 20px">
-                  <strong style="color:#1a6b4a">${requesterName}</strong> tapped your prayer band and asked to connect with you as Prayer Partners. If you accept, you'll be able to lift each other up in prayer.
+                  <strong style="color:#1a6b4a">${eRequesterName}</strong> tapped your prayer band and asked to connect with you as Prayer Partners. If you accept, you'll be able to lift each other up in prayer.
                 </p>
                 <div style="text-align:center;margin:28px 0">
                   <a href="https://prayerbands.com/dashboard?tab=prayers" style="display:inline-block;background:#1a6b4a;color:#fff;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:16px;font-weight:700;font-family:Georgia,serif">Review the Request ✝</a>

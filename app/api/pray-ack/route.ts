@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { escapeHtml } from '@/lib/escape-html'
 
 export async function POST(req: NextRequest) {
   const supabase = createClient(
@@ -32,17 +33,34 @@ export async function POST(req: NextRequest) {
     const isRecipient = targets.some((t: { email?: string }) => (t?.email || '').toLowerCase() === String(acknowledgerEmail).toLowerCase())
     if (!isRecipient) return NextResponse.json({ error: 'Not a recipient of this prayer' }, { status: 403 })
 
+    const requesterName = prayer.requester_name || 'Friend'
+
+    // Idempotent: if this person already acknowledged this prayer, don't insert a
+    // duplicate or re-email the requester. Without this the ack link (a plain URL
+    // with no token) could be replayed to spam the requester on a loop.
+    const { data: existingAck } = await supabase
+      .from('prayer_acknowledgments')
+      .select('id')
+      .eq('chain_prayer_id', chainPrayerId)
+      .eq('acknowledger_email', acknowledgerEmail)
+      .maybeSingle()
+    if (existingAck) {
+      return NextResponse.json({ success: true, requesterName, already: true })
+    }
+
     // Save acknowledgment
     await supabase.from('prayer_acknowledgments').insert({
       chain_prayer_id: chainPrayerId,
       acknowledger_email: acknowledgerEmail,
-      acknowledger_name: acknowledgerName,
+      acknowledger_name: String(acknowledgerName || '').slice(0, 80) || null,
     })
 
     // Notify the requester
     const requesterEmail = prayer.sender_contact
-    const requesterName = prayer.requester_name || 'Friend'
-    const acknowledgerDisplayName = acknowledgerName || 'Someone in your network'
+    const acknowledgerDisplayName = String(acknowledgerName || '').slice(0, 80) || 'Someone in your network'
+    const eRequesterName = escapeHtml(requesterName)
+    const eAck = escapeHtml(acknowledgerDisplayName)
+    const ePrayerText = escapeHtml(prayer.prayer_text)
 
     if (requesterEmail) {
       await resend.emails.send({
@@ -58,15 +76,15 @@ export async function POST(req: NextRequest) {
             </div>
             <div style="padding:32px">
               <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 20px">
-                Hi ${requesterName}, <strong>${acknowledgerDisplayName}</strong> has seen your prayer request and is praying for you right now. ✝
+                Hi ${eRequesterName}, <strong>${eAck}</strong> has seen your prayer request and is praying for you right now. ✝
               </p>
               <div style="background:#f0f7f3;border-radius:10px;padding:20px 24px;margin:20px 0;text-align:center">
                 <div style="font-size:32px;margin-bottom:8px">🙏</div>
-                <p style="font-size:16px;font-weight:bold;color:#1a6b4a;margin:0">${acknowledgerDisplayName} is praying for you</p>
+                <p style="font-size:16px;font-weight:bold;color:#1a6b4a;margin:0">${eAck} is praying for you</p>
               </div>
               <div style="background:#fff;border-left:4px solid #f5a623;padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0">
                 <p style="font-size:14px;color:#8a7c6a;margin:0 0 4px;font-style:italic">Your prayer request:</p>
-                <p style="font-family:Georgia,serif;font-size:16px;font-style:italic;color:#4a5568;line-height:1.75;margin:0">"${prayer.prayer_text}"</p>
+                <p style="font-family:Georgia,serif;font-size:16px;font-style:italic;color:#4a5568;line-height:1.75;margin:0">"${ePrayerText}"</p>
               </div>
               <p style="font-size:13px;color:#8896a8;text-align:center;font-style:italic;margin:20px 0 0">
                 "The prayer of a righteous person is powerful and effective." — James 5:16 ✝
