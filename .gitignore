@@ -45,3 +45,6 @@ _SUPABASE_MCP_SETUP.local.md
 
 # local MCP config (contains a Supabase token — never commit)
 .mcp.json
+
+# Local DB snapshots (contain PII — never commit)
+db/backups/
