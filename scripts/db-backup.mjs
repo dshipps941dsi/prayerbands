@@ -32,6 +32,8 @@ const TABLES = [
   'bands', 'registrations', 'profiles', 'orders',
   'prayer_circles', 'circle_members', 'circle_prayer_requests', 'circle_intercessions',
   'prayer_network_connections', 'band_transfers', 'org_invites',
+  // Orphaned tables being dropped in the 2026-06-30 cleanup — capture first.
+  'followers', 'lineage_tree', 'prayer_intercessions',
 ]
 
 const stamp = process.argv[2] || new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)

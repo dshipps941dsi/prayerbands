@@ -129,14 +129,18 @@ export default function PrayerWallPage() {
     if (!message.trim()) { showToast('Please write a prayer first'); return }
     if (!bandId.trim()) { showToast('Please enter a band ID'); return }
     setSubmitting(true)
-    const { error } = await supabase.from('registrations').insert({
-      band_id: bandId.trim().toUpperCase(),
-      prayer: message.trim(),
-      user_name: 'Anonymous',
-      city: location.trim() || null,
+    // Server-side so the post is moderated + rate-limited (the table no longer
+    // accepts unguarded anon inserts).
+    const res = await fetch('/api/wall-prayer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bandId: bandId.trim(), prayer: message.trim(), location: location.trim() }),
     })
     setSubmitting(false)
-    if (error) { showToast('Something went wrong — please try again'); return }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      showToast(data.error || 'Something went wrong — please try again'); return
+    }
     setBandId('')
     setMessage('')
     setLocation('')
