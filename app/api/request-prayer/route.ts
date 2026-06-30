@@ -4,6 +4,7 @@ import { Resend } from 'resend'
 import { getSessionOrg } from '@/lib/org-auth'
 import { escapeHtml } from '@/lib/escape-html'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { unsubUrl, unsubPostUrl } from '@/lib/unsub'
 
 // Cap how many people one prayer request fans out to (a band that's been
 // mass-registered could otherwise turn this into a bulk mailer).
@@ -79,9 +80,25 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const recipients = networkEmails
-      .filter(r => !excludedEmails.includes(r.email))
-      .slice(0, MAX_RECIPIENTS)
+    let candidates = networkEmails.filter(r => !excludedEmails.includes(r.email))
+
+    // Honor unsubscribes: drop anyone who opted out of all prayer emails, or out
+    // of this specific sender. Fail-open (send) if the lookup errors.
+    if (candidates.length > 0) {
+      const lowerEmails = candidates.map(r => r.email.toLowerCase())
+      const { data: optouts } = await supabase
+        .from('prayer_email_optouts')
+        .select('email, sender_user_id')
+        .in('email', lowerEmails)
+      const suppressed = new Set<string>()
+      for (const o of optouts || []) {
+        const e = (o.email || '').toLowerCase()
+        if (o.sender_user_id === null || o.sender_user_id === userId) suppressed.add(e)
+      }
+      if (suppressed.size > 0) candidates = candidates.filter(r => !suppressed.has(r.email.toLowerCase()))
+    }
+
+    const recipients = candidates.slice(0, MAX_RECIPIENTS)
 
     if (recipients.length === 0) {
       return NextResponse.json({ success: true, sent: 0, message: 'No contacts found in your network yet. Share bands with people to build your prayer network.' })
@@ -111,11 +128,19 @@ export async function POST(req: NextRequest) {
       const ackUrl = `https://prayerbands.com/pray-ack?id=${chainPrayerId}&name=${encodeURIComponent(recipient.name)}&email=${encodeURIComponent(recipient.email)}`
       const eRecipientName = escapeHtml(recipient.name)
       const eRelationship = escapeHtml(recipient.relationship)
+      // Per-person unsubscribe (just this sender) + global (all prayer emails).
+      const unsubSender = unsubUrl(recipient.email, userId)
+      const unsubAll = unsubUrl(recipient.email, 'all')
 
       await resend.emails.send({
         from: 'Prayer Bands <bands@prayerbands.com>',
         to: [recipient.email],
         subject: `🙏 ${senderName} is asking for prayer`,
+        // RFC 8058 one-click unsubscribe (mail clients show a native button).
+        headers: {
+          'List-Unsubscribe': `<${unsubPostUrl(recipient.email, 'all')}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
         html: `
           <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;background:#fdf8f0;border-radius:12px;overflow:hidden;border:1px solid #e2d5b8">
             <div style="background:#1a6b4a;padding:32px;text-align:center">
@@ -140,6 +165,13 @@ export async function POST(req: NextRequest) {
               <div style="background:#f0f7f3;border-radius:10px;padding:16px 20px;margin:24px 0;text-align:center">
                 <p style="font-size:14px;color:#5a4f42;margin:0;font-style:italic">"Carry each other's burdens, and in this way you will fulfill the law of Christ." — Galatians 6:2</p>
               </div>
+            </div>
+            <div style="padding:16px 32px;border-top:1px solid #e2d5b8;text-align:center">
+              <p style="font-size:11px;color:#a0aec0;line-height:1.7;margin:0">
+                <a href="${unsubSender}" style="color:#8896a8">Stop prayer requests from ${eSenderName}</a>
+                &nbsp;·&nbsp;
+                <a href="${unsubAll}" style="color:#8896a8">Unsubscribe from all prayer emails</a>
+              </p>
             </div>
           </div>
         `
