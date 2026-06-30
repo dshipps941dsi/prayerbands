@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { serviceClient } from '@/lib/org-auth'
+import { findAuthUserByEmail } from '@/lib/find-auth-user'
 
 // Public lookup so the /accept-invite page can show who's inviting and to which
 // church before the recipient sets a password. Only returns non-sensitive info,
@@ -27,9 +28,18 @@ export async function GET(req: NextRequest) {
     .eq('id', invite.org_id)
     .maybeSingle()
 
+  // Does a PrayerBands account already exist on this email? If so the page asks
+  // them to sign in (proving they own it) instead of setting a password — we
+  // never reset an existing account's password from an invite link.
+  let accountExists = false
+  try {
+    accountExists = !!(await findAuthUserByEmail(admin, invite.email))
+  } catch { /* fall back to the set-password path */ }
+
   return NextResponse.json({
     email: invite.email,
     display_name: invite.display_name,
+    account_exists: accountExists,
     org: { name: org?.name || 'a ministry', logo_url: org?.logo_url || null, color: org?.color || '#1a6b4a' },
   })
 }

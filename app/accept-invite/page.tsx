@@ -60,29 +60,59 @@ function AcceptInviteInner() {
   }, [token])
 
   async function submit() {
-    setSubmitting(true); setError(''); setStatus('Creating your account...')
+    setSubmitting(true); setError('')
+    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     try {
+      if (invite?.account_exists) {
+        // Existing account: sign in FIRST (proves they own the email), then the
+        // invite only attaches the org — we never reset their password.
+        setStatus('Signing you in...')
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email: invite.email, password })
+        if (signInError) {
+          setError('That password didn’t match. Try again, or reset it below.')
+          setSubmitting(false); setStatus(''); return
+        }
+        setStatus('Joining the team...')
+        const res = await fetch('/api/accept-invite', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, display_name: name }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) { setError(data.message || data.error || 'Could not join the team.'); setSubmitting(false); setStatus(''); return }
+        window.location.replace('/org/dashboard')
+        return
+      }
+
+      // Brand-new account: create it with the chosen password, then sign in.
+      setStatus('Creating your account...')
       const res = await fetch('/api/accept-invite', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, display_name: name, password }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setError(data.error || 'Could not accept the invite.'); setSubmitting(false); setStatus(''); return }
+      if (!res.ok) {
+        if (data.error === 'account_exists') {
+          // Raced with an account creation — flip to the sign-in path.
+          setInvite((p: any) => ({ ...p, account_exists: true }))
+          setError('You already have an account — enter your password to sign in.')
+          setSubmitting(false); setStatus(''); return
+        }
+        setError(data.error || 'Could not accept the invite.'); setSubmitting(false); setStatus(''); return
+      }
 
       setStatus('Signing you in...')
-      const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
       const { error: signInError } = await supabase.auth.signInWithPassword({ email: data.email, password })
-      if (signInError) {
-        // Account exists but sign-in failed — send them to the org sign-in.
-        window.location.replace('/signin/org')
-        return
-      }
+      if (signInError) { window.location.replace('/signin/org'); return }
       window.location.replace('/org/dashboard')
     } catch {
       setError('Network error. Please try again.')
       setSubmitting(false); setStatus('')
     }
   }
+
+  // Existing accounts enter their real password (any length); new accounts must
+  // create one of at least 8 characters.
+  const minPwLen = invite?.account_exists ? 1 : 8
 
   const inputStyle = {
     width: '100%', padding: '11px 14px', borderRadius: 8,
@@ -141,26 +171,36 @@ function AcceptInviteInner() {
           : <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}><Logo size={40} /></div>}
         <div style={{ fontSize: 11, letterSpacing: '0.14em', color: BRAND.goldText, fontFamily: "'Cinzel', serif", textTransform: 'uppercase', marginBottom: 8 }}>Ministry Invitation</div>
         <h1 style={{ fontSize: 23, fontWeight: 600, color: BRAND.navyMid, margin: '0 0 6px', fontFamily: "'Cormorant Garamond', serif" }}>Join {invite?.org?.name}</h1>
-        <p style={{ fontSize: 13, color: BRAND.secondaryText, margin: 0 }}>Set a password to access the ministry dashboard</p>
+        <p style={{ fontSize: 13, color: BRAND.secondaryText, margin: 0 }}>{invite?.account_exists ? 'Sign in to join the ministry dashboard' : 'Set a password to access the ministry dashboard'}</p>
       </div>
 
       <label style={labelStyle}>Email</label>
       <div style={{ ...inputStyle, color: BRAND.secondaryText, background: '#ECEEF1' }}>{invite?.email}</div>
 
-      <label style={labelStyle}>Your name</label>
-      <input className="pb-input" style={inputStyle} type="text" placeholder="Your name" value={name} onChange={e => setName(e.target.value)} />
+      {!invite?.account_exists && (
+        <>
+          <label style={labelStyle}>Your name</label>
+          <input className="pb-input" style={inputStyle} type="text" placeholder="Your name" value={name} onChange={e => setName(e.target.value)} />
+        </>
+      )}
 
-      <label style={labelStyle}>Create a password</label>
-      <input className="pb-input" style={inputStyle} type="password" placeholder="At least 8 characters" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && password.length >= 8) submit() }} />
+      <label style={labelStyle}>{invite?.account_exists ? 'Your password' : 'Create a password'}</label>
+      <input className="pb-input" style={inputStyle} type="password" placeholder={invite?.account_exists ? 'Your account password' : 'At least 8 characters'} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && password.length >= minPwLen) submit() }} />
 
       {error && <div style={{ background: '#fef0f0', border: '1px solid #f5c6c6', borderRadius: 7, padding: '10px 14px', color: '#c0392b', fontSize: 13, marginBottom: 12 }}>{error}</div>}
 
-      <button onClick={submit} disabled={submitting || password.length < 8} style={{ width: '100%', padding: '13px', borderRadius: 8, background: (!submitting && password.length >= 8) ? BRAND.gold : '#C9CFD6', color: (!submitting && password.length >= 8) ? BRAND.navy : '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: (!submitting && password.length >= 8) ? 'pointer' : 'default', fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-        {submitting ? 'Joining...' : 'Join the Team ✝'}
+      <button onClick={submit} disabled={submitting || password.length < minPwLen} style={{ width: '100%', padding: '13px', borderRadius: 8, background: (!submitting && password.length >= minPwLen) ? BRAND.gold : '#C9CFD6', color: (!submitting && password.length >= minPwLen) ? BRAND.navy : '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: (!submitting && password.length >= minPwLen) ? 'pointer' : 'default', fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        {submitting ? (invite?.account_exists ? 'Signing in...' : 'Joining...') : (invite?.account_exists ? 'Sign in & Join ✝' : 'Join the Team ✝')}
       </button>
 
+      {invite?.account_exists && (
+        <div style={{ marginTop: 12, textAlign: 'center', fontSize: 12, color: BRAND.mutedText }}>
+          Forgot your password? <a href="/reset-password" style={{ color: BRAND.goldText, textDecoration: 'none', fontWeight: 600 }}>Reset it</a>
+        </div>
+      )}
+
       <div style={{ marginTop: 16, textAlign: 'center', fontSize: 12, color: BRAND.mutedText }}>
-        Already have an account? <a href="/signin/org" style={{ color: BRAND.goldText, textDecoration: 'none', fontWeight: 600 }}>Sign in</a>
+        {invite?.account_exists ? 'Not you?' : 'Already have an account?'} <a href="/signin/org" style={{ color: BRAND.goldText, textDecoration: 'none', fontWeight: 600 }}>Sign in</a>
       </div>
     </div>
   )

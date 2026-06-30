@@ -1,24 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 import { serviceClient } from '@/lib/org-auth'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient as createServerClient } from '@/lib/supabase/server'
+import { findAuthUserByEmail } from '@/lib/find-auth-user'
 
-// Finds an existing auth user by email (Supabase admin has no direct getByEmail,
-// so we page through listUsers). Bounded to keep it cheap.
-async function findAuthUserByEmail(admin: SupabaseClient, email: string) {
-  const target = email.toLowerCase()
-  for (let page = 1; page <= 20; page++) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 })
-    if (error) throw error
-    const match = data.users.find(u => (u.email || '').toLowerCase() === target)
-    if (match) return match
-    if (data.users.length < 200) break
-  }
-  return null
-}
-
-// Completes an invite: the recipient sets a password and joins the org. Works
-// whether or not they already had a Prayer Bands account on this email.
+// Completes an invite and joins the recipient to the org. Two safe paths:
+//   - Brand-new email -> create the account with the password they chose.
+//   - Existing account -> they must already be SIGNED IN as that email (proving
+//     they own it); we only attach the org. We NEVER reset an existing account's
+//     password from an invite link (that was an account-takeover vector).
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
   const token = String(body.token || '')
@@ -26,9 +16,6 @@ export async function POST(req: NextRequest) {
   const displayName = String(body.display_name || '').trim()
 
   if (!token) return NextResponse.json({ error: 'Missing token.' }, { status: 400 })
-  if (password.length < 8) {
-    return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 })
-  }
 
   const admin = serviceClient()
 
@@ -49,27 +36,39 @@ export async function POST(req: NextRequest) {
   const email = invite.email.toLowerCase()
   const name = displayName || invite.display_name || email.split('@')[0]
 
-  // Create the auth user, or attach to an existing account on this email.
-  let userId: string
-  const { data: created, error: createErr } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { display_name: name },
-  })
+  // Who's calling? (Existing users sign in first, so they arrive authenticated.)
+  const authed = await createServerClient()
+  const { data: { user: sessionUser } } = await authed.auth.getUser()
+  const existing = await findAuthUserByEmail(admin, email).catch(() => null)
 
-  if (created?.user) {
-    userId = created.user.id
+  let userId: string
+  if (existing) {
+    // An account already exists — the caller must be signed in AS that account.
+    if (!sessionUser || (sessionUser.email || '').toLowerCase() !== email) {
+      return NextResponse.json(
+        { error: 'account_exists', message: 'An account already exists for this email. Please sign in to join.' },
+        { status: 409 }
+      )
+    }
+    userId = existing.id
+    // No password change. Just (re)confirm the display name on their metadata.
+    await admin.auth.admin.updateUserById(userId, { user_metadata: { display_name: name } })
   } else {
-    // Likely "already registered" — find the existing account and set the
-    // password they just chose so they can sign in.
-    const existing = await findAuthUserByEmail(admin, email).catch(() => null)
-    if (!existing) {
+    // Brand-new account — set the password they chose.
+    if (password.length < 8) {
+      return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 })
+    }
+    const { data: created, error: createErr } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { display_name: name },
+    })
+    if (!created?.user) {
       console.error('[accept-invite] createUser error:', createErr)
       return NextResponse.json({ error: 'Could not create your account. Please try again.' }, { status: 500 })
     }
-    userId = existing.id
-    await admin.auth.admin.updateUserById(userId, { password, email_confirm: true })
+    userId = created.user.id
   }
 
   // Upsert the profile and attach it to the org. Preserve an existing profile's
@@ -103,6 +102,7 @@ export async function POST(req: NextRequest) {
     .update({ status: 'accepted', accepted_at: new Date().toISOString() })
     .eq('id', invite.id)
 
-  // The client signs in with this email + password and lands on /org/dashboard.
-  return NextResponse.json({ ok: true, email })
+  // mode: 'created' -> the client signs in with the new password; 'attached' ->
+  // the caller was already signed in, just send them to the dashboard.
+  return NextResponse.json({ ok: true, email, mode: existing ? 'attached' : 'created' })
 }
