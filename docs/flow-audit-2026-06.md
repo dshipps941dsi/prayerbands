@@ -10,7 +10,13 @@
 > - **C3 (full) — "view circle without joining."** Join codes still work as a read credential by design (your "no account needed to view" feature). Now rate-limited against enumeration. If you want true privacy, require membership to read request text.
 > - **band-status `userId`** is still a client param (read-only personal_space). Low risk; could derive from session.
 >
-> **Still open (medium, not yet done):** network M2 (directional-unique race), M6/M8 (decline → block/cooldown), M4 (intercede on answered), profanity filter, geocode timeout. See the MEDIUM/LOW sections.
+> **Medium items — done (2026-06-30, batches M-A..M-D):** registration robustness (R-M1/M4/M6/M7), circle correctness (C-M6/M7/M8/M9), network connection integrity + harassment rate-limit (N-M2/M6), transfer edge-case hardening + "just view the journey" read-only path (T-M8/T-M9).
+>
+> **Resolved by decision (no code):**
+> - **T-M6 (upline lineage).** The prayer chain is derived from `registrations` ordered by time — the working source of truth. `upline_user_id` on `bands` is an unused denormalized column; populating it on every registration would create a second source that can drift. Treated as vestigial/reserved; the chain stays registrations-based.
+> - **C-M5 (leader role).** Leadership == `prayer_circles.created_by`, enforced server-side everywhere. The `circle_members.role` column is cosmetic; don't wire it into auth unless co-leaders are added.
+>
+> **Still open (low):** N-M4 (intercede on already-answered request), profanity filter weakness, inline geocode timeout, M5 server-side unsubscribe (tied to the H3 legacy-network decision above).
 
 
 Audit of the four adoption-critical flows: **registration / first-tap**, **transfer / gifting / dedication**, **prayer circles**, and **prayer network (tap-to-add-friend)**. Findings below; ✅ = personally verified against the code, ◻ = reported by audit, consistent with verified patterns but not individually re-read.

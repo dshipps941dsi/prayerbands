@@ -133,7 +133,7 @@ export default function BandPage() {
   const [claimCountry, setClaimCountry] = useState('United States')
   const [claimPrayer, setClaimPrayer] = useState('')
   const [showSignup, setShowSignup] = useState(false)
-  const [claimStep, setClaimStep] = useState<'prompt' | 'form' | 'done'>('prompt')
+  const [claimStep, setClaimStep] = useState<'prompt' | 'form' | 'done' | 'view'>('prompt')
   const [giftAcknowledged, setGiftAcknowledged] = useState(false)
   const [transferNote, setTransferNote] = useState('')
   const [transferStep, setTransferStep] = useState<'idle' | 'sheet' | 'pending' | 'save_prompt'>('idle')
@@ -928,7 +928,13 @@ export default function BandPage() {
             <div style={{ fontFamily: body, fontSize: 14, opacity: 0.8, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>This band has traveled through {regs.length} {regs.length === 1 ? 'person' : 'people'}. Now it's being offered to you.</div>
             {status.transfer?.note && <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: '14px 16px', fontFamily: body, fontSize: 14, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20, textAlign: 'left' }}>"{status.transfer.note}"</div>}
             <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 16, background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>Accept this band →</button>
-            <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Just view the journey</button>
+            <button onClick={() => setClaimStep('view')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Just view the journey</button>
+          </div>
+        )}
+        {claimStep === 'view' && (
+          <div style={{ margin: '24px 20px 0', textAlign: 'center' }}>
+            <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 12 }}>Take your time. When you&apos;re ready, you can accept the band.</div>
+            <button onClick={() => setClaimStep('form')} style={{ display: 'inline-block', padding: '13px 28px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Accept this band →</button>
           </div>
         )}
         {claimStep === 'form' && <ClaimForm title="You're joining the chain ✝" subtitle="Add your name and a prayer to complete the handoff." submitLabel="Accept & add my prayer ✝" onSubmit={handleAcceptTransfer} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}

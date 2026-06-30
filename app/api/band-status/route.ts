@@ -107,7 +107,9 @@ export async function GET(req: NextRequest) {
       .select('id, note, created_at, from_user_id')
       .eq('band_id', bandId)
       .eq('status', 'pending')
-      .single()
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
     // Get the sender's name
     let senderName = null
@@ -116,7 +118,7 @@ export async function GET(req: NextRequest) {
         .from('profiles')
         .select('full_name')
         .eq('id', transfer.from_user_id)
-        .single()
+        .maybeSingle()
       senderName = profile?.full_name ?? null
     }
 
@@ -148,7 +150,7 @@ export async function GET(req: NextRequest) {
       .from('profiles')
       .select('full_name')
       .eq('id', band.owner_id)
-      .single()
+      .maybeSingle()
 
     return NextResponse.json({
       screen: 'first_tap_gift',
