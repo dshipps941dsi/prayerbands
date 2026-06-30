@@ -1,5 +1,18 @@
 # PrayerBands — Core Flow Security & UX Audit (2026-06)
 
+> ## Remediation status (2026-06-30)
+> Shipped to `main` in six batches. Code restore point: tag `pre-flow-audit-2026-06-30`. DB snapshot: `db/backups/2026-06-30-pre-audit/`.
+>
+> **Fixed:** C1, C2, C3 (rate-limit + stop leaking leader id; see note), C4, C5, C6, C7, C8, H1, H2, H4, H5, H6, M1, M3, M5, and the dead `send-journey-alert` route.
+>
+> **Deliberately deferred (product decisions, not bugs):**
+> - **H3 — consent-less legacy network.** The legacy "network" is still auto-derived from band registrations (no explicit accept). It's now rate-limited, fan-out-capped, and escaped, but the *model* (auto-add anyone who registers your band) remains. Decide: retire it onto the consent-based `prayer_network_connections`, or keep it (registering with an email is arguably opt-in). Add a server-side unsubscribe list either way.
+> - **C3 (full) — "view circle without joining."** Join codes still work as a read credential by design (your "no account needed to view" feature). Now rate-limited against enumeration. If you want true privacy, require membership to read request text.
+> - **band-status `userId`** is still a client param (read-only personal_space). Low risk; could derive from session.
+>
+> **Still open (medium, not yet done):** network M2 (directional-unique race), M6/M8 (decline → block/cooldown), M4 (intercede on answered), profanity filter, geocode timeout. See the MEDIUM/LOW sections.
+
+
 Audit of the four adoption-critical flows: **registration / first-tap**, **transfer / gifting / dedication**, **prayer circles**, and **prayer network (tap-to-add-friend)**. Findings below; ✅ = personally verified against the code, ◻ = reported by audit, consistent with verified patterns but not individually re-read.
 
 ## Systemic root cause (read this first)
