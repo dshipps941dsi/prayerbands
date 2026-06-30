@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 
 const GOLD = '#C8A96E'
 const GOLD_SOFT = '#E2C98A'
@@ -21,19 +20,10 @@ export default function IncomingGiftScreen({
   note?: string | null
   onProceed: () => void
 }) {
-  const [working, setWorking] = useState(false)
-
-  async function begin() {
-    setWorking(true)
-    try {
-      await fetch('/api/mark-dedication-viewed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bandId }),
-      })
-    } catch {
-      // Non-fatal — proceed into the journey regardless.
-    }
+  // The blessing is marked "viewed" server-side when the recipient actually
+  // registers (in /api/register-band), not here — so closing the tab on the
+  // claim form doesn't permanently suppress this reveal.
+  function begin() {
     onProceed()
   }
 
@@ -86,7 +76,6 @@ export default function IncomingGiftScreen({
 
         <button
           onClick={begin}
-          disabled={working}
           style={{
             display: 'block',
             width: '100%',
@@ -99,11 +88,11 @@ export default function IncomingGiftScreen({
             fontSize: 15,
             fontWeight: 700,
             letterSpacing: '0.04em',
-            cursor: working ? 'wait' : 'pointer',
+            cursor: 'pointer',
             boxShadow: '0 10px 30px rgba(200,169,110,0.25)',
           }}
         >
-          {working ? 'Opening…' : 'Begin Your Journey →'}
+          Begin Your Journey →
         </button>
 
         <div style={{ marginTop: 18, fontSize: 12, color: 'rgba(245,237,216,0.4)', fontFamily: 'monospace' }}>{bandId}</div>

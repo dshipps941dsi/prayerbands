@@ -33,8 +33,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ screen: 'not_found' })
   }
 
-  // The dedication token gates dedication writes — never hand it to a public client.
+  // The private blessing is only ever surfaced through the one screen that needs
+  // it (incoming_gift, below). Capture it, then strip it — along with the token —
+  // from the public `band` object so it isn't echoed in every other screen's
+  // payload (it used to be readable by anyone sweeping band IDs).
+  const dedicationNote: string | null = band.dedication_note ?? null
+  const dedicationRecipient: string | null = band.dedication_recipient ?? null
   delete (band as { dedication_token?: string }).dedication_token
+  delete (band as { dedication_note?: string }).dedication_note
+  delete (band as { dedication_recipient?: string }).dedication_recipient
 
   // Fetch registrations in order
   const { data: registrations } = await supabase
@@ -113,13 +120,13 @@ export async function GET(req: NextRequest) {
   // 3.5 Pre-dedicated gift band — recipient's first tap, message not yet seen.
   // Gate on "no registrations yet" rather than a status string so it fires for
   // assigned/shipped gift bands too (one-time store gifts and subscriptions).
-  if (regs.length === 0 && band.dedication_note && !band.dedication_viewed) {
+  if (regs.length === 0 && dedicationNote && !band.dedication_viewed) {
     return NextResponse.json({
       screen: 'incoming_gift',
       band,
       registrations: regs,
-      dedicationNote: band.dedication_note,
-      dedicationRecipient: band.dedication_recipient,
+      dedicationNote,
+      dedicationRecipient,
     })
   }
 

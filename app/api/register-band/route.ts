@@ -127,6 +127,17 @@ export async function POST(req: NextRequest) {
       .update({ status: 'registered' })
       .eq('band_id', bandId)
 
+    // Mark a gift band's blessing as seen once the recipient actually registers
+    // (idempotent no-op for non-gift bands / later holders). This replaces the
+    // old unauthenticated mark-dedication-viewed POST — so closing the tab on the
+    // claim form no longer permanently suppresses the "sent especially for you"
+    // reveal; it persists until they genuinely claim the band.
+    await supabase
+      .from('bands')
+      .update({ dedication_viewed: true })
+      .eq('band_id', bandId)
+      .eq('dedication_viewed', false)
+
     let alertEmails = (prevRegs || []).map((r: any) => r.email).filter(Boolean)
     // Respect notification opt-outs: drop any prior holder whose account has
     // turned band emails off.

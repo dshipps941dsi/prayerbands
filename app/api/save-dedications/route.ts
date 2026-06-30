@@ -85,7 +85,11 @@ export async function POST(req: NextRequest) {
       patch.dedication_note = d.note?.trim() || null
     }
     if (authUserId) patch.owner_id = authUserId
-    await supabase.from('bands').update(patch).eq('band_id', d.bandId).is('owner_id', null)
+    let q = supabase.from('bands').update(patch).eq('band_id', d.bandId).is('owner_id', null)
+    // Never clobber an existing blessing — only write a dedication where none
+    // exists yet. (The /dedicate page, token-gated above, is the place to edit one.)
+    if (hasText) q = q.is('dedication_note', null)
+    await q
   }
 
   return NextResponse.json({ success: true })
