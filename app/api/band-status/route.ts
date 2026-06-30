@@ -22,14 +22,26 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
   }
 
-  // Fetch band
+  // Light sanity check on the ID shape — keeps obviously-garbage values from
+  // hitting the DB, and there's no valid band ID this would exclude.
+  if (bandId.length > 64 || /[^A-Za-z0-9_-]/.test(bandId)) {
+    return NextResponse.json({ screen: 'not_found' })
+  }
+
+  // Fetch band. maybeSingle() so a genuinely-missing band (null) is the
+  // "not found" screen, while a real DB error surfaces as a retryable 'error'
+  // screen instead of the dead-end "Band not found".
   const { data: band, error } = await supabase
     .from('bands')
     .select('*')
     .eq('band_id', bandId)
-    .single()
+    .maybeSingle()
 
-  if (error || !band) {
+  if (error) {
+    console.error('[band-status] band fetch error:', error)
+    return NextResponse.json({ screen: 'error' }, { status: 503 })
+  }
+  if (!band) {
     return NextResponse.json({ screen: 'not_found' })
   }
 

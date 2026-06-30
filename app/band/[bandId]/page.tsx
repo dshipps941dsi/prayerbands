@@ -28,7 +28,7 @@ type Registration = {
 }
 
 type BandStatus = {
-  screen: 'personal_space' | 'incoming_transfer' | 'incoming_gift' | 'first_tap_gift' | 'journey' | 'first_tap_blank' | 'not_found' | 'loading'
+  screen: 'personal_space' | 'incoming_transfer' | 'incoming_gift' | 'first_tap_gift' | 'journey' | 'first_tap_blank' | 'not_found' | 'loading' | 'error'
   reason?: string
   band?: any
   registrations?: Registration[]
@@ -207,7 +207,7 @@ export default function BandPage() {
     if (!bandId) return
     const localHolder = localStorage.getItem(`holder_${bandId}`)
     const url = `/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}${localHolder ? '&localHolder=true' : ''}`
-    fetch(url).then(r => r.json()).then(data => setStatus(data)).catch(() => setStatus({ screen: 'not_found' }))
+    fetch(url).then(r => r.json()).then(data => setStatus(data)).catch(() => setStatus({ screen: 'error' }))
   }, [bandId, userId])
 
   useEffect(() => {
@@ -681,7 +681,29 @@ export default function BandPage() {
         <div style={{ padding: '60px 24px', textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>✝</div>
           <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Band not found</div>
-          <div style={{ fontFamily: body, fontSize: 14, color: GRAY }}>Check the ID on your wristband and try again.</div>
+          <div style={{ fontFamily: body, fontSize: 14, color: GRAY, marginBottom: 24 }}>
+            We couldn&apos;t find a band with the ID <strong>{bandId}</strong>. Double-check the ID printed on your wristband.
+          </div>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href="/store" style={{ display: 'inline-block', background: GOLD, color: INK, textDecoration: 'none', fontFamily: serif, fontSize: 13, fontWeight: 700, padding: '12px 24px', borderRadius: 8 }}>Get a Prayer Band</a>
+            <a href="/contact" style={{ display: 'inline-block', background: 'transparent', color: INK, textDecoration: 'none', fontFamily: serif, fontSize: 13, fontWeight: 700, padding: '12px 24px', borderRadius: 8, border: '1px solid rgba(10,22,40,0.18)' }}>Contact Support</a>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (status.screen === 'error') {
+    return (
+      <div style={{ minHeight: '100vh' }}>
+        <Nav />
+        <div style={{ padding: '60px 24px', textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>✝</div>
+          <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Something went wrong</div>
+          <div style={{ fontFamily: body, fontSize: 14, color: GRAY, marginBottom: 24 }}>
+            We had trouble loading your band. This is usually temporary.
+          </div>
+          <button onClick={() => window.location.reload()} style={{ background: GOLD, color: INK, border: 'none', fontFamily: serif, fontSize: 13, fontWeight: 700, padding: '12px 24px', borderRadius: 8, cursor: 'pointer' }}>Try Again</button>
         </div>
       </div>
     )

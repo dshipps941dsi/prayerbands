@@ -48,6 +48,23 @@ export async function POST(req: NextRequest) {
       ? String(email).trim().toLowerCase()
       : null
 
+    // Idempotency: collapse accidental double-submits (double-tap, or a retry
+    // after a flaky network where the first insert actually succeeded). If an
+    // identical registration for this band landed in the last 30s, return it
+    // instead of appending a duplicate holder to the chain.
+    const dupSince = new Date(Date.now() - 30_000).toISOString()
+    const { data: dup } = await supabase
+      .from('registrations')
+      .select('id')
+      .eq('band_id', bandId)
+      .eq('user_name', cleanName)
+      .gte('registered_at', dupSince)
+      .limit(1)
+      .maybeSingle()
+    if (dup) {
+      return NextResponse.json({ success: true, registrationId: dup.id, deduped: true })
+    }
+
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || ''
     let latitude = null
     let longitude = null
