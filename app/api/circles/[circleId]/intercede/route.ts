@@ -64,16 +64,25 @@ export async function POST(
         .from('circle_intercessions')
         .delete()
         .eq('id', existing.id)
-
-      return NextResponse.json({ praying: false })
     } else {
-      // Add intercession
-      await admin
+      // Add intercession. Ignore a unique-constraint conflict (a concurrent
+      // double-tap) — the row already exists, which is the desired end state.
+      const { error: insErr } = await admin
         .from('circle_intercessions')
         .insert({ request_id, user_id: user.id })
-
-      return NextResponse.json({ praying: true })
+      if (insErr && insErr.code !== '23505') {
+        return NextResponse.json({ error: 'Could not record your prayer' }, { status: 500 })
+      }
     }
+
+    // Return the authoritative count + this user's state so the client doesn't
+    // drift from optimistic updates.
+    const { count } = await admin
+      .from('circle_intercessions')
+      .select('id', { count: 'exact', head: true })
+      .eq('request_id', request_id)
+
+    return NextResponse.json({ praying: !existing, count: count ?? 0 })
   } catch (err) {
     console.error('Intercession toggle error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

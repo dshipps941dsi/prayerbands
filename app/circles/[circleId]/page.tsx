@@ -148,7 +148,10 @@ function CirclePageInner() {
         ? {
           ...r,
           i_prayed: data.praying,
-          intercession_count: data.praying ? r.intercession_count + 1 : r.intercession_count - 1
+          // Trust the server's authoritative count (avoids drift from races).
+          intercession_count: typeof data.count === 'number'
+            ? data.count
+            : (data.praying ? r.intercession_count + 1 : r.intercession_count - 1)
         }
         : r
     ))

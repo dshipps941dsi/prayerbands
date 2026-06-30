@@ -57,7 +57,7 @@ export default function NewCirclePage() {
 
   // ── Confirmation screen (after a circle is created) ──
   if (created) {
-    const link = `https://prayerbands.com/circles?code=${created.join_code}`
+    const link = `https://prayerbands.com/circle/${created.id}`
     const shareText = `Join my Prayer Circle on Prayer Bands. Enter code ${created.join_code} at ${link}`
     const shareOption = (label: string, onClick: () => void, href?: string) => {
       const style: React.CSSProperties = { display: 'block', width: '100%', boxSizing: 'border-box', textAlign: 'center', backgroundColor: '#FFFDF8', border: '1px solid rgba(92,101,115,0.20)', borderRadius: 10, padding: '13px', fontSize: 12, fontFamily: "'Cinzel', serif", fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: '#15223B', cursor: 'pointer', textDecoration: 'none', marginBottom: 10 }

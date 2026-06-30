@@ -10,16 +10,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is a band holder (service-role: works regardless of bands RLS)
+    // Band holder = OWNS a band (purchaser) OR has REGISTERED one. Same
+    // definition the create route uses, so the dashboard's "create a circle"
+    // affordance matches what create actually allows. (Service-role so RLS
+    // doesn't interfere; no .single() — it errors when the user holds zero bands.)
     const admin = createServiceClient()
-    const { data: band } = await admin
-      .from('bands')
-      .select('id')
-      .eq('owner_id', user.id)
-      .limit(1)
-      .single()
-
-    const isBandHolder = !!band
+    const [{ data: ownedBands }, { data: registeredBands }] = await Promise.all([
+      admin.from('bands').select('id').eq('owner_id', user.id).limit(1),
+      admin.from('registrations').select('id').eq('user_id', user.id).limit(1),
+    ])
+    const isBandHolder = !!(ownedBands?.length || registeredBands?.length)
 
     // Get all circles this user belongs to. Use the service client: these
     // tables have recursive RLS policies (the create/join routes bypass them

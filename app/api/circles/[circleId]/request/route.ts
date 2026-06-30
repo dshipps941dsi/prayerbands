@@ -97,9 +97,18 @@ export async function PATCH(
       .eq('id', circleId)
       .maybeSingle()
 
+    const { data: actorMembership } = await admin
+      .from('circle_members')
+      .select('id')
+      .eq('circle_id', circleId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
     const isAuthor = existingReq.user_id === user.id
     const isLeader = circle?.created_by === user.id
-    if (!isAuthor && !isLeader) {
+    // Author rights require still being in the circle — a removed/departed member
+    // can't keep editing content in a circle they're no longer part of.
+    if (!((isAuthor && actorMembership) || isLeader)) {
       return NextResponse.json({ error: 'Not allowed to update this request' }, { status: 403 })
     }
 
@@ -165,9 +174,16 @@ export async function DELETE(
       .eq('id', circleId)
       .maybeSingle()
 
+    const { data: actorMembership } = await admin
+      .from('circle_members')
+      .select('id')
+      .eq('circle_id', circleId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
     const isAuthor = existingReq.user_id === user.id
     const isLeader = circle?.created_by === user.id
-    if (!isAuthor && !isLeader) {
+    if (!((isAuthor && actorMembership) || isLeader)) {
       return NextResponse.json({ error: 'Not allowed to delete this request' }, { status: 403 })
     }
 
