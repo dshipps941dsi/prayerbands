@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
         const query = [geoCity, geoState, geoCountry].filter(Boolean).join(', ')
         const nominatim = await fetch(
           `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
-          { headers: { 'User-Agent': 'PrayerBands/1.0 (hello@prayerbands.com)' } }
+          { headers: { 'User-Agent': 'PrayerBands/1.0 (hello@prayerbands.com)' }, signal: AbortSignal.timeout(3500) }
         )
         const places = await nominatim.json()
         if (places.length > 0) {
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
     // 2. Fall back to IP geolocation only if no typed location
     if (!latitude && ip && ip !== '127.0.0.1') {
       try {
-        const geo = await fetch(`https://ipapi.co/${ip}/json/`)
+        const geo = await fetch(`https://ipapi.co/${ip}/json/`, { signal: AbortSignal.timeout(3500) })
         const geoData = await geo.json()
         if (!geoData.error) {
           latitude = geoData.latitude

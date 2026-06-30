@@ -219,7 +219,13 @@ export default function BandPage() {
 
   useEffect(() => {
     if (transferStep !== 'pending') return
+    // Poll while the recipient taps to accept — but stop after ~10 min so an
+    // un-accepted transfer doesn't poll forever in an open tab. A refresh
+    // re-checks if they're still waiting.
+    let attempts = 0
+    const MAX_ATTEMPTS = 120
     const interval = setInterval(() => {
+      if (++attempts > MAX_ATTEMPTS) { clearInterval(interval); return }
       fetch(`/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}`)
         .then(r => r.json())
         .then(data => {
@@ -230,6 +236,7 @@ export default function BandPage() {
             setTransferComplete(true)
           }
         })
+        .catch(() => {})
     }, 5000)
     return () => clearInterval(interval)
   }, [transferStep, bandId, userId])
