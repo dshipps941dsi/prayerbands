@@ -78,7 +78,6 @@ const gold = "#C8A96E";
 const goldText = "#9A7A35";
 const secondary = "#5C6573";
 const borderNavy = "rgba(10,22,40,0.12)";
-const borderSilver = "rgba(92,101,115,0.20)";
 
 export default function SiteMapPage() {
   return (

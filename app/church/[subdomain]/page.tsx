@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
 // Brand font import
@@ -19,7 +18,6 @@ const NAVY_HEADING = '#15223B'
 const BODY_TEXT = '#2A3344'
 const GOLD = '#C8A96E'
 const GOLD_TEXT = '#9A7A35'
-const SILVER_BG = '#ECEEF1'
 const SILVER_BORDER = 'rgba(92,101,115,0.20)'
 const NAVY_BORDER = 'rgba(10,22,40,0.12)'
 const SECONDARY_TEXT = '#5C6573'

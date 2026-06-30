@@ -45,14 +45,6 @@ type MapPoint = {
 const TABS = ['Overview', 'Inbox', 'Prayers', 'Map', 'Account']
 // Mobile bottom nav mirrors the band page: includes a Shop/purchase link.
 const MOBILE_NAV = ['Overview', 'Inbox', 'Prayers', 'Map', 'Account']
-const TAB_ICONS: Record<string, string> = {
-  Overview: '◎',
-  Inbox: '📖',
-  Prayers: '🙏',
-  Map: '🌍',
-  Shop: '🛍',
-  Account: '👤',
-}
 // SVG line icons for the mobile footer — matches the band page's footer menu.
 const MOBILE_TAB_ICON: Record<string, IconName> = {
   Overview: 'church-home',
@@ -78,10 +70,6 @@ const SECONDARY_TEXT = '#5C6573'
 const AMBER = '#C8A96E'
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 const BAND_HEX: Record<string, string> = { sky: '#7BB8D4', sage: '#7BAE8E', amber: '#C8A96E', slate: '#7B8FAE', rose: '#C47B8E', ivory: '#E8DCC8' }
-const BAND_COLOR_OPTIONS = [
-  { id: 'sky', name: 'Sky' }, { id: 'sage', name: 'Sage' }, { id: 'amber', name: 'Amber' },
-  { id: 'slate', name: 'Slate' }, { id: 'rose', name: 'Rose' }, { id: 'ivory', name: 'Ivory' },
-]
 const SUB_STATUS: Record<string, { label: string; color: string }> = {
   active: { label: 'Active', color: '#7BAE8E' },
   past_due: { label: 'Past Due', color: '#AE7B7B' },

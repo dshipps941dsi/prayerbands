@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { deriveTheme, idealTextOn } from '@/lib/themes'
+import { deriveTheme } from '@/lib/themes'
 
 // Band theme editor. Built-in themes (from lib/themes.ts) are editable here as
 // DB overrides; admins can also create brand-new themes. Self-contained; the

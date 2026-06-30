@@ -65,14 +65,22 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  if (!profile) return NextResponse.json({ profile: null })
+  if (!profile) return NextResponse.json({ users: [] })
 
-  // 3. Their bands (with registration counts).
-  const { data: bands } = await admin
+  // 3. How many bands they own (for the result card).
+  const { count: bandCount } = await admin
     .from('bands')
-    .select('band_id, created_at, registrations(count)')
+    .select('band_id', { count: 'exact', head: true })
     .eq('owner_id', profile.id)
-    .order('created_at', { ascending: false })
 
-  return NextResponse.json({ profile, bands: bands || [] })
+  // Shape matches the admin "User Lookup" list (id / full_name / email /
+  // band_count, with a View-Dashboard ?viewAs link).
+  return NextResponse.json({
+    users: [{
+      id: profile.id,
+      full_name: profile.full_name ?? null,
+      email: profile.email ?? null,
+      band_count: bandCount ?? 0,
+    }],
+  })
 }
