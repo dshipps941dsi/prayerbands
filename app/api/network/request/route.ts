@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { resolveBandRecipient, isBandHolder, nameFromProfile } from '@/lib/network'
 import { escapeHtml } from '@/lib/escape-html'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 // POST /api/network/request  { band_id }
 // Sends a connection request from the viewer to the band's holder.
@@ -19,6 +20,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'band_id is required' }, { status: 400 })
     }
 
+    // Cap how many connection requests one person can fire overall.
+    if (!(await checkRateLimit(`net-req:user:${user.id}`, 20, 3600))) {
+      return NextResponse.json({ error: 'You’ve sent a lot of requests recently. Please wait a bit.' }, { status: 429 })
+    }
+
     const admin = createServiceClient()
 
     if (!(await isBandHolder(admin, user.id))) {
@@ -31,6 +37,12 @@ export async function POST(req: NextRequest) {
     }
     if (recipientId === user.id) {
       return NextResponse.json({ error: "You can't connect with yourself" }, { status: 400 })
+    }
+
+    // Per-target cap: after someone declines (the row is deleted), this stops the
+    // requester from re-sending repeatedly to harass one person.
+    if (!(await checkRateLimit(`net-req:pair:${user.id}:${recipientId}`, 3, 86400))) {
+      return NextResponse.json({ error: 'You’ve already reached out to this person recently.' }, { status: 429 })
     }
 
     // Already connected / pending, in either direction?
@@ -50,6 +62,11 @@ export async function POST(req: NextRequest) {
       .insert({ requester_id: user.id, recipient_id: recipientId, band_id, status: 'pending' })
 
     if (insertError) {
+      // Unique-constraint conflict = a connection/request already exists for this
+      // pair (a race with a simultaneous request in either direction).
+      if ((insertError as { code?: string }).code === '23505') {
+        return NextResponse.json({ error: 'A request already exists', status: 'pending' }, { status: 409 })
+      }
       console.error('Connection insert error:', insertError)
       return NextResponse.json({ error: 'Failed to send request' }, { status: 500 })
     }
