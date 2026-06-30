@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { isFlaggable, AUTO_FLAG_REASON } from '@/lib/moderation'
 import { escapeHtml } from '@/lib/escape-html'
+import { createClient as createServerClient } from '@/lib/supabase/server'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   const supabase = createClient(
@@ -15,6 +17,36 @@ export async function POST(req: NextRequest) {
     if (!bandId || !name) {
       return NextResponse.json({ error: 'Band ID and name are required' }, { status: 400 })
     }
+
+    // Throttle writes — this endpoint is otherwise open. Generous enough for a
+    // church handing out bands on shared venue wifi, tight enough to stop a
+    // script appending thousands of bogus holders.
+    const rlIp = getClientIp(req)
+    if (!(await checkRateLimit(`register:ip:${rlIp}`, 20, 60))) {
+      return NextResponse.json({ error: 'Too many registrations. Please wait a moment.' }, { status: 429 })
+    }
+
+    // Bind the registration to the signed-in user when there is one. Read it
+    // from the session cookie (authoritative) — never trust a user id in the
+    // body. Anonymous first-tap is still allowed (user_id stays null); this is
+    // what lets a signed-in owner keep their band across devices instead of
+    // dropping to the public journey on the next tap.
+    let holderUserId: string | null = null
+    try {
+      const authed = await createServerClient()
+      const { data: { user } } = await authed.auth.getUser()
+      holderUserId = user?.id ?? null
+    } catch { /* not signed in — anonymous registration */ }
+
+    // Normalize + bound user text (the endpoint is public, so validate here).
+    const cleanName = String(name).trim().slice(0, 80)
+    if (!cleanName) {
+      return NextResponse.json({ error: 'Name is required' }, { status: 400 })
+    }
+    const cleanPrayer = prayer ? String(prayer).trim().slice(0, 2000) || null : null
+    const cleanEmail = email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())
+      ? String(email).trim().toLowerCase()
+      : null
 
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || ''
     let latitude = null
@@ -62,21 +94,22 @@ export async function POST(req: NextRequest) {
 
     // Auto-flag prayers containing filtered language for admin review (hidden
     // from the public wall until approved). Soft — never blocks the submission.
-    const autoFlag = isFlaggable(prayer)
+    const autoFlag = isFlaggable(cleanPrayer)
 
     const { data, error } = await supabase
       .from('registrations')
       .insert({
         band_id: bandId,
-        user_name: name,
+        user_name: cleanName,
+        user_id: holderUserId,
         city: geoCity,
         state: geoState,
         country: geoCountry,
         latitude,
         longitude,
-        prayer: prayer || null,
+        prayer: cleanPrayer,
         verse: verse || null,
-        email: email || null,
+        email: cleanEmail,
         ip_address: ip || null,
         flagged: autoFlag,
         flagged_reason: autoFlag ? AUTO_FLAG_REASON : null,
@@ -111,9 +144,9 @@ export async function POST(req: NextRequest) {
         const resend = new Resend(process.env.RESEND_API_KEY)
         const location = [geoCity, geoState, geoCountry].filter(Boolean).join(', ')
         // Escape every user-controlled value before it enters the email HTML.
-        const eName = escapeHtml(name)
+        const eName = escapeHtml(cleanName)
         const eLocation = escapeHtml(location)
-        const ePrayer = escapeHtml(prayer)
+        const ePrayer = escapeHtml(cleanPrayer)
         const eBandId = escapeHtml(bandId)
         for (const email of alertEmails) {
           await resend.emails.send({
@@ -132,7 +165,7 @@ export async function POST(req: NextRequest) {
                     <strong style="color:#1a5fa0">${eName}</strong> just received your band in
                     <strong style="color:#1aabaa">${eLocation}</strong>. Your prayer is continuing its journey. ✝
                   </p>
-                  ${prayer ? `<div style="background:#fff;border-left:3px solid #f5a623;padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0"><p style="font-family:Georgia,serif;font-size:17px;font-style:italic;color:#4a5568;line-height:1.75;margin:0">"${ePrayer}"</p></div>` : ''}
+                  ${cleanPrayer ? `<div style="background:#fff;border-left:3px solid #f5a623;padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0"><p style="font-family:Georgia,serif;font-size:17px;font-style:italic;color:#4a5568;line-height:1.75;margin:0">"${ePrayer}"</p></div>` : ''}
                   <div style="text-align:center;margin:28px 0">
                     <a href="https://prayerbands.com/band/${eBandId}" style="display:inline-block;background:#2b7bc4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700">View Full Journey ✝</a>
                   </div>
