@@ -17,6 +17,7 @@ const GROUPS: { title: string; intro: string; entries: Entry[] }[] = [
     intro: "Open to everyone, no sign-in required.",
     entries: [
       { href: "/", label: "Home", desc: "Landing page, live prayer map and stats." },
+      { href: "/how-it-works", label: "How It Works", desc: "Interactive help center — everything a band can do." },
       { href: "/store", label: "Store", desc: "Browse and order bands." },
       { href: "/subscribe", label: "Subscribe", desc: "Recurring band plans (sign-in only at checkout)." },
       { href: "/prayer-wall", label: "Prayer Wall", desc: "Public wall of prayers left on bands." },
