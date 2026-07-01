@@ -17,6 +17,19 @@ const NAV_LINKS = [
   { href: '/contact', label: 'Contact' },
 ]
 
+const SOCIAL: { label: string; href: string; path: string }[] = [
+  { label: 'Facebook', href: 'https://facebook.com/prayerbands', path: 'M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.9h2.54V9.85c0-2.52 1.49-3.91 3.78-3.91 1.1 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.78-1.63 1.57v1.88h2.78l-.44 2.9h-2.34V22c4.78-.79 8.44-4.94 8.44-9.94Z' },
+  { label: 'Instagram', href: 'https://instagram.com/prayer_bands', path: 'instagram' },
+  { label: 'X (Twitter)', href: 'https://twitter.com/prayerbands', path: 'M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.65l-5.21-6.82-5.97 6.82H1.68l7.74-8.84L1.25 2.25H8.1l4.71 6.23 5.43-6.23Zm-1.16 17.52h1.83L7.01 4.13H5.04l12.04 15.64Z' },
+  { label: 'TikTok', href: 'https://tiktok.com/@prayerbands', path: 'M16.6 5.82a4.28 4.28 0 0 1-1.06-2.82h-3.3v12.97a2.32 2.32 0 1 1-2.32-2.32c.24 0 .47.04.69.1v-3.36a5.66 5.66 0 0 0-.69-.04 5.66 5.66 0 1 0 5.66 5.66V9.46a7.55 7.55 0 0 0 4.42 1.42V7.55a4.28 4.28 0 0 1-3.4-1.73Z' },
+  { label: 'YouTube', href: 'https://youtube.com/@prayerbands', path: 'M23.5 6.5a3 3 0 0 0-2.11-2.13C19.5 3.86 12 3.86 12 3.86s-7.5 0-9.39.51A3 3 0 0 0 .5 6.5 31.3 31.3 0 0 0 0 12a31.3 31.3 0 0 0 .5 5.5 3 3 0 0 0 2.11 2.13c1.89.51 9.39.51 9.39.51s7.5 0 9.39-.51A3 3 0 0 0 23.5 17.5 31.3 31.3 0 0 0 24 12a31.3 31.3 0 0 0-.5-5.5ZM9.6 15.57V8.43L15.82 12 9.6 15.57Z' },
+]
+
+function SocialIcon({ path }: { path: string }) {
+  if (path === 'instagram') return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none" /></svg>
+  return <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d={path} /></svg>
+}
+
 function NavIcon({ name }: { name: 'user' | 'cart' }) {
   const c = { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   if (name === 'user') return <svg {...c} aria-hidden><circle cx="12" cy="8" r="4" /><path d="M4 20a8 8 0 0 1 16 0" /></svg>
@@ -48,6 +61,11 @@ export default function SiteNav({ onCartClick, cartCount = 0 }: { onCartClick?: 
             {NAV_LINKS.map(l => <Link key={l.label} href={l.href} className="sn-link">{l.label}</Link>)}
           </div>
           <div className="sn-actions">
+            <span className="sn-social">
+              {SOCIAL.map(s => (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="sn-social-link"><SocialIcon path={s.path} /></a>
+              ))}
+            </span>
             <Link href="/signin" className="sn-ico" aria-label="Account"><NavIcon name="user" /></Link>
             {onCartClick ? (
               <button onClick={onCartClick} className="sn-ico" aria-label="Cart" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
@@ -64,6 +82,11 @@ export default function SiteNav({ onCartClick, cartCount = 0 }: { onCartClick?: 
           <div className="sn-mobile">
             {NAV_LINKS.map(l => <Link key={l.label} href={l.href} className="sn-mobile-link" onClick={() => setMenuOpen(false)}>{l.label}</Link>)}
             <Link href="/signin" className="sn-mobile-link" onClick={() => setMenuOpen(false)}>Sign In</Link>
+            <span className="sn-mobile-social">
+              {SOCIAL.map(s => (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="sn-social-link"><SocialIcon path={s.path} /></a>
+              ))}
+            </span>
           </div>
         )}
       </nav>
@@ -86,8 +109,13 @@ const navStyles = `
   .sn-link { color:#3a4660; font-size:0.74rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none; transition:color .2s; font-family:'Inter',sans-serif; }
   .sn-link:hover { color:#9A7A35; }
   .sn-actions { display:flex; align-items:center; gap:14px; }
+  .sn-social { display:flex; align-items:center; gap:13px; padding-right:15px; border-right:1px solid rgba(10,22,40,0.14); }
+  .sn-social-link { color:#3a4660; display:inline-flex; align-items:center; transition:color .2s; }
+  .sn-social-link:hover { color:#9A7A35; }
+  .sn-social-link svg { width:16px; height:16px; }
   .sn-ico { color:#15223B; display:inline-flex; align-items:center; transition:color .2s; position:relative; }
   .sn-ico:hover { color:#9A7A35; }
+  .sn-mobile-social { display:none; }
   .sn-cart-badge { position:absolute; top:-7px; right:-9px; min-width:17px; height:17px; padding:0 4px; border-radius:9px; background:#C8A96E; color:#0A1628; font-size:10px; font-weight:700; font-family:'Inter',sans-serif; display:flex; align-items:center; justify-content:center; }
   .sn-toggle { display:none; flex-direction:column; gap:5px; width:38px; height:38px; background:none; border:none; cursor:pointer; padding:8px; }
   .sn-toggle span { display:block; width:22px; height:2px; background:#15223B; border-radius:2px; transition:transform .25s, opacity .25s; }
@@ -97,6 +125,9 @@ const navStyles = `
   .sn-mobile { display:flex; flex-direction:column; background:#FAF7EF; border-top:1px solid rgba(10,22,40,0.10); padding:8px 24px 16px; }
   .sn-mobile-link { color:#15223B; font-size:0.95rem; letter-spacing:0.05em; text-decoration:none; padding:14px 4px; border-bottom:1px solid rgba(10,22,40,0.10); font-family:'Inter',sans-serif; }
   .sn-mobile-link:last-child { border-bottom:none; color:#9A7A35; font-family:'Cinzel',serif; font-weight:600; }
-  @media (max-width:980px){ .sn-links { display:none; } .sn-toggle { display:flex; } }
+  .sn-mobile-social { gap:22px; padding:18px 4px 6px; }
+  .sn-mobile-social .sn-social-link { color:#15223B; }
+  .sn-mobile-social .sn-social-link svg { width:20px; height:20px; }
+  @media (max-width:980px){ .sn-links { display:none; } .sn-toggle { display:flex; } .sn-social { display:none; } .sn-mobile-social { display:flex; } }
   @media (min-width:981px){ .sn-mobile { display:none !important; } }
 `
