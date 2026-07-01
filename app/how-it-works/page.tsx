@@ -90,6 +90,41 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    id: "verse",
+    icon: "🌅",
+    nav: "Daily verse tap",
+    title: "Tap in for your daily verse",
+    blurb: "Tap your band each day to receive a fresh verse — and watch your walk grow, one day at a time.",
+    blocks: [
+      { type: "p", text: "Make it a daily habit. Tap your band each morning and a verse of the day is waiting — a small moment of scripture to carry with you." },
+      { type: "steps", items: [
+        "Tap your band to open it and see today's verse.",
+        "Tap a theme — like peace, strength, or hope — for a verse that fits what you're facing.",
+        "Each day you tap in, your walk counts up — 'Day 12 of your walk.'",
+        "Keep tapping in day after day to build a streak — the days you've shown up in a row.",
+        "Miss a day? No worry — it quietly starts fresh, never penalized.",
+      ] },
+      { type: "tip", text: "No account needed to begin — your walk is saved on your device, and once you sign in it follows you across your phone and tablet." },
+    ],
+  },
+  {
+    id: "journal",
+    icon: "📓",
+    nav: "Prayer journal",
+    title: "Keep a prayer journal",
+    blurb: "Write down what you're praying for on your band — and mark the moment it's answered.",
+    blocks: [
+      { type: "p", text: "Each band can hold your own private prayer journal — a personal place to record what you're bringing to God and to look back on how He's moved." },
+      { type: "steps", items: [
+        "Add a prayer with a title and, if you like, a few details.",
+        "Your entries stay private to you on this band — no one else sees them.",
+        "When God answers, mark it answered and add a short testimony of what happened.",
+      ] },
+      { type: "tip", text: "The prayer journal is a free-account feature. Saving your band to an account (see 'Save to an account') unlocks it and keeps your entries safe across devices." },
+    ],
+    cta: { label: "See your bands", href: "/dashboard" },
+  },
+  {
     id: "pass",
     icon: "🤝",
     nav: "Pass it on",
