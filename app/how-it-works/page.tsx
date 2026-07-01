@@ -74,22 +74,6 @@ const SECTIONS: Section[] = [
     cta: { label: "Open my dashboard", href: "/dashboard" },
   },
   {
-    id: "journey",
-    icon: "🗺️",
-    nav: "Follow the journey",
-    title: "Follow your band's journey",
-    blurb: "See the live map, the prayers, and every hand that has carried it.",
-    blocks: [
-      { type: "p", text: "Each band's page is a living record. Open it any time to see how far it has traveled and how many people have paused to pray." },
-      { type: "steps", items: [
-        "The map shows each place the band has been carried.",
-        "The prayer feed shows the prayers people have added along the way.",
-        "A running count marks how many have prayed over this band.",
-      ] },
-      { type: "tip", text: "Come back whenever you like — the journey keeps growing as the band moves from person to person." },
-    ],
-  },
-  {
     id: "verse",
     icon: "🌅",
     nav: "Daily verse tap",
@@ -123,6 +107,22 @@ const SECTIONS: Section[] = [
       { type: "tip", text: "The prayer journal is a free-account feature. Saving your band to an account (see 'Save to an account') unlocks it and keeps your entries safe across devices." },
     ],
     cta: { label: "See your bands", href: "/dashboard" },
+  },
+  {
+    id: "journey",
+    icon: "🗺️",
+    nav: "Follow the journey",
+    title: "Follow your band's journey",
+    blurb: "See the live map, the prayers, and every hand that has carried it.",
+    blocks: [
+      { type: "p", text: "Each band's page is a living record. Open it any time to see how far it has traveled and how many people have paused to pray." },
+      { type: "steps", items: [
+        "The map shows each place the band has been carried.",
+        "The prayer feed shows the prayers people have added along the way.",
+        "A running count marks how many have prayed over this band.",
+      ] },
+      { type: "tip", text: "Come back whenever you like — the journey keeps growing as the band moves from person to person." },
+    ],
   },
   {
     id: "pass",
