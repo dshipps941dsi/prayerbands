@@ -7,7 +7,7 @@
 //   node scripts/export-batch.mjs PB-BATCH-2026-06-16
 //
 // Columns match the generator exactly:
-//   sequence,band_id,theme,color,nfc_url,outside_text,inside_text
+//   sequence,band_id,theme,color,size,nfc_url,outside_text,inside_text
 // Reads NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_KEY from .env.local.
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs'
@@ -43,7 +43,7 @@ const PAGE = 1000
 for (let from = 0; ; from += PAGE) {
   const { data, error } = await supabase
     .from('bands')
-    .select('band_id, theme, color, nfc_url, outside_text, inside_text, created_at')
+    .select('band_id, theme, color, size, nfc_url, outside_text, inside_text, created_at')
     .eq('batch', batch)
     .order('created_at', { ascending: true })
     .order('band_id', { ascending: true })
@@ -56,10 +56,10 @@ for (let from = 0; ; from += PAGE) {
 
 if (!bands.length) { console.error(`No bands found for batch "${batch}".`); process.exit(1) }
 
-const header = ['sequence', 'band_id', 'theme', 'color', 'nfc_url', 'outside_text', 'inside_text']
+const header = ['sequence', 'band_id', 'theme', 'color', 'size', 'nfc_url', 'outside_text', 'inside_text']
 const lines = [header.join(',')]
 bands.forEach((b, i) => {
-  lines.push([i + 1, csvField(b.band_id), csvField(b.theme), csvField(b.color || ''), csvField(b.nfc_url), csvField(b.outside_text), csvField(b.inside_text)].join(','))
+  lines.push([i + 1, csvField(b.band_id), csvField(b.theme), csvField(b.color || ''), csvField(b.size || ''), csvField(b.nfc_url), csvField(b.outside_text), csvField(b.inside_text)].join(','))
 })
 
 const outPath = process.argv[3] || join('db', 'exports', `${batch}_${bands.length}-bands.csv`)

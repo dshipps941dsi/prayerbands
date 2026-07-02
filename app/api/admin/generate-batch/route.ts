@@ -28,14 +28,21 @@ export async function POST(req: NextRequest) {
   if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))
-  // Each row is either a theme (e.g. 'baseball') OR a solid color (e.g. 'Black').
+  const SIZES = new Set(['S', 'M', 'L'])
+  // Each item is a theme (e.g. 'baseball') OR a solid color (e.g. 'Black'), for a
+  // given size (S/M/L, optional). One design split across sizes arrives as
+  // several items sharing a theme/color but differing in size.
   const clean = (Array.isArray(body.items) ? body.items : [])
-    .map((it: any) => ({
-      theme: String(it.theme || '').trim(),
-      color: String(it.color || '').trim(),
-      quantity: Math.max(0, Math.round(Number(it.quantity) || 0)),
-    }))
-    .filter((it: { theme: string; color: string; quantity: number }) => (it.theme || it.color) && it.quantity > 0)
+    .map((it: any) => {
+      const size = String(it.size || '').trim().toUpperCase()
+      return {
+        theme: String(it.theme || '').trim(),
+        color: String(it.color || '').trim(),
+        size: SIZES.has(size) ? size : '',
+        quantity: Math.max(0, Math.round(Number(it.quantity) || 0)),
+      }
+    })
+    .filter((it: { theme: string; color: string; size: string; quantity: number }) => (it.theme || it.color) && it.quantity > 0)
 
   if (!clean.length) return NextResponse.json({ error: 'Add at least one theme or color with a quantity.' }, { status: 400 })
   const total = clean.reduce((s: number, it: { quantity: number }) => s + it.quantity, 0)
@@ -69,6 +76,7 @@ export async function POST(req: NextRequest) {
         // Solid-color rows are the classic ('default') design in a physical color.
         theme: it.theme || 'default',
         color: it.color || null,
+        size: it.size || null,
         status: 'unregistered',
         nfc_url: `https://prayerbands.com/r/${id}`,
         outside_text: 'PrayerBands.com ✝',
@@ -88,6 +96,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     batch,
     total: rows.length,
-    bands: rows.map(r => ({ band_id: r.band_id, theme: r.theme, color: r.color || '', nfc_url: r.nfc_url, outside_text: r.outside_text, inside_text: r.inside_text })),
+    bands: rows.map(r => ({ band_id: r.band_id, theme: r.theme, color: r.color || '', size: r.size || '', nfc_url: r.nfc_url, outside_text: r.outside_text, inside_text: r.inside_text })),
   })
 }
