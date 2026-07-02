@@ -48,3 +48,6 @@ _SUPABASE_MCP_SETUP.local.md
 
 # Local DB snapshots (contain PII — never commit)
 db/backups/
+
+# Locally exported supplier CSVs (regenerable from the DB / admin panel)
+db/exports/

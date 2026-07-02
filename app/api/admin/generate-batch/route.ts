@@ -55,7 +55,11 @@ export async function POST(req: NextRequest) {
     if (data.length < PAGE) break
   }
 
-  const batch = `PB-BATCH-${new Date().toISOString().slice(0, 10)}`
+  // Unique per run: date + a short time-based suffix so two batches generated on
+  // the same day never collapse into one tag (each stays separately re-downloadable).
+  const now = new Date()
+  const suffix = now.toISOString().slice(11, 19).replace(/:/g, '') // HHMMSS (UTC)
+  const batch = `PB-BATCH-${now.toISOString().slice(0, 10)}-${suffix}`
   const rows: any[] = []
   for (const it of clean) {
     for (let i = 0; i < it.quantity; i++) {

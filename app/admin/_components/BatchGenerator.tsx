@@ -12,9 +12,27 @@ const C = {
 }
 
 type Row = { kind: 'theme' | 'color'; theme: string; color: string; quantity: number }
+type PastBatch = { batch: string; total: number; created: string; themes: string[]; colors: string[] }
 
 function csvField(v: string) {
   return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
+}
+
+// Build + download the supplier CSV from a list of band rows. Shared by a fresh
+// generation and by re-downloading a past batch so both files are identical.
+function downloadCsv(bands: any[], filename: string) {
+  const header = ['sequence', 'band_id', 'theme', 'color', 'nfc_url', 'outside_text', 'inside_text']
+  const lines = [header.join(',')]
+  bands.forEach((b, i) => {
+    lines.push([i + 1, csvField(b.band_id), csvField(b.theme), csvField(b.color || ''), csvField(b.nfc_url), csvField(b.outside_text), csvField(b.inside_text)].join(','))
+  })
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 export default function BatchGenerator() {
@@ -22,8 +40,36 @@ export default function BatchGenerator() {
   const [rows, setRows] = useState<Row[]>([{ kind: 'theme', theme: 'mountain', color: '', quantity: 50 }])
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const [past, setPast] = useState<PastBatch[]>([])
+  const [pastLoading, setPastLoading] = useState(true)
+  const [downloading, setDownloading] = useState('')
 
   useEffect(() => { loadThemes().then(() => setThemeOptions(getThemeOptions())) }, [])
+
+  async function loadPast() {
+    setPastLoading(true)
+    try {
+      const res = await fetch('/api/admin/batches')
+      const d = await res.json()
+      if (res.ok) setPast(d.batches || [])
+    } catch { /* leave list empty */ }
+    setPastLoading(false)
+  }
+  useEffect(() => { loadPast() }, [])
+
+  async function downloadPast(b: PastBatch) {
+    setDownloading(b.batch)
+    try {
+      const res = await fetch(`/api/admin/batches?batch=${encodeURIComponent(b.batch)}`)
+      const d = await res.json()
+      if (!res.ok) { setMsg('❌ ' + (d.error || 'Could not load that batch.')); return }
+      downloadCsv(d.bands, `${d.batch}_${d.total}-bands.csv`)
+    } catch {
+      setMsg('❌ Could not download that batch.')
+    } finally {
+      setDownloading('')
+    }
+  }
 
   const total = rows.reduce((s, r) => s + (Number(r.quantity) || 0), 0)
 
@@ -50,19 +96,9 @@ export default function BatchGenerator() {
       const d = await res.json()
       if (!res.ok) { setMsg('❌ ' + (d.error || 'Failed.')); return }
 
-      const header = ['sequence', 'band_id', 'theme', 'color', 'nfc_url', 'outside_text', 'inside_text']
-      const lines = [header.join(',')]
-      d.bands.forEach((b: any, i: number) => {
-        lines.push([i + 1, csvField(b.band_id), csvField(b.theme), csvField(b.color || ''), csvField(b.nfc_url), csvField(b.outside_text), csvField(b.inside_text)].join(','))
-      })
-      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${d.batch}_${d.total}-bands.csv`
-      a.click()
-      URL.revokeObjectURL(url)
+      downloadCsv(d.bands, `${d.batch}_${d.total}-bands.csv`)
       setMsg(`✅ Generated ${d.total} bands (batch ${d.batch}) and downloaded the CSV.`)
+      loadPast()
     } catch {
       setMsg('❌ Something went wrong.')
     } finally {
@@ -117,6 +153,37 @@ export default function BatchGenerator() {
 
       <p style={{ fontSize: 12, color: C.secondary, marginTop: 14, lineHeight: 1.5 }}>CSV columns: <code>sequence, band_id, theme, color, nfc_url, outside_text, inside_text</code>. <strong>theme</strong> = which artwork; <strong>color</strong> = the solid color (blank for themed bands); <strong>nfc_url</strong> = what to program into each chip.</p>
       <p style={{ fontSize: 12, color: C.secondary, marginTop: 8, lineHeight: 1.5 }}>Note: solid-color generation needs the <code>color</code> column — run <code>db/bands-color.sql</code> in Supabase once.</p>
+
+      <div style={{ marginTop: 36 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 4px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Past Batches</h2>
+        <p style={{ color: C.secondary, fontSize: 14, margin: '0 0 16px', lineHeight: 1.5 }}>Every production run is kept here. Re-download the exact supplier CSV for any batch — nothing is lost even if the original file is gone.</p>
+
+        {pastLoading ? (
+          <div style={{ fontSize: 14, color: C.secondary }}>Loading…</div>
+        ) : past.length === 0 ? (
+          <div style={{ background: C.card, border: `1px dashed ${C.borderNavy}`, borderRadius: 12, padding: '18px 20px', fontSize: 14, color: C.secondary }}>No batches yet — your first generation will appear here.</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {past.map(b => {
+              const designs = [...b.themes.filter(t => t !== 'default' || b.colors.length === 0), ...b.colors].filter(Boolean)
+              return (
+                <div key={b.batch} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 12, padding: '14px 18px', boxShadow: '0 2px 10px rgba(10,22,40,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 15, fontWeight: 700, color: C.heading, fontFamily: 'Inter, sans-serif' }}>{b.batch}</span>
+                      <span style={{ fontSize: 13, color: C.secondary }}>{new Date(b.created).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: C.secondary, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <strong style={{ color: C.body }}>{b.total}</strong> bands{designs.length ? ` · ${designs.join(', ')}` : ''}
+                    </div>
+                  </div>
+                  <button onClick={() => downloadPast(b)} disabled={downloading === b.batch} style={{ flexShrink: 0, background: downloading === b.batch ? C.silver : 'transparent', color: downloading === b.batch ? '#fff' : C.goldText, border: `1px solid ${downloading === b.batch ? C.silver : C.gold}`, borderRadius: 8, padding: '9px 16px', fontSize: 12, fontWeight: 700, cursor: downloading === b.batch ? 'not-allowed' : 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{downloading === b.batch ? 'Preparing…' : '↓ Download CSV'}</button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
