@@ -768,7 +768,7 @@ export default function BandPage() {
             <VerseEngine />
             <div style={{ padding: '20px 20px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid rgba(44,24,16,0.08)' }}>
-                <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700 }}>Prayer Journal</div>
+                <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700 }}>My Prayer Journal</div>
                 {prayerStep === 'list' && userId && <button onClick={() => setPrayerStep('form')} style={{ background: GOLD, color: INK, border: 'none', borderRadius: 8, padding: '6px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>}
               </div>
               {!userId && (
