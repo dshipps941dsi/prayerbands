@@ -32,12 +32,45 @@ interface PendingRequest {
   created_at: string
 }
 
+interface CircleRequest {
+  id: string
+  circle_id: string
+  circle_name: string
+  request_text: string
+  author: string
+  created_at: string
+  intercession_count: number
+  i_prayed: boolean
+}
+
+// Unified item for the "Others' Requests" feed — a request shared with you by
+// someone else, whether through the network (direct/lineage) or a circle.
+type OtherKind = 'direct' | 'lineage' | 'circles'
+interface OtherItem {
+  key: string
+  source: 'network' | 'circle'
+  kind: OtherKind
+  author: string
+  context: string // circle name for circle requests, else ''
+  request_text: string
+  created_at: string
+  intercession_count: number
+  i_prayed: boolean
+  request_id: string
+  circle_id?: string
+}
+
 const GOLD = 'var(--pb-primary, #B8860B)'
 const DARK = 'var(--pb-text, #2C1810)'
 const GRAY = 'var(--pb-text-muted, #8B7355)'
 const BORDER = 'var(--pb-border, #E8DCC8)'
 const CREAM = 'var(--pb-background, #FAF6EF)'
 const serif = 'Playfair Display, Georgia, serif'
+const LINEAGE = '#6B4E9E'
+const CIRCLE = '#2E7D8A'
+
+const KIND_COLOR: Record<OtherKind, string> = { direct: '#9A7A35', lineage: LINEAGE, circles: CIRCLE }
+const KIND_LABEL: Record<OtherKind, string> = { direct: 'Direct', lineage: 'Lineage', circles: 'Circle' }
 
 export default function NetworkSection({ userId, section = 'all' }: { userId: string; section?: 'all' | 'partners' | 'requests' }) {
   const showPartners = section === 'all' || section === 'partners'
@@ -45,7 +78,9 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [connections, setConnections] = useState<Connection[]>([])
   const [pending, setPending] = useState<PendingRequest[]>([])
   const [myRequests, setMyRequests] = useState<NetworkRequest[]>([])
+  const [circleRequests, setCircleRequests] = useState<CircleRequest[]>([])
   const [partnerFilter, setPartnerFilter] = useState<'all' | Relation>('all')
+  const [othersFilter, setOthersFilter] = useState<'all' | OtherKind>('all')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -55,14 +90,20 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [anonymity, setAnonymity] = useState<'anonymous' | 'first_initial'>('first_initial')
 
   async function load() {
-    const res = await fetch('/api/network/my-network')
-    if (res.ok) {
-      const d = await res.json()
-      // Accepted connections + lineage-only partners share one Partners list,
-      // each tagged with its relation.
+    const [netRes, circleRes] = await Promise.all([
+      fetch('/api/network/my-network'),
+      showRequests ? fetch('/api/circles/open-requests') : Promise.resolve(null),
+    ])
+    if (netRes.ok) {
+      const d = await netRes.json()
+      // Accepted connections + lineage-only partners share one Partners list.
       setConnections([...(d.connections ?? []), ...(d.lineage_partners ?? [])])
       setPending(d.pending_requests ?? [])
       setMyRequests(d.my_requests ?? [])
+    }
+    if (circleRes && circleRes.ok) {
+      const d = await circleRes.json()
+      setCircleRequests(d.requests ?? [])
     }
     setLoading(false)
   }
@@ -89,6 +130,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     }
   }
 
+  // Toggle a prayer on a network request (updates connections + my own list).
   async function intercede(requestId: string) {
     const res = await fetch('/api/network/intercede', {
       method: 'POST',
@@ -103,6 +145,25 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         : r
     setConnections(prev => prev.map(c => ({ ...c, requests: c.requests.map(apply) })))
     setMyRequests(prev => prev.map(apply))
+  }
+
+  // Toggle a prayer on a circle request (different endpoint; authoritative count).
+  async function intercedeCircle(circleId: string, requestId: string) {
+    const res = await fetch(`/api/circles/${circleId}/intercede`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ request_id: requestId }),
+    })
+    if (!res.ok) return
+    const d = await res.json()
+    setCircleRequests(prev => prev.map(r =>
+      r.id === requestId ? { ...r, i_prayed: d.praying, intercession_count: d.count ?? r.intercession_count } : r
+    ))
+  }
+
+  function prayOther(item: OtherItem) {
+    if (item.source === 'circle' && item.circle_id) intercedeCircle(item.circle_id, item.request_id)
+    else intercede(item.request_id)
   }
 
   async function shareRequest() {
@@ -140,37 +201,66 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     return <div style={{ padding: '20px 0', color: GRAY, fontSize: 14, textAlign: 'center' }}>Loading your network...</div>
   }
 
-  const intercedeBtn = (r: NetworkRequest) => (
-    <button
-      onClick={() => intercede(r.id)}
-      style={{ backgroundColor: r.i_prayed ? '#FFF8E7' : CREAM, border: `1px solid ${r.i_prayed ? GOLD : BORDER}`, borderRadius: 20, padding: '5px 12px', fontSize: 12, fontFamily: 'Georgia, serif', color: r.i_prayed ? GOLD : GRAY, cursor: 'pointer', fontWeight: r.i_prayed ? 600 : 400 }}
-    >
-      🙏 {r.i_prayed ? 'Praying' : 'Pray'} · {r.intercession_count}
-    </button>
-  )
-
+  // ── Partners (people) ──────────────────────────────────────────────────────
   const relationOf = (c: Connection): Relation => c.relation ?? 'direct'
   const directCount = connections.filter(c => relationOf(c) === 'direct').length
   const lineageCount = connections.filter(c => relationOf(c) === 'lineage').length
   const visiblePartners = connections.filter(c => partnerFilter === 'all' || relationOf(c) === partnerFilter)
 
   const relationBadge = (rel: Relation) => (
-    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: rel === 'lineage' ? '#6B4E9E' : GOLD, background: rel === 'lineage' ? 'rgba(107,78,158,0.10)' : '#FFF8E7', border: `1px solid ${rel === 'lineage' ? 'rgba(107,78,158,0.35)' : GOLD}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>
+    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: rel === 'lineage' ? LINEAGE : GOLD, background: rel === 'lineage' ? 'rgba(107,78,158,0.10)' : '#FFF8E7', border: `1px solid ${rel === 'lineage' ? 'rgba(107,78,158,0.35)' : GOLD}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>
       {rel === 'lineage' ? 'Lineage' : 'Direct'}
     </span>
   )
 
-  const filterChips = (
-    <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-      {([['all', `All · ${connections.length}`], ['direct', `Direct · ${directCount}`], ['lineage', `Lineage · ${lineageCount}`]] as const).map(([id, label]) => {
-        const active = partnerFilter === id
-        return (
-          <button key={id} onClick={() => setPartnerFilter(id)} style={{ padding: '5px 11px', borderRadius: 16, border: `1px solid ${active ? GOLD : BORDER}`, background: active ? '#FFF8E7' : '#fff', color: active ? GOLD : GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: active ? 700 : 400, cursor: 'pointer' }}>
-            {label}
-          </button>
-        )
-      })}
-    </div>
+  const chip = (active: boolean, label: string, onClick: () => void, color = GOLD) => (
+    <button onClick={onClick} style={{ padding: '5px 11px', borderRadius: 16, border: `1px solid ${active ? color : BORDER}`, background: active ? '#FFF8E7' : '#fff', color: active ? color : GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: active ? 700 : 400, cursor: 'pointer' }}>
+      {label}
+    </button>
+  )
+
+  // ── Others' Requests (merged feed) ─────────────────────────────────────────
+  const othersFeed: OtherItem[] = [
+    ...connections.flatMap(c => (c.requests ?? []).map(r => ({
+      key: `n-${r.id}`,
+      source: 'network' as const,
+      kind: relationOf(c) as OtherKind,
+      author: c.name,
+      context: '',
+      request_text: r.request_text,
+      created_at: r.created_at,
+      intercession_count: r.intercession_count,
+      i_prayed: r.i_prayed,
+      request_id: r.id,
+    }))),
+    ...circleRequests.map(r => ({
+      key: `c-${r.id}`,
+      source: 'circle' as const,
+      kind: 'circles' as OtherKind,
+      author: r.author,
+      context: r.circle_name,
+      request_text: r.request_text,
+      created_at: r.created_at,
+      intercession_count: r.intercession_count,
+      i_prayed: r.i_prayed,
+      request_id: r.id,
+      circle_id: r.circle_id,
+    })),
+  ].sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+
+  const oDirect = othersFeed.filter(o => o.kind === 'direct').length
+  const oLineage = othersFeed.filter(o => o.kind === 'lineage').length
+  const oCircles = othersFeed.filter(o => o.kind === 'circles').length
+  const visibleOthers = othersFeed.filter(o => othersFilter === 'all' || o.kind === othersFilter)
+
+  const prayBtn = (id: string, praying: boolean, count: number, onClick: () => void) => (
+    <button
+      key={id}
+      onClick={onClick}
+      style={{ backgroundColor: praying ? '#FFF8E7' : CREAM, border: `1px solid ${praying ? GOLD : BORDER}`, borderRadius: 20, padding: '5px 12px', fontSize: 12, fontFamily: 'Georgia, serif', color: praying ? GOLD : GRAY, cursor: 'pointer', fontWeight: praying ? 600 : 400 }}
+    >
+      🙏 {praying ? 'Praying' : 'Pray'} · {count}
+    </button>
   )
 
   return (
@@ -189,34 +279,25 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         </div>
       ))}
 
-      {/* Direct / Lineage filter (only worth showing once you have partners) */}
-      {connections.length > 0 && filterChips}
+      {/* Direct / Lineage filter */}
+      {connections.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+          {chip(partnerFilter === 'all', `All · ${connections.length}`, () => setPartnerFilter('all'))}
+          {chip(partnerFilter === 'direct', `Direct · ${directCount}`, () => setPartnerFilter('direct'))}
+          {chip(partnerFilter === 'lineage', `Lineage · ${lineageCount}`, () => setPartnerFilter('lineage'), LINEAGE)}
+        </div>
+      )}
 
-      {/* Partners (accepted connections + lineage), filtered */}
+      {/* Partner people */}
       {visiblePartners.map(c => {
         const rel = relationOf(c)
-        const lineageOnly = c.connection_id === null
         return (
           <div key={c.connection_id ?? `lin-${c.user_id}`} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: c.requests.length ? 12 : 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: BORDER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>🙏</div>
               <p style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0, flex: 1 }}>{c.name}</p>
               {relationBadge(rel)}
             </div>
-            {lineageOnly ? (
-              <p style={{ fontSize: 12, color: GRAY, fontStyle: 'italic', margin: '0 0 0 48px' }}>Connected through a band you&rsquo;ve shared.</p>
-            ) : c.requests.length === 0 ? (
-              <p style={{ fontSize: 12, color: GRAY, fontStyle: 'italic', margin: '0 0 0 48px' }}>No requests shared yet</p>
-            ) : (
-              <div style={{ marginLeft: 48, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {c.requests.map(r => (
-                  <div key={r.id} style={{ borderTop: `1px solid ${CREAM}`, paddingTop: 8 }}>
-                    <p style={{ fontSize: 14, color: DARK, lineHeight: 1.5, margin: '0 0 8px 0', fontStyle: 'italic' }}>&ldquo;{r.request_text}&rdquo;</p>
-                    {intercedeBtn(r)}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )
       })}
@@ -234,11 +315,11 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       )}
       </>)}
 
-      {/* My Prayer Requests */}
+      {/* ── My Requests ────────────────────────────────────────────────────── */}
       {showRequests && (
       <div style={{ marginTop: section === 'all' ? 20 : 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <h4 style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0 }}>My Prayer Requests</h4>
+          <h4 style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0 }}>My Requests</h4>
           {!showForm && (
             <button onClick={() => setShowForm(true)} style={{ backgroundColor: GOLD, color: '#fff', border: 'none', borderRadius: 16, padding: '5px 12px', fontSize: 12, fontFamily: 'Georgia, serif', cursor: 'pointer', fontWeight: 600 }}>+ Share</button>
           )}
@@ -272,7 +353,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         )}
 
         {myRequests.length === 0 && !showForm && (
-          <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: 0 }}>You haven&rsquo;t shared any requests with your network yet.</p>
+          <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: 0 }}>You haven&rsquo;t shared any requests yet.</p>
         )}
 
         {myRequests.map(r => (
@@ -287,6 +368,37 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             </div>
           </div>
         ))}
+
+        {/* ── Others' Requests ───────────────────────────────────────────── */}
+        <div style={{ marginTop: 26 }}>
+          <h4 style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: '0 0 10px 0' }}>Others&rsquo; Requests</h4>
+
+          {othersFeed.length > 0 && (
+            <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+              {chip(othersFilter === 'all', `All · ${othersFeed.length}`, () => setOthersFilter('all'))}
+              {chip(othersFilter === 'direct', `Direct · ${oDirect}`, () => setOthersFilter('direct'))}
+              {chip(othersFilter === 'lineage', `Lineage · ${oLineage}`, () => setOthersFilter('lineage'), LINEAGE)}
+              {chip(othersFilter === 'circles', `Circles · ${oCircles}`, () => setOthersFilter('circles'), CIRCLE)}
+            </div>
+          )}
+
+          {othersFeed.length === 0 ? (
+            <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: 0 }}>No requests from others yet. When your partners or circles share a need, it&rsquo;ll appear here.</p>
+          ) : visibleOthers.length === 0 ? (
+            <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: 0 }}>Nothing under this filter right now.</p>
+          ) : visibleOthers.map(o => (
+            <div key={o.key} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 10, padding: 14, marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontFamily: serif, fontSize: 14, fontWeight: 700, color: DARK }}>{o.author}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: KIND_COLOR[o.kind], background: '#fff', border: `1px solid ${KIND_COLOR[o.kind]}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>
+                  {KIND_LABEL[o.kind]}{o.context ? ` · ${o.context}` : ''}
+                </span>
+              </div>
+              <p style={{ fontSize: 14, color: DARK, lineHeight: 1.5, margin: '0 0 10px 0', fontStyle: 'italic' }}>&ldquo;{o.request_text}&rdquo;</p>
+              {prayBtn(o.key, o.i_prayed, o.intercession_count, () => prayOther(o))}
+            </div>
+          ))}
+        </div>
       </div>
       )}
     </div>
