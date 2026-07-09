@@ -25,10 +25,50 @@ export async function GET(_req: NextRequest) {
     const accepted = all.filter((c: any) => c.status === 'accepted')
     const pendingIncoming = all.filter((c: any) => c.status === 'pending' && c.recipient_id === user.id)
 
-    // Names for the "other" person in each row.
+    // Lineage: the people a band actually passed between you and — i.e. whoever
+    // held one of your bands immediately before you (gave it to you) or right
+    // after you (you gave it to them), read off each band's holder chain. These
+    // are "lineage" partners; everyone else you've connected with is "direct".
+    const lineageIds = new Set<string>()
+    const lineageBandByUser: Record<string, string> = {}
+    const { data: myRegs } = await admin
+      .from('registrations')
+      .select('band_id')
+      .eq('user_id', user.id)
+      .not('band_id', 'is', null)
+    const myBandIds = Array.from(new Set((myRegs ?? []).map((r: any) => r.band_id)))
+    if (myBandIds.length) {
+      const { data: chainRegs } = await admin
+        .from('registrations')
+        .select('band_id, user_id, registered_at')
+        .in('band_id', myBandIds)
+        .not('user_id', 'is', null)
+        .order('registered_at', { ascending: true })
+      const byBand: Record<string, string[]> = {}
+      ;(chainRegs ?? []).forEach((r: any) => {
+        const chain = (byBand[r.band_id] ??= [])
+        // Collapse consecutive same-user rows (re-registrations) so neighbors are
+        // genuinely different people.
+        if (chain[chain.length - 1] !== r.user_id) chain.push(r.user_id)
+      })
+      for (const [bandId, chain] of Object.entries(byBand)) {
+        for (let i = 0; i < chain.length; i++) {
+          if (chain[i] !== user.id) continue
+          for (const nb of [chain[i - 1], chain[i + 1]]) {
+            if (nb && nb !== user.id) {
+              lineageIds.add(nb)
+              if (!lineageBandByUser[nb]) lineageBandByUser[nb] = bandId
+            }
+          }
+        }
+      }
+    }
+
+    // Names for the "other" person in each row, plus every lineage person.
     const otherIds = new Set<string>()
     accepted.forEach((c: any) => otherIds.add(c.requester_id === user.id ? c.recipient_id : c.requester_id))
     pendingIncoming.forEach((c: any) => otherIds.add(c.requester_id))
+    lineageIds.forEach(id => otherIds.add(id))
 
     const profilesById: Record<string, any> = {}
     if (otherIds.size > 0) {
@@ -91,17 +131,35 @@ export async function GET(_req: NextRequest) {
       ;(requestsByUser[r.user_id] ??= []).push(decorate(r))
     })
 
+    const connectedIds = new Set<string>()
     const connections = accepted.map((c: any) => {
       const otherId = c.requester_id === user.id ? c.recipient_id : c.requester_id
+      connectedIds.add(otherId)
       return {
         connection_id: c.id,
         user_id: otherId,
         name: nameOf(otherId),
         band_id: c.band_id,
         since: c.updated_at,
+        relation: lineageIds.has(otherId) ? 'lineage' : 'direct',
         requests: requestsByUser[otherId] ?? [],
       }
     })
+
+    // Lineage people you haven't formally connected with still belong on your
+    // Partners list (the band tied you together). They carry no shared requests
+    // here — sharing to lineage comes with request targeting later.
+    const lineage_partners = Array.from(lineageIds)
+      .filter(id => !connectedIds.has(id))
+      .map(id => ({
+        connection_id: null,
+        user_id: id,
+        name: nameOf(id),
+        band_id: lineageBandByUser[id] ?? null,
+        since: null,
+        relation: 'lineage' as const,
+        requests: [] as any[],
+      }))
 
     const pending_requests = pendingIncoming.map((c: any) => ({
       connection_id: c.id,
@@ -115,6 +173,7 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json({
       connections,
+      lineage_partners,
       pending_requests,
       my_requests,
       is_band_holder: await isBandHolder(admin, user.id),

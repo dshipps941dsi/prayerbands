@@ -29,7 +29,7 @@ const INFO: Record<Sub, { title: string; body: string }> = {
   },
   partners: {
     title: 'Prayer Partners',
-    body: 'Partners are the people you’re connected to in prayer. They come from the bands you’ve held or passed on (everyone in that band’s journey) and the members of any circles you join. Your partners can see and pray over the requests you choose to share with your network.',
+    body: 'Partners are the people you’re connected to in prayer, in two kinds. “Lineage” partners are those a band actually passed between — whoever handed you a band or received one from you. “Direct” partners are people you’ve connected with by tapping bands, without a handoff between you. Use the filter to see each group.',
   },
   circles: {
     title: 'Prayer Circles',

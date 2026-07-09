@@ -12,12 +12,15 @@ interface NetworkRequest {
   i_prayed: boolean
 }
 
+type Relation = 'direct' | 'lineage'
+
 interface Connection {
-  connection_id: string
+  connection_id: string | null
   user_id: string
   name: string
   band_id: string | null
-  since: string
+  since: string | null
+  relation?: Relation
   requests: NetworkRequest[]
 }
 
@@ -42,6 +45,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [connections, setConnections] = useState<Connection[]>([])
   const [pending, setPending] = useState<PendingRequest[]>([])
   const [myRequests, setMyRequests] = useState<NetworkRequest[]>([])
+  const [partnerFilter, setPartnerFilter] = useState<'all' | Relation>('all')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -54,7 +58,9 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     const res = await fetch('/api/network/my-network')
     if (res.ok) {
       const d = await res.json()
-      setConnections(d.connections ?? [])
+      // Accepted connections + lineage-only partners share one Partners list,
+      // each tagged with its relation.
+      setConnections([...(d.connections ?? []), ...(d.lineage_partners ?? [])])
       setPending(d.pending_requests ?? [])
       setMyRequests(d.my_requests ?? [])
     }
@@ -143,6 +149,30 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     </button>
   )
 
+  const relationOf = (c: Connection): Relation => c.relation ?? 'direct'
+  const directCount = connections.filter(c => relationOf(c) === 'direct').length
+  const lineageCount = connections.filter(c => relationOf(c) === 'lineage').length
+  const visiblePartners = connections.filter(c => partnerFilter === 'all' || relationOf(c) === partnerFilter)
+
+  const relationBadge = (rel: Relation) => (
+    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: rel === 'lineage' ? '#6B4E9E' : GOLD, background: rel === 'lineage' ? 'rgba(107,78,158,0.10)' : '#FFF8E7', border: `1px solid ${rel === 'lineage' ? 'rgba(107,78,158,0.35)' : GOLD}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>
+      {rel === 'lineage' ? 'Lineage' : 'Direct'}
+    </span>
+  )
+
+  const filterChips = (
+    <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+      {([['all', `All · ${connections.length}`], ['direct', `Direct · ${directCount}`], ['lineage', `Lineage · ${lineageCount}`]] as const).map(([id, label]) => {
+        const active = partnerFilter === id
+        return (
+          <button key={id} onClick={() => setPartnerFilter(id)} style={{ padding: '5px 11px', borderRadius: 16, border: `1px solid ${active ? GOLD : BORDER}`, background: active ? '#FFF8E7' : '#fff', color: active ? GOLD : GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: active ? 700 : 400, cursor: 'pointer' }}>
+            {label}
+          </button>
+        )
+      })}
+    </div>
+  )
+
   return (
     <div style={{ marginBottom: 32 }}>
       {section === 'all' && <h3 style={{ fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK, margin: '0 0 14px 0' }}>Prayer Partners</h3>}
@@ -159,34 +189,48 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         </div>
       ))}
 
-      {/* Accepted connections + their requests */}
-      {connections.map(c => (
-        <div key={c.connection_id} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: c.requests.length ? 12 : 0 }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: BORDER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>🙏</div>
-            <p style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0 }}>{c.name}</p>
-          </div>
-          {c.requests.length === 0 ? (
-            <p style={{ fontSize: 12, color: GRAY, fontStyle: 'italic', margin: '0 0 0 48px' }}>No requests shared yet</p>
-          ) : (
-            <div style={{ marginLeft: 48, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {c.requests.map(r => (
-                <div key={r.id} style={{ borderTop: `1px solid ${CREAM}`, paddingTop: 8 }}>
-                  <p style={{ fontSize: 14, color: DARK, lineHeight: 1.5, margin: '0 0 8px 0', fontStyle: 'italic' }}>&ldquo;{r.request_text}&rdquo;</p>
-                  {intercedeBtn(r)}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+      {/* Direct / Lineage filter (only worth showing once you have partners) */}
+      {connections.length > 0 && filterChips}
 
-      {/* Empty state */}
-      {connections.length === 0 && pending.length === 0 && (
+      {/* Partners (accepted connections + lineage), filtered */}
+      {visiblePartners.map(c => {
+        const rel = relationOf(c)
+        const lineageOnly = c.connection_id === null
+        return (
+          <div key={c.connection_id ?? `lin-${c.user_id}`} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: c.requests.length ? 12 : 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: BORDER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>🙏</div>
+              <p style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0, flex: 1 }}>{c.name}</p>
+              {relationBadge(rel)}
+            </div>
+            {lineageOnly ? (
+              <p style={{ fontSize: 12, color: GRAY, fontStyle: 'italic', margin: '0 0 0 48px' }}>Connected through a band you&rsquo;ve shared.</p>
+            ) : c.requests.length === 0 ? (
+              <p style={{ fontSize: 12, color: GRAY, fontStyle: 'italic', margin: '0 0 0 48px' }}>No requests shared yet</p>
+            ) : (
+              <div style={{ marginLeft: 48, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {c.requests.map(r => (
+                  <div key={r.id} style={{ borderTop: `1px solid ${CREAM}`, paddingTop: 8 }}>
+                    <p style={{ fontSize: 14, color: DARK, lineHeight: 1.5, margin: '0 0 8px 0', fontStyle: 'italic' }}>&ldquo;{r.request_text}&rdquo;</p>
+                    {intercedeBtn(r)}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      {/* Empty states */}
+      {connections.length === 0 && pending.length === 0 ? (
         <div style={{ backgroundColor: '#fff', border: `1px dashed var(--pb-border, #D4C5B0)`, borderRadius: 12, padding: '20px', textAlign: 'center', marginBottom: 16 }}>
           <p style={{ fontSize: 24, margin: '0 0 8px 0' }}>🙏</p>
           <p style={{ fontSize: 14, color: GRAY, margin: 0, lineHeight: 1.5 }}>Tap your band to someone else&rsquo;s phone to connect in prayer.</p>
         </div>
+      ) : visiblePartners.length === 0 && (
+        <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: '2px 0 12px' }}>
+          {partnerFilter === 'lineage' ? 'No lineage partners yet — pass a band to someone (or receive one) and they’ll appear here.' : 'No direct partners yet — connect with someone by tapping bands.'}
+        </p>
       )}
       </>)}
 
