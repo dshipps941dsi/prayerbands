@@ -80,21 +80,31 @@ export async function GET(_req: NextRequest) {
     }
     const nameOf = (id: string) => nameFromProfile(profilesById[id])
 
-    // Open requests shared by accepted connections, plus the viewer's own requests.
+    // Everyone whose requests could reach the viewer: accepted connections and
+    // lineage people (band handoff). Track each author's relation + whether
+    // they're a formal connection, so we can honor the audience they targeted.
+    // Lineage is mutual, so the viewer's relation to an author equals theirs.
     const connectionUserIds = accepted.map((c: any) => (c.requester_id === user.id ? c.recipient_id : c.requester_id))
+    const connectedIds = new Set<string>(connectionUserIds)
 
-    const { data: theirRequests } = connectionUserIds.length
+    type AuthorInfo = { connected: boolean; relation: 'direct' | 'lineage' }
+    const authorInfo: Record<string, AuthorInfo> = {}
+    connectionUserIds.forEach((id: string) => { authorInfo[id] = { connected: true, relation: lineageIds.has(id) ? 'lineage' : 'direct' } })
+    lineageIds.forEach(id => { if (!authorInfo[id]) authorInfo[id] = { connected: false, relation: 'lineage' } })
+    const authorIds = Object.keys(authorInfo)
+
+    const { data: theirRequests } = authorIds.length
       ? await admin
           .from('prayer_network_requests')
-          .select('id, user_id, request_text, is_answered, created_at')
-          .in('user_id', connectionUserIds)
+          .select('id, user_id, request_text, is_answered, created_at, visibility, audience')
+          .in('user_id', authorIds)
           .eq('is_answered', false)
           .order('created_at', { ascending: false })
       : { data: [] as any[] }
 
     const { data: myRequests } = await admin
       .from('prayer_network_requests')
-      .select('id, user_id, request_text, is_answered, answered_at, created_at')
+      .select('id, user_id, request_text, is_answered, answered_at, created_at, visibility, audience')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
@@ -126,15 +136,25 @@ export async function GET(_req: NextRequest) {
       i_prayed: interByReq[r.id]?.mine ?? false,
     })
 
-    const requestsByUser: Record<string, any[]> = {}
-    ;((theirRequests ?? []) as any[]).forEach(r => {
-      ;(requestsByUser[r.user_id] ??= []).push(decorate(r))
-    })
+    // Does a request with this audience, from an author with this info, reach
+    // the viewer? Legacy rows (null audience) behave like 'network'.
+    const reaches = (audience: string | null, info: AuthorInfo) => {
+      const a = audience || 'network'
+      if (a === 'wall' || a === 'public') return false      // lives on the prayer wall, not here
+      if (a === 'direct') return info.connected && info.relation === 'direct'
+      if (a === 'lineage') return info.relation === 'lineage'
+      return info.connected                                  // 'network' → must be a connection
+    }
 
-    const connectedIds = new Set<string>()
+    // Others' Requests feed: network + lineage requests the viewer is allowed to
+    // see, each tagged with the author's relation for the Direct/Lineage badge.
+    const others_requests = ((theirRequests ?? []) as any[])
+      .filter(r => { const info = authorInfo[r.user_id]; return info && reaches(r.audience, info) })
+      .map(r => ({ ...decorate(r), author: nameOf(r.user_id), relation: authorInfo[r.user_id].relation }))
+
+    // Partners (people only; requests live in the Others' Requests feed).
     const connections = accepted.map((c: any) => {
       const otherId = c.requester_id === user.id ? c.recipient_id : c.requester_id
-      connectedIds.add(otherId)
       return {
         connection_id: c.id,
         user_id: otherId,
@@ -142,13 +162,11 @@ export async function GET(_req: NextRequest) {
         band_id: c.band_id,
         since: c.updated_at,
         relation: lineageIds.has(otherId) ? 'lineage' : 'direct',
-        requests: requestsByUser[otherId] ?? [],
       }
     })
 
     // Lineage people you haven't formally connected with still belong on your
-    // Partners list (the band tied you together). They carry no shared requests
-    // here — sharing to lineage comes with request targeting later.
+    // Partners list (the band tied you together).
     const lineage_partners = Array.from(lineageIds)
       .filter(id => !connectedIds.has(id))
       .map(id => ({
@@ -158,7 +176,6 @@ export async function GET(_req: NextRequest) {
         band_id: lineageBandByUser[id] ?? null,
         since: null,
         relation: 'lineage' as const,
-        requests: [] as any[],
       }))
 
     const pending_requests = pendingIncoming.map((c: any) => ({
@@ -169,11 +186,12 @@ export async function GET(_req: NextRequest) {
       created_at: c.created_at,
     }))
 
-    const my_requests = ((myRequests ?? []) as any[]).map(decorate)
+    const my_requests = ((myRequests ?? []) as any[]).map(r => ({ ...decorate(r), audience: r.audience ?? 'network' }))
 
     return NextResponse.json({
       connections,
       lineage_partners,
+      others_requests,
       pending_requests,
       my_requests,
       is_band_holder: await isBandHolder(admin, user.id),

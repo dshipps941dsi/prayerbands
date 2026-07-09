@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
-// POST /api/network/prayer-request  { request_text, visibility, anonymity }
-// Share a prayer request with your accepted network.
-//   visibility: 'private' (network only) | 'public' (shown on the prayer wall)
-//   anonymity (public only): 'anonymous' | 'first_initial'
+// POST /api/network/prayer-request  { request_text, audience, anonymity }
+// Share a prayer request with a chosen audience.
+//   audience: 'network' (all partners) | 'direct' | 'lineage' | 'wall'
+//   anonymity (wall only): 'anonymous' | 'first_initial'
+// visibility is derived: 'wall' → 'public' (prayer wall), everything else 'private'.
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
@@ -13,12 +14,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { request_text, visibility, anonymity } = await req.json()
+    const body = await req.json()
+    const request_text = body.request_text
     if (!request_text?.trim()) {
       return NextResponse.json({ error: 'Prayer request text is required' }, { status: 400 })
     }
 
-    const vis = visibility === 'public' ? 'public' : 'private'
+    // Accept `audience`; tolerate the old `visibility` field for safety.
+    const AUDIENCES = new Set(['network', 'direct', 'lineage', 'wall'])
+    let audience: string = String(body.audience || '')
+    if (!AUDIENCES.has(audience)) audience = body.visibility === 'public' ? 'wall' : 'network'
+    const vis = audience === 'wall' ? 'public' : 'private'
+    const anonymity = body.anonymity
 
     // For public requests, freeze a display name now: "Anonymous", or first
     // name + last initial from the user's profile.
@@ -46,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     const { data: request, error } = await supabase
       .from('prayer_network_requests')
-      .insert({ user_id: user.id, request_text: request_text.trim(), visibility: vis, public_name })
+      .insert({ user_id: user.id, request_text: request_text.trim(), visibility: vis, audience, public_name })
       .select()
       .single()
 

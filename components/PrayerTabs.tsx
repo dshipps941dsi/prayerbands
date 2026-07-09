@@ -25,7 +25,7 @@ const SUBTABS: { id: Sub; label: string }[] = [
 const INFO: Record<Sub, { title: string; body: string }> = {
   requests: {
     title: 'Prayer Requests',
-    body: 'Requests are specific needs people ask prayer for. “My Requests” are the ones you’ve shared. “Others’ Requests” are needs shared with you — filter them by Direct partners, Lineage (people a band passed between), or your Circles. Tap 🙏 to let someone know you’re praying.',
+    body: 'Requests are specific needs people ask prayer for. When you share one, you choose who sees it — your whole network, just Direct partners, just Lineage (people a band passed between), or the public wall. “Others’ Requests” are the needs shared with you, filterable by Direct, Lineage, or Circles. Tap 🙏 to let someone know you’re praying.',
   },
   partners: {
     title: 'Prayer Partners',

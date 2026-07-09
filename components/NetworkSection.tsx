@@ -10,9 +10,11 @@ interface NetworkRequest {
   created_at: string
   intercession_count: number
   i_prayed: boolean
+  audience?: Audience
 }
 
 type Relation = 'direct' | 'lineage'
+type Audience = 'network' | 'direct' | 'lineage' | 'wall'
 
 interface Connection {
   connection_id: string | null
@@ -21,7 +23,6 @@ interface Connection {
   band_id: string | null
   since: string | null
   relation?: Relation
-  requests: NetworkRequest[]
 }
 
 interface PendingRequest {
@@ -30,6 +31,17 @@ interface PendingRequest {
   name: string
   band_id: string | null
   created_at: string
+}
+
+// A request shared with the viewer through the network (audience-filtered by the API).
+interface OthersApiRequest {
+  id: string
+  request_text: string
+  created_at: string
+  intercession_count: number
+  i_prayed: boolean
+  author: string
+  relation: Relation
 }
 
 interface CircleRequest {
@@ -43,15 +55,14 @@ interface CircleRequest {
   i_prayed: boolean
 }
 
-// Unified item for the "Others' Requests" feed — a request shared with you by
-// someone else, whether through the network (direct/lineage) or a circle.
+// Unified item for the "Others' Requests" feed.
 type OtherKind = 'direct' | 'lineage' | 'circles'
 interface OtherItem {
   key: string
   source: 'network' | 'circle'
   kind: OtherKind
   author: string
-  context: string // circle name for circle requests, else ''
+  context: string
   request_text: string
   created_at: string
   intercession_count: number
@@ -72,12 +83,21 @@ const CIRCLE = '#2E7D8A'
 const KIND_COLOR: Record<OtherKind, string> = { direct: '#9A7A35', lineage: LINEAGE, circles: CIRCLE }
 const KIND_LABEL: Record<OtherKind, string> = { direct: 'Direct', lineage: 'Lineage', circles: 'Circle' }
 
+const AUDIENCES: { id: Audience; label: string; hint: string }[] = [
+  { id: 'network', label: '🙏 My Network', hint: 'Everyone you’re connected to' },
+  { id: 'direct', label: '👥 Direct', hint: 'Direct partners only' },
+  { id: 'lineage', label: '🔗 Lineage', hint: 'People a band passed between' },
+  { id: 'wall', label: '🌍 Public Wall', hint: 'Shared on the public wall' },
+]
+const AUD_LABEL: Record<Audience, string> = { network: 'Network', direct: 'Direct', lineage: 'Lineage', wall: 'Wall' }
+
 export default function NetworkSection({ userId, section = 'all' }: { userId: string; section?: 'all' | 'partners' | 'requests' }) {
   const showPartners = section === 'all' || section === 'partners'
   const showRequests = section === 'all' || section === 'requests'
   const [connections, setConnections] = useState<Connection[]>([])
   const [pending, setPending] = useState<PendingRequest[]>([])
   const [myRequests, setMyRequests] = useState<NetworkRequest[]>([])
+  const [othersReqs, setOthersReqs] = useState<OthersApiRequest[]>([])
   const [circleRequests, setCircleRequests] = useState<CircleRequest[]>([])
   const [partnerFilter, setPartnerFilter] = useState<'all' | Relation>('all')
   const [othersFilter, setOthersFilter] = useState<'all' | OtherKind>('all')
@@ -86,7 +106,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [showForm, setShowForm] = useState(false)
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [visibility, setVisibility] = useState<'private' | 'public'>('private')
+  const [audience, setAudience] = useState<Audience>('network')
   const [anonymity, setAnonymity] = useState<'anonymous' | 'first_initial'>('first_initial')
 
   async function load() {
@@ -96,10 +116,10 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     ])
     if (netRes.ok) {
       const d = await netRes.json()
-      // Accepted connections + lineage-only partners share one Partners list.
       setConnections([...(d.connections ?? []), ...(d.lineage_partners ?? [])])
       setPending(d.pending_requests ?? [])
       setMyRequests(d.my_requests ?? [])
+      setOthersReqs(d.others_requests ?? [])
     }
     if (circleRes && circleRes.ok) {
       const d = await circleRes.json()
@@ -130,7 +150,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     }
   }
 
-  // Toggle a prayer on a network request (updates connections + my own list).
+  // Toggle a prayer on a network request (others' feed + my own list).
   async function intercede(requestId: string) {
     const res = await fetch('/api/network/intercede', {
       method: 'POST',
@@ -139,11 +159,11 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     })
     if (!res.ok) return
     const d = await res.json()
-    const apply = (r: NetworkRequest) =>
+    const apply = <T extends { id: string; i_prayed: boolean; intercession_count: number }>(r: T): T =>
       r.id === requestId
         ? { ...r, i_prayed: d.praying, intercession_count: d.praying ? r.intercession_count + 1 : r.intercession_count - 1 }
         : r
-    setConnections(prev => prev.map(c => ({ ...c, requests: c.requests.map(apply) })))
+    setOthersReqs(prev => prev.map(apply))
     setMyRequests(prev => prev.map(apply))
   }
 
@@ -173,13 +193,14 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       const res = await fetch('/api/network/prayer-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_text: text.trim(), visibility, anonymity }),
+        body: JSON.stringify({ request_text: text.trim(), audience, anonymity }),
       })
       if (res.ok) {
         const d = await res.json()
         setMyRequests(prev => [{ ...d.request, intercession_count: 0, i_prayed: false }, ...prev])
         setText('')
         setShowForm(false)
+        setAudience('network')
       }
     } finally {
       setSubmitting(false)
@@ -221,18 +242,18 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
 
   // ── Others' Requests (merged feed) ─────────────────────────────────────────
   const othersFeed: OtherItem[] = [
-    ...connections.flatMap(c => (c.requests ?? []).map(r => ({
+    ...othersReqs.map(r => ({
       key: `n-${r.id}`,
       source: 'network' as const,
-      kind: relationOf(c) as OtherKind,
-      author: c.name,
+      kind: r.relation as OtherKind,
+      author: r.author,
       context: '',
       request_text: r.request_text,
       created_at: r.created_at,
       intercession_count: r.intercession_count,
       i_prayed: r.i_prayed,
       request_id: r.id,
-    }))),
+    })),
     ...circleRequests.map(r => ({
       key: `c-${r.id}`,
       source: 'circle' as const,
@@ -289,18 +310,15 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       )}
 
       {/* Partner people */}
-      {visiblePartners.map(c => {
-        const rel = relationOf(c)
-        return (
-          <div key={c.connection_id ?? `lin-${c.user_id}`} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: BORDER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>🙏</div>
-              <p style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0, flex: 1 }}>{c.name}</p>
-              {relationBadge(rel)}
-            </div>
+      {visiblePartners.map(c => (
+        <div key={c.connection_id ?? `lin-${c.user_id}`} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: BORDER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>🙏</div>
+            <p style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0, flex: 1 }}>{c.name}</p>
+            {relationBadge(relationOf(c))}
           </div>
-        )
-      })}
+        </div>
+      ))}
 
       {/* Empty states */}
       {connections.length === 0 && pending.length === 0 ? (
@@ -327,15 +345,22 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
 
         {showForm && (
           <div style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, marginBottom: 10 }}>
-            <textarea value={text} onChange={e => setText(e.target.value)} placeholder="What would you like your network to pray for?" rows={3} maxLength={400} autoFocus style={{ width: '100%', padding: '10px 14px', fontSize: 14, fontFamily: 'Georgia, serif', color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', resize: 'none', boxSizing: 'border-box', lineHeight: 1.6 }} />
+            <textarea value={text} onChange={e => setText(e.target.value)} placeholder="What would you like prayer for?" rows={3} maxLength={400} autoFocus style={{ width: '100%', padding: '10px 14px', fontSize: 14, fontFamily: 'Georgia, serif', color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', resize: 'none', boxSizing: 'border-box', lineHeight: 1.6 }} />
 
-            <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Who can see this?</div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => setVisibility('private')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: `1px solid ${visibility === 'private' ? GOLD : BORDER}`, background: visibility === 'private' ? '#FFF8E7' : '#fff', color: visibility === 'private' ? GOLD : GRAY, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: visibility === 'private' ? 600 : 400, cursor: 'pointer' }}>🔒 My Network</button>
-              <button onClick={() => setVisibility('public')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: `1px solid ${visibility === 'public' ? GOLD : BORDER}`, background: visibility === 'public' ? '#FFF8E7' : '#fff', color: visibility === 'public' ? GOLD : GRAY, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: visibility === 'public' ? 600 : 400, cursor: 'pointer' }}>🌍 Public Wall</button>
+            <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Who should see this?</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+              {AUDIENCES.map(a => {
+                const active = audience === a.id
+                return (
+                  <button key={a.id} onClick={() => setAudience(a.id)} title={a.hint} style={{ padding: '9px 8px', borderRadius: 8, border: `1px solid ${active ? GOLD : BORDER}`, background: active ? '#FFF8E7' : '#fff', color: active ? GOLD : GRAY, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left' }}>
+                    {a.label}
+                  </button>
+                )
+              })}
             </div>
+            <p style={{ fontSize: 11, color: GRAY, margin: '6px 2px 0', fontStyle: 'italic' }}>{AUDIENCES.find(a => a.id === audience)?.hint}</p>
 
-            {visibility === 'public' && (
+            {audience === 'wall' && (
               <>
                 <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Show on the wall as</div>
                 <div style={{ display: 'flex', gap: 6 }}>
@@ -346,7 +371,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             )}
 
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button onClick={() => { setShowForm(false); setText(''); setVisibility('private'); setAnonymity('first_initial') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid var(--pb-border, #D4C5B0)`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => { setShowForm(false); setText(''); setAudience('network'); setAnonymity('first_initial') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid var(--pb-border, #D4C5B0)`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
               <button onClick={shareRequest} disabled={!text.trim() || submitting} style={{ flex: 2, backgroundColor: text.trim() ? GOLD : 'var(--pb-border, #D4C5B0)', border: 'none', borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: text.trim() ? 'pointer' : 'default' }}>{submitting ? 'Sharing...' : 'Share Request'}</button>
             </div>
           </div>
@@ -358,7 +383,10 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
 
         {myRequests.map(r => (
           <div key={r.id} style={{ backgroundColor: r.is_answered ? '#F5F5F0' : '#fff', border: `1px solid ${r.is_answered ? '#D4D0C8' : BORDER}`, borderRadius: 10, padding: 14, marginBottom: 10, opacity: r.is_answered ? 0.85 : 1 }}>
-            {r.is_answered && <p style={{ fontSize: 11, fontWeight: 600, color: '#7BAE8E', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 6px 0' }}>✓ Answered</p>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              {r.is_answered && <span style={{ fontSize: 11, fontWeight: 600, color: '#7BAE8E', letterSpacing: '0.08em', textTransform: 'uppercase' }}>✓ Answered</span>}
+              {r.audience && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: GRAY, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>{AUD_LABEL[r.audience]}</span>}
+            </div>
             <p style={{ fontSize: 14, color: DARK, lineHeight: 1.5, margin: '0 0 10px 0', fontStyle: 'italic' }}>&ldquo;{r.request_text}&rdquo;</p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 12, color: GRAY }}>🙏 {r.intercession_count} {r.intercession_count === 1 ? 'person praying' : 'praying'}</span>
