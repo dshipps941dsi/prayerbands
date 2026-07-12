@@ -7,6 +7,7 @@ import ProductsManager from './_components/ProductsManager'
 import PricingManager from './_components/PricingManager'
 import ThemesManager from './_components/ThemesManager'
 import BatchGenerator from './_components/BatchGenerator'
+import { parseOrderItems, orderItemLabel } from '@/lib/fulfillment'
 
 // Prayer Bands brand palette
 const C = {
@@ -219,47 +220,28 @@ export default function AdminPage() {
   }
 
   async function assignBands(order: Order) {
-    const qty = order.order_metadata?.quantity || 1
     setAssigningBands(order.id)
     try {
-      const { data: bands } = await supabase
-        .from('bands')
-        .select('band_id')
-        .eq('status', 'unregistered')
-        .is('owner_id', null)
-        .is('org_id', null)
-        .limit(qty)
-
-      if (!bands || bands.length < qty) {
-        alert('Not enough available bands in inventory.')
+      // Server-side matching: picks bands whose design (theme/color) and size
+      // match each ordered line, links the buyer, and reports any shortfalls.
+      const res = await fetch('/api/admin/assign-order-bands', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        const short = Array.isArray(d.shortfalls) && d.shortfalls.length
+          ? '\n\nShort on: ' + d.shortfalls.map((s: any) => `${s.ordered - s.matched}× ${s.design}${s.size ? ' ' + s.size : ''}`).join(', ')
+          : ''
+        alert((d.error || 'Could not assign bands.') + short)
         return
       }
-
-      const bandIds = bands.map((b: any) => b.band_id)
-
-      await supabase
-        .from('bands')
-        .update({ status: 'assigned' })
-        .in('band_id', bandIds)
-
-      await supabase
-        .from('orders')
-        .update({ assigned_band_ids: bandIds, status: 'processing' })
-        .eq('id', order.id)
-
-      // Link the bands to the buyer's account (matched by order email) so they
-      // appear in the buyer's dashboard and can be dedicated from the account.
-      // Guests without an account are simply recorded on the order. Best-effort.
-      if (order.customer_email) {
-        try {
-          await fetch('/api/admin/assign-bands', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: order.customer_email, band_ids: bandIds }),
-          })
-        } catch { /* no account for this email — recorded on the order only */ }
+      if (Array.isArray(d.shortfalls) && d.shortfalls.length) {
+        alert(`Assigned ${d.count} band(s), but inventory is short on:\n` +
+          d.shortfalls.map((s: any) => `• ${s.ordered - s.matched}× ${s.design}${s.size ? ' ' + s.size : ''}`).join('\n') +
+          '\n\nGenerate more of those designs, then assign the rest.')
       }
-
-      setSelectedBands(prev => ({ ...prev, [order.id]: bandIds }))
+      setSelectedBands(prev => ({ ...prev, [order.id]: d.assigned || [] }))
       await loadOrders()
       await loadStats()
     } finally {
@@ -571,6 +553,12 @@ export default function AdminPage() {
                       {/* Order details */}
                       <div style={{ fontSize: '13px', color: C.body, marginBottom: '12px', lineHeight: '1.6' }}>
                         <strong>Type:</strong> {order.has_custom_bands ? 'Custom' : 'Standard'} &middot; <strong>Qty:</strong> {qty}<br />
+                        {(() => {
+                          const items = parseOrderItems(order.order_metadata)
+                          return items.length ? (
+                            <><strong>Ordered:</strong> {items.map(orderItemLabel).join(' · ')}<br /></>
+                          ) : null
+                        })()}
                         <strong>Ship to:</strong> {shippingAddr(order)}
                       </div>
 
