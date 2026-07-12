@@ -109,6 +109,22 @@ async function main() {
   ])
   console.log(`Bands: ${BAND} (4 cities, lineage Grace) + ${BAND2} (3 cities, lineage Elijah)`)
 
+  // ── Un-opened gift bands owned by the demo user ────────────────────────────
+  // These have no registrations (never tapped), so they show up in the dashboard
+  // "Gift Dedications" manager — one already has a message, one is blank.
+  for (const [bid, rec, note] of [
+    ['PB-GIFT1', 'Aunt Ruth', 'Praying for your healing every single day — this band carries our whole family’s love.'],
+    ['PB-GIFT2', '', ''],
+  ]) {
+    await sb.from('bands').upsert({
+      band_id: bid, status: 'unregistered', theme: 'default', color: null,
+      nfc_url: `https://prayerbands.com/r/${bid}`, outside_text: 'PrayerBands.com ✝', inside_text: bid,
+      owner_id: test.id, dedication_recipient: rec || null, dedication_note: note || null, dedication_viewed: false,
+    }, { onConflict: 'band_id' })
+    await sb.from('registrations').delete().eq('band_id', bid) // keep them un-opened
+  }
+  console.log('Gift bands: PB-GIFT1 (has message) + PB-GIFT2 (blank) — for the dedication manager')
+
   // ── Connections: Samuel (accepted, Direct) + Naomi (pending, to accept) ────
   const pairFilter = (a, b) => `and(requester_id.eq.${a},recipient_id.eq.${b}),and(requester_id.eq.${b},recipient_id.eq.${a})`
   await sb.from('prayer_network_connections').delete().or(pairFilter(samuel.id, test.id))

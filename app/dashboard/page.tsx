@@ -6,6 +6,7 @@ import Logo from '@/components/Logo'
 import Icon, { type IconName } from '@/components/Icon'
 import PrayerTabs from '@/components/PrayerTabs'
 import ShareSheet from '@/components/ShareSheet'
+import GiftDedications from '@/components/GiftDedications'
 
 // Brand font import (injected once client-side)
 if (typeof document !== 'undefined' && !document.getElementById('pb-brand-fonts')) {
@@ -910,6 +911,8 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+
+        <GiftDedications userId={effectiveId} readOnly={isViewingAs} />
 
         {!isViewingAs && profile?.referral_code && (
           <div style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #132544 100%)`, border: `1px solid ${GOLD}55`, borderRadius: 10, padding: isMobile ? '16px 16px' : '18px 22px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', boxShadow: '0 4px 18px rgba(10,22,40,0.18)' }}>
