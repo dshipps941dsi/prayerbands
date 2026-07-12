@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     const qty = ship.bands_quantity || 1
     // Shippable inventory = generated bands not yet claimed (seeded 'unregistered';
     // 'available' was never written, so this used to always find nothing).
-    const { data: bands } = await admin.from('bands').select('band_id').eq('status', 'unregistered').is('owner_id', null).limit(qty)
+    const { data: bands } = await admin.from('bands').select('band_id').eq('status', 'unregistered').is('owner_id', null).is('org_id', null).limit(qty)
     if (!bands || bands.length < qty) {
       return NextResponse.json({ error: 'Not enough available bands in inventory.' }, { status: 400 })
     }

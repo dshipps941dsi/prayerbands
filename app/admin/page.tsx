@@ -197,10 +197,11 @@ export default function AdminPage() {
 
   async function loadStats() {
     const { data: ordersData } = await supabase.from('orders').select('status, amount_total')
-    // Shippable inventory = generated bands not yet claimed by anyone. (Bands are
-    // seeded 'unregistered'; 'available' was never written, so the old query
-    // always read 0.) 'assigned' bands leave this pool.
-    const { count: bandCount } = await supabase.from('bands').select('band_id', { count: 'exact', head: true }).eq('status', 'unregistered').is('owner_id', null)
+    // Shippable inventory = general-store bands not yet claimed by anyone. (Bands
+    // are seeded 'unregistered'; 'available' was never written, so the old query
+    // always read 0.) org_id null excludes church/org stock; 'assigned' bands
+    // also leave this pool.
+    const { count: bandCount } = await supabase.from('bands').select('band_id', { count: 'exact', head: true }).eq('status', 'unregistered').is('owner_id', null).is('org_id', null)
 
     if (ordersData) {
       const total = ordersData.length
@@ -226,6 +227,7 @@ export default function AdminPage() {
         .select('band_id')
         .eq('status', 'unregistered')
         .is('owner_id', null)
+        .is('org_id', null)
         .limit(qty)
 
       if (!bands || bands.length < qty) {

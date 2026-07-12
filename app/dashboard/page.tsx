@@ -593,6 +593,13 @@ export default function Dashboard() {
         setViewAsId(viewAs)
         const effectiveId = viewAs || user.id
 
+        // Backfill: link any bands from this account's past orders (guest
+        // checkout, or purchases made before the account existed) before we read
+        // the band list, so they show up in reach right away. Idempotent.
+        if (!viewAs) {
+          try { await fetch('/api/link-purchased-bands', { method: 'POST' }) } catch {}
+        }
+
         const { data: prof } = await supabase.from('profiles').select('*').eq('id', effectiveId).single()
         setProfile(prof)
 
