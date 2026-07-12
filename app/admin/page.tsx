@@ -245,6 +245,18 @@ export default function AdminPage() {
         .update({ assigned_band_ids: bandIds, status: 'processing' })
         .eq('id', order.id)
 
+      // Link the bands to the buyer's account (matched by order email) so they
+      // appear in the buyer's dashboard and can be dedicated from the account.
+      // Guests without an account are simply recorded on the order. Best-effort.
+      if (order.customer_email) {
+        try {
+          await fetch('/api/admin/assign-bands', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: order.customer_email, band_ids: bandIds }),
+          })
+        } catch { /* no account for this email — recorded on the order only */ }
+      }
+
       setSelectedBands(prev => ({ ...prev, [order.id]: bandIds }))
       await loadOrders()
       await loadStats()
