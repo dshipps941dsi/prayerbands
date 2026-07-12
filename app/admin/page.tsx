@@ -7,6 +7,7 @@ import ProductsManager from './_components/ProductsManager'
 import PricingManager from './_components/PricingManager'
 import ThemesManager from './_components/ThemesManager'
 import BatchGenerator from './_components/BatchGenerator'
+import CustomerDetail from './_components/CustomerDetail'
 import { parseOrderItems, orderItemLabel } from '@/lib/fulfillment'
 
 // Prayer Bands brand palette
@@ -67,6 +68,7 @@ export default function AdminPage() {
   const [userResults, setUserResults] = useState<any[]>([])
   const [searchingUsers, setSearchingUsers] = useState(false)
   const [activeTab, setActiveTab] = useState<'orders' | 'shipments' | 'sales' | 'catalog' | 'prayers' | 'users'>('orders')
+  const [crmUserId, setCrmUserId] = useState<string | null>(null)
   const [catalogSub, setCatalogSub] = useState<'bands' | 'products' | 'pricing' | 'themes' | 'generate'>('bands')
   const [sales, setSales] = useState<any>(null)
   const [salesDays, setSalesDays] = useState('30')
@@ -806,13 +808,18 @@ export default function AdminPage() {
                       <div style={{ fontSize: '13px', color: C.goldText }}>{u.email}</div>
                       <div style={{ fontSize: '12px', color: C.secondary }}>{u.band_count || 0} bands registered</div>
                     </div>
-                    <a href={`/dashboard?viewAs=${u.id}`} style={{ padding: '7px 16px', background: C.gold, color: C.navy, borderRadius: '6px', textDecoration: 'none', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>View Dashboard</a>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => setCrmUserId(u.id)} style={{ padding: '7px 16px', background: C.navy, color: C.gold, border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Customer</button>
+                      <a href={`/dashboard?viewAs=${u.id}`} style={{ padding: '7px 16px', background: C.gold, color: C.navy, borderRadius: '6px', textDecoration: 'none', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Dashboard</a>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
         )}
+
+        {crmUserId && <CustomerDetail userId={crmUserId} onClose={() => setCrmUserId(null)} />}
 
         {/* BAND MANAGEMENT TAB — bands, products, pricing */}
         {activeTab === 'catalog' && (
