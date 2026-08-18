@@ -1042,10 +1042,10 @@ export default function BandPage() {
 
           {/* Main message */}
           <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, marginBottom: 16, lineHeight: 1.3, maxWidth: 320 }}>
-            Every prayer begins somewhere.
+            One band. A story still being written.
           </div>
           <div style={{ fontFamily: body, fontSize: 15, color: 'rgba(255,255,255,0.7)', fontStyle: 'italic', lineHeight: 1.7, marginBottom: 32, maxWidth: 340 }}>
-            This band is yours. What you carry, who you pass it to, the prayers you leave along the way — it starts here, with you.
+            Follow its journey, share prayers, and discover Scripture each day.
           </div>
 
           {/* Verse */}
