@@ -129,7 +129,13 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bandId: dedBandId.trim(), dedication_recipient: dedRecipient, dedication_note: dedNote, adminOverride: true }),
       })
-      if (res.ok) { setDedMsg('saved'); setDedBandId(''); setDedRecipient(''); setDedNote(''); setTimeout(() => setDedMsg(''), 3000) }
+      if (res.ok) {
+        // Echo the band the server actually wrote to (normalized/uppercased),
+        // so a mistyped ID is obvious rather than a bare "Saved".
+        const d = await res.json().catch(() => ({}))
+        setDedMsg('saved:' + (d.bandId || dedBandId.trim().toUpperCase()))
+        setDedBandId(''); setDedRecipient(''); setDedNote(''); setTimeout(() => setDedMsg(''), 5000)
+      }
       else { const d = await res.json().catch(() => ({})); setDedMsg(d.error || 'Could not save.') }
     } catch { setDedMsg('Network error.') }
     setDedSaving(false)
@@ -477,7 +483,7 @@ export default function AdminPage() {
               <textarea value={dedNote} onChange={e => setDedNote(e.target.value)} placeholder="Personal message…" style={{ ...dedInput, minHeight: 72, resize: 'vertical' as const, fontFamily: 'Inter, sans-serif' }} />
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10 }}>
                 <button onClick={preDedicate} disabled={dedSaving} style={{ background: C.gold, color: C.navy, border: 'none', borderRadius: 6, padding: '9px 20px', fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, cursor: dedSaving ? 'wait' : 'pointer' }}>{dedSaving ? 'Saving…' : 'Save Dedication'}</button>
-                {dedMsg === 'saved' ? <span style={{ color: C.green, fontSize: 13, fontWeight: 600 }}>Saved ✓</span> : dedMsg && <span style={{ color: C.red, fontSize: 13 }}>{dedMsg}</span>}
+                {dedMsg.startsWith('saved:') ? <span style={{ color: C.green, fontSize: 13, fontWeight: 600 }}>Saved to {dedMsg.slice(6)} ✓</span> : dedMsg && <span style={{ color: C.red, fontSize: 13 }}>{dedMsg}</span>}
               </div>
             </div>
 

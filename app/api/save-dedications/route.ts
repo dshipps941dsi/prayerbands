@@ -6,6 +6,13 @@ import { getSessionOrg } from '@/lib/org-auth'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
+// Band IDs are stored uppercase (PB-955HQ, GCC-2VPUA). Postgres `eq` is
+// case-sensitive, so a hand-typed "pb-955hq" would match nothing and — before
+// the row-count checks below — report success while saving nothing.
+function normalizeBandId(raw: unknown): string {
+  return typeof raw === 'string' ? raw.trim().toUpperCase() : ''
+}
+
 // Is the current caller signed in as the admin? Used to allow the admin panel
 // to pre-dedicate any band without the per-band token.
 async function callerIsAdmin(): Promise<boolean> {
@@ -30,7 +37,12 @@ export async function POST(req: NextRequest) {
   // ── Single-band path: from the public /dedicate page (token-gated) or the
   // admin pre-dedicate panel (adminOverride, cookie-authenticated). ──
   if (body.bandId) {
-    const { bandId, token, dedication_recipient, dedication_note, adminOverride } = body
+    const { token, dedication_recipient, dedication_note, adminOverride } = body
+    const bandId = normalizeBandId(body.bandId)
+
+    if (!bandId) {
+      return NextResponse.json({ error: 'Enter a band ID.' }, { status: 400 })
+    }
 
     if (adminOverride) {
       if (!(await callerIsAdmin())) {
@@ -41,25 +53,34 @@ export async function POST(req: NextRequest) {
         .from('bands')
         .select('dedication_token')
         .eq('band_id', bandId)
-        .single()
+        .maybeSingle()
       if (!band || band.dedication_token !== token) {
         return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
       }
     }
 
-    const { error } = await supabase
+    // `.select()` makes the update return the rows it touched, so a band ID
+    // that matches nothing is reported as a 404 instead of a false success.
+    const { data: updated, error } = await supabase
       .from('bands')
       .update({
         dedication_recipient: (dedication_recipient || '').trim() || null,
         dedication_note: (dedication_note || '').trim() || null,
       })
       .eq('band_id', bandId)
+      .select('band_id')
 
     if (error) {
       console.error('[save-dedications single]', error)
       return NextResponse.json({ error: 'Could not save' }, { status: 500 })
     }
-    return NextResponse.json({ success: true })
+    if (!updated || updated.length === 0) {
+      return NextResponse.json(
+        { error: `No band found with ID "${bandId}". Check the ID and try again.` },
+        { status: 404 }
+      )
+    }
+    return NextResponse.json({ success: true, bandId })
   }
 
   // ── Array path: checkout/order flow (links owner + dedication). ──
@@ -75,8 +96,14 @@ export async function POST(req: NextRequest) {
   // someone — the original threat was an anon caller passing any band_id + uid.
   const { userId: authUserId } = await getSessionOrg()
 
+  // Bands this call did not touch — unknown ID, already owned, or already
+  // dedicated. Skipping those is deliberate (see the filters below), but the
+  // caller gets told rather than seeing a bare success.
+  const skipped: string[] = []
+
   for (const d of dedications) {
-    if (!d.bandId) continue
+    const bandId = normalizeBandId(d.bandId)
+    if (!bandId) continue
     const hasText = !!(d.recipientName?.trim() || d.note?.trim())
     if (!hasText && !authUserId) continue
     const patch: Record<string, string | null> = {}
@@ -85,12 +112,16 @@ export async function POST(req: NextRequest) {
       patch.dedication_note = d.note?.trim() || null
     }
     if (authUserId) patch.owner_id = authUserId
-    let q = supabase.from('bands').update(patch).eq('band_id', d.bandId).is('owner_id', null)
+    let q = supabase.from('bands').update(patch).eq('band_id', bandId).is('owner_id', null)
     // Never clobber an existing blessing — only write a dedication where none
     // exists yet. (The /dedicate page, token-gated above, is the place to edit one.)
     if (hasText) q = q.is('dedication_note', null)
-    await q
+    const { data: rows, error } = await q.select('band_id')
+    if (error) console.error('[save-dedications array]', bandId, error)
+    if (error || !rows || rows.length === 0) skipped.push(bandId)
   }
 
-  return NextResponse.json({ success: true })
+  // Still a 200 — checkout must not fail because one band was already spoken
+  // for — but the response now says what was left out.
+  return NextResponse.json({ success: true, skipped })
 }
