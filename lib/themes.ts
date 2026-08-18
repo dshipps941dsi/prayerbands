@@ -95,14 +95,14 @@ export const BUILTIN_THEMES: Record<ThemeKey, BandTheme> = {
     surface:       '#FFFFFF',  // white
     surfaceAlt:    '#F5EFE4',  // warm parchment tint
 
-    text:          '#2C1A0E',  // espresso
-    textMuted:     '#7A5C3A',  // warm brown
+    text:          '#15223B',  // navy — also the full-page background on the claim screen
+    textMuted:     '#5A6A85',  // blue-grey
     textOnPrimary: '#0F0D09',  // dark text — the default primary is light gold
 
     accent:        '#C8A96E',  // gold
     accentAlt:     '#7BAE8E',  // sage green
 
-    tabBar:        '#2C1A0E',  // espresso
+    tabBar:        '#15223B',  // navy — verse card, tab bar, dark gradients
     tabActive:     '#C8A96E',  // gold
 
     border:        '#E8DCC8',  // parchment border

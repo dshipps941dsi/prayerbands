@@ -14,13 +14,13 @@ export default function NFCRedirect() {
   const bandId = (params?.bandId as string) || ''
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F1E4' }}>
-      <div style={{ textAlign: 'center', fontFamily: 'Cormorant Garamond, Georgia, serif', color: '#5C6573' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#15223B' }}>
+      <div style={{ textAlign: 'center', fontFamily: 'Cormorant Garamond, Georgia, serif', color: '#B9C2D0' }}>
         <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={42} color="#C8A96E" /></div>
-        <div style={{ fontStyle: 'italic', color: '#15223B' }}>Opening your band...</div>
+        <div style={{ fontStyle: 'italic', color: '#F6F1E4' }}>Opening your band...</div>
         {/* Fallback if the JS redirect doesn't fire (JS disabled / slow device). */}
         {bandId && (
-          <a href={`/band/${bandId}`} style={{ display: 'inline-block', marginTop: 14, color: '#9A7A35', fontStyle: 'italic', fontSize: 14 }}>
+          <a href={`/band/${bandId}`} style={{ display: 'inline-block', marginTop: 14, color: '#C8A96E', fontStyle: 'italic', fontSize: 14 }}>
             Tap here if your band doesn&apos;t open
           </a>
         )}
