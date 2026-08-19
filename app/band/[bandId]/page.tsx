@@ -214,6 +214,28 @@ export default function BandPage() {
       .catch(() => {})
   }, [userId])
 
+  // Claim an unowned band for whoever is signed in and holding it.
+  //
+  // The OTP path claims explicitly after verifying the code, but signing in
+  // with Google or Facebook returns here without ever doing so — which left
+  // two real accounts (Jackson, Brinley) signed up but owning nothing, their
+  // band still showing owner_id null and untransferable. Claiming on load
+  // covers every route back, not just the one we remembered to instrument.
+  //
+  // /api/claim-band does the guarding: it refuses a band owned by someone else
+  // or actively held by a different account, so this cannot take a band that
+  // is not theirs.
+  useEffect(() => {
+    if (!userId || !status.band) return
+    if (status.band.owner_id) return
+    fetch('/api/claim-band', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bandId }),
+    }).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, status.band?.band_id, status.band?.owner_id])
+
   // Bands available in the header switcher. Signed-out visitors get none, so
   // the control stays hidden for anyone tapping a stranger's band.
   useEffect(() => {
