@@ -13,9 +13,12 @@ function normalizeBandId(raw: unknown): string {
   return typeof raw === 'string' ? raw.trim().toUpperCase() : ''
 }
 
-// Is the current caller signed in as the admin? Used to allow the admin panel
-// to pre-dedicate any band without the per-band token.
-async function callerIsAdmin(): Promise<boolean> {
+// Who does the SERVER think is calling? The admin page keeps `authorized` in
+// React state, so after signing in as someone else in the same browser the panel
+// still renders while the cookie the server reads belongs to another account —
+// or to nobody. Returning the email lets the caller see which it was instead of
+// a bare "Not authorized".
+async function callerEmail(): Promise<string | null> {
   const cookieStore = await cookies()
   const authed = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,7 +26,7 @@ async function callerIsAdmin(): Promise<boolean> {
     { cookies: { getAll() { return cookieStore.getAll() }, setAll() {} } }
   )
   const { data: { user } } = await authed.auth.getUser()
-  return user?.email === ADMIN_EMAIL
+  return user?.email ?? null
 }
 
 export async function POST(req: NextRequest) {
@@ -45,8 +48,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (adminOverride) {
-      if (!(await callerIsAdmin())) {
-        return NextResponse.json({ error: 'Not authorized' }, { status: 401 })
+      const who = await callerEmail()
+      if (who !== ADMIN_EMAIL) {
+        return NextResponse.json({
+          error: who
+            ? `Not authorized — this browser is signed in as ${who}. Sign out and sign back in as ${ADMIN_EMAIL}.`
+            : 'Your admin session expired. Refresh the page and sign in again.',
+        }, { status: 401 })
       }
     } else {
       const { data: band } = await supabase
