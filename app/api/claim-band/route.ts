@@ -74,18 +74,31 @@ export async function POST(req: NextRequest) {
     }
 
     // Adopt the guest registration left behind by registering before signing in.
-    // The check above already proved no OTHER account holds this band, so any
-    // accountless registration here belongs to the person claiming it now.
     // Without this the claimer is owner but not holder, and the journey shows
     // the band as held by nobody.
-    const { error: adoptError } = await admin
+    //
+    // ONLY the most recent registration. Updating every unlinked row on the
+    // band credited earlier holders' stops to whoever claimed it later — on
+    // PB-ZKPMT that attached Mason Struble's registration to Jackson's account,
+    // even though Mason had an account of his own. Each stop belongs to the
+    // person who made it.
+    const { data: latestUnlinked } = await admin
       .from('registrations')
-      .update({ user_id: user.id })
+      .select('id, user_id')
       .eq('band_id', bandId)
-      .is('user_id', null)
-    if (adoptError) {
-      // Ownership already succeeded; log and continue rather than failing the claim.
-      console.error('[claim-band] registration adopt error:', adoptError)
+      .order('registered_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (latestUnlinked && !latestUnlinked.user_id) {
+      const { error: adoptError } = await admin
+        .from('registrations')
+        .update({ user_id: user.id })
+        .eq('id', latestUnlinked.id)
+      if (adoptError) {
+        // Ownership already succeeded; log and continue rather than failing the claim.
+        console.error('[claim-band] registration adopt error:', adoptError)
+      }
     }
 
     return NextResponse.json({ success: true })
