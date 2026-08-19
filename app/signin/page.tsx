@@ -25,6 +25,17 @@ const BRAND = {
 }
 
 export default function SignInChooser() {
+  // Callers arrive as /signin?redirect=/band/PB-XXXXX (e.g. from a band page).
+  // Both sub-pages honour ?redirect=, but this chooser used to link to them with
+  // bare hrefs, dropping the param — so signing in from a band landed the user
+  // on /dashboard instead of back on the band they were holding.
+  const suffix = typeof window === 'undefined'
+    ? ''
+    : (() => {
+        const r = new URLSearchParams(window.location.search).get('redirect')
+        return r ? `?redirect=${encodeURIComponent(r)}` : ''
+      })()
+
   return (
     <>
       <style>{`
@@ -54,7 +65,7 @@ export default function SignInChooser() {
           width: '100%', maxWidth: 420,
         }}>
           {/* Personal */}
-          <a href="/signin/personal" style={{ textDecoration: 'none' }}>
+          <a href={`/signin/personal${suffix}`} style={{ textDecoration: 'none' }}>
             <div className="signin-card" style={{
               background: BRAND.cardBg, borderRadius: 14, padding: '28px 28px',
               border: `1px solid ${BRAND.goldBorder}`,
@@ -75,7 +86,7 @@ export default function SignInChooser() {
           </a>
 
           {/* Church / Org */}
-          <a href="/signin/org" style={{ textDecoration: 'none' }}>
+          <a href={`/signin/org${suffix}`} style={{ textDecoration: 'none' }}>
             <div className="signin-card" style={{
               background: BRAND.cardBg, borderRadius: 14, padding: '28px 28px',
               border: `1px solid ${BRAND.silverBorder}`,

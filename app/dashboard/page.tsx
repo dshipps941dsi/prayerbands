@@ -630,11 +630,13 @@ export default function Dashboard() {
         setBands(myBands)
         if (myBands.length > 0) {
           const bandIds = myBands.map(b => b.band_id)
+          // Fetch every registration, not just geocoded ones. A stop whose
+          // geocoding failed still belongs in the country tally; only the map
+          // needs coordinates, and the pin filter below already handles that.
           const { data: regsData } = await supabase
             .from('registrations')
             .select('band_id, user_name, city, country, latitude, longitude, prayer')
             .in('band_id', bandIds)
-            .not('latitude', 'is', null)
           const pts = (regsData || []).filter(r => r.latitude && r.longitude).map(r => ({
             lat: r.latitude, lng: r.longitude, band_id: r.band_id,
             user_name: r.user_name, city: r.city, country: r.country, prayer: r.prayer,

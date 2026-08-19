@@ -72,20 +72,43 @@ export async function POST(req: NextRequest) {
     let geoState = state || null
     let geoCountry = country || null
 
-    // 1. Geocode from typed city/country first (most accurate)
-    if (geoCity || geoCountry) {
+    // Hand-typed locations arrive with stray whitespace ("NY ") and typos
+    // ("Syracus"). Trim first, then try progressively looser queries: a
+    // misspelled city should still drop a pin on the right state rather than
+    // leaving the registration with no coordinates at all — the dashboard map
+    // filters those out, so the stop silently disappears from the journey.
+    geoCity = geoCity?.trim() || null
+    geoState = geoState?.trim() || null
+    geoCountry = geoCountry?.trim() || null
+
+    async function geocode(query: string): Promise<[number, number] | null> {
       try {
-        const query = [geoCity, geoState, geoCountry].filter(Boolean).join(', ')
         const nominatim = await fetch(
           `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
           { headers: { 'User-Agent': 'PrayerBands/1.0 (hello@prayerbands.com)' }, signal: AbortSignal.timeout(3500) }
         )
         const places = await nominatim.json()
-        if (places.length > 0) {
-          latitude = parseFloat(places[0].lat)
-          longitude = parseFloat(places[0].lon)
+        if (Array.isArray(places) && places.length > 0) {
+          return [parseFloat(places[0].lat), parseFloat(places[0].lon)]
         }
       } catch {}
+      return null
+    }
+
+    // 1. Geocode from typed city/country first (most accurate), widening the
+    //    query only if the more precise one finds nothing.
+    const attempts = [
+      [geoCity, geoState, geoCountry],
+      [geoCity, geoCountry],
+      [geoState, geoCountry],
+      [geoCountry],
+    ]
+      .map(parts => parts.filter(Boolean).join(', '))
+      .filter((q, i, all) => q && all.indexOf(q) === i)
+
+    for (const query of attempts) {
+      const hit = await geocode(query)
+      if (hit) { [latitude, longitude] = hit; break }
     }
 
     // 2. Fall back to IP geolocation only if no typed location
