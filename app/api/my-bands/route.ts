@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { BUILTIN_THEMES } from '@/lib/themes'
 
 // Every band the signed-in person can switch between: ones they own, plus ones
 // they currently hold (latest registrant). Someone matching bands to outfits
@@ -27,12 +28,37 @@ export async function GET() {
     if (b.band_id && !ids.has(b.band_id)) { ids.add(b.band_id); ordered.push(b.band_id) }
   }
 
-  const meta = new Map((owned.data ?? []).map(b => [b.band_id, b]))
-  const bands = ordered.map(id => ({
-    band_id: id,
-    theme: meta.get(id)?.theme ?? null,
-    color: meta.get(id)?.color ?? null,
-  }))
+  // Bands they hold but do not own are not in `owned`, so fetch styling for
+  // everything in the list — otherwise a held band shows as a bare code.
+  const { data: styleRows } = ordered.length
+    ? await admin.from('bands').select('band_id, theme, color, size').in('band_id', ordered)
+    : { data: [] }
+
+  // Built-in theme names live in code; only overridden or custom themes reach
+  // band_themes. Merge both, or a stock theme reads as its raw key.
+  const { data: themeRows } = await admin.from('band_themes').select('key, label')
+  const themeLabels = new Map<string, string>(
+    Object.entries(BUILTIN_THEMES).map(([key, t]) => [key, t.label])
+  )
+  for (const t of themeRows ?? []) themeLabels.set(t.key as string, t.label as string)
+
+  const meta = new Map((styleRows ?? []).map(b => [b.band_id as string, b]))
+  const bands = ordered.map(id => {
+    const b = meta.get(id)
+    // Name every band by something human. A themed band carries no colour and
+    // a plain band carries no distinctive theme, so whichever exists is the
+    // identifying feature — previously only colour was used, which left themed
+    // bands showing nothing at all.
+    const themeName = b?.theme && b.theme !== 'default' ? (themeLabels.get(b.theme) ?? b.theme) : null
+    const label = themeName ?? b?.color ?? null
+    return {
+      band_id: id,
+      theme: b?.theme ?? null,
+      color: b?.color ?? null,
+      size: b?.size ?? null,
+      label,
+    }
+  })
 
   return NextResponse.json({ bands })
 }

@@ -182,7 +182,7 @@ export default function BandPage() {
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
   // Bands this person owns or holds, for the header switcher.
-  const [myBands, setMyBands] = useState<{ band_id: string; color: string | null }[]>([])
+  const [myBands, setMyBands] = useState<{ band_id: string; label: string | null }[]>([])
   const [notifOpen, setNotifOpen] = useState(false)
   const [walk, setWalk] = useState<VerseWalk>({ total: 0, run: 0, returning: false })
 
@@ -434,7 +434,7 @@ export default function BandPage() {
             >
               {myBands.map(b => (
                 <option key={b.band_id} value={b.band_id}>
-                  {b.band_id}{b.color ? ` · ${b.color}` : ''}
+                  {b.band_id}{b.label ? ` · ${b.label}` : ''}
                 </option>
               ))}
             </select>
