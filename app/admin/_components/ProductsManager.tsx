@@ -35,6 +35,9 @@ export default function ProductsManager() {
   const [newSlug, setNewSlug] = useState('')
   const [newName, setNewName] = useState('')
   const [filterId, setFilterId] = useState('')
+  // Collapsed by default: twelve full editors stacked open was a long scroll to
+  // find any one product.
+  const [openId, setOpenId] = useState<string | null>(null)
   // Theme dropdown options, including admin-created themes from the DB.
   const [themeOptions, setThemeOptions] = useState<{ id: string; label: string }[]>(THEME_OPTIONS)
 
@@ -175,16 +178,31 @@ export default function ProductsManager() {
           "4 across" would squeeze every field to about 150px. This fits as many
           as the screen genuinely allows — three on a wide monitor, two on a
           laptop, one on a phone — and never below a workable width. */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 20, alignItems: 'start' }}>
-      {(filterId ? products.filter(p => p.id === filterId) : products).map(p => (
-        <div key={p.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 12, padding: '20px 22px', opacity: p.active ? 1 : 0.7, boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 600, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{p.name} <span style={{ fontSize: 12, color: C.secondary, fontWeight: 400 }}>/{p.slug}</span></h2>
-            <label style={{ fontSize: 13, color: C.body, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <input type="checkbox" checked={p.active} onChange={e => edit(p.id, { active: e.target.checked })} style={{ width: 'auto' }} /> Active
-            </label>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, alignItems: 'start' }}>
+      {(filterId ? products.filter(p => p.id === filterId) : products).map(p => {
+        const isOpen = openId === p.id
+        return (
+        // The open card spans the full row: collapsed cards tile as a compact
+        // index, and the one being edited gets the whole width for its fields
+        // rather than being squeezed into a third of the screen.
+        <div key={p.id} style={{ background: C.card, border: `1px solid ${isOpen ? C.gold : C.borderNavy}`, borderRadius: 12, padding: '20px 22px', opacity: p.active ? 1 : 0.7, boxShadow: '0 2px 10px rgba(10,22,40,0.06)', gridColumn: isOpen ? '1 / -1' : 'auto' }}>
+          <div
+            onClick={() => setOpenId(isOpen ? null : p.id)}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isOpen ? 14 : 0, cursor: 'pointer', gap: 12 }}
+          >
+            <h2 style={{ fontSize: 20, fontWeight: 600, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', minWidth: 0 }}>{p.name} <span style={{ fontSize: 12, color: C.secondary, fontWeight: 400 }}>/{p.slug}</span></h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+              {/* Price and status stay legible while collapsed, so the tiles
+                  work as an at-a-glance catalogue. */}
+              <span style={{ fontSize: 13, color: C.body, fontFamily: 'Inter, sans-serif' }}>${(p.price_cents / 100).toFixed(2)}</span>
+              <label onClick={e => e.stopPropagation()} style={{ fontSize: 13, color: C.body, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <input type="checkbox" checked={p.active} onChange={e => edit(p.id, { active: e.target.checked })} style={{ width: 'auto' }} /> Active
+              </label>
+              <span style={{ fontSize: 20, color: C.secondary }}>{isOpen ? '▾' : '▸'}</span>
+            </div>
           </div>
 
+          {isOpen && (<>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {field('Name', <input style={input} value={p.name} onChange={e => edit(p.id, { name: e.target.value })} />)}
             {field('Slug · URL id (avoid changing once live)', <input style={input} value={p.slug} onChange={e => edit(p.id, { slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') })} />)}
@@ -250,8 +268,10 @@ export default function ProductsManager() {
             <button onClick={() => duplicate(p)} style={{ background: 'transparent', border: `1px solid ${C.borderNavy}`, color: C.body, borderRadius: 8, padding: '10px 16px', fontSize: 11, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Duplicate</button>
             <button onClick={() => remove(p)} style={{ background: 'transparent', border: `1px solid rgba(192,57,43,0.35)`, color: C.red, borderRadius: 8, padding: '10px 16px', fontSize: 11, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Delete</button>
           </div>
+          </>)}
         </div>
-      ))}
+        )
+      })}
       </div>
     </div>
   )

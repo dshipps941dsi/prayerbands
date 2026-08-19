@@ -149,7 +149,7 @@ export default function ThemesManager() {
   const sorted = [...themes].sort((a, b) => (a.builtin === b.builtin ? a.sort_order - b.sort_order : a.builtin ? -1 : 1))
 
   return (
-    <div style={{ maxWidth: 760 }}>
+    <div style={{ maxWidth: 1400 }}>
       <h2 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 4px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Themes</h2>
       <p style={{ color: C.secondary, fontSize: 14, margin: '0 0 20px' }}>Create band themes and set their colors, verse, and background image. New themes appear automatically in the product Theme dropdown.</p>
 
@@ -161,11 +161,15 @@ export default function ThemesManager() {
         <button onClick={addTheme} style={{ background: C.gold, color: C.navy, border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>+ Add Theme</button>
       </div>
 
+      {/* Collapsed themes tile three across as a swatch index; the open one
+          takes the full row, since its editor is a two-column field grid that
+          would be unusable at a third of the width. */}
+      <div className="pb-admin-cols3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, alignItems: 'start' }}>
       {sorted.map(t => {
         const isOpen = openKey === t.key
         const isAdv = advanced.has(t.key)
         return (
-          <div key={t.key} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 12, marginBottom: 14, boxShadow: '0 2px 10px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
+          <div key={t.key} style={{ background: C.card, border: `1px solid ${isOpen ? C.gold : C.borderNavy}`, borderRadius: 12, boxShadow: '0 2px 10px rgba(10,22,40,0.06)', overflow: 'hidden', gridColumn: isOpen ? '1 / -1' : 'auto' }}>
             {/* Header row — swatch + name + open/close */}
             <div onClick={() => setOpenKey(isOpen ? null : t.key)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', cursor: 'pointer' }}>
               <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden', border: `1px solid ${C.borderNavy}`, flexShrink: 0 }}>
@@ -248,6 +252,7 @@ export default function ThemesManager() {
           </div>
         )
       })}
+      </div>
     </div>
   )
 }

@@ -505,7 +505,13 @@ export default function AdminPage() {
           .pb-admin-grid2 { grid-template-columns: 1fr !important; }
           .pb-admin-chartgrid { grid-template-columns: 1fr !important; }
           .pb-admin-cols { grid-template-columns: 1fr !important; }
+          .pb-admin-cols3 { grid-template-columns: 1fr !important; }
           .pb-admin-card { padding: 16px 16px !important; }
+        }
+        /* Three across needs real width; drop to two before the phone
+           breakpoint rather than jumping straight from three to one. */
+        @media (min-width: 721px) and (max-width: 1100px) {
+          .pb-admin-cols3 { grid-template-columns: repeat(2, 1fr) !important; }
         }
       `}</style>
       {/* Header */}
