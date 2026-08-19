@@ -153,6 +153,10 @@ export default function BandPage() {
 
   const [status, setStatus] = useState<BandStatus>({ screen: 'loading' })
   const [userId, setUserId] = useState<string | null>(null)
+  // Admin's own email, so the Account tab can offer a way into the control
+  // centre. Everything now routes to the band view, which left /admin reachable
+  // only by typing the URL.
+  const [userEmail, setUserEmail] = useState<string | null>(null)
   const [claimName, setClaimName] = useState('')
   const [claimCity, setClaimCity] = useState('')
   const [claimState, setClaimState] = useState('')
@@ -197,7 +201,7 @@ export default function BandPage() {
 
   useEffect(() => {
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-    supabase.auth.getUser().then(({ data }) => setUserId(data?.user?.id ?? null))
+    supabase.auth.getUser().then(({ data }) => { setUserId(data?.user?.id ?? null); setUserEmail(data?.user?.email ?? null) })
   }, [])
 
   // Unread notification count for the bell (signed-in account holders only).
@@ -931,6 +935,11 @@ export default function BandPage() {
                 <a href="/dashboard" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
                   📊 My Dashboard
                 </a>
+                {userEmail === 'dshipps941@gmail.com' && (
+                  <a href="/admin" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: `1px solid ${GOLD}`, fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
+                    ⚙️ Control Centre
+                  </a>
+                )}
                 <a href="/store" style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
                   <Icon name="shop-bag" size={18} color={DARK} bg="white" /> Purchase More Bands
                 </a>

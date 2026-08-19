@@ -35,6 +35,43 @@ const C = {
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
+// Seven flat tabs with a nested sub-bar under one of them had no grouping logic:
+// sales and shipments sat beside orders as peers though they are all views of
+// the same fulfilment work, and moderation was split between two unrelated
+// places. Two levels — a section, then its views — keeps related work together
+// and leaves room to grow.
+type View =
+  | 'orders' | 'sales' | 'shipments' | 'inventory'
+  | 'recent' | 'prayers' | 'flagged'
+  | 'bands' | 'products' | 'pricing' | 'themes' | 'generate'
+  | 'customers'
+
+const SECTIONS: { key: string; label: string; views: { id: View; label: string }[] }[] = [
+  { key: 'orders', label: 'Orders', views: [
+    { id: 'orders', label: 'Orders' },
+    { id: 'sales', label: 'Sales' },
+    { id: 'shipments', label: 'Shipments' },
+    { id: 'inventory', label: 'Inventory' },
+  ] },
+  { key: 'activity', label: 'Activity', views: [
+    { id: 'recent', label: 'Recent activity' },
+    { id: 'prayers', label: 'Prayers' },
+    { id: 'flagged', label: 'Flagged' },
+  ] },
+  { key: 'catalog', label: 'Catalog', views: [
+    { id: 'bands', label: 'Bands' },
+    { id: 'products', label: 'Products' },
+    { id: 'pricing', label: 'Pricing' },
+    { id: 'themes', label: 'Themes' },
+    { id: 'generate', label: 'Generate IDs' },
+  ] },
+  { key: 'people', label: 'People', views: [
+    { id: 'customers', label: 'Customers' },
+  ] },
+]
+
+const sectionOf = (view: View) => SECTIONS.find(s => s.views.some(v => v.id === view)) ?? SECTIONS[0]
+
 const dedInput: CSSProperties = { padding: '10px 12px', border: `1px solid ${C.borderNavy}`, borderRadius: 6, fontSize: 14, fontFamily: 'Inter, sans-serif', color: C.heading, background: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box' }
 
 type Order = {
@@ -72,9 +109,8 @@ export default function AdminPage() {
   const [userSearch, setUserSearch] = useState('')
   const [userResults, setUserResults] = useState<any[]>([])
   const [searchingUsers, setSearchingUsers] = useState(false)
-  const [activeTab, setActiveTab] = useState<'orders' | 'activity' | 'shipments' | 'sales' | 'catalog' | 'prayers' | 'users'>('orders')
+  const [activeTab, setActiveTab] = useState<View>('orders')
   const [crmUserId, setCrmUserId] = useState<string | null>(null)
-  const [catalogSub, setCatalogSub] = useState<'bands' | 'products' | 'pricing' | 'themes' | 'generate'>('bands')
   const [sales, setSales] = useState<any>(null)
   const [salesDays, setSalesDays] = useState('30')
   const [dedBandId, setDedBandId] = useState('')
@@ -102,11 +138,15 @@ export default function AdminPage() {
     checkAuth()
     // Deep links from old standalone pages: /admin?tab=catalog&sub=products
     const params = new URLSearchParams(window.location.search)
-    const tab = params.get('tab')
-    if (tab === 'catalog') {
-      setActiveTab('catalog')
+    // Deep links: ?view=<id> targets a view directly. ?tab=catalog&sub=<id> is
+    // the older form and still works, since links to it exist elsewhere.
+    const view = params.get('view')
+    const known = SECTIONS.flatMap(s => s.views.map(v => v.id))
+    if (view && (known as string[]).includes(view)) {
+      setActiveTab(view as View)
+    } else if (params.get('tab') === 'catalog') {
       const sub = params.get('sub')
-      if (sub === 'products' || sub === 'pricing' || sub === 'bands' || sub === 'themes' || sub === 'generate') setCatalogSub(sub)
+      setActiveTab((['products', 'pricing', 'bands', 'themes', 'generate'].includes(sub || '') ? sub : 'bands') as View)
     }
   }, [])
 
@@ -423,12 +463,15 @@ export default function AdminPage() {
     <div style={{ minHeight: '100vh', background: C.pageBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <div style={{ maxWidth: 460, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>
         <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 24, fontWeight: 700, color: C.heading, marginBottom: 10 }}>
-          {deniedAs ? 'Signed in as the wrong account' : 'Your admin session has expired'}
+          {/* Not "expired": arriving at /admin cold is the common case, and
+              telling someone their session ran out when they never had one is
+              both wrong and confusing. */}
+          {deniedAs ? 'Signed in as the wrong account' : 'Admin sign-in required'}
         </div>
         <p style={{ color: C.secondary, fontSize: 14, lineHeight: 1.6, marginBottom: 22 }}>
           {deniedAs
             ? <>This browser is signed in as <strong style={{ color: C.heading }}>{deniedAs}</strong>. The admin panel needs <strong style={{ color: C.heading }}>{ADMIN_EMAIL}</strong>.</>
-            : <>Sign in again as <strong style={{ color: C.heading }}>{ADMIN_EMAIL}</strong> to continue.</>}
+            : <>Sign in as <strong style={{ color: C.heading }}>{ADMIN_EMAIL}</strong> to continue.</>}
         </p>
         <button
           onClick={async () => { await supabase.auth.signOut(); window.location.href = '/signin/personal?redirect=/admin' }}
@@ -501,23 +544,41 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* Tabs */}
+      {/* Sections, then the views inside the active one. */}
       <div className="pb-admin-tabs" style={{ display: 'flex', gap: '4px', padding: '20px 32px 0', borderBottom: `1px solid ${C.borderGold}`, marginTop: '8px' }}>
-        {(['orders', 'activity', 'shipments', 'sales', 'catalog', 'prayers', 'users'] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} style={{
-            padding: '8px 18px',
-            background: activeTab === tab ? C.navy : 'transparent',
-            color: activeTab === tab ? C.gold : C.secondary,
-            border: 'none',
-            borderRadius: '6px 6px 0 0',
-            cursor: 'pointer',
-            fontSize: '11px',
-            fontFamily: 'Cinzel, serif',
-            textTransform: 'uppercase',
-            letterSpacing: '0.07em',
-          }}>{tab === 'catalog' ? 'Band Mgmt' : tab}{tab === 'prayers' && flaggedPrayers.length > 0 ? ` (${flaggedPrayers.length})` : ''}</button>
-        ))}
+        {SECTIONS.map(s => {
+          const active = sectionOf(activeTab).key === s.key
+          const flagCount = s.key === 'activity' ? flaggedPrayers.length : 0
+          return (
+            <button key={s.key} onClick={() => setActiveTab(s.views[0].id)} style={{
+              padding: '9px 20px',
+              background: active ? C.navy : 'transparent',
+              color: active ? C.gold : C.secondary,
+              border: 'none', borderRadius: '6px 6px 0 0', cursor: 'pointer',
+              fontSize: 12, fontFamily: 'Cinzel, serif', textTransform: 'uppercase',
+              letterSpacing: '0.07em', fontWeight: 600, whiteSpace: 'nowrap',
+            }}>{s.label}{flagCount > 0 ? ` (${flagCount})` : ''}</button>
+          )
+        })}
       </div>
+
+      {/* Views within the active section. Hidden when a section has only one. */}
+      {sectionOf(activeTab).views.length > 1 && (
+        <div style={{ display: 'flex', gap: 4, padding: '12px 32px 0', flexWrap: 'wrap' }}>
+          {sectionOf(activeTab).views.map(v => (
+            <button key={v.id} onClick={() => setActiveTab(v.id)} style={{
+              padding: '6px 14px',
+              background: activeTab === v.id ? C.silverBg : 'transparent',
+              color: activeTab === v.id ? C.heading : C.secondary,
+              border: `1px solid ${activeTab === v.id ? C.borderGold : 'transparent'}`,
+              borderRadius: 20, cursor: 'pointer',
+              fontSize: 12, fontFamily: 'Inter, sans-serif', fontWeight: activeTab === v.id ? 600 : 400,
+              whiteSpace: 'nowrap',
+            }}>{v.label}{v.id === 'flagged' && flaggedPrayers.length > 0 ? ` (${flaggedPrayers.length})` : ''}</button>
+          ))}
+        </div>
+      )}
+
 
       <div className="pb-admin-content" style={{ padding: '24px 32px' }}>
 
@@ -739,7 +800,8 @@ export default function AdminPage() {
         )}
 
         {/* PRAYERS TAB */}
-        {activeTab === 'activity' && <ActivityFeed C={C} />}
+        {activeTab === 'recent' && <ActivityFeed C={C} show="feed" />}
+        {activeTab === 'inventory' && <ActivityFeed C={C} show="inventory" />}
 
         {activeTab === 'prayers' && (
           <div>
@@ -819,6 +881,13 @@ export default function AdminPage() {
               )}
             </div>
 
+          </div>
+        )}
+
+        {/* Moderation queue — its own view, so a full inbox is not buried
+            below the prayer search it has nothing to do with. */}
+        {activeTab === 'flagged' && (
+          <div>
             <h2 style={{ margin: '0 0 16px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Flagged Prayers</h2>
             {flaggedPrayers.length === 0 ? (
               <p style={{ color: C.secondary, fontStyle: 'italic' }}>No flagged prayers. All clear.</p>
@@ -843,7 +912,7 @@ export default function AdminPage() {
         )}
 
         {/* USERS TAB */}
-        {activeTab === 'users' && (
+        {activeTab === 'customers' && (
           <div>
             <h2 style={{ margin: '0 0 16px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>User Lookup</h2>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
@@ -882,26 +951,13 @@ export default function AdminPage() {
         {crmUserId && <CustomerDetail userId={crmUserId} onClose={() => setCrmUserId(null)} />}
 
         {/* BAND MANAGEMENT TAB — bands, products, pricing */}
-        {activeTab === 'catalog' && (
-          <div>
-            <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${C.borderGold}`, marginBottom: 24 }}>
-              {(['bands', 'products', 'pricing', 'themes', 'generate'] as const).map(s => (
-                <button key={s} onClick={() => setCatalogSub(s)} style={{
-                  padding: '8px 18px',
-                  background: catalogSub === s ? C.navy : 'transparent',
-                  color: catalogSub === s ? C.gold : C.secondary,
-                  border: 'none', borderRadius: '6px 6px 0 0', cursor: 'pointer',
-                  fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.07em', whiteSpace: 'nowrap',
-                }}>{s === 'generate' ? 'Generate IDs' : s}</button>
-              ))}
-            </div>
-            {catalogSub === 'bands' && <BandsManager />}
-            {catalogSub === 'products' && <ProductsManager />}
-            {catalogSub === 'pricing' && <PricingManager />}
-            {catalogSub === 'themes' && <ThemesManager />}
-            {catalogSub === 'generate' && <BatchGenerator />}
-          </div>
-        )}
+        {/* Catalog views are top-level now: the old nested sub-bar was a
+            second navigation idiom for no reason. */}
+        {activeTab === 'bands' && <BandsManager />}
+        {activeTab === 'products' && <ProductsManager />}
+        {activeTab === 'pricing' && <PricingManager />}
+        {activeTab === 'themes' && <ThemesManager />}
+        {activeTab === 'generate' && <BatchGenerator />}
 
 
         {/* SUBSCRIPTION SHIPMENTS TAB */}

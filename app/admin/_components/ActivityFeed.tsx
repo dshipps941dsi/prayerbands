@@ -31,7 +31,10 @@ const when = (iso: string) => {
 
 // Launch-window telemetry. Everything here is read-only: a feed of what is
 // happening to bands, a full history for one band, and what is left in stock.
-export default function ActivityFeed({ C }: { C: C }) {
+// `show` splits the two audiences this data serves: the live feed belongs with
+// moderation under Activity, while stock levels belong with Orders, next to the
+// fulfilment work that consumes them.
+export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed' | 'inventory' }) {
   const [events, setEvents] = useState<Event[]>([])
   const [inventory, setInventory] = useState<Inventory | null>(null)
   const [loading, setLoading] = useState(true)
@@ -76,6 +79,7 @@ export default function ActivityFeed({ C }: { C: C }) {
   return (
     <div>
       {/* Inventory */}
+      {show === 'inventory' && (
       <div style={panel}>
         <div style={head}>Inventory</div>
         <div style={{ padding: 16 }}>
@@ -119,7 +123,9 @@ export default function ActivityFeed({ C }: { C: C }) {
           ) : <div style={{ color: C.secondary, fontSize: 13 }}>{loading ? 'Loading…' : '—'}</div>}
         </div>
       </div>
+      )}
 
+      {show === 'feed' && (<>
       {/* Filters */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
         <input style={input} placeholder="Band ID (e.g. PB-N2N63)" value={bandFilter} onChange={e => setBandFilter(e.target.value)} />
@@ -200,6 +206,7 @@ export default function ActivityFeed({ C }: { C: C }) {
           ))}
         </div>
       </div>
+      </>)}
     </div>
   )
 }
