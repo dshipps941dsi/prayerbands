@@ -56,6 +56,10 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
+  // What the browser session says when authorization fails: an email means a
+  // different account is signed in, null means no session at all. Drives the
+  // denied screen, which used to just say "Access denied".
+  const [deniedAs, setDeniedAs] = useState<string | null>(null)
   const [filter, setFilter] = useState('pending')
   const [markingShipped, setMarkingShipped] = useState<number | null>(null)
   const [assigningBands, setAssigningBands] = useState<number | null>(null)
@@ -185,11 +189,43 @@ export default function AdminPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user?.email === ADMIN_EMAIL) {
       setAuthorized(true)
+      setDeniedAs(null)
       loadAll()
     } else {
+      // Also runs on re-checks, so a session that dies or switches while the
+      // panel is open drops it out of the authorized view instead of leaving a
+      // working-looking UI whose every request 401s.
+      setAuthorized(false)
+      setDeniedAs(user?.email ?? null)
       setLoading(false)
     }
   }
+
+  // Re-verify whenever the tab regains focus, and whenever any admin request
+  // comes back 401. Authorization was previously checked once on mount and
+  // cached in state, so signing in as a test account in the same browser left
+  // the panel fully rendered while the server saw somebody else.
+  useEffect(() => {
+    const recheck = () => { checkAuth() }
+    const onVisible = () => { if (document.visibilityState === 'visible') recheck() }
+    window.addEventListener('focus', recheck)
+    document.addEventListener('visibilitychange', onVisible)
+
+    const originalFetch = window.fetch
+    window.fetch = async (...args: Parameters<typeof fetch>) => {
+      const res = await originalFetch(...args)
+      const url = typeof args[0] === 'string' ? args[0] : (args[0] as Request)?.url ?? ''
+      if (res.status === 401 && url.includes('/api/')) recheck()
+      return res
+    }
+
+    return () => {
+      window.removeEventListener('focus', recheck)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.fetch = originalFetch
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function loadAll() {
     await Promise.all([loadOrders(), loadStats(), loadFlaggedPrayers()])
@@ -383,8 +419,23 @@ export default function AdminPage() {
   )
 
   if (!authorized) return (
-    <div style={{ minHeight: '100vh', background: C.pageBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ fontFamily: 'Inter, sans-serif', color: C.goldText }}>Access denied.</p>
+    <div style={{ minHeight: '100vh', background: C.pageBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ maxWidth: 460, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 24, fontWeight: 700, color: C.heading, marginBottom: 10 }}>
+          {deniedAs ? 'Signed in as the wrong account' : 'Your admin session has expired'}
+        </div>
+        <p style={{ color: C.secondary, fontSize: 14, lineHeight: 1.6, marginBottom: 22 }}>
+          {deniedAs
+            ? <>This browser is signed in as <strong style={{ color: C.heading }}>{deniedAs}</strong>. The admin panel needs <strong style={{ color: C.heading }}>{ADMIN_EMAIL}</strong>.</>
+            : <>Sign in again as <strong style={{ color: C.heading }}>{ADMIN_EMAIL}</strong> to continue.</>}
+        </p>
+        <button
+          onClick={async () => { await supabase.auth.signOut(); window.location.href = '/signin/personal?redirect=/admin' }}
+          style={{ background: C.gold, color: C.navy, border: 'none', borderRadius: 8, padding: '12px 26px', fontSize: 13, fontWeight: 700, fontFamily: 'Cinzel, serif', letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}
+        >
+          {deniedAs ? 'Switch account' : 'Sign in'}
+        </button>
+      </div>
     </div>
   )
 
