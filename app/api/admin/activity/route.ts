@@ -10,7 +10,7 @@ async function callerEmail(): Promise<string | null> {
 }
 
 type Event = {
-  kind: 'registration' | 'transfer'
+  kind: 'registration' | 'transfer' | 'ownership'
   at: string
   band_id: string
   who: string | null
@@ -45,17 +45,26 @@ export async function GET(req: NextRequest) {
 
     if (!band) return NextResponse.json({ error: `No band found with ID "${bandFilter}".` }, { status: 404 })
 
-    const [{ data: regs }, { data: transfers }] = await Promise.all([
+    const [{ data: regs }, { data: transfers }, { data: owners }] = await Promise.all([
       admin.from('registrations')
         .select('id, user_id, user_name, email, city, state, country, latitude, longitude, prayer, registered_at')
         .eq('band_id', bandFilter).order('registered_at', { ascending: true }),
       admin.from('band_transfers')
         .select('id, from_user_id, note, status, created_at, completed_at')
         .eq('band_id', bandFilter).order('created_at', { ascending: true }),
+      // Ordered by id, not changed_at: writes inside one transaction share a
+      // timestamp, so id is the only reliable tiebreaker.
+      admin.from('band_ownership_events')
+        .select('id, old_owner_id, new_owner_id, changed_at')
+        .eq('band_id', bandFilter).order('id', { ascending: true }),
     ])
 
-    const ids = [band.owner_id, ...(regs ?? []).map(r => r.user_id), ...(transfers ?? []).map(t => t.from_user_id)]
-      .filter(Boolean) as string[]
+    const ids = [
+      band.owner_id,
+      ...(regs ?? []).map(r => r.user_id),
+      ...(transfers ?? []).map(t => t.from_user_id),
+      ...(owners ?? []).flatMap(o => [o.old_owner_id, o.new_owner_id]),
+    ].filter(Boolean) as string[]
     const emails = await emailsFor(admin, ids)
 
     return NextResponse.json({
@@ -72,6 +81,11 @@ export async function GET(req: NextRequest) {
         ...t,
         from_email: t.from_user_id ? emails.get(t.from_user_id) ?? null : null,
       })),
+      ownership: (owners ?? []).map(o => ({
+        ...o,
+        old_email: o.old_owner_id ? emails.get(o.old_owner_id) ?? null : null,
+        new_email: o.new_owner_id ? emails.get(o.new_owner_id) ?? null : null,
+      })),
     })
   }
 
@@ -86,10 +100,18 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false }).limit(limit)
   if (bandFilter) transferQuery = transferQuery.eq('band_id', bandFilter)
 
-  const [{ data: regs }, { data: transfers }] = await Promise.all([regQuery, transferQuery])
+  let ownerQuery = admin.from('band_ownership_events')
+    .select('id, band_id, old_owner_id, new_owner_id, changed_at')
+    .order('id', { ascending: false }).limit(limit)
+  if (bandFilter) ownerQuery = ownerQuery.eq('band_id', bandFilter)
 
-  const ids = [...(regs ?? []).map(r => r.user_id), ...(transfers ?? []).map(t => t.from_user_id)]
-    .filter(Boolean) as string[]
+  const [{ data: regs }, { data: transfers }, { data: owners }] = await Promise.all([regQuery, transferQuery, ownerQuery])
+
+  const ids = [
+    ...(regs ?? []).map(r => r.user_id),
+    ...(transfers ?? []).map(t => t.from_user_id),
+    ...(owners ?? []).flatMap(o => [o.old_owner_id, o.new_owner_id]),
+  ].filter(Boolean) as string[]
   const emails = await emailsFor(admin, ids)
 
   const events: Event[] = [
@@ -113,6 +135,22 @@ export async function GET(req: NextRequest) {
       email: (t.from_user_id ? emails.get(t.from_user_id) : null) ?? null,
       detail: [`passed on (${t.status})`, t.note ? `"${t.note}"` : null].filter(Boolean).join(' · '),
     })),
+    ...(owners ?? []).map(o => {
+      const from = o.old_owner_id ? emails.get(o.old_owner_id) ?? 'unknown' : null
+      const to = o.new_owner_id ? emails.get(o.new_owner_id) ?? 'unknown' : null
+      return {
+        kind: 'ownership' as const,
+        at: o.changed_at as string,
+        band_id: o.band_id as string,
+        who: null,
+        // The account the band ended up on — what you filter by when someone
+        // says "my band isn't showing".
+        email: to,
+        detail: to
+          ? (from ? `reassigned from ${from}` : 'claimed to account')
+          : `released from ${from ?? 'unknown'}`,
+      }
+    }),
   ]
     .filter(e => !emailFilter || (e.email || '').toLowerCase().includes(emailFilter))
     .sort((a, b) => (a.at < b.at ? 1 : -1))

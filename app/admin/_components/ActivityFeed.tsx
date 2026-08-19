@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 type C = Record<string, string>
 
 type Event = {
-  kind: 'registration' | 'transfer'
+  kind: 'registration' | 'transfer' | 'ownership'
   at: string
   band_id: string
   who: string | null
@@ -155,6 +155,14 @@ export default function ActivityFeed({ C }: { C: C }) {
                 {r.prayer && <div style={{ fontStyle: 'italic', color: C.secondary, marginTop: 4 }}>&ldquo;{r.prayer}&rdquo;</div>}
               </div>
             ))}
+            {history.ownership?.map((o: any) => (
+              <div key={`own-${o.id}`} style={{ borderTop: `1px solid ${C.borderSilver}`, padding: '10px 0', color: C.secondary }}>
+                ⚑ {o.new_email
+                  ? (o.old_email ? <>ownership moved from <strong style={{ color: C.heading }}>{o.old_email}</strong> to <strong style={{ color: C.heading }}>{o.new_email}</strong></> : <>claimed by <strong style={{ color: C.heading }}>{o.new_email}</strong></>)
+                  : <>released from <strong style={{ color: C.heading }}>{o.old_email || 'unknown'}</strong></>}
+                {' · '}{new Date(o.changed_at).toLocaleString()}
+              </div>
+            ))}
             {history.transfers.map((t: any) => (
               <div key={t.id} style={{ borderTop: `1px solid ${C.borderSilver}`, padding: '10px 0', color: C.secondary }}>
                 ↗ passed on by {t.from_email || 'unknown'} · {t.status} · {new Date(t.created_at).toLocaleString()}
@@ -175,8 +183,8 @@ export default function ActivityFeed({ C }: { C: C }) {
           {events.map((e, i) => (
             <div key={i} style={{ borderTop: i === 0 ? 'none' : `1px solid ${C.borderSilver}`, padding: '10px 0', fontSize: 13, fontFamily: 'Inter, sans-serif' }}>
               <div>
-                <span style={{ display: 'inline-block', minWidth: 74, fontSize: 10, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em', color: e.kind === 'transfer' ? C.goldText : C.secondary }}>
-                  {e.kind === 'transfer' ? 'Passed on' : 'Registered'}
+                <span style={{ display: 'inline-block', minWidth: 74, fontSize: 10, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em', color: e.kind === 'registration' ? C.secondary : C.goldText }}>
+                  {e.kind === 'transfer' ? 'Passed on' : e.kind === 'ownership' ? 'Claimed' : 'Registered'}
                 </span>
                 <button
                   onClick={() => { setBandFilter(e.band_id); setHistory(null); setHistoryError('') }}
