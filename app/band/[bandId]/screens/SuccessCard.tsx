@@ -76,7 +76,21 @@ export default function SuccessCard({
     // Without this the common path — register as a guest, then sign up — left
     // the band with a null owner_id: invisible on their dashboard and
     // untransferable, since transfers require owner or holder.
-    try { await fetch('/api/claim-band', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bandId }) }) } catch {}
+    //
+    // Wait for the session to be readable first. verifyOtp resolves before the
+    // auth cookie is necessarily visible to the server, and claim-band reads
+    // the session from that cookie — so firing immediately returns 401 and the
+    // claim is lost. Two real signups (2026-08-19) created accounts this way
+    // and left their bands unowned.
+    try { await supabase.auth.getSession() } catch {}
+    try {
+      const res = await fetch('/api/claim-band', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bandId }) })
+      // One retry: the cookie can still be a moment behind on a slow phone.
+      if (!res.ok) {
+        await new Promise(r => setTimeout(r, 1200))
+        await fetch('/api/claim-band', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bandId }) })
+      }
+    } catch {}
     // Now signed in — reload so the page lands them in their personal space.
     window.location.reload()
   }
