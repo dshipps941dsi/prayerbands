@@ -153,6 +153,8 @@ export default function BandPage() {
   const [activeTab, setActiveTab] = useState<'home' | 'prayers' | 'journey' | 'purchase' | 'account'>('home')
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
+  // Bands this person owns or holds, for the header switcher.
+  const [myBands, setMyBands] = useState<{ band_id: string; color: string | null }[]>([])
   const [notifOpen, setNotifOpen] = useState(false)
   const [walk, setWalk] = useState<VerseWalk>({ total: 0, run: 0, returning: false })
 
@@ -181,6 +183,16 @@ export default function BandPage() {
     fetch('/api/my-notifications')
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setUnread(d.unread || 0) })
+      .catch(() => {})
+  }, [userId])
+
+  // Bands available in the header switcher. Signed-out visitors get none, so
+  // the control stays hidden for anyone tapping a stranger's band.
+  useEffect(() => {
+    if (!userId) { setMyBands([]); return }
+    fetch('/api/my-bands')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.bands) setMyBands(d.bands) })
       .catch(() => {})
   }, [userId])
 
@@ -355,6 +367,24 @@ export default function BandPage() {
           <Logo size={28} withName nameColor={DARK} nameSize={18} />
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          {/* Band switcher. Only appears once someone holds more than one —
+              matching a band to an outfit means carrying several — so a single
+              -band holder sees no extra chrome. Selecting one opens that band's
+              own view rather than routing through the dashboard. */}
+          {myBands.length > 1 && (
+            <select
+              aria-label="Switch band"
+              value={bandId}
+              onChange={e => { if (e.target.value !== bandId) window.location.href = `/band/${e.target.value}` }}
+              style={{ fontFamily: serif, fontSize: 13, fontWeight: 700, color: DARK, background: 'white', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '6px 8px', cursor: 'pointer', maxWidth: 130 }}
+            >
+              {myBands.map(b => (
+                <option key={b.band_id} value={b.band_id}>
+                  {b.band_id}{b.color ? ` · ${b.color}` : ''}
+                </option>
+              ))}
+            </select>
+          )}
           {status.screen === 'personal_space' && currentHolder?.user_name && (
             <div style={{ fontFamily: serif, fontSize: 13, fontWeight: 600, color: DARK, textAlign: 'right' }}>{currentHolder.user_name}</div>
           )}
