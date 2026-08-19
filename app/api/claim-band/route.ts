@@ -73,6 +73,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Could not claim this band.' }, { status: 500 })
     }
 
+    // Adopt the guest registration left behind by registering before signing in.
+    // The check above already proved no OTHER account holds this band, so any
+    // accountless registration here belongs to the person claiming it now.
+    // Without this the claimer is owner but not holder, and the journey shows
+    // the band as held by nobody.
+    const { error: adoptError } = await admin
+      .from('registrations')
+      .update({ user_id: user.id })
+      .eq('band_id', bandId)
+      .is('user_id', null)
+    if (adoptError) {
+      // Ownership already succeeded; log and continue rather than failing the claim.
+      console.error('[claim-band] registration adopt error:', adoptError)
+    }
+
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[claim-band] error:', err)

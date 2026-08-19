@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { findAuthUserByEmail } from '@/lib/find-auth-user'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
@@ -34,13 +35,23 @@ export async function POST(req: NextRequest) {
     .ilike('email', email.trim())
     .maybeSingle()
 
-  if (!profile) {
-    return NextResponse.json({ error: `No account found for ${email}` }, { status: 404 })
+  // A profile row is the normal case, but accounts can exist in auth.users
+  // without one (any account created before the on_auth_user_created trigger).
+  // Fall back to the auth record and heal the missing profile rather than
+  // reporting a real account as "not found".
+  let ownerId = profile?.id as string | undefined
+  if (!ownerId) {
+    const authUser = await findAuthUserByEmail(admin, email.trim())
+    if (!authUser) {
+      return NextResponse.json({ error: `No account found for ${email}` }, { status: 404 })
+    }
+    ownerId = authUser.id
+    await admin.from('profiles').upsert({ id: authUser.id, email: authUser.email }, { onConflict: 'id' })
   }
 
   const { data: updated, error } = await admin
     .from('bands')
-    .update({ owner_id: profile.id })
+    .update({ owner_id: ownerId })
     .in('band_id', ids)
     .select('band_id')
 

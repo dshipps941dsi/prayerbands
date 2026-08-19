@@ -563,6 +563,11 @@ export default function BandPage() {
       const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token, type: 'email' })
       if (error) { setAuthError('That code didn’t match. Check it and try again.'); setAuthSubmitting(false); return }
       track('sign_up', { method: 'email_otp' })
+      // Attach the band they are standing on to the account they just made.
+      // Without this the common path — register as a guest, then sign up — left
+      // the band with a null owner_id: invisible on their dashboard and
+      // untransferable, since transfers require owner or holder.
+      try { await fetch('/api/claim-band', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bandId }) }) } catch {}
       // Now signed in — reload so the page lands them in their personal space.
       window.location.reload()
     }
