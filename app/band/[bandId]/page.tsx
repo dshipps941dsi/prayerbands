@@ -317,7 +317,9 @@ export default function BandPage() {
       if (!res.ok) throw new Error('register-band failed')
       localStorage.setItem(`holder_${bandId}`, 'true')
       setClaimStep('done')
-      setTimeout(() => { window.location.reload() }, 8000)
+      // No auto-reload. This screen is where someone creates their account, and
+      // an 8s timer tore them off it mid-signup — long before they could enter
+      // an email, wait for a code and type it. Moving on is now their choice.
     } catch {
       alert('Something went wrong. Please try again.')
     } finally {
@@ -401,7 +403,9 @@ export default function BandPage() {
       if (!res.ok) throw new Error('register-band failed')
       localStorage.setItem(`holder_${bandId}`, 'true')
       setClaimStep('done')
-      setTimeout(() => { window.location.reload() }, 8000)
+      // No auto-reload. This screen is where someone creates their account, and
+      // an 8s timer tore them off it mid-signup — long before they could enter
+      // an email, wait for a code and type it. Moving on is now their choice.
     } catch {
       alert('Something went wrong. Please try again.')
     } finally {

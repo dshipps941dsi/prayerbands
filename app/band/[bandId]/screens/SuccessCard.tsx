@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { track } from '@/lib/analytics'
 
@@ -44,21 +44,6 @@ export default function SuccessCard({
   const [code, setCode] = useState('')
   const [authError, setAuthError] = useState('')
   const [authSubmitting, setAuthSubmitting] = useState(false)
-  const [countdown, setCountdown] = useState(8)
-
-  useEffect(() => {
-    if (userId) return
-    const interval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(interval)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [userId])
 
   // Passwordless: email a 6-digit code, then verify it on this page. No
   // password to invent, and the code IS the verification — so "create account"
@@ -184,10 +169,16 @@ export default function SuccessCard({
             </div>
           )}
           <div style={{ textAlign: 'center', marginTop: 16, fontFamily: body, fontSize: 12, color: GRAY }}>No account needed to hold a band or leave a prayer.</div>
+          {/* Was a countdown that reloaded the page after 8 seconds — far too
+              short to enter an email, wait for a code and type it, so it threw
+              people off this screen mid-signup. Leaving is now deliberate. */}
           {showCountdown !== false && (
-            <div style={{ textAlign: 'center', marginTop: 16, fontFamily: body, fontSize: 14, color: DARK }}>
-              Taking you to your band in <span style={{ fontFamily: serif, fontWeight: 700, color: GOLD, fontSize: 22 }}>{countdown}</span>
-            </div>
+            <button
+              onClick={() => window.location.reload()}
+              style={{ display: 'block', width: '100%', marginTop: 16, padding: '12px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}
+            >
+              Skip for now — take me to my band →
+            </button>
           )}
         </div>
     </div>
