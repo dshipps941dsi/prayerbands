@@ -71,7 +71,7 @@ const SECTIONS: Section[] = [
       ] },
       { type: "tip", text: "No password to create or remember. The code signs you in, and every band you claim appears together in your dashboard." },
     ],
-    cta: { label: "Open my dashboard", href: "/dashboard" },
+    cta: { label: "Open my dashboard", href: "/my-band" },
   },
   {
     id: "verse",
@@ -106,7 +106,7 @@ const SECTIONS: Section[] = [
       ] },
       { type: "tip", text: "The prayer journal is a free-account feature. Saving your band to an account (see 'Save to an account') unlocks it and keeps your entries safe across devices." },
     ],
-    cta: { label: "See your bands", href: "/dashboard" },
+    cta: { label: "See your bands", href: "/my-band" },
   },
   {
     id: "journey",

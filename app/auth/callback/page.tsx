@@ -26,7 +26,7 @@ export default function AuthCallback() {
       if (profile?.org_id) {
         window.location.href = '/org/dashboard'
       } else {
-        window.location.href = '/dashboard'
+        window.location.href = '/my-band'
       }
     }
 

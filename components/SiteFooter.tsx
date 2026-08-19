@@ -97,7 +97,7 @@ export default function SiteFooter() {
             <Link href="/subscribe" className="pbf-link">Subscribe</Link>
             <Link href="/prayer-wall" className="pbf-link">Prayer Wall</Link>
             <Link href="/prayer-circles" className="pbf-link">Prayer Circles</Link>
-            <Link href="/dashboard" className="pbf-link">My Dashboard</Link>
+            <Link href="/my-band" className="pbf-link">My Band</Link>
           </div>
           <div>
             <div className="pbf-col-title">About</div>
@@ -110,7 +110,7 @@ export default function SiteFooter() {
             <div className="pbf-col-title">Account</div>
             <Link href="/signin" className="pbf-link">Sign In</Link>
             <Link href="/signin" className="pbf-link">Create Account</Link>
-            <Link href="/dashboard" className="pbf-link">Dashboard</Link>
+            <Link href="/my-band" className="pbf-link">My Band</Link>
           </div>
         </div>
         <div className="pbf-bottom">

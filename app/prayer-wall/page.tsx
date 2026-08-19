@@ -224,7 +224,7 @@ export default function PrayerWallPage() {
           </a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             <a href="/store" className="cinzel" style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#5C6573', textDecoration: 'none' }}>Shop</a>
-            <a href="/dashboard" className="cinzel" style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#5C6573', textDecoration: 'none' }}>Dashboard</a>
+            <a href="/my-band" className="cinzel" style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#5C6573', textDecoration: 'none' }}>Dashboard</a>
             <button onClick={() => setShowForm(true)} className="submit-btn" style={{ padding: '9px 20px', fontSize: 11 }}>+ Leave a Prayer</button>
           </div>
         </div>

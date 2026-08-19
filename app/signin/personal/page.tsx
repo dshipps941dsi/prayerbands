@@ -81,7 +81,7 @@ export default function SignInPersonal() {
       return
     }
     setStatus('Redirecting...')
-    window.location.replace(redirectParam() || '/dashboard')
+    window.location.replace(redirectParam() || '/my-band')
   }
 
   const inputStyle = {

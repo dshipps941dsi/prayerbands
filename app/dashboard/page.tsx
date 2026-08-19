@@ -1303,6 +1303,10 @@ export default function Dashboard() {
       <div style={{ background: NAVY, color: '#fff', display: 'flex', alignItems: 'center', padding: '0 16px', height: 56, gap: 12, boxShadow: '0 2px 12px rgba(10,22,40,0.25)', position: 'sticky', top: 0, zIndex: 100 }}>
         <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: GOLD, textDecoration: 'none', cursor: 'pointer', fontFamily: 'Cinzel, serif' }}><Logo size={26} color={GOLD} />Prayer Bands</a>
         <div style={{ flex: 1 }} />
+        {/* Way back to the everyday band view. The dashboard is the account
+            overview people visit occasionally; the band page is where they read
+            the daily verse. /my-band resolves whichever band they last held. */}
+        <a href="/my-band" style={{ background: GOLD, color: NAVY, padding: '6px 12px', borderRadius: 6, textDecoration: 'none', fontSize: 12, fontWeight: 700, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>← My Band</a>
         <button onClick={async () => { const s = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); await s.auth.signOut(); window.location.href = '/signin' }} style={{ background: 'rgba(200,169,110,0.15)', border: `1px solid ${GOLD_BORDER}`, color: GOLD, padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>Sign out</button>
       </div>
 

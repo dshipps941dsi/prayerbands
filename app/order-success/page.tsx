@@ -187,7 +187,7 @@ function OrderSuccessInner() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <a href="/dashboard" style={{ display: 'block', textAlign: 'center', background: GOLD, color: NAVY, padding: '14px 24px', borderRadius: 10, textDecoration: 'none', fontFamily: "'Cinzel', serif", fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, boxShadow: '0 4px 16px rgba(200,169,110,0.35)' }}>Go to Dashboard ✝</a>
+          <a href="/my-band" style={{ display: 'block', textAlign: 'center', background: GOLD, color: NAVY, padding: '14px 24px', borderRadius: 10, textDecoration: 'none', fontFamily: "'Cinzel', serif", fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, boxShadow: '0 4px 16px rgba(200,169,110,0.35)' }}>Go to Dashboard ✝</a>
           <a href="/store" style={{ display: 'block', textAlign: 'center', background: 'transparent', color: GRAY, padding: '12px 24px', borderRadius: 10, textDecoration: 'none', fontFamily: body, fontSize: 14, border: '1px solid rgba(92,101,115,0.30)' }}>Order More Bands</a>
         </div>
 
