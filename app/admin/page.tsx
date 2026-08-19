@@ -8,6 +8,7 @@ import PricingManager from './_components/PricingManager'
 import ThemesManager from './_components/ThemesManager'
 import BatchGenerator from './_components/BatchGenerator'
 import CustomerDetail from './_components/CustomerDetail'
+import ActivityFeed from './_components/ActivityFeed'
 import { parseOrderItems, orderItemLabel } from '@/lib/fulfillment'
 
 // Prayer Bands brand palette
@@ -71,7 +72,7 @@ export default function AdminPage() {
   const [userSearch, setUserSearch] = useState('')
   const [userResults, setUserResults] = useState<any[]>([])
   const [searchingUsers, setSearchingUsers] = useState(false)
-  const [activeTab, setActiveTab] = useState<'orders' | 'shipments' | 'sales' | 'catalog' | 'prayers' | 'users'>('orders')
+  const [activeTab, setActiveTab] = useState<'orders' | 'activity' | 'shipments' | 'sales' | 'catalog' | 'prayers' | 'users'>('orders')
   const [crmUserId, setCrmUserId] = useState<string | null>(null)
   const [catalogSub, setCatalogSub] = useState<'bands' | 'products' | 'pricing' | 'themes' | 'generate'>('bands')
   const [sales, setSales] = useState<any>(null)
@@ -502,7 +503,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div className="pb-admin-tabs" style={{ display: 'flex', gap: '4px', padding: '20px 32px 0', borderBottom: `1px solid ${C.borderGold}`, marginTop: '8px' }}>
-        {(['orders', 'shipments', 'sales', 'catalog', 'prayers', 'users'] as const).map(tab => (
+        {(['orders', 'activity', 'shipments', 'sales', 'catalog', 'prayers', 'users'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             padding: '8px 18px',
             background: activeTab === tab ? C.navy : 'transparent',
@@ -738,6 +739,8 @@ export default function AdminPage() {
         )}
 
         {/* PRAYERS TAB */}
+        {activeTab === 'activity' && <ActivityFeed C={C} />}
+
         {activeTab === 'prayers' && (
           <div>
             {/* Search prayers (by text / name / city) and remove without the band ID */}
