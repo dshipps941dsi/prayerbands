@@ -13,7 +13,6 @@ import { track } from '@/lib/analytics'
 import { CATEGORIES, getVerseForCategory } from '@/lib/verses'
 import { recordVerseView, type VerseWalk } from '@/lib/verseWalk'
 import WalkLine from '@/components/band/WalkLine'
-import IncomingGiftScreen from './screens/IncomingGiftScreen'
 
 type Registration = {
   id: string
@@ -138,7 +137,6 @@ export default function BandPage() {
   const [claimPrayer, setClaimPrayer] = useState('')
   const [showSignup, setShowSignup] = useState(false)
   const [claimStep, setClaimStep] = useState<'prompt' | 'form' | 'done' | 'view'>('prompt')
-  const [giftAcknowledged, setGiftAcknowledged] = useState(false)
   const [transferNote, setTransferNote] = useState('')
   const [transferStep, setTransferStep] = useState<'idle' | 'sheet' | 'pending' | 'save_prompt'>('idle')
   const [transferComplete, setTransferComplete] = useState(false)
@@ -1020,17 +1018,6 @@ export default function BandPage() {
     )
   }
 
-  if (status.screen === 'incoming_gift' && !giftAcknowledged) {
-    return (
-      <IncomingGiftScreen
-        bandId={bandId}
-        recipient={status.dedicationRecipient}
-        note={status.dedicationNote}
-        onProceed={() => setGiftAcknowledged(true)}
-      />
-    )
-  }
-
   return (
     <div style={{ background: DARK, minHeight: '100vh', fontFamily: body, color: 'white' }}>
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
@@ -1051,6 +1038,28 @@ export default function BandPage() {
           <div style={{ fontFamily: body, fontSize: 15, color: 'rgba(255,255,255,0.7)', fontStyle: 'italic', lineHeight: 1.7, marginBottom: 32, maxWidth: 340 }}>
             Follow its journey, share prayers, and discover Scripture each day.
           </div>
+
+          {/* Pre-dedicated gift: the sender's blessing, shown inline on the entry
+              page rather than as a takeover screen. Gold-tinted so it reads as
+              personal next to the generic verse card below. `pre-line` keeps the
+              sender's own line breaks (they usually sign off on a new line). */}
+          {(status.dedicationRecipient || status.dedicationNote) && (
+            <div style={{ background: 'rgba(200,169,110,0.10)', border: `1px solid ${GOLD}`, borderRadius: 14, padding: '20px 22px', marginBottom: 32, maxWidth: 380, width: '100%' }}>
+              <div style={{ fontFamily: body, fontSize: 10, letterSpacing: '0.28em', textTransform: 'uppercase', color: GOLD, marginBottom: 10 }}>
+                A Gift of Prayer
+              </div>
+              {status.dedicationRecipient && (
+                <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: status.dedicationNote ? 10 : 0 }}>
+                  For {status.dedicationRecipient}
+                </div>
+              )}
+              {status.dedicationNote && (
+                <div style={{ fontFamily: serif, fontSize: 16, fontStyle: 'italic', lineHeight: 1.6, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-line' }}>
+                  &ldquo;{status.dedicationNote}&rdquo;
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Verse */}
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 24px', marginBottom: 40, maxWidth: 380, border: '1px solid rgba(255,255,255,0.1)' }}>
