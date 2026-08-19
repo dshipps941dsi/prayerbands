@@ -10,6 +10,7 @@ type Event = {
   who: string | null
   email: string | null
   detail: string | null
+  style: string | null
 }
 
 type Inventory = {
@@ -196,6 +197,9 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
                   onClick={() => { setBandFilter(e.band_id); setHistory(null); setHistoryError('') }}
                   style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'monospace', fontSize: 13, color: C.heading, fontWeight: 700 }}
                 >{e.band_id}</button>
+                {/* What the band physically is, so a row names an object and
+                    not just a code. */}
+                {e.style && <span style={{ color: C.goldText, fontSize: 12 }}> · {e.style}</span>}
                 {e.who && <span style={{ color: C.body }}> · {e.who}</span>}
                 {e.email && <span style={{ color: C.secondary }}> · {e.email}</span>}
               </div>

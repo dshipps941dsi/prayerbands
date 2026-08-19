@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { BUILTIN_THEMES } from '@/lib/themes'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
@@ -16,6 +17,9 @@ type Event = {
   who: string | null
   email: string | null
   detail: string | null
+  // What the band physically is — "Beach · M", "Black · L". A band ID alone
+  // says nothing about the thing in someone's hand.
+  style: string | null
 }
 
 // Read-only launch telemetry: one reverse-chronological feed of what is
@@ -114,11 +118,44 @@ export async function GET(req: NextRequest) {
   ].filter(Boolean) as string[]
   const emails = await emailsFor(admin, ids)
 
+  // Band styling for every band appearing in the feed, so a row reads as a
+  // real object rather than a code.
+  const eventBandIds = [...new Set([
+    ...(regs ?? []).map(r => r.band_id),
+    ...(transfers ?? []).map(t => t.band_id),
+    ...(owners ?? []).map(o => o.band_id),
+  ].filter(Boolean) as string[])]
+
+  const styles = new Map<string, string>()
+  if (eventBandIds.length > 0) {
+    const [{ data: bandRows }, { data: themeRows }] = await Promise.all([
+      admin.from('bands').select('band_id, theme, color, size').in('band_id', eventBandIds),
+      admin.from('band_themes').select('key, label'),
+    ])
+    // Built-in theme names live in code and only overridden/custom ones reach
+    // band_themes, so merge both or a stock theme shows as its raw key
+    // ("beach" rather than "Beach").
+    const themeLabels = new Map<string, string>(
+      Object.entries(BUILTIN_THEMES).map(([key, t]) => [key, t.label])
+    )
+    for (const t of themeRows ?? []) themeLabels.set(t.key as string, t.label as string)
+    for (const b of bandRows ?? []) {
+      // "default" is the plain band — its colour is the identifying feature, so
+      // naming the theme there would just add noise to every row.
+      const themeName = b.theme && b.theme !== 'default'
+        ? (themeLabels.get(b.theme) ?? b.theme)
+        : null
+      const parts = [themeName, b.color, b.size].filter(Boolean)
+      if (parts.length) styles.set(b.band_id as string, parts.join(' · '))
+    }
+  }
+
   const events: Event[] = [
     ...(regs ?? []).map(r => ({
       kind: 'registration' as const,
       at: r.registered_at as string,
       band_id: r.band_id as string,
+      style: styles.get(r.band_id as string) ?? null,
       who: r.user_name ?? null,
       email: (r.user_id ? emails.get(r.user_id) : null) ?? r.email ?? null,
       detail: [
@@ -131,6 +168,7 @@ export async function GET(req: NextRequest) {
       kind: 'transfer' as const,
       at: t.created_at as string,
       band_id: t.band_id as string,
+      style: styles.get(t.band_id as string) ?? null,
       who: null,
       email: (t.from_user_id ? emails.get(t.from_user_id) : null) ?? null,
       detail: [`passed on (${t.status})`, t.note ? `"${t.note}"` : null].filter(Boolean).join(' · '),
@@ -142,6 +180,7 @@ export async function GET(req: NextRequest) {
         kind: 'ownership' as const,
         at: o.changed_at as string,
         band_id: o.band_id as string,
+        style: styles.get(o.band_id as string) ?? null,
         who: null,
         // The account the band ended up on — what you filter by when someone
         // says "my band isn't showing".
