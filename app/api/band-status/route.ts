@@ -45,6 +45,21 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ screen: 'not_found' })
   }
 
+  // Who put this band into circulation, shown at the head of the journey. Only
+  // a display name is exposed — never the attribution email, which is an admin
+  // detail and would leak an address to anyone tapping the band.
+  let uplineName: string | null = null
+  if (band.upline_user_id) {
+    const { data: upline } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', band.upline_user_id)
+      .maybeSingle()
+    uplineName = upline?.full_name || (upline?.email ? upline.email.split('@')[0] : null)
+  }
+  delete (band as { upline_email?: string }).upline_email
+  delete (band as { upline_user_id?: string }).upline_user_id
+
   // The private blessing is only ever surfaced through the one screen that needs
   // it (incoming_gift, below). Capture it, then strip it — along with the token —
   // from the public `band` object so it isn't echoed in every other screen's
@@ -77,6 +92,7 @@ export async function GET(req: NextRequest) {
       reason: 'local_holder',
       band,
       registrations: regs,
+      uplineName,
     })
   }
 
@@ -87,6 +103,7 @@ export async function GET(req: NextRequest) {
       reason: 'pre_linked_owner',
       band,
       registrations: regs,
+      uplineName,
     })
   }
 
@@ -97,6 +114,7 @@ export async function GET(req: NextRequest) {
       reason: 'current_holder',
       band,
       registrations: regs,
+      uplineName,
     })
   }
 
@@ -126,6 +144,7 @@ export async function GET(req: NextRequest) {
       screen: 'incoming_transfer',
       band,
       registrations: regs,
+      uplineName,
       transfer,
       senderName,
     })
@@ -139,6 +158,7 @@ export async function GET(req: NextRequest) {
       screen: 'incoming_gift',
       band,
       registrations: regs,
+      uplineName,
       dedicationNote,
       dedicationRecipient,
     })
@@ -156,6 +176,7 @@ export async function GET(req: NextRequest) {
       screen: 'first_tap_gift',
       band,
       registrations: regs,
+      uplineName,
       dedicatorName: dedicator?.full_name ?? null,
     })
   }
@@ -166,6 +187,7 @@ export async function GET(req: NextRequest) {
       screen: 'journey',
       band,
       registrations: regs,
+      uplineName,
       currentHolder: latestReg,
     })
   }
@@ -175,5 +197,6 @@ export async function GET(req: NextRequest) {
     screen: 'first_tap_blank',
     band,
     registrations: regs,
+    uplineName,
   })
 }

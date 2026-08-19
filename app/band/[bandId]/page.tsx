@@ -41,6 +41,9 @@ type BandStatus = {
   // the public band object and returns it only on the incoming_gift screen.
   dedicationNote?: string | null
   dedicationRecipient?: string | null
+  // Who put this band into circulation. A display name only — never the
+  // attribution email.
+  uplineName?: string | null
 }
 
 // Colors resolve from theme CSS variables (--pb-*, set on :root by useApplyTheme).
@@ -566,6 +569,18 @@ export default function BandPage() {
       <div style={{ padding: '24px 20px' }}>
         <JourneyMap regs={regs} />
         <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK, marginBottom: 20, paddingBottom: 10, borderBottom: '1px solid rgba(44,24,16,0.08)' }}>Prayer Chain</div>
+        {/* Where the band came from, above the stops. Shown as its own line
+            rather than a fake registration: whoever put it into circulation did
+            not necessarily hold it or leave a prayer, so inventing a stop for
+            them would put something in the journey that never happened. */}
+        {status.uplineName && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18, paddingBottom: 14, borderBottom: '1px dashed rgba(44,24,16,0.12)' }}>
+            <span style={{ fontSize: 18, color: GOLD }}>✝</span>
+            <div style={{ fontFamily: body, fontSize: 13, color: GRAY }}>
+              Given by <strong style={{ color: DARK, fontFamily: serif, fontSize: 15 }}>{status.uplineName}</strong>
+            </div>
+          </div>
+        )}
         <div style={{ position: 'relative' }}>
           <div style={{ position: 'absolute', left: 22, top: 8, bottom: 8, width: 1, background: 'rgba(44,24,16,0.1)' }} />
           {[...regs].reverse().map((reg, i) => {

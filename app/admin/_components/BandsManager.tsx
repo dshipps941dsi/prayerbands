@@ -15,6 +15,10 @@ export default function BandsManager() {
   const [assignIds, setAssignIds] = useState('')
   const [assigning, setAssigning] = useState(false)
   const [assignMsg, setAssignMsg] = useState('')
+  const [uplineEmail, setUplineEmail] = useState('')
+  const [uplineIds, setUplineIds] = useState('')
+  const [uplineMsg, setUplineMsg] = useState('')
+  const [uplineSaving, setUplineSaving] = useState(false)
 
   const [oldId, setOldId] = useState('')
   const [newId, setNewId] = useState('')
@@ -69,6 +73,31 @@ export default function BandsManager() {
       setAssignMsg('❌ ' + (data.error || 'Failed to assign bands.'))
     }
     setAssigning(false)
+  }
+
+  async function setUpline() {
+    setUplineSaving(true); setUplineMsg('')
+    const band_ids = uplineIds.split(/[\s,]+/).map(s => s.trim()).filter(Boolean)
+    const res = await fetch('/api/admin/set-upline', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: uplineEmail, band_ids }),
+    })
+    const data = await res.json()
+    if (res.ok) {
+      let msg = `✅ Credited ${data.count} band(s) to ${data.email}.`
+      // Worth saying out loud: with no account yet the credit is held against
+      // the address and attaches on signup, so this is not a silent no-op.
+      msg += data.linked
+        ? ' Linked to their account.'
+        : ' No account yet — it will attach automatically when they sign up.'
+      if (data.missing?.length) msg += ` Not found: ${data.missing.join(', ')}.`
+      setUplineMsg(msg)
+      setUplineIds('')
+    } else {
+      setUplineMsg('❌ ' + (data.error || 'Failed to credit bands.'))
+    }
+    setUplineSaving(false)
   }
 
   async function replaceBand() {
@@ -140,6 +169,18 @@ export default function BandsManager() {
         <textarea value={assignIds} onChange={e => setAssignIds(e.target.value)} placeholder={'PB-AB12C\nPB-XY34Z'} rows={4} style={{ ...input, resize: 'vertical', minHeight: 90 }} />
         <button onClick={assignBands} disabled={assigning || !email.trim() || !assignIds.trim()} style={btn(assigning || !email.trim() || !assignIds.trim())}>{assigning ? 'Assigning…' : 'Assign Bands'}</button>
         {assignMsg && <div style={{ marginTop: 14, fontSize: 13, color: assignMsg.startsWith('❌') ? C.red : C.green, lineHeight: 1.5 }}>{assignMsg}</div>}
+      </div>
+
+      {/* Attribute bands to whoever hands them out */}
+      <div style={card}>
+        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 6, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Credit Bands to a Giver</h2>
+        <p style={{ fontSize: 13, color: C.secondary, marginBottom: 18, lineHeight: 1.5 }}>Records who put these bands into circulation. Their name shows as &ldquo;Given by&rdquo; at the top of each band&rsquo;s journey. The person does <strong>not</strong> need an account yet — the credit attaches automatically the moment they sign up with this address.</p>
+        <label style={label}>Giver&rsquo;s email</label>
+        <input value={uplineEmail} onChange={e => setUplineEmail(e.target.value)} placeholder="taylor@example.com" style={input} />
+        <label style={label}>Band IDs (one per line, or comma/space separated)</label>
+        <textarea value={uplineIds} onChange={e => setUplineIds(e.target.value)} placeholder={'PB-AB12C\nPB-XY34Z'} rows={4} style={{ ...input, resize: 'vertical', minHeight: 90 }} />
+        <button onClick={setUpline} disabled={uplineSaving || !uplineEmail.trim() || !uplineIds.trim()} style={btn(uplineSaving || !uplineEmail.trim() || !uplineIds.trim())}>{uplineSaving ? 'Saving…' : 'Credit Bands'}</button>
+        {uplineMsg && <div style={{ marginTop: 14, fontSize: 13, color: uplineMsg.startsWith('❌') ? C.red : C.green, lineHeight: 1.5 }}>{uplineMsg}</div>}
       </div>
 
       {/* Replace a lost band */}
