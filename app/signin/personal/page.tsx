@@ -31,6 +31,9 @@ export default function SignInPersonal() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [status, setStatus] = useState('')
+  // Passwordless sign-in by emailed code, for accounts created from a band.
+  const [code, setCode] = useState('')
+  const [codeSent, setCodeSent] = useState(false)
 
   function getSupabase() {
     return createBrowserClient(
@@ -78,6 +81,48 @@ export default function SignInPersonal() {
       setError(signInError.message)
       setLoading(false)
       setStatus('')
+      return
+    }
+    setStatus('Redirecting...')
+    window.location.replace(redirectParam() || '/my-band')
+  }
+
+  // Accounts created from a band page are passwordless: signInWithOtp created
+  // them and the 6-digit code was the verification, so no password was ever
+  // set. Without this, those people could not sign back in at all — the only
+  // way through was "Forgot your password?", which is the last link someone
+  // clicks when they never had one.
+  async function sendCode() {
+    if (!email.trim()) return
+    setLoading(true); setError(''); setStatus('Sending your code…')
+    const supabase = getSupabase()
+    // shouldCreateUser: false — this is the sign-IN page. A typo should say
+    // "no account found", not silently create a second empty account.
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { shouldCreateUser: false },
+    })
+    setLoading(false)
+    if (otpError) {
+      setStatus('')
+      setError(/not found|signups not allowed/i.test(otpError.message)
+        ? 'No account found for that email. Check the address, or use Google or Facebook if you signed up that way.'
+        : otpError.message)
+      return
+    }
+    setStatus('')
+    setCodeSent(true)
+  }
+
+  async function verifyCode() {
+    const token = code.trim()
+    if (token.length < 6) return
+    setLoading(true); setError(''); setStatus('Checking your code…')
+    const supabase = getSupabase()
+    const { error: verifyError } = await supabase.auth.verifyOtp({ email: email.trim(), token, type: 'email' })
+    if (verifyError) {
+      setError('That code didn’t match. Check it and try again.')
+      setLoading(false); setStatus('')
       return
     }
     setStatus('Redirecting...')
@@ -153,7 +198,36 @@ export default function SignInPersonal() {
               <button onClick={signInWithEmail} disabled={loading || !email || !password} style={{ width: '100%', padding: '13px', borderRadius: 8, background: (!loading && email && password) ? BRAND.gold : BRAND.silver, color: (!loading && email && password) ? BRAND.navy : '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
-              <button onClick={() => { setShowEmail(false); setError('') }} style={{ width: '100%', padding: '10px', borderRadius: 8, background: 'transparent', color: BRAND.secondaryText, border: `1px solid ${BRAND.silverBorder}`, fontSize: 14, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
+              {/* Passwordless route. Anyone who signed up from a band never set
+                  a password, so without this the page has no door for them. */}
+              {!codeSent ? (
+                <button onClick={sendCode} disabled={loading || !email} style={{ width: '100%', padding: '11px', borderRadius: 8, background: 'transparent', color: BRAND.goldText, border: `1px solid ${BRAND.gold}`, fontSize: 13, fontWeight: 600, cursor: email ? 'pointer' : 'not-allowed', fontFamily: "'Inter', sans-serif", marginBottom: 10 }}>
+                  No password? Email me a code
+                </button>
+              ) : (
+                <div style={{ background: '#FBF7EC', border: `1px solid ${BRAND.goldBorder}`, borderRadius: 8, padding: '14px', marginBottom: 10 }}>
+                  <div style={{ fontSize: 13, color: BRAND.bodyText, marginBottom: 10, lineHeight: 1.5 }}>
+                    We sent a 6-digit code to <strong>{email}</strong>. It can take a minute — check spam too.
+                  </div>
+                  <input
+                    className="pb-input"
+                    style={{ ...inputStyle, marginBottom: 10, letterSpacing: '0.3em', textAlign: 'center', fontSize: 18 }}
+                    inputMode="numeric"
+                    placeholder="000000"
+                    maxLength={6}
+                    value={code}
+                    onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
+                    onKeyDown={e => { if (e.key === 'Enter') verifyCode() }}
+                  />
+                  <button onClick={verifyCode} disabled={loading || code.trim().length < 6} style={{ width: '100%', padding: '12px', borderRadius: 8, background: code.trim().length === 6 ? BRAND.gold : BRAND.silver, color: code.trim().length === 6 ? BRAND.navy : '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    Sign in
+                  </button>
+                  <button onClick={() => { setCodeSent(false); setCode(''); setError('') }} style={{ width: '100%', padding: '8px', marginTop: 8, background: 'none', border: 'none', color: BRAND.secondaryText, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
+                    Use a different email
+                  </button>
+                </div>
+              )}
+              <button onClick={() => { setShowEmail(false); setError(''); setCodeSent(false); setCode('') }} style={{ width: '100%', padding: '10px', borderRadius: 8, background: 'transparent', color: BRAND.secondaryText, border: `1px solid ${BRAND.silverBorder}`, fontSize: 14, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
                 ← Back
               </button>
               <a href="/reset-password" style={{ display: 'block', textAlign: 'center', color: BRAND.secondaryText, fontSize: 13, textDecoration: 'none', marginTop: 10 }}>Forgot your password?</a>
