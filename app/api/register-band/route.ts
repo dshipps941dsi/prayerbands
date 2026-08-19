@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { isFlaggable, AUTO_FLAG_REASON } from '@/lib/moderation'
 import { escapeHtml } from '@/lib/escape-html'
+import { subdivisionCentroid } from '@/lib/locations'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
@@ -109,6 +110,15 @@ export async function POST(req: NextRequest) {
     for (const query of attempts) {
       const hit = await geocode(query)
       if (hit) { [latitude, longitude] = hit; break }
+    }
+
+    // 1b. Offline fallback. The form now sends a real state/province code, so a
+    // pin can be placed with no network call at all — which matters because
+    // Nominatim is free-tier and rate-limited, and a classroom registering at
+    // once would otherwise silently save rows with no coordinates.
+    if (!latitude) {
+      const centroid = subdivisionCentroid(geoCountry || '', geoState || '')
+      if (centroid) { latitude = centroid.lat; longitude = centroid.lng }
     }
 
     // 2. Fall back to IP geolocation only if no typed location

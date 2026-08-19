@@ -9,6 +9,7 @@ import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
 import PrayerTabs from '@/components/PrayerTabs'
 import PurchaseTab from '@/components/PurchaseTab'
 import { useApplyTheme } from '@/components/ThemeProvider'
+import { COUNTRIES, subdivisionsFor } from '@/lib/locations'
 import { track } from '@/lib/analytics'
 import { CATEGORIES, getVerseForCategory } from '@/lib/verses'
 import { recordVerseView, type VerseWalk } from '@/lib/verseWalk'
@@ -108,12 +109,34 @@ function ClaimForm({ onSubmit, onBack, title, subtitle, submitLabel, claimName, 
           <input value={claimCity} onChange={e => setClaimCity(e.target.value)} placeholder="City" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, outline: 'none', boxSizing: 'border-box' }} />
         </div>
         <div style={{ flex: 1 }}>
-          <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>State / Province *</label>
-          <input value={claimState} onChange={e => setClaimState(e.target.value)} placeholder="State" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, outline: 'none', boxSizing: 'border-box' }} />
+          {/* A dropdown where "state" is a real concept, free text elsewhere —
+              France has départements, Japan prefectures. A valid subdivision is
+              what guarantees the map pin: even a misspelled city falls back to
+              the state centroid instead of resolving to nothing. */}
+          <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>
+            {subdivisionsFor(claimCountry)?.label ?? 'Region'} {subdivisionsFor(claimCountry) ? '*' : '(optional)'}
+          </label>
+          {subdivisionsFor(claimCountry) ? (
+            <select value={claimState} onChange={e => setClaimState(e.target.value)} style={{ display: 'block', width: '100%', padding: '12px 10px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, outline: 'none', boxSizing: 'border-box' }}>
+              <option value="">Select…</option>
+              {subdivisionsFor(claimCountry)!.items.map(s => (
+                <option key={s.code} value={s.code}>{s.name}</option>
+              ))}
+            </select>
+          ) : (
+            <input value={claimState} onChange={e => setClaimState(e.target.value)} placeholder="Region" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, outline: 'none', boxSizing: 'border-box' }} />
+          )}
         </div>
       </div>
       <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Country *</label>
-      <input value={claimCountry} onChange={e => setClaimCountry(e.target.value)} placeholder="Country" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', boxSizing: 'border-box' }} />
+      <select
+        value={claimCountry}
+        // Changing country invalidates any subdivision picked under the old one.
+        onChange={e => { setClaimCountry(e.target.value); setClaimState('') }}
+        style={{ display: 'block', width: '100%', padding: '12px 10px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', boxSizing: 'border-box' }}
+      >
+        {COUNTRIES.map(c => <option key={c.code} value={c.name}>{c.name}</option>)}
+      </select>
       <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your prayer (optional)</label>
       <textarea value={claimPrayer} onChange={e => setClaimPrayer(e.target.value)} placeholder="A prayer, a verse, or what this moment means to you..." rows={4} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: CREAM, marginBottom: 20, outline: 'none', resize: 'vertical', lineHeight: 1.5, boxSizing: 'border-box' }} />
       <button onClick={onSubmit} disabled={submitting || !claimName.trim() || !claimCity.trim() || !claimCountry.trim()} style={{ display: 'block', width: '100%', padding: 15, background: claimName.trim() ? GOLD : '#ccc', color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: claimName.trim() ? 'pointer' : 'not-allowed' }}>
