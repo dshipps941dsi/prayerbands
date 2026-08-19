@@ -521,6 +521,9 @@ export default function Dashboard() {
   const [activity, setActivity] = useState<Activity[]>([])
   const [prayers, setPrayers] = useState<any[]>([])
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([])
+  // Map lens: own bands, or how far what you gave away has carried.
+  const [mapMode, setMapMode] = useState<'mine' | '1' | '2' | 'all'>('mine')
+  const [reach, setReach] = useState<{ points: MapPoint[]; counts: { direct: number; total: number } }>({ points: [], counts: { direct: 0, total: 0 } })
   const [stats, setStats] = useState({ bands: 0, prayers: 0, registrations: 0, countries: 0 })
   const [subscription, setSubscription] = useState<any>(null)
   const [pendingShipment, setPendingShipment] = useState<any>(null)
@@ -567,6 +570,29 @@ export default function Dashboard() {
   useEffect(() => {
     if (profile?.referral_code) setShareUrl(`${window.location.origin}/store?ref=${profile.referral_code}`)
   }, [profile?.referral_code])
+
+  // Load reach for whichever depth the map is showing. Fetched per mode rather
+  // than all at once so a large network is not pulled down to draw one ring.
+  useEffect(() => {
+    if (mapMode === 'mine') return
+    let alive = true
+    fetch(`/api/my-reach?depth=${mapMode}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (alive && d) setReach({ points: d.points || [], counts: d.counts || { direct: 0, total: 0 } }) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [mapMode])
+
+  // Counts drive the toggle labels, so fetch them once even before a reach
+  // mode is picked — otherwise the buttons cannot say what they contain.
+  useEffect(() => {
+    fetch('/api/my-reach?depth=all')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.counts) setReach(prev => ({ ...prev, counts: d.counts })) })
+      .catch(() => {})
+  }, [])
+
+  const shownPoints = mapMode === 'mine' ? mapPoints : reach.points
 
   const copyReferral = async () => {
     if (!shareUrl) return
@@ -1049,17 +1075,40 @@ export default function Dashboard() {
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, marginBottom: 20 }}>
           <div style={{ background: CARD_BG, border: `1px solid ${NAVY_BORDER}`, borderRadius: 10, overflow: 'hidden', boxShadow: '0 1px 6px rgba(10,22,40,0.06)' }}>
-            <div style={{ padding: '14px 16px', borderBottom: `1px solid ${SILVER_BORDER}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '14px 16px', borderBottom: `1px solid ${SILVER_BORDER}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               <span style={{ fontWeight: 700, fontSize: 15, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Band Journey Map</span>
-              <span style={{ fontSize: 11, color: SECONDARY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>{mapPoints.length} location{mapPoints.length !== 1 ? 's' : ''}</span>
+              <span style={{ fontSize: 11, color: SECONDARY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>{shownPoints.length} location{shownPoints.length !== 1 ? 's' : ''}</span>
             </div>
-            {mapPoints.length === 0 ? (
+            {/* One map, four lenses. Your own bands, then how far what you gave
+                away has carried: the people you handed bands to, their
+                recipients, and everyone below you however many generations. */}
+            <div style={{ display: 'flex', gap: 4, padding: '10px 12px 0', flexWrap: 'wrap' }}>
+              {([
+                { id: 'mine', label: 'My bands' },
+                { id: '1', label: `Direct${reach.counts.direct ? ` (${reach.counts.direct})` : ''}` },
+                { id: '2', label: '+ Their recipients' },
+                { id: 'all', label: `Total reach${reach.counts.total ? ` (${reach.counts.total})` : ''}` },
+              ] as const).map(m => (
+                <button key={m.id} onClick={() => setMapMode(m.id)} style={{
+                  padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
+                  background: mapMode === m.id ? NAVY : 'transparent',
+                  color: mapMode === m.id ? GOLD : SECONDARY_TEXT,
+                  border: `1px solid ${mapMode === m.id ? NAVY : SILVER_BORDER}`,
+                  fontSize: 11, fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
+                }}>{m.label}</button>
+              ))}
+            </div>
+            {shownPoints.length === 0 ? (
               <div style={{ padding: '40px 20px', textAlign: 'center', color: SECONDARY_TEXT }}>
                 <div style={{ fontSize: 32, marginBottom: 8 }}>🌍</div>
-                <div style={{ fontSize: 14, fontFamily: 'Inter, sans-serif' }}>Map will appear once bands are registered with location.</div>
+                <div style={{ fontSize: 14, fontFamily: 'Inter, sans-serif' }}>
+                  {mapMode === 'mine'
+                    ? 'Map will appear once bands are registered with location.'
+                    : 'Nobody here yet — this fills in as people you hand bands to register them.'}
+                </div>
               </div>
             ) : (
-              <BoundedMap points={mapPoints} />
+              <BoundedMap points={shownPoints} />
             )}
           </div>
 

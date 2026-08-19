@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     const admin = createServiceClient()
     const { data: band } = await admin
       .from('bands')
-      .select('id, band_id, owner_id')
+      .select('id, band_id, owner_id, upline_user_id')
       .eq('band_id', bandId)
       .maybeSingle()
 
@@ -82,6 +82,24 @@ export async function POST(req: NextRequest) {
     // PB-ZKPMT that attached Mason Struble's registration to Jackson's account,
     // even though Mason had an account of his own. Each stop belongs to the
     // person who made it.
+    // Record who introduced this person, if the band carries an attribution.
+    // First-wins: whoever gave someone their first band keeps them. Without
+    // that, a later band would silently move them under a different sponsor.
+    if (band.upline_user_id && band.upline_user_id !== user.id) {
+      const { data: profile } = await admin
+        .from('profiles')
+        .select('upline_user_id')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (profile && !profile.upline_user_id) {
+        await admin
+          .from('profiles')
+          .update({ upline_user_id: band.upline_user_id, upline_band_id: bandId })
+          .eq('id', user.id)
+          .is('upline_user_id', null)
+      }
+    }
+
     const { data: latestUnlinked } = await admin
       .from('registrations')
       .select('id, user_id')
