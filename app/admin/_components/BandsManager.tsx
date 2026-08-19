@@ -94,23 +94,12 @@ export default function BandsManager() {
   const card: React.CSSProperties = { background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 12, padding: '24px 26px', marginBottom: 24, boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }
 
   return (
-    <div style={{ maxWidth: 640 }}>
+    <div style={{ maxWidth: 1100 }}>
       <h2 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 4px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Band Management</h2>
       <p style={{ color: C.secondary, fontSize: 14, margin: '0 0 20px' }}>Link bands to a personal account, or replace a lost band.</p>
 
-      {/* Assign bands to an account */}
-      <div style={card}>
-        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 6, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Assign Bands to an Account</h2>
-        <p style={{ fontSize: 13, color: C.secondary, marginBottom: 18, lineHeight: 1.5 }}>Sets each band&rsquo;s owner to this account so they all appear under the person&rsquo;s dashboard. Useful for sending someone a curated set of design bands.</p>
-        <label style={label}>Account email</label>
-        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="person@example.com" style={input} />
-        <label style={label}>Band IDs (one per line, or comma/space separated)</label>
-        <textarea value={assignIds} onChange={e => setAssignIds(e.target.value)} placeholder={'PB-AB12C\nPB-XY34Z'} rows={4} style={{ ...input, resize: 'vertical', minHeight: 90 }} />
-        <button onClick={assignBands} disabled={assigning || !email.trim() || !assignIds.trim()} style={btn(assigning || !email.trim() || !assignIds.trim())}>{assigning ? 'Assigning…' : 'Assign Bands'}</button>
-        {assignMsg && <div style={{ marginTop: 14, fontSize: 13, color: assignMsg.startsWith('❌') ? C.red : C.green, lineHeight: 1.5 }}>{assignMsg}</div>}
-      </div>
-
-      {/* Pending replacement orders */}
+      {/* Pending replacements first and full width: it is the only queue here
+          that represents someone waiting, and it reads as a list. */}
       {pending.length > 0 && (
         <div style={{ ...card, borderColor: C.borderGold }}>
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 6, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Pending Replacement Orders ({pending.length})</h2>
@@ -137,6 +126,22 @@ export default function BandsManager() {
         </div>
       )}
 
+      {/* The two standing tools sit side by side rather than stacked — both are
+          short forms, and stacking them pushed "Replace a Lost Band" below the
+          fold for no reason. Collapses to one column under 720px. */}
+      <div className="pb-admin-cols" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
+      {/* Assign bands to an account */}
+      <div style={card}>
+        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 6, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Assign Bands to an Account</h2>
+        <p style={{ fontSize: 13, color: C.secondary, marginBottom: 18, lineHeight: 1.5 }}>Sets each band&rsquo;s owner to this account so they all appear under the person&rsquo;s dashboard. Useful for sending someone a curated set of design bands.</p>
+        <label style={label}>Account email</label>
+        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="person@example.com" style={input} />
+        <label style={label}>Band IDs (one per line, or comma/space separated)</label>
+        <textarea value={assignIds} onChange={e => setAssignIds(e.target.value)} placeholder={'PB-AB12C\nPB-XY34Z'} rows={4} style={{ ...input, resize: 'vertical', minHeight: 90 }} />
+        <button onClick={assignBands} disabled={assigning || !email.trim() || !assignIds.trim()} style={btn(assigning || !email.trim() || !assignIds.trim())}>{assigning ? 'Assigning…' : 'Assign Bands'}</button>
+        {assignMsg && <div style={{ marginTop: 14, fontSize: 13, color: assignMsg.startsWith('❌') ? C.red : C.green, lineHeight: 1.5 }}>{assignMsg}</div>}
+      </div>
+
       {/* Replace a lost band */}
       <div style={card}>
         <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 6, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Replace a Lost Band</h2>
@@ -147,6 +152,7 @@ export default function BandsManager() {
         <input value={newId} onChange={e => setNewId(e.target.value)} placeholder="PB-NEW34 (the replacement)" style={input} />
         <button onClick={replaceBand} disabled={replacing || !oldId.trim() || !newId.trim()} style={btn(replacing || !oldId.trim() || !newId.trim())}>{replacing ? 'Replacing…' : 'Replace Band'}</button>
         {replaceMsg && <div style={{ marginTop: 14, fontSize: 13, color: replaceMsg.startsWith('❌') ? C.red : C.green, lineHeight: 1.5 }}>{replaceMsg}</div>}
+      </div>
       </div>
     </div>
   )

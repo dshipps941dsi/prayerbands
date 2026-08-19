@@ -504,6 +504,7 @@ export default function AdminPage() {
           .pb-admin-content { padding: 18px 16px !important; }
           .pb-admin-grid2 { grid-template-columns: 1fr !important; }
           .pb-admin-chartgrid { grid-template-columns: 1fr !important; }
+          .pb-admin-cols { grid-template-columns: 1fr !important; }
           .pb-admin-card { padding: 16px 16px !important; }
         }
       `}</style>
