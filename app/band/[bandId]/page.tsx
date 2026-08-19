@@ -602,7 +602,12 @@ export default function BandPage() {
     // password to invent, and the code IS the verification — so "create account"
     // and "confirm email" collapse into one step, and they never leave the page.
     async function handleSendCode() {
-      if (!ageConsent || !email.trim()) return
+      if (!email.trim()) return
+      // Was `if (!ageConsent || !email.trim()) return` — a silent no-op. The
+      // button is only disabled on an empty email, so with consent unticked it
+      // looked live, did nothing, and said nothing: the person waits for a code
+      // that was never requested. Say so instead.
+      if (!ageConsent) { setAuthError('Please confirm you are 13 or older first.'); return }
       setAuthSubmitting(true)
       setAuthError('')
       const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -689,7 +694,7 @@ export default function BandPage() {
                 {authError && <div style={{ fontFamily: body, fontSize: 13, color: '#C0392B', marginBottom: 12 }}>{authError}</div>}
                 <div style={{ fontFamily: body, fontSize: 12, color: GRAY, marginBottom: 16 }}>Already have an account? <a href="/signin" style={{ color: GOLD }}>Sign in</a></div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={handleSendCode} disabled={authSubmitting || !email.trim()} style={{ flex: 1, padding: '13px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>{authSubmitting ? 'Sending...' : 'Email me a code'}</button>
+                  <button onClick={handleSendCode} disabled={authSubmitting || !email.trim() || !ageConsent} style={{ flex: 1, padding: '13px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>{authSubmitting ? 'Sending...' : 'Email me a code'}</button>
                   <button onClick={() => setAuthMode(null)} style={{ padding: '13px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Back</button>
                 </div>
               </div>
