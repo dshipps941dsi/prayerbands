@@ -34,6 +34,9 @@ export default function SignInPersonal() {
   // Passwordless sign-in by emailed code, for accounts created from a band.
   const [code, setCode] = useState('')
   const [codeSent, setCodeSent] = useState(false)
+  // Set when the address has no account, so we can offer to create one
+  // instead of leaving the person at a dead end.
+  const [noAccount, setNoAccount] = useState(false)
 
   function getSupabase() {
     return createBrowserClient(
@@ -105,12 +108,34 @@ export default function SignInPersonal() {
     setLoading(false)
     if (otpError) {
       setStatus('')
-      setError(/not found|signups not allowed/i.test(otpError.message)
-        ? 'No account found for that email. Check the address, or use Google or Facebook if you signed up that way.'
-        : otpError.message)
+      // Supabase answers "Signups not allowed for otp" when the address has no
+      // account. That used to be a dead end: someone tapping a band, following
+      // "already have an account?", and landing here was told no and left with
+      // nowhere to go. Offer to create the account instead.
+      if (/not found|signups not allowed/i.test(otpError.message)) {
+        setNoAccount(true)
+        setError('')
+      } else {
+        setError(otpError.message)
+      }
       return
     }
     setStatus('')
+    setCodeSent(true)
+  }
+
+  // Same call with signup allowed — reached only after the address has been
+  // shown not to exist, so this cannot quietly duplicate an account.
+  async function createAccount() {
+    setLoading(true); setError(''); setStatus('Creating your account…')
+    const supabase = getSupabase()
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { shouldCreateUser: true },
+    })
+    setLoading(false); setStatus('')
+    if (otpError) { setError(otpError.message); return }
+    setNoAccount(false)
     setCodeSent(true)
   }
 
@@ -200,7 +225,22 @@ export default function SignInPersonal() {
               </button>
               {/* Passwordless route. Anyone who signed up from a band never set
                   a password, so without this the page has no door for them. */}
-              {!codeSent ? (
+              {noAccount ? (
+                <div style={{ background: '#FBF7EC', border: `1px solid ${BRAND.goldBorder}`, borderRadius: 8, padding: '14px', marginBottom: 10 }}>
+                  <div style={{ fontSize: 13, color: BRAND.bodyText, marginBottom: 10, lineHeight: 1.5 }}>
+                    There&apos;s no account for <strong>{email}</strong> yet. Want to create one?
+                  </div>
+                  <button onClick={createAccount} disabled={loading} style={{ width: '100%', padding: '12px', borderRadius: 8, background: BRAND.gold, color: BRAND.navy, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    Create account &amp; email me a code
+                  </button>
+                  <div style={{ fontSize: 12, color: BRAND.secondaryText, marginTop: 10, lineHeight: 1.5 }}>
+                    If you signed up with Google or Facebook, go back and use that button instead.
+                  </div>
+                  <button onClick={() => { setNoAccount(false); setError('') }} style={{ width: '100%', padding: '8px', marginTop: 6, background: 'none', border: 'none', color: BRAND.secondaryText, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
+                    Use a different email
+                  </button>
+                </div>
+              ) : !codeSent ? (
                 <button onClick={sendCode} disabled={loading || !email} style={{ width: '100%', padding: '11px', borderRadius: 8, background: 'transparent', color: BRAND.goldText, border: `1px solid ${BRAND.gold}`, fontSize: 13, fontWeight: 600, cursor: email ? 'pointer' : 'not-allowed', fontFamily: "'Inter', sans-serif", marginBottom: 10 }}>
                   No password? Email me a code
                 </button>

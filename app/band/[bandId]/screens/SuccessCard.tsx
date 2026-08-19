@@ -154,7 +154,16 @@ export default function SuccessCard({
               <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Email</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" onKeyDown={e => { if (e.key === 'Enter' && email.trim()) handleSendCode() }} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }} />
               {authError && <div style={{ fontFamily: body, fontSize: 13, color: '#C0392B', marginBottom: 12 }}>{authError}</div>}
-              <div style={{ fontFamily: body, fontSize: 12, color: GRAY, marginBottom: 16 }}>Already have an account? <a href="/signin" style={{ color: GOLD }}>Sign in</a></div>
+              {/* Was "Already have an account? Sign in" sitting directly under
+                  the email field, which read as the next step. A first-time
+                  person following it reached the sign-in page, where the code
+                  button refuses unknown addresses — a dead end. Made explicit
+                  that this box already creates the account. */}
+              <div style={{ fontFamily: body, fontSize: 12, color: GRAY, marginBottom: 16, lineHeight: 1.5 }}>
+                New here? Just enter your email above — we&apos;ll create your account.
+                <br />
+                Already signed up before? <a href="/signin" style={{ color: GOLD }}>Sign in instead</a>
+              </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={handleSendCode} disabled={authSubmitting || !email.trim() || !ageConsent} style={{ flex: 1, padding: '13px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>{authSubmitting ? 'Sending...' : 'Email me a code'}</button>
                 <button onClick={() => setAuthMode(null)} style={{ padding: '13px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Back</button>
