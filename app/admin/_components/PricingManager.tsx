@@ -73,10 +73,13 @@ export default function PricingManager() {
   const saveBtn: CSSProperties = { background: C.gold, color: C.navy, border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600 }
 
   return (
-    <div>
+    // Two independent price lists, each a narrow column of rows — side by side
+    // rather than one scrolled past the other.
+    <div className="pb-admin-cols" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28, alignItems: 'start', maxWidth: 1200 }}>
+      <div>
       <h2 style={{ margin: '0 0 6px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Pricing &amp; Shipping</h2>
       <p style={{ fontSize: '13px', color: C.secondary, margin: '0 0 20px' }}>Edit amounts in dollars. Saved values drive Stripe checkout immediately.</p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '480px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {siteConfig.length === 0 && (
           <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '8px', padding: '20px', textAlign: 'center', color: C.secondary, fontSize: '13px' }}>
             No config rows found. Run the site_config migration in Supabase.
@@ -97,9 +100,12 @@ export default function PricingManager() {
         ))}
       </div>
 
-      <h2 style={{ margin: '32px 0 6px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Subscription Plans</h2>
+      </div>
+
+      <div>
+      <h2 style={{ margin: '0 0 6px', fontSize: '22px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 600 }}>Subscription Plans</h2>
       <p style={{ fontSize: '13px', color: C.secondary, margin: '0 0 20px' }}>Total is what Stripe charges new subscribers (existing ones keep their rate) and what /subscribe shows. Discount % is the marketing label on the page.</p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '560px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {subPlans.length === 0 && (
           <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: '8px', padding: '20px', textAlign: 'center', color: C.secondary, fontSize: '13px' }}>No subscription plans found.</div>
         )}
@@ -120,6 +126,7 @@ export default function PricingManager() {
             <button onClick={() => saveSubPlan(p.id)} disabled={savingPlan === p.id} style={saveBtn}>{savingPlan === p.id ? 'Saving…' : 'Save'}</button>
           </div>
         ))}
+      </div>
       </div>
     </div>
   )

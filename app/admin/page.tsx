@@ -804,8 +804,10 @@ export default function AdminPage() {
         {activeTab === 'recent' && <ActivityFeed C={C} show="feed" />}
         {activeTab === 'inventory' && <ActivityFeed C={C} show="inventory" />}
 
+        {/* Two ways into the same job — by words or by band — so they sit side
+            by side rather than one below the other. */}
         {activeTab === 'prayers' && (
-          <div>
+          <div className="pb-admin-cols" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
             {/* Search prayers (by text / name / city) and remove without the band ID */}
             <div style={{ background: C.card, border: `1px solid ${C.borderGold}`, borderRadius: 10, padding: '18px 20px', marginBottom: 24 }}>
               <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 700, color: C.heading, marginBottom: 4 }}>Search prayers</div>

@@ -143,7 +143,7 @@ export default function ProductsManager() {
   const field = (l: string, node: React.ReactNode) => <div style={{ marginBottom: 12 }}><label style={label}>{l}</label>{node}</div>
 
   return (
-    <div style={{ maxWidth: 760 }}>
+    <div style={{ maxWidth: 1400 }}>
       <h2 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 4px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Products</h2>
       <p style={{ color: C.secondary, fontSize: 14, margin: '0 0 20px' }}>Add band designs and packs, set prices, sizes, per-size stock, and backorder.</p>
 
@@ -170,8 +170,14 @@ export default function ProductsManager() {
         </div>
       )}
 
+      {/* Tiled rather than stacked. auto-fit rather than a fixed count: each
+          card is a full editor with its own two-column field grid, so a hard
+          "4 across" would squeeze every field to about 150px. This fits as many
+          as the screen genuinely allows — three on a wide monitor, two on a
+          laptop, one on a phone — and never below a workable width. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 20, alignItems: 'start' }}>
       {(filterId ? products.filter(p => p.id === filterId) : products).map(p => (
-        <div key={p.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 12, padding: '20px 22px', marginBottom: 20, opacity: p.active ? 1 : 0.7, boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
+        <div key={p.id} style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 12, padding: '20px 22px', opacity: p.active ? 1 : 0.7, boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <h2 style={{ fontSize: 20, fontWeight: 600, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{p.name} <span style={{ fontSize: 12, color: C.secondary, fontWeight: 400 }}>/{p.slug}</span></h2>
             <label style={{ fontSize: 13, color: C.body, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -246,6 +252,7 @@ export default function ProductsManager() {
           </div>
         </div>
       ))}
+      </div>
     </div>
   )
 }
