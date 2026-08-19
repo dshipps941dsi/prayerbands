@@ -174,6 +174,15 @@ export default function PrayerWallPage() {
     return `${days}d ago`
   }
 
+  // First name plus last initial, matching the home page. The wall is public —
+  // anyone on the internet can read it — so a surname does not belong here.
+  const publicName = (name?: string | null) => {
+    const parts = (name || '').trim().split(/\s+/).filter(Boolean)
+    if (!parts.length) return 'Anonymous'
+    const last = parts.length > 1 ? ` ${parts[parts.length - 1][0].toUpperCase()}.` : ''
+    return `${parts[0]}${last}`
+  }
+
   const getInitials = (prayer: Prayer) => {
     const name = prayer.user_name
     if (name) return name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
@@ -293,7 +302,7 @@ export default function PrayerWallPage() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div className="cinzel" style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#5C6573' }}>
-                          {prayer.user_name || 'Anonymous'}
+                          {publicName(prayer.user_name)}
                         </div>
                         {location && <div className="inter" style={{ fontSize: 12, color: '#9A7A35', marginTop: 1 }}>📍 {location}</div>}
                       </div>
