@@ -36,6 +36,10 @@ type BandStatus = {
   transfer?: any
   senderName?: string
   dedicatorName?: string
+  // Sent top-level, NOT on `band` — /api/band-status strips the blessing from
+  // the public band object and returns it only on the incoming_gift screen.
+  dedicationNote?: string | null
+  dedicationRecipient?: string | null
 }
 
 // Colors resolve from theme CSS variables (--pb-*, set on :root by useApplyTheme).
@@ -1020,8 +1024,8 @@ export default function BandPage() {
     return (
       <IncomingGiftScreen
         bandId={bandId}
-        recipient={status.band?.dedication_recipient}
-        note={status.band?.dedication_note}
+        recipient={status.dedicationRecipient}
+        note={status.dedicationNote}
         onProceed={() => setGiftAcknowledged(true)}
       />
     )
