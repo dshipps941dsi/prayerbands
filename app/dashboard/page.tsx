@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import LivingPrayerList from '@/components/LivingPrayerList'
 import Logo from '@/components/Logo'
+import { publicName } from '@/lib/public-name'
 import Icon, { type IconName } from '@/components/Icon'
 import PrayerTabs from '@/components/PrayerTabs'
 import ShareSheet from '@/components/ShareSheet'
@@ -129,7 +130,7 @@ function BoundedMap({ points }: { points: MapPoint[] }) {
         const m = L.marker([p.lat, p.lng], { icon: dot }).addTo(map)
         m.bindPopup(`<div style="font-family:Georgia,serif;font-size:13px">
           <strong style="color:${AMBER}">${p.band_id}</strong><br/>
-          ${p.user_name ? `${p.user_name}<br/>` : ''}
+          ${p.user_name ? `${publicName(p.user_name)}<br/>` : ""}
           ${p.city || p.country ? `<span style="color:#5C6573">${[p.city, p.country].filter(Boolean).join(', ')}</span>` : ''}
         </div>`)
         markers.push(m)
@@ -388,7 +389,7 @@ function DashboardMap({ bands, points }: { bands: Band[]; points: MapPoint[] }) 
         const m = L.marker([p.lat, p.lng], { icon: dot }).addTo(map)
         m.bindPopup(`<div style="font-family:Georgia,serif">
           <div style="font-family:monospace;font-weight:bold;color:${AMBER}">${p.band_id}</div>
-          ${p.user_name ? `<div style="font-size:13px">${p.user_name}</div>` : ''}
+          ${p.user_name ? `<div style="font-size:13px">${publicName(p.user_name)}</div>` : ""}
           ${p.city || p.country ? `<div style="font-size:12px;color:#5C6573">${[p.city, p.country].filter(Boolean).join(', ')}</div>` : ''}
           ${p.prayer ? `<div style="font-size:12px;font-style:italic;border-left:2px solid ${AMBER};padding-left:6px;margin-top:4px">"${p.prayer.slice(0, 80)}"</div>` : ''}
         </div>`)

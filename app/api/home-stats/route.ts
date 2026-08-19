@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { publicName } from '@/lib/public-name'
 
 // Public, read-only stats for the home page: aggregate counts + a set of recent
 // PUBLIC (non-flagged) prayers, anonymized to first name + last initial, with
@@ -55,12 +56,9 @@ export async function GET() {
     .order('registered_at', { ascending: false })
     .limit(48)
 
-  const anon = (name?: string | null) => {
-    const parts = (name || '').trim().split(/\s+/).filter(Boolean)
-    if (!parts.length) return 'Someone'
-    const last = parts.length > 1 ? ` ${parts[parts.length - 1][0].toUpperCase()}.` : ''
-    return `${parts[0]}${last}`
-  }
+  // Shared with the wall and both maps, so all public surfaces shorten names
+  // the same way and cannot drift apart.
+  const anon = (name?: string | null) => publicName(name, 'Someone')
   const initialsOf = (name?: string | null) => {
     const parts = (name || '').trim().split(/\s+/).filter(Boolean)
     if (!parts.length) return '✝'

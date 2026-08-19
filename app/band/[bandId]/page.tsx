@@ -11,6 +11,7 @@ import PurchaseTab from '@/components/PurchaseTab'
 import { useApplyTheme } from '@/components/ThemeProvider'
 import SuccessCard from './screens/SuccessCard'
 import { COUNTRIES, subdivisionsFor } from '@/lib/locations'
+import { publicName } from '@/lib/public-name'
 import { track } from '@/lib/analytics'
 import { CATEGORIES, getVerseForCategory } from '@/lib/verses'
 import { recordVerseView, type VerseWalk } from '@/lib/verseWalk'
@@ -539,7 +540,7 @@ export default function BandPage() {
           latlngs.push(ll)
           const dot = L.divIcon({ className: '', html: `<div style="width:12px;height:12px;background:${gold};border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,0.3)"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] })
           const m = L.marker(ll, { icon: dot }).addTo(map)
-          m.bindPopup(`<div style="font-family:Georgia,serif;font-size:13px"><strong>${p.user_name || 'Someone'}</strong>${(p.city || p.country) ? `<br/><span style="color:#5C6573">${[p.city, p.country].filter(Boolean).join(', ')}</span>` : ''}</div>`)
+          m.bindPopup(`<div style="font-family:Georgia,serif;font-size:13px"><strong>${publicName(p.user_name, "Someone")}</strong>${(p.city || p.country) ? `<br/><span style="color:#5C6573">${[p.city, p.country].filter(Boolean).join(', ')}</span>` : ''}</div>`)
           markers.push(m)
         })
         if (latlngs.length > 1) L.polyline(latlngs, { color: gold, weight: 2, opacity: 0.65, dashArray: '4 6' }).addTo(map)

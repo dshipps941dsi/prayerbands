@@ -1,4 +1,5 @@
 'use client'
+import { publicName } from '@/lib/public-name'
 import { useEffect, useState, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
@@ -172,15 +173,6 @@ export default function PrayerWallPage() {
     if (hours < 24) return `${hours}h ago`
     if (days === 1) return 'Yesterday'
     return `${days}d ago`
-  }
-
-  // First name plus last initial, matching the home page. The wall is public —
-  // anyone on the internet can read it — so a surname does not belong here.
-  const publicName = (name?: string | null) => {
-    const parts = (name || '').trim().split(/\s+/).filter(Boolean)
-    if (!parts.length) return 'Anonymous'
-    const last = parts.length > 1 ? ` ${parts[parts.length - 1][0].toUpperCase()}.` : ''
-    return `${parts[0]}${last}`
   }
 
   const getInitials = (prayer: Prayer) => {
