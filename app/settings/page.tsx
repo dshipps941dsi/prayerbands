@@ -95,6 +95,7 @@ export default function SettingsPage() {
         .set-card { background: #FFFDF8; border: 1px solid rgba(200,169,110,0.30); border-radius: 12px; padding: 26px 24px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(10,22,40,0.05); }
         .set-card-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 21px; font-weight: 700; color: #15223B; margin-bottom: 16px; }
         .set-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #9A7A35; font-family: 'Cinzel', serif; margin-bottom: 7px; }
+        .set-hint { font-size: 13px; line-height: 1.6; color: #5C6573; margin: -2px 0 14px; }
         .set-input { width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 15px; border: 1px solid rgba(10,22,40,0.15); border-radius: 8px; background: #F6F1E4; color: #15223B; outline: none; font-family: 'Inter', sans-serif; margin-bottom: 16px; }
         .set-input:focus { border-color: #C8A96E; }
         .set-readonly { color: #5C6573; background: #EFE9DA; }
@@ -142,12 +143,16 @@ export default function SettingsPage() {
 
             <div className="set-card">
               <div className="set-card-title">Password</div>
-              <label className="set-label">New Password</label>
+              {/* Accounts created from a band page have no password at all — the emailed
+                  code was the entire sign-up. "New Password" read as though you were
+                  changing one you already had. */}
+              <div className="set-hint">Signed up with an emailed code? You do not have a password yet. Set one here to sign in without waiting for a code — or carry on using codes, either works.</div>
+              <label className="set-label">Password</label>
               <input className="set-input" type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="At least 8 characters" />
               <label className="set-label">Confirm New Password</label>
               <input className="set-input" type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="Re-enter password" />
               <div style={{ display: "flex", alignItems: "center" }}>
-                <button className="set-btn" onClick={changePassword} disabled={savingPw}>{savingPw ? "Updating…" : "Update Password"}</button>
+                <button className="set-btn" onClick={changePassword} disabled={savingPw}>{savingPw ? "Saving…" : "Save Password"}</button>
                 {pwMsg === "saved" && <span className="set-msg-ok">Updated ✓</span>}
               </div>
               {pwMsg && pwMsg !== "saved" && <div className="set-msg-err">{pwMsg}</div>}

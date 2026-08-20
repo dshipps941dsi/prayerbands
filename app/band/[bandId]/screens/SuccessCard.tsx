@@ -39,9 +39,12 @@ export default function SuccessCard({
   showCountdown?: boolean
 }) {
   const [ageConsent, setAgeConsent] = useState(false)
-  const [authMode, setAuthMode] = useState<'email' | 'code' | null>(null)
+  const [authMode, setAuthMode] = useState<'email' | 'code' | 'password' | null>(null)
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
+  const [password, setPassword] = useState('')
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwError, setPwError] = useState('')
   const [authError, setAuthError] = useState('')
   const [authSubmitting, setAuthSubmitting] = useState(false)
 
@@ -91,7 +94,21 @@ export default function SuccessCard({
         await fetch('/api/claim-band', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bandId }) })
       }
     } catch {}
-    // Now signed in — reload so the page lands them in their personal space.
+    // Signed in. Offer a password before leaving: the code created the account
+    // and no password was ever set, so without this step the only way back in is
+    // another emailed code — and nothing anywhere says so. Skippable, because a
+    // code is a perfectly good way to sign in.
+    setAuthMode('password')
+    setAuthSubmitting(false)
+  }
+
+  async function handleSetPassword() {
+    if (password.length < 8) { setPwError('Use at least 8 characters.'); return }
+    setPwSaving(true)
+    setPwError('')
+    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) { setPwError(error.message || 'Could not save that password.'); setPwSaving(false); return }
     window.location.reload()
   }
 
@@ -167,6 +184,32 @@ export default function SuccessCard({
                 <button onClick={handleSendCode} disabled={authSubmitting || !email.trim() || !ageConsent} style={{ flex: 1, padding: '13px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>{authSubmitting ? 'Sending...' : 'Email me a code'}</button>
                 <button onClick={() => setAuthMode(null)} style={{ padding: '13px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Back</button>
               </div>
+            </div>
+          )}
+          {authMode === 'password' && (
+            <div>
+              <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK, marginBottom: 6 }}>You&apos;re in ✝</div>
+              <div style={{ fontFamily: body, fontSize: 13, color: GRAY, lineHeight: 1.55, marginBottom: 16 }}>
+                Your account is ready. Want a password so you can sign in without waiting for a code next time? You can
+                always skip this &mdash; we&apos;ll email you a code whenever you need one.
+              </div>
+              <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Password (optional)</label>
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && password.length >= 8) handleSetPassword() }}
+                placeholder="At least 8 characters"
+                style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 16, color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }}
+              />
+              {pwError && <div style={{ fontFamily: body, fontSize: 13, color: '#C0392B', marginBottom: 12 }}>{pwError}</div>}
+              <button onClick={handleSetPassword} disabled={pwSaving || password.length < 8} style={{ display: 'block', width: '100%', padding: '13px', background: password.length >= 8 ? GOLD : '#ccc', color: password.length >= 8 ? INK : 'white', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: password.length >= 8 ? 'pointer' : 'not-allowed' }}>
+                {pwSaving ? 'Saving…' : 'Save password'}
+              </button>
+              <button onClick={() => window.location.reload()} style={{ display: 'block', width: '100%', marginTop: 10, padding: '12px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>
+                No thanks &mdash; email me a code each time
+              </button>
             </div>
           )}
           {authMode === 'code' && (
