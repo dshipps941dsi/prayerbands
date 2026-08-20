@@ -103,6 +103,8 @@ export async function POST(req: NextRequest) {
     // and only for a signed-in buyer — credit belongs to an account.
     let creditUserId: string | null = null
     let creditApplied = 0
+    let couponAmount = 0
+    let waiveShipping = false
     try {
       const authed = await createClient()
       const { data: { user: buyer } } = await authed.auth.getUser()
@@ -112,7 +114,18 @@ export async function POST(req: NextRequest) {
           const goodsTotal = lineItems.reduce(
             (sum, li) => sum + (li.price_data?.unit_amount ?? 0) * (li.quantity ?? 1), 0
           )
-          creditApplied = Math.min(balance, goodsTotal)
+          // Stripe can discount line items but not a shipping rate, so shipping
+          // is covered by waiving it outright — and only when the balance covers
+          // the entire order. Anything less is capped at the goods, because a
+          // part-paid shipping rate is not something Stripe can express.
+          if (balance >= goodsTotal + shippingCost) {
+            creditApplied = goodsTotal + shippingCost
+            couponAmount = goodsTotal
+            waiveShipping = true
+          } else {
+            creditApplied = Math.min(balance, goodsTotal)
+            couponAmount = creditApplied
+          }
           if (creditApplied > 0) creditUserId = buyer.id
         }
       }
@@ -131,9 +144,9 @@ export async function POST(req: NextRequest) {
     const applyReferralDiscount = !!(referrerUserId && referralDiscount) && creditApplied === 0
 
     let creditCoupon: string | null = null
-    if (creditApplied > 0 && creditUserId) {
+    if (couponAmount > 0 && creditUserId) {
       const coupon = await stripe.coupons.create({
-        amount_off: creditApplied,
+        amount_off: couponAmount,
         currency: 'usd',
         duration: 'once',
         name: 'Referral credit',
@@ -156,7 +169,7 @@ export async function POST(req: NextRequest) {
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/store`,
       customer_email: email || undefined,
       shipping_address_collection: { allowed_countries: ['US', 'CA', 'GB', 'AU', 'NZ'] },
-      shipping_options: shippingCost > 0
+      shipping_options: shippingCost > 0 && !waiveShipping
         ? [{ shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: shippingCost, currency: 'usd' }, display_name: 'Standard Shipping', tax_behavior: 'exclusive', tax_code: 'txcd_92010001' } }]
         : undefined,
       metadata: {

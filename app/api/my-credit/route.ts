@@ -16,7 +16,7 @@ export async function GET() {
   const [{ data: entries }, { data: profile }, { count: referralCount }] = await Promise.all([
     admin
       .from('credit_ledger')
-      .select('delta_cents, reason, note, created_at')
+      .select('delta_cents, reason, note, created_at, expires_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(50),
@@ -33,8 +33,17 @@ export async function GET() {
     .filter((e: any) => e.reason === 'referral')
     .reduce((s: number, e: any) => s + Number(e.delta_cents || 0), 0)
 
+  // The soonest lapse still carrying credit, so the panel can warn rather than
+  // let it quietly disappear.
+  const nextExpiry = (entries ?? [])
+    .filter((e: any) => e.reason === 'referral' && e.expires_at)
+    .map((e: any) => e.expires_at as string)
+    .sort()
+    .find((d: string) => new Date(d) > new Date()) ?? null
+
   return NextResponse.json({
     balance_cents: balance,
+    expires_at: balance > 0 ? nextExpiry : null,
     earned_cents: earned,
     referrals: referralCount ?? 0,
     code: profile?.referral_code ?? null,

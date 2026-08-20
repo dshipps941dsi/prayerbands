@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
-import { recordCredit } from '@/lib/credit'
+import { recordCredit, creditExpiresAt } from '@/lib/credit'
 import { getSiteConfig } from '@/lib/getSiteConfig'
 
 export async function POST(req: NextRequest) {
@@ -565,6 +565,7 @@ async function settleCredit(supabase: any, session: any) {
       order_id: order?.id ?? null,
       stripe_session_id: sessionId,
       note: 'Referral reward',
+      expires_at: creditExpiresAt(),
     })
     // A retry finds the credit already recorded; the referral row is updated
     // either way so its status cannot drift from the ledger.

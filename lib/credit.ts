@@ -6,12 +6,24 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type CreditEntry = {
   delta_cents: number
-  reason: 'referral' | 'redemption' | 'adjustment'
+  reason: 'referral' | 'redemption' | 'adjustment' | 'expiry'
   created_at: string
   note: string | null
 }
 
+export const CREDIT_LIFETIME_DAYS = 90
+
+export function creditExpiresAt(from = new Date()): string {
+  return new Date(from.getTime() + CREDIT_LIFETIME_DAYS * 86400000).toISOString()
+}
+
 export async function creditBalanceCents(admin: SupabaseClient, userId: string): Promise<number> {
+  // Sweep anything past its 90 days first, so a balance is never quoted — or
+  // spent — after it has lapsed. The sweep writes ledger rows rather than
+  // filtering, so the sum below stays the whole truth.
+  const { error: sweepError } = await admin.rpc('expire_credit', { p_user: userId })
+  if (sweepError) throw new Error('credit: expiry sweep failed — ' + sweepError.message)
+
   const { data, error } = await admin
     .from('credit_ledger')
     .select('delta_cents')
@@ -38,6 +50,7 @@ export async function recordCredit(
     order_id?: number | null
     stripe_session_id?: string | null
     note?: string | null
+    expires_at?: string | null
   }
 ): Promise<{ recorded: boolean; duplicate: boolean }> {
   const { error } = await admin.from('credit_ledger').insert({
@@ -47,6 +60,7 @@ export async function recordCredit(
     order_id: entry.order_id ?? null,
     stripe_session_id: entry.stripe_session_id ?? null,
     note: entry.note ?? null,
+    expires_at: entry.expires_at ?? null,
   })
 
   if (error) {

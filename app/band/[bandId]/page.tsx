@@ -183,7 +183,7 @@ export default function BandPage() {
   const [testimony, setTestimony] = useState('')
   const [prayerSubmitting, setPrayerSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState<'home' | 'prayers' | 'journey' | 'purchase' | 'account'>('home')
-  const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null } | null>(null)
+  const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null; expires_at: string | null } | null>(null)
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
   // Bands this person owns or holds, for the header switcher.
@@ -291,7 +291,7 @@ export default function BandPage() {
     if (activeTab !== 'account' || !userId || credit) return
     fetch('/api/my-credit')
       .then(r => r.json())
-      .then(d => setCredit({ balance_cents: d.balance_cents ?? 0, referrals: d.referrals ?? 0, code: d.code ?? null }))
+      .then(d => setCredit({ balance_cents: d.balance_cents ?? 0, referrals: d.referrals ?? 0, code: d.code ?? null, expires_at: d.expires_at ?? null }))
       .catch(() => {})
   }, [activeTab, userId, credit])
 
@@ -865,6 +865,11 @@ export default function BandPage() {
                         ? `From ${credit.referrals} order${credit.referrals === 1 ? '' : 's'} placed through you. It comes off your next order automatically.`
                         : 'Share your code below. When someone orders with it, credit lands here.'}
                     </div>
+                    {credit.expires_at && credit.balance_cents > 0 && (
+                      <div style={{ fontFamily: body, fontSize: 12.5, opacity: 0.8, marginTop: 8 }}>
+                        Use it by {new Date(credit.expires_at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}.
+                      </div>
+                    )}
                     {credit.code && (
                       <div style={{ marginTop: 14, background: 'rgba(255,255,255,0.14)', borderRadius: 9, padding: '10px 13px', fontFamily: 'ui-monospace, monospace', fontSize: 15, letterSpacing: '0.08em' }}>
                         {credit.code}
