@@ -67,11 +67,46 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Could not move the prayer history.' }, { status: 500 })
     }
 
-    // Retire the old band.
-    await admin
+    // Retire the old band. This used to be fire-and-forget, and the write was
+
+
+    // being rejected every time — so the old band stayed live and owned while
+
+
+    // its history moved to the replacement, and the caller was told it worked.
+
+
+    const { error: retireErr } = await admin
+
+
       .from('bands')
+
+
       .update({ status: 'replaced', owner_id: null })
+
+
       .eq('id', oldBand.id)
+
+
+    if (retireErr) {
+
+
+      console.error('[replace-band] retire old band error:', retireErr)
+
+
+      return NextResponse.json(
+
+
+        { error: 'The new band is ready, but the old one could not be retired. Contact support before using it.' },
+
+
+        { status: 500 }
+
+
+      )
+
+
+    }
 
     return NextResponse.json({
       success: true,

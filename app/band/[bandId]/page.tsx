@@ -753,10 +753,21 @@ export default function BandPage() {
                     <button onClick={async () => {
                       if (!prayerTitle.trim()) return
                       setPrayerSubmitting(true)
-                      const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-                      const { data } = await supabase.from('prayer_requests').insert({ user_id: userId, band_id: bandId, title: prayerTitle, body: prayerBody, status: 'active', visibility: 'private' }).select().single()
-                      if (data) setPrayers(prev => [data, ...prev])
-                      setPrayerTitle(''); setPrayerBody(''); setPrayerStep('list'); setPrayerSubmitting(false)
+                      // Through the server: writing this from the browser meant a
+                      // rejected value vanished silently and the form cleared anyway.
+                      const res = await fetch('/api/prayer-requests/create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: prayerTitle, body: prayerBody, visibility: 'private', band_id: bandId }),
+                      })
+                      const json = await res.json().catch(() => ({}))
+                      if (res.ok && json.request) {
+                        setPrayers(prev => [json.request, ...prev])
+                        setPrayerTitle(''); setPrayerBody(''); setPrayerStep('list')
+                      } else {
+                        alert(json.error || 'Your prayer could not be saved. Please try again.')
+                      }
+                      setPrayerSubmitting(false)
                     }} disabled={prayerSubmitting || !prayerTitle.trim()} style={{ flex: 1, padding: '10px', background: prayerTitle.trim() ? GOLD : '#ccc', color: INK, border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: prayerTitle.trim() ? 'pointer' : 'not-allowed' }}>
                       {prayerSubmitting ? 'Saving...' : 'Add Prayer ✝'}
                     </button>

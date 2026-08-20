@@ -10,14 +10,18 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { title, body, visibility } = await req.json().catch(() => ({}))
+  const { title, body, visibility, band_id } = await req.json().catch(() => ({}))
   if (!title?.trim()) return NextResponse.json({ error: 'title is required' }, { status: 400 })
-  const vis = ['network', 'public', 'both'].includes(visibility) ? visibility : 'network'
+  // 'private' is a prayer written on your own band page: readable by its
+  // author and nobody else. The band page used to insert it straight from the
+  // browser, where the value was rejected and the error discarded.
+  const vis = ['network', 'public', 'both', 'private'].includes(visibility) ? visibility : 'network'
+  const band = typeof band_id === 'string' && band_id.trim() ? band_id.trim().toUpperCase() : null
 
   const admin = createServiceClient()
   const { data, error } = await admin
     .from('prayer_requests')
-    .insert({ user_id: user.id, title: title.trim(), body: body ?? null, visibility: vis })
+    .insert({ user_id: user.id, title: title.trim(), body: body ?? null, visibility: vis, band_id: band, status: 'active' })
     .select()
     .single()
 

@@ -74,7 +74,14 @@ export async function POST(req: NextRequest) {
   // New band inherits owner + theme; carry the journey; retire the old band.
   await admin.from('bands').update({ owner_id: oldBand.owner_id, theme: oldBand.theme ?? 'default', status: 'registered' }).eq('id', newBand.id)
   const { data: moved } = await admin.from('registrations').update({ band_id: newId }).eq('band_id', oldId).select('id')
-  await admin.from('bands').update({ status: 'replaced', owner_id: null }).eq('id', oldBand.id)
+  const { error: retireErr } = await admin
+    .from('bands')
+    .update({ status: 'replaced', owner_id: null })
+    .eq('id', oldBand.id)
+  if (retireErr) {
+    console.error('[replacements] retire old band error:', retireErr)
+    return NextResponse.json({ error: 'Replacement saved, but the old band could not be retired.' }, { status: 500 })
+  }
 
   // Mark the order done so it leaves the queue.
   await admin

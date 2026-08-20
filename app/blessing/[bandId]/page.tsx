@@ -32,7 +32,10 @@ export default function BlessingPage() {
 
       const { data: regs } = await supabase
         .from('registrations')
-        .select('*')
+        // Explicit columns, never select('*'): email and ip_address are revoked
+        // from the browser, and Postgres refuses the whole row for one denied
+        // column — the same trap that made a real band look "not found".
+        .select('user_name, city, state, country, prayer, verse, registered_at')
         .eq('band_id', bandId)
         .order('registered_at', { ascending: true })
 

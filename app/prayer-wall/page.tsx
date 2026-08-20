@@ -162,14 +162,17 @@ export default function PrayerWallPage() {
   async function reportPrayer(id: string) {
     const reason = prompt('Why are you reporting this prayer? (optional)')
     if (reason === null) return
-    const { error } = await supabase
-      .from('registrations')
-      .update({ flagged: true, flagged_reason: reason || 'Reported by user' })
-      .eq('id', id)
-    if (!error) {
+    const res = await fetch('/api/report-prayer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, reason }),
+    })
+    if (res.ok) {
       setFiltered(prev => prev.filter(p => p.id !== id))
       setPrayers(prev => prev.filter(p => p.id !== id))
       showToast('Prayer reported — thank you for keeping the wall sacred ✝')
+    } else {
+      showToast('That report did not go through. Please try again.')
     }
   }
 
