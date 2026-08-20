@@ -39,13 +39,6 @@ type Scan = {
   available: boolean
 }
 
-function bandIdFrom(text: string): string | null {
-  const m = text.match(/\/(?:r|band)\/([A-Za-z0-9-]+)/)
-  if (m) return m[1].toUpperCase()
-  const t = text.trim().toUpperCase()
-  return /^[A-Z]{2,4}-[A-Z0-9]{4,8}$/.test(t) ? t : null
-}
-
 function designLabel(s: Scan): string {
   const d = [s.theme, s.color].filter(Boolean).join(' ') || 'Unknown'
   return s.size ? `${d} · ${s.size}` : d
@@ -58,7 +51,6 @@ export default function HandoutPage() {
   )
 
   const [authorized, setAuthorized] = useState(false)
-  const [myId, setMyId] = useState<string | null>(null)
   const [deniedAs, setDeniedAs] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -83,7 +75,6 @@ export default function HandoutPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user?.email === ADMIN_EMAIL) {
         setAuthorized(true)
-        setMyId(user.id)
         // Bands you give out are credited to you unless you say otherwise, so the
         // common case needs no typing and cannot be forgotten.
         setUplineEmail(prev => prev || user.email || '')
@@ -95,25 +86,24 @@ export default function HandoutPage() {
   useEffect(() => () => { abortRef.current?.abort() }, [])
 
   async function addBand(raw: string) {
-    const id = bandIdFrom(raw)
-    if (!id) { setError('Could not read a band id from that tag.'); return }
+    // Server-side lookup: the browser cannot read every column of `bands`,
+    // and a denied column reads back as a missing band.
+    const res = await fetch('/api/admin/band-lookup?id=' + encodeURIComponent(raw))
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) { setError(json.error || 'Could not look that band up.'); return }
+
+    const m = json.match
+    const id = m?.band_id ?? json.candidate
     if (scans.some(s => s.band_id === id)) { setError(id + ' is already on this list'); return }
 
-    const { data } = await supabase
-      .from('bands')
-      .select('band_id, theme, color, size, status, owner_id, org_id')
-      .eq('band_id', id)
-      .maybeSingle()
-
-    const scan: Scan = data
+    const scan: Scan = m
       ? {
-          band_id: data.band_id,
-          theme: data.theme,
-          color: data.color,
-          size: data.size,
+          band_id: m.band_id,
+          theme: m.theme,
+          color: m.color,
+          size: m.size,
           known: true,
-          // A band you have claimed to your own account is still yours to give.
-          available: data.status === 'unregistered' && !data.org_id && (!data.owner_id || data.owner_id === myId),
+          available: m.status === 'unregistered' && !m.has_org && (!m.has_owner || m.owner_is_you),
         }
       : { band_id: id, theme: null, color: null, size: null, known: false, available: false }
 
@@ -134,7 +124,7 @@ export default function HandoutPage() {
         for (const rec of event.message.records) {
           try {
             const text = new TextDecoder(rec.encoding || 'utf-8').decode(rec.data)
-            if (bandIdFrom(text)) { addBand(text); return }
+            if (text.includes('/r/') || text.includes('/band/')) { addBand(text); return }
           } catch {}
         }
         setError('That tag did not carry a band id.')
@@ -319,7 +309,7 @@ export default function HandoutPage() {
             )}
 
             <form onSubmit={e => { e.preventDefault(); const v = manual; setManual(''); if (v.trim()) addBand(v) }} style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-              <input value={manual} onChange={e => setManual(e.target.value)} placeholder="PB-XXXXX" autoCapitalize="characters" autoCorrect="off"
+              <input value={manual} onChange={e => setManual(e.target.value)} placeholder="PB-XXXXX or just XXXXX" autoCapitalize="characters" autoCorrect="off"
                 style={{ ...field, flex: 1, fontFamily: 'ui-monospace, monospace', minWidth: 0 }} />
               <button type="submit" style={btn('rgba(10,22,40,0.06)', C.heading)}>Add</button>
             </form>
