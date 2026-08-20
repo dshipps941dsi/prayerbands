@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
+import { bandDescription, themeLabelMap } from '@/lib/band-label'
 import { isInternalOrAdmin } from '@/lib/internal-auth'
 import { escapeHtml } from '@/lib/escape-html'
 
@@ -19,13 +20,28 @@ export async function POST(req: NextRequest) {
       ? `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(String(trackingNumber))}`
       : 'https://tools.usps.com/go/TrackConfirmAction'
 
-    // Look up each band's dedication token so the "Add personal message" link works.
-    let bandRows: { band_id: string; dedication_token: string | null }[] = []
+    // Each band's dedication token (so the "Add personal message" link works)
+    // and its design, which is what tells one band from another. With a pink and
+    // a military in the same parcel, the id alone cannot say which dedication
+    // belongs to whom.
+    let bandRows: { band_id: string; dedication_token: string | null; description: string }[] = []
     if (Array.isArray(bandIds) && bandIds.length > 0) {
       const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!)
-      const { data } = await supabase.from('bands').select('band_id, dedication_token').in('band_id', bandIds)
-      const tokenBy = new Map((data ?? []).map((b: any) => [b.band_id, b.dedication_token]))
-      bandRows = bandIds.map((id: string) => ({ band_id: id, dedication_token: tokenBy.get(id) ?? null }))
+      const { data } = await supabase
+        .from('bands')
+        .select('band_id, dedication_token, theme, color, size')
+        .in('band_id', bandIds)
+      const { data: themeRows } = await supabase.from('band_themes').select('key, label')
+      const labels = themeLabelMap(themeRows as { key: string; label: string }[] | null)
+      const rowBy = new Map((data ?? []).map((b: any) => [b.band_id, b]))
+      bandRows = bandIds.map((id: string) => {
+        const b = rowBy.get(id)
+        return {
+          band_id: id,
+          dedication_token: b?.dedication_token ?? null,
+          description: b ? bandDescription(b, labels) : '',
+        }
+      })
     }
 
     // One card per assigned band (band ID + a link to add a personal message).
@@ -40,7 +56,7 @@ export async function POST(req: NextRequest) {
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                       <tr>
                         <td class="stack" valign="middle">
-                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;font-weight:bold;letter-spacing:1.2px;text-transform:uppercase;color:#A1782D;">Band ID</div>
+                          <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;font-weight:bold;letter-spacing:1.2px;text-transform:uppercase;color:#A1782D;">${b.description ? escapeHtml(b.description) : 'Band ID'}</div>
                           <div style="font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:25px;font-weight:bold;color:#12233F;">${escapeHtml(b.band_id)}</div>
                         </td>
                         <td class="stack stack-gap" align="right" valign="middle">

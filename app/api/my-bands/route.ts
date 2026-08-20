@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { BUILTIN_THEMES } from '@/lib/themes'
+import { bandLabel, themeLabelMap } from '@/lib/band-label'
 
 // Every band the signed-in person can switch between: ones they own, plus ones
 // they currently hold (latest registrant). Someone matching bands to outfits
@@ -37,10 +37,7 @@ export async function GET() {
   // Built-in theme names live in code; only overridden or custom themes reach
   // band_themes. Merge both, or a stock theme reads as its raw key.
   const { data: themeRows } = await admin.from('band_themes').select('key, label')
-  const themeLabels = new Map<string, string>(
-    Object.entries(BUILTIN_THEMES).map(([key, t]) => [key, t.label])
-  )
-  for (const t of themeRows ?? []) themeLabels.set(t.key as string, t.label as string)
+  const themeLabels = themeLabelMap(themeRows as { key: string; label: string }[] | null)
 
   const meta = new Map((styleRows ?? []).map(b => [b.band_id as string, b]))
   const bands = ordered.map(id => {
@@ -49,8 +46,7 @@ export async function GET() {
     // a plain band carries no distinctive theme, so whichever exists is the
     // identifying feature — previously only colour was used, which left themed
     // bands showing nothing at all.
-    const themeName = b?.theme && b.theme !== 'default' ? (themeLabels.get(b.theme) ?? b.theme) : null
-    const label = themeName ?? b?.color ?? null
+    const label = b ? bandLabel(b, themeLabels) : null
     return {
       band_id: id,
       theme: b?.theme ?? null,
