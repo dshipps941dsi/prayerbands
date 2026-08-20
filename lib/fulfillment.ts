@@ -45,3 +45,47 @@ export function orderItemLabel(it: OrderItem): string {
   const v = variantForSlug(it.id)
   return `${it.qty}× ${v.name}${it.size ? ` · ${it.size}` : ''}`
 }
+
+// Does a physical band match the design a line ordered? Shared by the picker
+// (which chooses bands out of stock) and the packer (which checks the ones a
+// human actually grabbed), so both answer the question identically. If they
+// ever drifted, the picker could allocate a band the packer would reject.
+export function matchesDesign(b: { theme: string | null; color: string | null }, v: Variant): boolean {
+  return !!v.assorted || (b.theme === v.theme && (!v.color || b.color === v.color))
+}
+
+export type PackBand = { band_id: string; theme: string | null; color: string | null; size: string | null }
+
+export type PackReconciliation = {
+  need: (OrderItem & { left: number })[]
+  matchedIds: Set<string>
+  unmatched: PackBand[]
+  remaining: number
+}
+
+// Match the bands a human physically picked against what an order asked for.
+// Greedy per line, which is right here: a band can only satisfy one line, and
+// orders have few lines.
+//
+// Shared by the pack API and the packing screen so the screen's live ✓/✕ is the
+// same verdict the server will reach on save. Callers pass only shippable bands.
+export function reconcilePack(bands: PackBand[], items: OrderItem[]): PackReconciliation {
+  const need = items.map(it => ({ ...it, left: it.qty }))
+  const matchedIds = new Set<string>()
+  const unmatched: PackBand[] = []
+
+  for (const b of bands) {
+    const line = need.find(n => {
+      if (n.left <= 0) return false
+      if (!matchesDesign(b, variantForSlug(n.id))) return false
+      // Hold a pick to its size only when both sides carry one: some designs are
+      // stocked unsized, and flagging those would cry wolf.
+      if (n.size && b.size && n.size !== b.size) return false
+      return true
+    })
+    if (line) { line.left--; matchedIds.add(b.band_id) }
+    else unmatched.push(b)
+  }
+
+  return { need, matchedIds, unmatched, remaining: need.reduce((a, n) => a + n.left, 0) }
+}

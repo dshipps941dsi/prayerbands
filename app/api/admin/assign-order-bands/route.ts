@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { variantForSlug, parseOrderItems, type Variant } from '@/lib/fulfillment'
+import { variantForSlug, parseOrderItems, matchesDesign } from '@/lib/fulfillment'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
@@ -47,9 +47,6 @@ export async function POST(req: NextRequest) {
     .eq('status', 'unregistered').is('owner_id', null).is('org_id', null)
     .order('band_id')
   const available = (pool ?? []) as { band_id: string; theme: string | null; color: string | null; size: string | null }[]
-
-  const matchesDesign = (b: typeof available[number], v: Variant) =>
-    v.assorted || (b.theme === v.theme && (!v.color || b.color === v.color))
 
   const used = new Set<string>()
   const assigned: string[] = []
