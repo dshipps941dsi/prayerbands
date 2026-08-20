@@ -145,6 +145,7 @@ export default function LabelsPage() {
         </div>
         <div style={{ display: 'flex', gap: 16 }}>
           <a href="/fulfill" style={{ color: C.gold, fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>← Packing</a>
+          <a href="/fulfill/handout" style={{ color: C.gold, fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>Give away</a>
           <a href="/admin" style={{ color: C.gold, fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>Admin</a>
         </div>
       </div>

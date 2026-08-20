@@ -17,6 +17,7 @@ type Inventory = {
   sellable: number
   org_stock: number
   registered: number
+  handed_out?: number
   total: number
   breakdown: { theme: string; color: string; size: string; count: number }[]
 }
@@ -90,6 +91,7 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
                 {[
                   { n: inventory.sellable, l: 'Sellable' },
                   { n: inventory.registered, l: 'Registered' },
+                  { n: inventory.handed_out ?? 0, l: 'Given away' },
                   { n: inventory.org_stock, l: 'Church stock' },
                   { n: inventory.total, l: 'Total made' },
                 ].map(s => (

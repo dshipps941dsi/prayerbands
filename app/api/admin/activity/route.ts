@@ -216,6 +216,9 @@ export async function GET(req: NextRequest) {
       sellable: sellable.length,
       org_stock: rows.filter(b => b.org_id).length,
       registered: rows.filter(b => b.status === 'registered').length,
+      // Given away rather than sold. Counted separately so the sellable number
+      // stays honest about what is actually still in the box.
+      handed_out: rows.filter(b => b.status === 'handed_out').length,
       total: rows.length,
       breakdown: [...byKey.entries()]
         .map(([key, count]) => {
