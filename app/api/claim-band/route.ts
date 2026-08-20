@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { adoptNameFromRegistration } from '@/lib/adopt-name'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 // Attach an UNOWNED band to the signed-in user's account (sets bands.owner_id).
@@ -102,7 +103,7 @@ export async function POST(req: NextRequest) {
 
     const { data: latestUnlinked } = await admin
       .from('registrations')
-      .select('id, user_id')
+      .select('id, user_id, user_name')
       .eq('band_id', bandId)
       .order('registered_at', { ascending: false })
       .limit(1)
@@ -117,6 +118,9 @@ export async function POST(req: NextRequest) {
         // Ownership already succeeded; log and continue rather than failing the claim.
         console.error('[claim-band] registration adopt error:', adoptError)
       }
+      // They typed a name on the band's first screen moments ago. Use it rather
+      // than leaving the account blank.
+      await adoptNameFromRegistration(admin, user.id, (latestUnlinked as any).user_name)
     }
 
     return NextResponse.json({ success: true })

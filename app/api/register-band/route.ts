@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
+import { adoptNameFromRegistration } from '@/lib/adopt-name'
 import { NextRequest, NextResponse } from 'next/server'
 import { isFlaggable, AUTO_FLAG_REASON } from '@/lib/moderation'
 import { escapeHtml } from '@/lib/escape-html'
@@ -176,6 +177,10 @@ export async function POST(req: NextRequest) {
       .from('bands')
       .update({ status: 'registered' })
       .eq('band_id', bandId)
+
+    // A signed-in person registering a stop has just given their name. If their
+    // account has none — the emailed-code sign-up never asks — take it.
+    if (holderUserId) await adoptNameFromRegistration(supabase, holderUserId, cleanName)
 
     // Mark a gift band's blessing as seen once the recipient actually registers
     // (idempotent no-op for non-gift bands / later holders). This replaces the
