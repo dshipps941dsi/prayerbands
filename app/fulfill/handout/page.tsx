@@ -58,6 +58,7 @@ export default function HandoutPage() {
   )
 
   const [authorized, setAuthorized] = useState(false)
+  const [myId, setMyId] = useState<string | null>(null)
   const [deniedAs, setDeniedAs] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -80,8 +81,13 @@ export default function HandoutPage() {
   useEffect(() => {
     ;(async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user?.email === ADMIN_EMAIL) setAuthorized(true)
-      else { setAuthorized(false); setDeniedAs(user?.email ?? null) }
+      if (user?.email === ADMIN_EMAIL) {
+        setAuthorized(true)
+        setMyId(user.id)
+        // Bands you give out are credited to you unless you say otherwise, so the
+        // common case needs no typing and cannot be forgotten.
+        setUplineEmail(prev => prev || user.email || '')
+      } else { setAuthorized(false); setDeniedAs(user?.email ?? null) }
       setLoading(false)
     })()
   }, [])
@@ -106,7 +112,8 @@ export default function HandoutPage() {
           color: data.color,
           size: data.size,
           known: true,
-          available: data.status === 'unregistered' && !data.owner_id && !data.org_id,
+          // A band you have claimed to your own account is still yours to give.
+          available: data.status === 'unregistered' && !data.org_id && (!data.owner_id || data.owner_id === myId),
         }
       : { band_id: id, theme: null, color: null, size: null, known: false, available: false }
 

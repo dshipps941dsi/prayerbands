@@ -47,14 +47,17 @@ export async function POST(req: NextRequest) {
 
   const admin = createServiceClient()
 
-  // Only bands genuinely still on the shelf. Anything claimed, sold, packed into
-  // an order, or already handed out is invisible here, so the same band cannot
-  // be given away twice or pulled out from under a paying customer.
+  // Only bands genuinely still on the shelf — plus bands the admin has claimed
+  // to their own account, which is the normal way of holding one back before
+  // giving it away. Anything owned by somebody else, sold, packed into an order,
+  // or already handed out stays invisible, so a band cannot be given away twice
+  // or pulled out from under a paying customer.
   const { data: rows } = await admin
     .from('bands')
     .select('band_id, theme, color, size')
     .in('band_id', bandIds)
-    .eq('status', 'unregistered').is('owner_id', null).is('org_id', null)
+    .eq('status', 'unregistered').is('org_id', null)
+    .or('owner_id.is.null,owner_id.eq.' + user.id)
   const available = (rows ?? []).map(b => b.band_id as string)
   const availableSet = new Set(available)
 
@@ -85,6 +88,10 @@ export async function POST(req: NextRequest) {
     .from('bands')
     .update({
       status: 'handed_out',
+      // Ownership is released on the way out. A band you still own cannot be
+      // claimed by whoever you gave it to — claim-band refuses it as "already
+      // linked to another account", silently, after they have made an account.
+      owner_id: null,
       upline_user_id: uplineUserId,
       upline_email: uplineEmail,
     })
