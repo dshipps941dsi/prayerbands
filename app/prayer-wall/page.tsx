@@ -65,25 +65,40 @@ export default function PrayerWallPage() {
     }
   }, [])
 
+  // Read through /api/wall-prayers rather than querying Supabase from here, so
+  // names are shortened to a last initial on the server and full surnames never
+  // reach the browser at all.
   const loadPrayers = useCallback(async (pageNum = 0) => {
-    const from = pageNum * PAGE_SIZE
-    const { data, error, count } = await supabase
-      .from('registrations')
-      .select('id, band_id, prayer, user_name, city, state, country, verse, registered_at', { count: 'exact' })
-      .not('prayer', 'is', null)
-      .neq('prayer', '')
-      .eq('flagged', false)
-      .order('registered_at', { ascending: false })
-      .range(from, from + PAGE_SIZE - 1)
-
-    if (!error && data) {
-      const newPrayers = pageNum === 0 ? (data as Prayer[]) : [...prayers, ...(data as Prayer[])]
-      setPrayers(newPrayers)
-      setFiltered(applyFilter(newPrayers, filter))
-      setTotalCount(count || 0)
-    }
+    try {
+      const res = await fetch(`/api/wall-prayers?page=${pageNum}&pageSize=${PAGE_SIZE}`)
+      const json = await res.json()
+      if (res.ok && Array.isArray(json.prayers)) {
+        const incoming = json.prayers as Prayer[]
+        const newPrayers = pageNum === 0 ? incoming : [...prayers, ...incoming]
+        setPrayers(newPrayers)
+        setFiltered(applyFilter(newPrayers, filter))
+        setTotalCount(json.count || 0)
+      }
+    } catch {}
     setLoading(false)
   }, [filter, prayers, applyFilter])
+
+  // A realtime INSERT payload carries the whole row, surname included, so we
+  // throw it away and re-read the newest page through the API instead. Merging
+  // by id keeps any extra pages the reader has already loaded.
+  const refreshTop = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/wall-prayers?page=0&pageSize=${PAGE_SIZE}`)
+      const json = await res.json()
+      if (!res.ok || !Array.isArray(json.prayers)) return
+      setTotalCount(json.count || 0)
+      setPrayers(prev => {
+        const have = new Set(prev.map(p => p.id))
+        const fresh = (json.prayers as Prayer[]).filter(p => !have.has(p.id))
+        return fresh.length ? [...fresh, ...prev] : prev
+      })
+    } catch {}
+  }, [])
 
   useEffect(() => {
     loadPrayers(0)
@@ -107,13 +122,8 @@ export default function PrayerWallPage() {
       })
     const channel = supabase
       .channel('prayer-wall')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'registrations' }, payload => {
-        const newPrayer = payload.new as Prayer
-        if (newPrayer.prayer) {
-          setPrayers(prev => [newPrayer, ...prev])
-          setFiltered(prev => [newPrayer, ...prev])
-          setTotalCount(c => c + 1)
-        }
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'registrations' }, () => {
+        refreshTop()
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
