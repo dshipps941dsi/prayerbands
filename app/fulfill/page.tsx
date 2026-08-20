@@ -251,7 +251,10 @@ export default function FulfillPage() {
             {toPack.length} order{toPack.length === 1 ? '' : 's'} to pack
           </div>
         </div>
-        <a href="/admin" style={{ color: C.gold, fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>Admin →</a>
+        <div style={{ display: 'flex', gap: 16 }}>
+          <a href="/fulfill/labels" style={{ color: C.gold, fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>Labels</a>
+          <a href="/admin" style={{ color: C.gold, fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>Admin →</a>
+        </div>
       </div>
 
       <div className="pb-fulfill-grid" style={{ padding: 20, display: 'grid', gap: 20, alignItems: 'start' }}>

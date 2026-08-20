@@ -53,7 +53,10 @@ export async function POST(req: NextRequest) {
         payment_status: session.payment_status,
         status: 'pending',
         has_custom_bands: session.metadata?.type === 'custom',
-        shipping_address: (session as any).shipping?.address || (session as any).shipping_details?.address || null,
+        // sessionShipping() knows every field name Stripe has used; the two paths
+        // that used to be inlined here are both gone in the current API version,
+        // so every order was being saved with no address at all.
+        shipping_address: sessionShipping(session).address || null,
         order_metadata: session.metadata,
         org_id: session.metadata?.org_id || null,
       })
