@@ -56,6 +56,7 @@ update public.referrals r
  where r.status = 'pending'
    and not exists (select 1 from public.orders o where o.stripe_session_id = r.stripe_session_id);
 
--- Editable without a deploy, like every other price in the system.
-insert into public.site_config (key, value) values ('referral_credit_cents', '500')
+-- $1.50 per referred order. Editable without a deploy, like every other price
+-- in the system, so this seed value only matters for a fresh database.
+insert into public.site_config (key, value) values ('referral_credit_cents', '150')
   on conflict (key) do nothing;
