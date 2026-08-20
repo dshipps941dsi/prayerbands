@@ -118,7 +118,26 @@ export async function GET(req: NextRequest) {
     })
   }
 
-  // 3. Band is pending transfer
+  // 3. Pre-dedicated gift band — recipient's first tap, message not yet seen.
+  // Gate on "no registrations yet" rather than a status string so it fires for
+  // assigned/shipped gift bands too (one-time store gifts and subscriptions).
+  //
+  // Ahead of the pending-transfer screen on purpose: a band can be both dedicated
+  // and handed on, and the dedication is the whole reason the giver wrote it. The
+  // transfer is unaffected — register-band completes it from the registration, not
+  // from whichever screen was shown.
+  if (regs.length === 0 && dedicationNote && !band.dedication_viewed) {
+    return NextResponse.json({
+      screen: 'incoming_gift',
+      band,
+      registrations: regs,
+      uplineName,
+      dedicationNote,
+      dedicationRecipient,
+    })
+  }
+
+  // 3.5 Band is pending transfer
   if (band.status === 'pending_transfer') {
     const { data: transfer } = await supabase
       .from('band_transfers')
@@ -147,20 +166,6 @@ export async function GET(req: NextRequest) {
       uplineName,
       transfer,
       senderName,
-    })
-  }
-
-  // 3.5 Pre-dedicated gift band — recipient's first tap, message not yet seen.
-  // Gate on "no registrations yet" rather than a status string so it fires for
-  // assigned/shipped gift bands too (one-time store gifts and subscriptions).
-  if (regs.length === 0 && dedicationNote && !band.dedication_viewed) {
-    return NextResponse.json({
-      screen: 'incoming_gift',
-      band,
-      registrations: regs,
-      uplineName,
-      dedicationNote,
-      dedicationRecipient,
     })
   }
 

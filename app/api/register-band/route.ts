@@ -191,11 +191,58 @@ export async function POST(req: NextRequest) {
     // If this registration is the recipient accepting a hand-off, complete the
     // pending transfer here — server-side and atomic with the registration —
     // rather than via forgeable client writes that RLS now blocks anyway.
-    await supabase
+    const { data: completedTransfers } = await supabase
       .from('band_transfers')
       .update({ status: 'completed', completed_at: new Date().toISOString() })
       .eq('band_id', bandId)
       .eq('status', 'pending')
+      .select('from_user_id')
+
+    // Handing a band over has to hand ownership over too. Completing the
+    // transfer used to leave owner_id on the giver forever, so a recipient who
+    // later made an account was refused by claim-band with "already linked to
+    // another account" — on the band in their own hand. A guest recipient has no
+    // account to receive ownership, so it is released instead, which leaves the
+    // band claimable if they sign up later.
+    if (completedTransfers && completedTransfers.length > 0) {
+      const giverId = (completedTransfers[0] as any).from_user_id as string | null
+      const giver = giverId && giverId !== holderUserId ? giverId : null
+
+      let giverEmail: string | null = null
+      if (giver) {
+        const { data: giverProfile } = await supabase
+          .from('profiles').select('email').eq('id', giver).maybeSingle()
+        giverEmail = (giverProfile as any)?.email ?? null
+      }
+
+      const { error: handoverError } = await supabase
+        .from('bands')
+        .update({
+          owner_id: holderUserId || null,
+          // The giver becomes the upline on every pass, so the tree gains a
+          // level each time instead of everyone hanging off whoever started it.
+          ...(giver ? { upline_user_id: giver, upline_email: giverEmail } : {}),
+        })
+        .eq('band_id', bandId)
+      if (handoverError) console.error('[register-band] handover error:', handoverError)
+
+      // Sponsorship is what the reach tree actually traverses (profiles.upline_
+      // user_id), and accepting a hand-off is exactly the moment one person
+      // introduces another. First-wins, matching claim-band: whoever gave
+      // someone their first band keeps them, so a later hand-off cannot take
+      // attribution from the person who actually introduced them.
+      if (giver && holderUserId) {
+        const { data: recipientProfile } = await supabase
+          .from('profiles').select('upline_user_id').eq('id', holderUserId).maybeSingle()
+        if (recipientProfile && !(recipientProfile as any).upline_user_id) {
+          await supabase
+            .from('profiles')
+            .update({ upline_user_id: giver, upline_band_id: bandId })
+            .eq('id', holderUserId)
+            .is('upline_user_id', null)
+        }
+      }
+    }
 
     let alertEmails = (prevRegs || []).map((r: any) => r.email).filter(Boolean)
     // Respect notification opt-outs: drop any prior holder whose account has
