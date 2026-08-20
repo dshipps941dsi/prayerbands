@@ -592,6 +592,35 @@ export default function AdminPage() {
         {/* ORDERS TAB */}
         {activeTab === 'orders' && (
           <div>
+            {/* The station pages live outside /admin but this is where the work
+                starts, so link them from the view the day actually begins in. */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
+              {[
+                { href: '/fulfill', label: 'Packing station', hint: 'Tap bands into an order' },
+                { href: '/fulfill/labels', label: 'Address labels', hint: 'Print an Avery sheet' },
+                { href: '/fulfill/handout', label: 'Give away', hint: 'Take bands out of stock' },
+              ].map(l => (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  style={{
+                    flex: '1 1 200px',
+                    background: C.card,
+                    border: `1px solid ${C.borderGold}`,
+                    borderRadius: 10,
+                    padding: '13px 16px',
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 8px rgba(10,22,40,0.06)',
+                  }}
+                >
+                  <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 16, fontWeight: 700, color: C.heading }}>
+                    {l.label} <span style={{ color: C.gold }}>&rarr;</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: C.secondary, marginTop: 2 }}>{l.hint}</div>
+                </a>
+              ))}
+            </div>
+
             {/* Pre-dedicate a band */}
             <div style={{ background: C.card, border: `1px solid ${C.borderGold}`, borderRadius: 10, padding: '18px 20px', marginBottom: 20 }}>
               <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 700, color: C.heading, marginBottom: 4 }}>Pre-dedicate a Band</div>
