@@ -183,6 +183,7 @@ export default function BandPage() {
   const [testimony, setTestimony] = useState('')
   const [prayerSubmitting, setPrayerSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState<'home' | 'prayers' | 'journey' | 'purchase' | 'account'>('home')
+  const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null } | null>(null)
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
   // Bands this person owns or holds, for the header switcher.
@@ -284,6 +285,15 @@ export default function BandPage() {
     supabase.from('prayer_requests').select('*').eq('user_id', userId).eq('band_id', bandId)
       .order('created_at', { ascending: false }).then(({ data }) => setPrayers(data ?? []))
   }, [userId, bandId])
+
+  // Referral credit, fetched only once someone opens their account tab.
+  useEffect(() => {
+    if (activeTab !== 'account' || !userId || credit) return
+    fetch('/api/my-credit')
+      .then(r => r.json())
+      .then(d => setCredit({ balance_cents: d.balance_cents ?? 0, referrals: d.referrals ?? 0, code: d.code ?? null }))
+      .catch(() => {})
+  }, [activeTab, userId, credit])
 
   useEffect(() => {
     if (transferStep !== 'pending') return
@@ -844,6 +854,24 @@ export default function BandPage() {
             <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Account</div>
             {userId ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {credit && (credit.balance_cents > 0 || credit.referrals > 0 || credit.code) && (
+                  <div style={{ background: 'linear-gradient(135deg, #1a4a3a, #2E7D6B)', borderRadius: 12, padding: '18px 20px', color: 'white' }}>
+                    <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.75, marginBottom: 6 }}>Referral credit</div>
+                    <div style={{ fontFamily: serif, fontSize: 30, fontWeight: 700, lineHeight: 1 }}>
+                      ${(credit.balance_cents / 100).toFixed(2)}
+                    </div>
+                    <div style={{ fontFamily: body, fontSize: 13, opacity: 0.85, marginTop: 8, lineHeight: 1.5 }}>
+                      {credit.referrals > 0
+                        ? `From ${credit.referrals} order${credit.referrals === 1 ? '' : 's'} placed through you. It comes off your next order automatically.`
+                        : 'Share your code below. When someone orders with it, credit lands here.'}
+                    </div>
+                    {credit.code && (
+                      <div style={{ marginTop: 14, background: 'rgba(255,255,255,0.14)', borderRadius: 9, padding: '10px 13px', fontFamily: 'ui-monospace, monospace', fontSize: 15, letterSpacing: '0.08em' }}>
+                        {credit.code}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <a href="/dashboard" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
                   📊 My Dashboard
                 </a>

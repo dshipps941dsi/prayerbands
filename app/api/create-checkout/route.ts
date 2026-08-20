@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { getSiteConfig } from '@/lib/getSiteConfig'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { creditBalanceCents } from '@/lib/credit'
 
 // Fallback definitions (used only if the products table hasn't been seeded yet),
 // so checkout keeps working before db/products.sql is run.
@@ -97,20 +98,59 @@ export async function POST(req: NextRequest) {
         .maybeSingle()
       if (refProfile) referrerUserId = refProfile.id as string
     }
+    // Store credit the buyer has earned from referrals, spent automatically.
+    // Capped at the order total so a discount can never exceed what is owed,
+    // and only for a signed-in buyer — credit belongs to an account.
+    let creditUserId: string | null = null
+    let creditApplied = 0
+    try {
+      const authed = await createClient()
+      const { data: { user: buyer } } = await authed.auth.getUser()
+      if (buyer) {
+        const balance = await creditBalanceCents(admin, buyer.id)
+        if (balance > 0) {
+          const goodsTotal = lineItems.reduce(
+            (sum, li) => sum + (li.price_data?.unit_amount ?? 0) * (li.quantity ?? 1), 0
+          )
+          creditApplied = Math.min(balance, goodsTotal)
+          if (creditApplied > 0) creditUserId = buyer.id
+        }
+      }
+    } catch (e) {
+      // Never block a purchase over credit. Worst case they keep the balance.
+      console.error('[create-checkout] credit lookup failed:', e)
+      creditApplied = 0
+      creditUserId = null
+    }
+
     const promoId = process.env.STRIPE_REFERRAL_PROMO_CODE_ID
     // Accept either a Promotion Code id (promo_...) or a Coupon id.
     const referralDiscount: Stripe.Checkout.SessionCreateParams.Discount | null = promoId
       ? (promoId.startsWith('promo_') ? { promotion_code: promoId } : { coupon: promoId })
       : null
-    const applyReferralDiscount = !!(referrerUserId && referralDiscount)
+    const applyReferralDiscount = !!(referrerUserId && referralDiscount) && creditApplied === 0
+
+    let creditCoupon: string | null = null
+    if (creditApplied > 0 && creditUserId) {
+      const coupon = await stripe.coupons.create({
+        amount_off: creditApplied,
+        currency: 'usd',
+        duration: 'once',
+        name: 'Referral credit',
+        max_redemptions: 1,
+      })
+      creditCoupon = coupon.id
+    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      ...(applyReferralDiscount && referralDiscount
-        ? { discounts: [referralDiscount] }
-        : { allow_promotion_codes: true }),
+      ...(creditCoupon
+        ? { discounts: [{ coupon: creditCoupon }] }
+        : applyReferralDiscount && referralDiscount
+          ? { discounts: [referralDiscount] }
+          : { allow_promotion_codes: true }),
       automatic_tax: { enabled: process.env.STRIPE_TAX_ENABLED === 'true' },
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/store`,
@@ -128,6 +168,9 @@ export async function POST(req: NextRequest) {
         items: JSON.stringify(items),
         replaces: replaces ? String(replaces).trim().toUpperCase() : '',
         referrer_user_id: referrerUserId || '',
+        // Read back by the webhook to record the spend against the ledger.
+        credit_applied_cents: creditApplied > 0 ? String(creditApplied) : '',
+        credit_user_id: creditUserId || '',
         referral_code: referrerUserId ? referralCode : '',
       },
     })

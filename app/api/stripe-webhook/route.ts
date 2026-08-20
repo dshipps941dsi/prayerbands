@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { recordCredit } from '@/lib/credit'
+import { getSiteConfig } from '@/lib/getSiteConfig'
 
 export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
@@ -60,6 +62,8 @@ export async function POST(req: NextRequest) {
         order_metadata: session.metadata,
         org_id: session.metadata?.org_id || null,
       })
+
+      await settleCredit(supabase, session)
 
       // Decrement catalog stock and flag any backordered lines.
       await applyInventory(supabase, session)
@@ -515,5 +519,68 @@ async function sendSubscriptionEmails(session: Stripe.Checkout.Session, plan: an
     })
   } catch (e) {
     console.error('Subscription email error:', e)
+  }
+}
+
+// Referral credit is earned when Stripe confirms payment, not when the checkout
+// page opens — the old behaviour recorded abandoned carts as if they were sales.
+// Redemption is recorded here too, so both sides of the ledger land in the same
+// place and the same webhook retry protects them.
+async function settleCredit(supabase: any, session: any) {
+  const sessionId = session.id as string
+
+  // 1. The buyer spent credit at checkout. create-checkout applied it as a
+  //    one-off discount and stamped the amount here.
+  const spent = parseInt(session.metadata?.credit_applied_cents || '0', 10) || 0
+  const spender = session.metadata?.credit_user_id || null
+  if (spent > 0 && spender) {
+    try {
+      await recordCredit(supabase, {
+        user_id: spender,
+        delta_cents: -Math.abs(spent),
+        reason: 'redemption',
+        stripe_session_id: sessionId,
+        note: 'Applied at checkout',
+      })
+    } catch (e) {
+      console.error('[stripe-webhook] credit redemption error:', e)
+    }
+  }
+
+  // 2. Somebody referred this order. Credit them.
+  const referrerUserId = session.metadata?.referrer_user_id || null
+  if (!referrerUserId) return
+
+  try {
+    const creditCents = await getSiteConfig('referral_credit_cents')
+    if (!creditCents || creditCents <= 0) return
+
+    const { data: order } = await supabase
+      .from('orders').select('id').eq('stripe_session_id', sessionId).maybeSingle()
+
+    const { duplicate } = await recordCredit(supabase, {
+      user_id: referrerUserId,
+      delta_cents: creditCents,
+      reason: 'referral',
+      order_id: order?.id ?? null,
+      stripe_session_id: sessionId,
+      note: 'Referral reward',
+    })
+    // A retry finds the credit already recorded; the referral row is updated
+    // either way so its status cannot drift from the ledger.
+    if (duplicate) return
+
+    const { error: refErr } = await supabase
+      .from('referrals')
+      .update({
+        status: 'earned',
+        order_id: order?.id ?? null,
+        credit_cents: creditCents,
+        earned_at: new Date().toISOString(),
+      })
+      .eq('stripe_session_id', sessionId)
+    if (refErr) console.error('[stripe-webhook] referral update error:', refErr)
+  } catch (e) {
+    console.error('[stripe-webhook] referral credit error:', e)
   }
 }
