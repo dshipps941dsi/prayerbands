@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { publicName } from '@/lib/public-name'
+import { scatterPoint } from '@/lib/map-scatter'
 
 // Public, read-only stats for the home page: aggregate counts + a set of recent
 // PUBLIC (non-flagged) prayers, anonymized to first name + last initial, with
@@ -15,6 +16,9 @@ export async function GET() {
     .from('registrations')
     .select('*', { count: 'exact', head: true })
     .not('prayer', 'is', null)
+    // Registering without writing anything stores an empty string, which
+    // counted as a prayer and overstated the headline figure.
+    .neq('prayer', '')
 
   const { count: bands } = await supabase
     .from('bands')
@@ -48,6 +52,18 @@ export async function GET() {
     .slice(0, 5)
     .map(([country, count]) => ({ country, count }))
 
+  // Everyone the bands have reached, whether or not they wrote something. The
+  // map answers "where has this travelled", and someone who registered without
+  // leaving a prayer travelled just as far — nine real people were missing from
+  // it for no better reason than having left the box blank.
+  const { data: geoStops } = await supabase
+    .from('registrations')
+    .select('user_name, city, state, country, latitude, longitude, prayer, band_id, registered_at')
+    .eq('flagged', false)
+    .not('latitude', 'is', null)
+    .order('registered_at', { ascending: false })
+    .limit(300)
+
   const { data: recent } = await supabase
     .from('registrations')
     .select('user_name, city, country, latitude, longitude, prayer, band_id, registered_at')
@@ -78,9 +94,24 @@ export async function GET() {
     registered_at: r.registered_at,
   }))
 
+  const points = (geoStops || []).map((r: any) => {
+    // Spread stops that share a city centroid so a town of bands reads as a
+    // town, not a single pin. Seeded by band and time, so each sits still.
+    const at = scatterPoint(r.latitude, r.longitude, `${r.band_id}|${r.registered_at}`)
+    return {
+    name: anon(r.user_name),
+    location: [r.city, r.state, r.country].filter(Boolean).join(', ') || 'Somewhere',
+    lat: at.lat,
+    lng: at.lng,
+    prayer: (r.prayer || '').trim() || null,
+    band: r.band_id,
+    }
+  })
+
   return NextResponse.json({
     stats: { prayers: prayers || 0, people: people || 0, countries, cities, bands: bands || 0 },
     prayers: prayersList,
+    points,
     topCountries,
   })
 }

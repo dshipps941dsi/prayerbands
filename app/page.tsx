@@ -206,8 +206,12 @@ export default function HomePage() {
   ];
 
   const mapPoints: MapPoint[] = useMemo(() => {
-    const liveGeo = ((live?.prayers || []) as any[]).filter(p => p.lat != null && p.lng != null);
-    return liveGeo.length >= 12
+    // Every stop with coordinates, not only the ones carrying a prayer.
+    const liveGeo = ((live?.points || live?.prayers || []) as any[]).filter(p => p.lat != null && p.lng != null);
+    // Threshold was 12, which quietly swapped in hardcoded sample points
+    // whenever real reach was smaller — showing invented pins on a map that
+    // looked live. Three real places is enough to be a map of somewhere.
+    return liveGeo.length >= 3
       ? liveGeo.map(p => ({ lat: p.lat, lng: p.lng, name: p.name, loc: p.location, band: p.band, prayer: p.prayer }))
       : MAP_POINTS;
   }, [live]);
