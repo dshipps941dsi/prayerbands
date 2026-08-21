@@ -230,16 +230,31 @@ export default function BandPage() {
   // /api/claim-band does the guarding: it refuses a band owned by someone else
   // or actively held by a different account, so this cannot take a band that
   // is not theirs.
+  //
+  // But an untouched band has no holder to compare against, so those guards let
+  // it through — and merely opening the page claimed it. PB-SCSXD was given
+  // away, then silently re-claimed two minutes later by its own giver opening
+  // the link to check the dedication read well. Had it shipped that way, Chris
+  // would have made an account and been told the band belonged to someone else.
+  //
+  // Requiring a registration is what separates the two cases. This exists to
+  // recover a stop somebody made as a guest and then signed in to keep, so with
+  // no registration there is nothing to recover and nothing to infer: an
+  // account being signed in on the phone that opened the link says nothing
+  // about who the band is for. Every account this was written for — Jackson's,
+  // Brinley's — registered first and signed in after, so all of them still
+  // claim on the way back.
   useEffect(() => {
     if (!userId || !status.band) return
     if (status.band.owner_id) return
+    if (!status.registrations?.length) return
     fetch('/api/claim-band', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ bandId }),
     }).catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, status.band?.band_id, status.band?.owner_id])
+  }, [userId, status.band?.band_id, status.band?.owner_id, status.registrations?.length])
 
   // Bands available in the header switcher. Signed-out visitors get none, so
   // the control stays hidden for anyone tapping a stranger's band.
