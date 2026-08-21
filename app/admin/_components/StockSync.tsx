@@ -17,6 +17,7 @@ type Row = {
 }
 
 type Orphan = { theme: string; color: string; count: number }
+type Unmapped = { slug: string; name: string }
 
 // The store now counts bands directly, so what customers see is always right.
 // This panel exists for the number that is *not* automatic: the stored copy in
@@ -29,6 +30,7 @@ type Orphan = { theme: string; color: string; count: number }
 export default function StockSync({ C }: { C: C }) {
   const [rows, setRows] = useState<Row[]>([])
   const [orphans, setOrphans] = useState<Orphan[]>([])
+  const [unmapped, setUnmapped] = useState<Unmapped[]>([])
   const [shelfTotal, setShelfTotal] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -41,7 +43,7 @@ export default function StockSync({ C }: { C: C }) {
       const res = await fetch('/api/admin/resync-stock')
       const d = await res.json().catch(() => ({}))
       if (!res.ok) { setError(d.error || 'Could not read stock.'); return }
-      setRows(d.rows || []); setOrphans(d.orphans || []); setShelfTotal(d.shelfTotal ?? null)
+      setRows(d.rows || []); setOrphans(d.orphans || []); setUnmapped(d.unmapped || []); setShelfTotal(d.shelfTotal ?? null)
     } catch { setError('Network error.') }
     finally { setLoading(false) }
   }, [])
@@ -114,6 +116,26 @@ export default function StockSync({ C }: { C: C }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {unmapped.length > 0 && (
+          <div style={{ marginTop: 18, padding: '12px 14px', background: 'rgba(180,68,31,0.06)', border: '1px solid rgba(180,68,31,0.28)', borderRadius: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#B4441F', marginBottom: 6 }}>
+              {unmapped.length === 1 ? 'A product is not linked to a band design' : 'Products are not linked to a band design'}
+            </div>
+            <div style={{ fontSize: 12, color: C.secondary, lineHeight: 1.6, marginBottom: 8 }}>
+              Adding a product here does not tell fulfillment which physical bands it means &mdash; that link lives in
+              the code. Until it is added {unmapped.length === 1 ? 'this product reads' : 'these products read'} as
+              out of stock and cannot be picked for an order. Send the slug over and it takes a minute.
+            </div>
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: C.body }}>
+              {unmapped.map(u => (
+                <li key={u.slug} style={{ marginBottom: 2 }}>
+                  {u.name} <span style={{ color: C.secondary }}>({u.slug})</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { availableFor, orphanStock, type OpenOrder, type StockBand } from '@/lib/inventory'
+import { isMapped } from '@/lib/fulfillment'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
@@ -79,7 +80,15 @@ async function survey() {
   // Designs sitting in the box that no *active* product can sell.
   const sellableSlugs = (products ?? []).filter((p: any) => p.active).map((p: any) => p.slug)
 
-  return { rows, orphans: orphanStock(shelf, sellableSlugs), shelfTotal: shelf.length }
+  // Active products with no entry in PRODUCT_VARIANTS. They match no band, so
+  // they read as out of stock and can never be filled — which is the safe way
+  // to be wrong, but only if somebody is told. Adding a product in the admin
+  // does not create the mapping; that still lives in lib/fulfillment.ts.
+  const unmapped = (products ?? [])
+    .filter((p: any) => p.active && !isMapped(p.slug))
+    .map((p: any) => ({ slug: p.slug, name: p.name }))
+
+  return { rows, orphans: orphanStock(shelf, sellableSlugs), shelfTotal: shelf.length, unmapped }
 }
 
 export async function GET() {
@@ -124,5 +133,5 @@ export async function POST() {
     )
   }
 
-  return NextResponse.json({ updated: changed.length, rows: s.rows, orphans: s.orphans })
+  return NextResponse.json({ updated: changed.length, rows: s.rows, orphans: s.orphans, unmapped: s.unmapped })
 }

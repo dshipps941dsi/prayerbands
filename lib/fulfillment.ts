@@ -4,7 +4,7 @@
 // carry a color instead of a unique theme; packs / custom are assorted (any
 // design). Keep in sync with the products catalog and the batch generator themes.
 
-export type Variant = { name: string; theme?: string; color?: string; assorted?: boolean }
+export type Variant = { name: string; theme?: string; color?: string; assorted?: boolean; unmapped?: boolean }
 
 export const PRODUCT_VARIANTS: Record<string, Variant> = {
   baseball: { name: 'Home Run', theme: 'baseball' },
@@ -16,15 +16,39 @@ export const PRODUCT_VARIANTS: Record<string, Variant> = {
   teal: { name: 'Teal', theme: 'default', color: 'Teal' },
   pink: { name: 'Pink', theme: 'default', color: 'Pink' },
   vhs: { name: 'VHS', theme: 'vhs' },
+  volleyball: { name: 'Volleyball', theme: 'volleyball' },
+  // The store calls it Gray; the bands were engraved as "Light Grey". The
+  // spelling has to match the band exactly or the design matches nothing.
+  gray: { name: 'Gray', theme: 'default', color: 'Light Grey' },
   // Bulk / custom orders aren't a single design — ship assorted.
   custom: { name: 'Custom', assorted: true },
   'pack-50': { name: 'Starter Pack', assorted: true },
   'pack-100': { name: 'Community Pack', assorted: true },
   'pack-200': { name: 'Mission Pack', assorted: true },
+  // Older orders carry no per-line breakdown; assign-order-bands falls back to
+  // this so those still fill from anything. Explicit because the catch-all
+  // below no longer means "any design".
+  assorted: { name: 'Assorted', assorted: true },
 }
 
+// A slug with no entry above matches NOTHING, deliberately.
+//
+// This used to fall back to `assorted`, which matches every band — so adding a
+// product in the admin without a mapping here did not fail, it claimed the
+// whole shelf. Gray and Volleyball went live reading 156/203/167 in stock
+// against 22 and 20 really there, and an order for either could have been
+// filled with a military band or a breast-cancer one. Nothing flagged it.
+//
+// Zero is the safe direction to be wrong in: a product reads out of stock,
+// which is visible and annoying, instead of overselling stock that does not
+// exist and shipping the wrong design. isMapped() surfaces these in the admin
+// so an unmapped product is noticed rather than silently unsellable.
 export function variantForSlug(slug: string): Variant {
-  return PRODUCT_VARIANTS[slug] || { name: slug, assorted: true }
+  return PRODUCT_VARIANTS[slug] || { name: slug, unmapped: true }
+}
+
+export function isMapped(slug: string): boolean {
+  return Object.prototype.hasOwnProperty.call(PRODUCT_VARIANTS, slug)
 }
 
 export type OrderItem = { id: string; qty: number; size?: string }
@@ -51,6 +75,7 @@ export function orderItemLabel(it: OrderItem): string {
 // human actually grabbed), so both answer the question identically. If they
 // ever drifted, the picker could allocate a band the packer would reject.
 export function matchesDesign(b: { theme: string | null; color: string | null }, v: Variant): boolean {
+  if (v.unmapped) return false
   return !!v.assorted || (b.theme === v.theme && (!v.color || b.color === v.color))
 }
 
