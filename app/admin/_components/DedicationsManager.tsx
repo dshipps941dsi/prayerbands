@@ -17,11 +17,32 @@ type Dedication = {
   on_shelf: boolean
 }
 
+// Module scope, matching ActivityFeed: reading the clock is impure, so calling
+// it from inside the component body is a render that can't be replayed.
+const when = (iso: string | null) => {
+  if (!iso) return 'undated'
+  const d = new Date(iso)
+  const mins = Math.floor((Date.now() - d.getTime()) / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  if (mins < 1440) return `${Math.floor(mins / 60)}h ago`
+  if (mins < 43200) return `${Math.floor(mins / 1440)}d ago`
+  return d.toLocaleDateString()
+}
+
+// Waiting vs opened is the split that decides what you can still do about a
+// dedication, not just how it is going. A waiting one can still be rewritten
+// and still has to reach somebody; an opened one has already been read, so
+// editing it changes nothing they will ever see. Filtering on that is really
+// filtering on "is there anything left for me to do here".
+type Filter = 'all' | 'waiting' | 'opened' | 'stock'
+
 // Read and edit every dedication in one place. Previously a dedication could
 // only be reached one band at a time by typing an ID you already knew, which
 // works when the band is in your hand and not at all for "what did I write
 // lately" — or for noticing one sitting somewhere it shouldn't be.
 export default function DedicationsManager({ C }: { C: C }) {
+  const [filter, setFilter] = useState<Filter>('all')
   const [rows, setRows] = useState<Dedication[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -69,23 +90,32 @@ export default function DedicationsManager({ C }: { C: C }) {
 
   const onShelf = rows.filter(d => d.on_shelf)
 
+  // "Waiting" means nobody has opened it: no stop on the band and the gift
+  // screen never shown. Both are checked because they can disagree — a band can
+  // be tapped without the dedication being displayed — and either one happening
+  // means the moment has passed.
+  const isWaiting = (d: Dedication) => d.stops === 0 && !d.viewed
+  const matches = (d: Dedication) =>
+    filter === 'all' ? true
+      : filter === 'waiting' ? isWaiting(d)
+      : filter === 'opened' ? !isWaiting(d)
+      : d.on_shelf
+  const shown = rows.filter(matches)
+
+  const FILTERS: { id: Filter; label: string; count: number }[] = [
+    { id: 'all', label: 'All', count: rows.length },
+    { id: 'waiting', label: 'Still waiting', count: rows.filter(isWaiting).length },
+    { id: 'opened', label: 'Already opened', count: rows.filter(d => !isWaiting(d)).length },
+    // Only worth offering when there is something wrong to look at.
+    ...(onShelf.length ? [{ id: 'stock' as Filter, label: 'In sellable stock', count: onShelf.length }] : []),
+  ]
+
   const panel = { background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 10, overflow: 'hidden', marginBottom: 20 }
   const head = { padding: '13px 16px', borderBottom: `1px solid ${C.borderSilver}`, fontWeight: 700, fontSize: 14, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }
   const input = { padding: '9px 12px', border: `1px solid ${C.borderSilver}`, borderRadius: 6, fontSize: 13, fontFamily: 'Inter, sans-serif', color: C.body, background: '#fff', width: '100%', boxSizing: 'border-box' as const }
   const btn = { padding: '8px 16px', background: C.gold, color: C.navy, border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontWeight: 600 }
   const btnGhost = { ...btn, background: 'transparent', color: C.secondary, border: `1px solid ${C.borderSilver}` }
   const pill = (bg: string, fg: string) => ({ display: 'inline-block', padding: '2px 8px', borderRadius: 999, fontSize: 10, fontWeight: 700, background: bg, color: fg, fontFamily: 'Inter, sans-serif' })
-
-  const when = (iso: string | null) => {
-    if (!iso) return 'undated'
-    const d = new Date(iso)
-    const mins = Math.floor((Date.now() - d.getTime()) / 60000)
-    if (mins < 1) return 'just now'
-    if (mins < 60) return `${mins}m ago`
-    if (mins < 1440) return `${Math.floor(mins / 60)}h ago`
-    if (mins < 43200) return `${Math.floor(mins / 1440)}d ago`
-    return d.toLocaleDateString()
-  }
 
   return (
     <div style={panel}>
@@ -106,13 +136,47 @@ export default function DedicationsManager({ C }: { C: C }) {
 
         {error && <div style={{ fontSize: 12, color: '#B4441F', marginBottom: 12 }}>{error}</div>}
 
+        {!loading && rows.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+            {FILTERS.map(f => {
+              const on = filter === f.id
+              const alert = f.id === 'stock'
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setFilter(f.id)}
+                  style={{
+                    padding: '6px 13px',
+                    borderRadius: 999,
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: on ? 700 : 500,
+                    background: on ? (alert ? '#B4441F' : C.navy) : 'transparent',
+                    color: on ? '#F6F1E4' : (alert ? '#B4441F' : C.secondary),
+                    border: `1px solid ${on ? (alert ? '#B4441F' : C.navy) : (alert ? 'rgba(180,68,31,0.4)' : C.borderSilver)}`,
+                  }}
+                >
+                  {f.label} <span style={{ opacity: 0.75 }}>{f.count}</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         {loading ? (
           <div style={{ color: C.secondary, fontSize: 13 }}>Loading…</div>
         ) : rows.length === 0 ? (
           <div style={{ color: C.secondary, fontSize: 13 }}>No dedications yet.</div>
+        ) : shown.length === 0 ? (
+          <div style={{ color: C.secondary, fontSize: 13 }}>
+            {filter === 'waiting' ? 'Every dedication has been opened.'
+              : filter === 'opened' ? 'None have been opened yet.'
+              : 'Nothing here.'}
+          </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {rows.map(d => (
+            {shown.map(d => (
               <div key={d.band_id} style={{ border: `1px solid ${d.on_shelf ? 'rgba(180,68,31,0.35)' : C.borderSilver}`, borderRadius: 8, padding: 13 }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 7 }}>
                   <strong style={{ fontSize: 13, color: C.heading, fontFamily: 'Inter, sans-serif' }}>{d.band_id}</strong>
