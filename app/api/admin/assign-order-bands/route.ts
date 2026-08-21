@@ -41,10 +41,11 @@ export async function POST(req: NextRequest) {
   }
 
   // Load the whole shippable pool once; match each line against it in memory.
+  // sellable_bands is the same shelf the storefront counts, so the picker can
+  // never allocate a band the store has already written off as gone.
   const { data: pool } = await admin
-    .from('bands')
+    .from('sellable_bands')
     .select('band_id, theme, color, size')
-    .eq('status', 'unregistered').is('owner_id', null).is('org_id', null)
     .order('band_id')
   const available = (pool ?? []) as { band_id: string; theme: string | null; color: string | null; size: string | null }[]
 

@@ -203,7 +203,12 @@ export async function GET(req: NextRequest) {
     .select('theme, color, size, status, owner_id, org_id')
 
   const rows = stock ?? []
-  const sellable = rows.filter(b => b.status === 'unregistered' && !b.owner_id && !b.org_id)
+  // Read the shelf through the same view the storefront and the picker use, so
+  // this dashboard cannot quietly report more stock than the store will sell.
+  const { data: shelfRows } = await admin
+    .from('sellable_bands')
+    .select('theme, color, size')
+  const sellable = shelfRows ?? []
   const byKey = new Map<string, number>()
   for (const b of sellable) {
     const key = `${b.theme || 'default'}|${b.color || '—'}|${b.size || '—'}`
