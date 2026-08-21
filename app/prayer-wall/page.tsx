@@ -28,11 +28,6 @@ export default function PrayerWallPage() {
   const [filtered, setFiltered] = useState<Prayer[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>('All')
-  const [showForm, setShowForm] = useState(false)
-  const [bandId, setBandId] = useState('')
-  const [message, setMessage] = useState('')
-  const [location, setLocation] = useState('')
-  const [submitting, setSubmitting] = useState(false)
   const [toast, setToast] = useState('')
   const [totalCount, setTotalCount] = useState(0)
   const [page, setPage] = useState(0)
@@ -134,29 +129,6 @@ export default function PrayerWallPage() {
     setFiltered(applyFilter(merged, filter))
   }, [filter, prayers, networkPrayers, applyFilter])
 
-  const submitPrayer = async () => {
-    if (!message.trim()) { showToast('Please write a prayer first'); return }
-    if (!bandId.trim()) { showToast('Please enter a band ID'); return }
-    setSubmitting(true)
-    // Server-side so the post is moderated + rate-limited (the table no longer
-    // accepts unguarded anon inserts).
-    const res = await fetch('/api/wall-prayer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bandId: bandId.trim(), prayer: message.trim(), location: location.trim() }),
-    })
-    setSubmitting(false)
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}))
-      showToast(data.error || 'Something went wrong — please try again'); return
-    }
-    setBandId('')
-    setMessage('')
-    setLocation('')
-    setShowForm(false)
-    showToast('Your prayer has been added to the wall ✝')
-  }
-
   async function reportPrayer(id: string) {
     const reason = prompt('Why are you reporting this prayer? (optional)')
     if (reason === null) return
@@ -236,7 +208,10 @@ export default function PrayerWallPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             <a href="/store" className="inter" style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#5C6573', textDecoration: 'none' }}>Shop</a>
             <a href="/my-band" className="inter" style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#5C6573', textDecoration: 'none' }}>Dashboard</a>
-            <button onClick={() => setShowForm(true)} className="submit-btn" style={{ padding: '9px 20px', fontSize: 11 }}>+ Leave a Prayer</button>
+            {/* Was "+ Leave a Prayer", which opened a form that let anyone
+                write into any band's chain. A prayer belongs to a band somebody
+                is actually holding, so the tap is the only way in now. */}
+            <a href="/store" className="submit-btn" style={{ padding: '9px 20px', fontSize: 12, textDecoration: 'none', display: 'inline-block' }}>Get a Band</a>
           </div>
         </div>
       </nav>
@@ -290,8 +265,10 @@ export default function PrayerWallPage() {
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🙏</div>
             <h3 className="cormorant" style={{ fontSize: 28, marginBottom: 12, color: '#15223B' }}>No prayers yet</h3>
-            <p className="inter" style={{ fontSize: 14, color: '#5C6573', fontWeight: 300, marginBottom: 28 }}>Be the first to leave a prayer on the wall.</p>
-            <button className="submit-btn" onClick={() => setShowForm(true)}>Leave the First Prayer</button>
+            <p className="inter" style={{ fontSize: 14, color: '#5C6573', marginBottom: 28, lineHeight: 1.7 }}>
+              Prayers reach this wall by being left on a band. Tap one and the prayer you write travels with it.
+            </p>
+            <a href="/store" className="submit-btn" style={{ textDecoration: 'none', display: 'inline-block' }}>Get a Band</a>
           </div>
         ) : (
           <>
@@ -364,41 +341,6 @@ export default function PrayerWallPage() {
         )}
       </div>
 
-      {showForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,22,40,0.55)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
-          onClick={e => { if (e.target === e.currentTarget) setShowForm(false) }}>
-          <div style={{ background: '#FFFDF8', borderRadius: 12, padding: '44px 40px', maxWidth: 520, width: '100%', boxShadow: '0 24px 80px rgba(10,22,40,0.22)', border: '1px solid rgba(200,169,110,0.34)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
-              <div>
-                <span className="inter" style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#9A7A35', display: 'block', marginBottom: 6 }}>Leave a Prayer</span>
-                <h2 className="cormorant" style={{ fontSize: 30, fontWeight: 600, color: '#15223B' }}>Add to the Wall</h2>
-              </div>
-              <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#5C6573', lineHeight: 1 }}>×</button>
-            </div>
-            <div style={{ display: 'grid', gap: 16 }}>
-              <div>
-                <label className="inter" style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#5C6573', display: 'block', marginBottom: 6 }}>Band ID *</label>
-                <input placeholder="e.g. PB-K7M2R" value={bandId} onChange={e => setBandId(e.target.value)} />
-              </div>
-              <div>
-                <label className="inter" style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#5C6573', display: 'block', marginBottom: 6 }}>Your Prayer *</label>
-                <textarea placeholder="Write your prayer for whoever holds this band..." value={message} onChange={e => setMessage(e.target.value)} />
-              </div>
-              <div>
-                <label className="inter" style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#5C6573', display: 'block', marginBottom: 6 }}>Your Location (optional)</label>
-                <input placeholder="e.g. Nashville, TN" value={location} onChange={e => setLocation(e.target.value)} />
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 12, marginTop: 28 }}>
-              <button className="submit-btn" style={{ flex: 1 }} disabled={submitting} onClick={submitPrayer}>
-                {submitting ? 'Sending...' : '✝ Leave My Prayer'}
-              </button>
-              <button onClick={() => setShowForm(false)} style={{ padding: '14px 20px', background: 'transparent', border: '1px solid rgba(92,101,115,0.20)', borderRadius: 4, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#5C6573' }}>Cancel</button>
-            </div>
-            <p className="inter" style={{ fontSize: 12, color: '#5C6573', marginTop: 14, textAlign: 'center', lineHeight: 1.6 }}>Your prayer will appear publicly on the wall. No account required.</p>
-          </div>
-        </div>
-      )}
       <SiteFooter />
     </div>
   )
