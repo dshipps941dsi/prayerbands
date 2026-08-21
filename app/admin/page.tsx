@@ -10,6 +10,7 @@ import BatchGenerator from './_components/BatchGenerator'
 import CustomerDetail from './_components/CustomerDetail'
 import ActivityFeed from './_components/ActivityFeed'
 import StockSync from './_components/StockSync'
+import DedicationsManager from './_components/DedicationsManager'
 import { parseOrderItems, orderItemLabel } from '@/lib/fulfillment'
 
 // Prayer Bands brand palette
@@ -43,7 +44,7 @@ const ADMIN_EMAIL = 'dshipps941@gmail.com'
 // and leaves room to grow.
 type View =
   | 'orders' | 'sales' | 'shipments' | 'inventory'
-  | 'recent' | 'prayers' | 'flagged'
+  | 'recent' | 'prayers' | 'flagged' | 'dedications'
   | 'bands' | 'products' | 'pricing' | 'themes' | 'generate'
   | 'customers'
 
@@ -58,6 +59,7 @@ const SECTIONS: { key: string; label: string; views: { id: View; label: string }
     { id: 'recent', label: 'Recent activity' },
     { id: 'prayers', label: 'Prayers' },
     { id: 'flagged', label: 'Flagged' },
+    { id: 'dedications', label: 'Dedications' },
   ] },
   { key: 'catalog', label: 'Catalog', views: [
     { id: 'bands', label: 'Bands' },
@@ -838,6 +840,7 @@ export default function AdminPage() {
 
         {/* PRAYERS TAB */}
         {activeTab === 'recent' && <ActivityFeed C={C} show="feed" />}
+        {activeTab === 'dedications' && <DedicationsManager C={C} />}
         {activeTab === 'inventory' && <><StockSync C={C} /><ActivityFeed C={C} show="inventory" /></>}
 
         {/* Two ways into the same job — by words or by band — so they sit side

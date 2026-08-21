@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
       .update({
         dedication_recipient: (dedication_recipient || '').trim() || null,
         dedication_note: (dedication_note || '').trim() || null,
+        dedication_updated_at: new Date().toISOString(),
       })
       .eq('band_id', bandId)
       .select('band_id')
@@ -118,6 +119,7 @@ export async function POST(req: NextRequest) {
     if (hasText) {
       patch.dedication_recipient = d.recipientName?.trim() || null
       patch.dedication_note = d.note?.trim() || null
+      patch.dedication_updated_at = new Date().toISOString()
     }
     if (authUserId) patch.owner_id = authUserId
     let q = supabase.from('bands').update(patch).eq('band_id', bandId).is('owner_id', null)

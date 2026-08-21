@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
     .update({
       dedication_recipient: String(dedication_recipient || '').trim().slice(0, 120) || null,
       dedication_note: String(dedication_note || '').trim().slice(0, 300) || null,
+      dedication_updated_at: new Date().toISOString(),
     })
     .eq('band_id', bandId)
 
