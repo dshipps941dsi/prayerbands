@@ -56,11 +56,16 @@ const SIZES = [
   { id: "L", label: "Large" },
 ];
 
-// Placeholder measurements — edit to your real band sizing.
+// Inches lead, centimetres follow in brackets: every customer is in the US for
+// now, and the unit they measure in should be the one they read first.
+//
+// NOTE: these are still the placeholder ranges from the original build, not
+// measurements taken off a real band. The unit order is right; the numbers want
+// checking against the actual product.
 const SIZE_CHART = [
-  { size: "Small", wrist: "14–16 cm (5.5–6.3 in)", fit: "Youth / smaller wrists" },
-  { size: "Medium", wrist: "16–18 cm (6.3–7.1 in)", fit: "Most adults" },
-  { size: "Large", wrist: "18–20 cm (7.1–7.9 in)", fit: "Larger wrists" },
+  { size: "Small", wrist: "5.5–6.3 in (14–16 cm)", fit: "Youth / smaller wrists" },
+  { size: "Medium", wrist: "6.3–7.1 in (16–18 cm)", fit: "Most adults" },
+  { size: "Large", wrist: "7.1–7.9 in (18–20 cm)", fit: "Larger wrists" },
 ];
 
 // ─── Image carousel (falls back to the band illustration) ─────
