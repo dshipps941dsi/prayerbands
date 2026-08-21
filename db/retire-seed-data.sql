@@ -32,3 +32,7 @@ update public.registrations
 -- To reverse it:
 -- update public.registrations set flagged = false, flagged_reason = null
 --  where flagged_reason like 'Seed data retired%';
+
+-- Applied 2026-08-20 for PB-TEST only: those seven stops carried no prayer, so
+-- they were invisible until the map started plotting stops as well as prayers,
+-- and they say nothing about reach. The GCC- half above stays deliberately live.

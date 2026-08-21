@@ -175,9 +175,12 @@ function GlobalPrayerMap({ points }: { points: MapPoint[] }) {
       // screen; the world view was the opposite problem — every pin in one
       // corner of an empty globe.
       if (bounds.length > 1) {
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 6 });
+        // maxZoom 4 keeps the surrounding country in frame. Fitted tightly to one
+        // town the map filled with rooftops and read as a street map, which says
+        // nothing about a band travelling.
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 4 });
       } else if (bounds.length === 1) {
-        map.setView(bounds[0], 6);
+        map.setView(bounds[0], 4);
       } else {
         map.setView([22, 8], 2);
       }
