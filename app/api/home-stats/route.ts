@@ -94,7 +94,17 @@ export async function GET() {
     registered_at: r.registered_at,
   }))
 
-  const points = (geoStops || []).map((r: any) => {
+  const seenAt = new Set<string>()
+  const points = (geoStops || [])
+    .filter((r: any) => {
+      // geoStops is newest-first, so the first row wins and the pin shows their
+      // latest stop on that band.
+      const key = `${r.band_id}|${(r.user_name || '').trim().toLowerCase()}`
+      if (seenAt.has(key)) return false
+      seenAt.add(key)
+      return true
+    })
+    .map((r: any) => {
     // Spread stops that share a city centroid so a town of bands reads as a
     // town, not a single pin. Seeded by band and time, so each sits still.
     const at = scatterPoint(r.latitude, r.longitude, `${r.band_id}|${r.registered_at}`)

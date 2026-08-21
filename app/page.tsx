@@ -150,20 +150,37 @@ function GlobalPrayerMap({ points }: { points: MapPoint[] }) {
       const L = (window as any).L;
       if (!L || !mapRef.current) return;
       if (instRef.current) { instRef.current.remove(); instRef.current = null; }
-      const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false, scrollWheelZoom: false, worldCopyJump: true, minZoom: 1 });
+      const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false, scrollWheelZoom: true, worldCopyJump: true, minZoom: 1 });
       instRef.current = map;
-      map.setView([22, 8], 2);
       L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
+      // Frame on the newest stops rather than every pin. Fitting all of them
+      // just reproduced the old whole-world view, with everything recent
+      // squeezed into one corner. Opening where the latest activity is puts the
+      // map somewhere real; the rest is one scroll away.
+      const RECENT = 12;
+      const bounds: [number, number][] = [];
+      points.slice(0, RECENT).forEach((p) => bounds.push([p.lat, p.lng]));
       points.forEach((p) => {
         const dot = L.divIcon({ className: "", html: '<div class="pb-map-dot"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
         L.marker([p.lat, p.lng], { icon: dot }).addTo(map).bindPopup(
           `<div style="font-family:Georgia,serif;max-width:230px">
              <div style="font-family:monospace;font-weight:bold;color:#9A7A35;font-size:12px">${p.band}</div>
              <div style="font-size:13px;color:#15223B;font-weight:600;margin-top:2px">${p.name} · ${p.loc}</div>
-             <div style="font-size:13px;color:#2A3344;font-style:italic;line-height:1.55;margin-top:7px;border-left:2px solid #C8A96E;padding-left:9px">"${p.prayer}"</div>
+             ${p.prayer ? '<div style="font-size:13px;color:#2A3344;font-style:italic;line-height:1.55;margin-top:7px;border-left:2px solid #C8A96E;padding-left:9px">&ldquo;' + p.prayer + '&rdquo;</div>' : '<div style="font-size:12px;color:#5C6573;margin-top:6px">Carried this band</div>'}
            </div>`
         );
       });
+
+      // Frame what is actually there. maxZoom stops a single town filling the
+      // screen; the world view was the opposite problem — every pin in one
+      // corner of an empty globe.
+      if (bounds.length > 1) {
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 6 });
+      } else if (bounds.length === 1) {
+        map.setView(bounds[0], 6);
+      } else {
+        map.setView([22, 8], 2);
+      }
     };
     if ((window as any).L) { render(); return () => { if (instRef.current) { instRef.current.remove(); instRef.current = null; } }; }
     if (!document.getElementById("leaflet-css")) {
