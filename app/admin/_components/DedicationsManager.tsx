@@ -43,6 +43,16 @@ type Filter = 'all' | 'waiting' | 'opened' | 'stock'
 // lately" — or for noticing one sitting somewhere it shouldn't be.
 export default function DedicationsManager({ C }: { C: C }) {
   const [filter, setFilter] = useState<Filter>('all')
+  // Writing a new dedication used to live over in Orders, nowhere near the list
+  // of dedications it adds to. Same endpoint, now next to its own result — and
+  // the list refreshes on save, so a mistyped band ID shows up immediately as a
+  // row that is not the one you meant.
+  const [newBandId, setNewBandId] = useState('')
+  const [newRecipient, setNewRecipient] = useState('')
+  const [newNote, setNewNote] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [createMsg, setCreateMsg] = useState('')
+  const [createErr, setCreateErr] = useState('')
   const [rows, setRows] = useState<Dedication[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -64,6 +74,27 @@ export default function DedicationsManager({ C }: { C: C }) {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  async function preDedicate() {
+    if (!newBandId.trim()) { setCreateErr('Enter a band ID.'); setCreateMsg(''); return }
+    setCreating(true); setCreateErr(''); setCreateMsg('')
+    try {
+      const res = await fetch('/api/save-dedications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bandId: newBandId.trim(), dedication_recipient: newRecipient, dedication_note: newNote, adminOverride: true }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setCreateErr(d.error || 'Could not save.'); return }
+      // Echo the band the server actually wrote to, normalized, so a mistyped
+      // ID reads as somebody else's band rather than a bare "Saved".
+      setCreateMsg(`Saved to ${d.bandId || newBandId.trim().toUpperCase()}`)
+      setNewBandId(''); setNewRecipient(''); setNewNote('')
+      await load()
+      setTimeout(() => setCreateMsg(''), 6000)
+    } catch { setCreateErr('Network error.') }
+    finally { setCreating(false) }
+  }
 
   function startEdit(d: Dedication) {
     setEditing(d.band_id); setRecipient(d.recipient); setNote(d.note); setError(''); setSaved('')
@@ -121,6 +152,25 @@ export default function DedicationsManager({ C }: { C: C }) {
     <div style={panel}>
       <div style={head}>Dedications</div>
       <div style={{ padding: 16 }}>
+        <div style={{ background: 'rgba(200,169,110,0.07)', border: `1px solid ${C.borderGold || 'rgba(200,169,110,0.34)'}`, borderRadius: 8, padding: '16px 18px', marginBottom: 18 }}>
+          <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 18, fontWeight: 700, color: C.heading, marginBottom: 4 }}>Pre-dedicate a band</div>
+          <div style={{ fontSize: 12, color: C.secondary, marginBottom: 13, lineHeight: 1.5 }}>
+            Attach a recipient and message so the band shows a &ldquo;sent especially for you&rdquo; screen on their first tap.
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <input style={input} value={newBandId} onChange={e => setNewBandId(e.target.value)} placeholder="Band ID (e.g. PB-1234)" />
+            <input style={input} value={newRecipient} onChange={e => setNewRecipient(e.target.value)} placeholder="Recipient name" />
+          </div>
+          <textarea style={{ ...input, minHeight: 72, resize: 'vertical' }} value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Personal message…" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
+            <button style={{ ...btn, cursor: creating ? 'wait' : 'pointer', opacity: creating ? 0.6 : 1 }} onClick={preDedicate} disabled={creating}>
+              {creating ? 'Saving…' : 'Save dedication'}
+            </button>
+            {createMsg && <span style={{ fontSize: 13, color: '#4E6340', fontWeight: 600 }}>{createMsg} ✓</span>}
+            {createErr && <span style={{ fontSize: 13, color: '#B4441F' }}>{createErr}</span>}
+          </div>
+        </div>
+
         {onShelf.length > 0 && (
           <div style={{ marginBottom: 16, padding: '12px 14px', background: 'rgba(180,68,31,0.06)', border: '1px solid rgba(180,68,31,0.28)', borderRadius: 8 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#B4441F', marginBottom: 6 }}>

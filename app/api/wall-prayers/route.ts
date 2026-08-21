@@ -26,7 +26,7 @@ export async function GET(req: Request) {
 
   const { data, error, count } = await supabase
     .from('registrations')
-    .select('id, band_id, prayer, user_name, city, state, country, verse, registered_at', { count: 'exact' })
+    .select('id, prayer, user_name, city, state, country, verse, registered_at', { count: 'exact' })
     .not('prayer', 'is', null)
     .neq('prayer', '')
     .eq('flagged', false)
@@ -37,9 +37,13 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Could not load prayers' }, { status: 500 })
   }
 
+  // band_id is deliberately NOT returned. A band ID is the key to that band —
+  // it opens its page, and it is what the claim flow keys on — so publishing one
+  // beside every prayer handed out a list of live bands to anyone reading. The
+  // wall needs nothing from it: the avatar colour and initials now key off the
+  // registration id, which identifies the prayer and unlocks nothing.
   const prayers = (data || []).map((r: any) => ({
     id: r.id,
-    band_id: r.band_id,
     prayer: r.prayer,
     user_name: publicName(r.user_name),
     city: r.city,

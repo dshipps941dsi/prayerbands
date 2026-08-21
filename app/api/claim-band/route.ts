@@ -53,10 +53,14 @@ export async function POST(req: NextRequest) {
     // bands (latest holder has no user_id — e.g. the holder is signing in now to
     // attach it) remain claimable; a band whose latest holder is another signed-
     // in user does not.
+    // Wall posts are excluded. Anyone can leave one on any band without ever
+    // touching it, so counting one as the latest "holder" let a stranger make an
+    // unowned band look unheld and then claim it.
     const { data: latest } = await admin
       .from('registrations')
       .select('user_id')
       .eq('band_id', bandId)
+      .neq('source', 'wall')
       .order('registered_at', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -101,10 +105,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Wall posts excluded here too: adopting one would put a stranger's
+    // anonymous prayer into this account's journey and take its name from it.
     const { data: latestUnlinked } = await admin
       .from('registrations')
       .select('id, user_id, user_name')
       .eq('band_id', bandId)
+      .neq('source', 'wall')
       .order('registered_at', { ascending: false })
       .limit(1)
       .maybeSingle()

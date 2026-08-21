@@ -7,7 +7,6 @@ import SiteFooter from '@/components/SiteFooter'
 
 type Prayer = {
   id: string
-  band_id: string
   prayer: string
   user_name?: string
   city?: string
@@ -112,7 +111,6 @@ export default function PrayerWallPage() {
         if (data) {
           setNetworkPrayers(data.map((r: any) => ({
             id: 'nr-' + r.id,
-            band_id: '',
             prayer: r.request_text,
             user_name: r.public_name || 'Anonymous',
             registered_at: r.created_at,
@@ -191,11 +189,11 @@ export default function PrayerWallPage() {
   const getInitials = (prayer: Prayer) => {
     const name = prayer.user_name
     if (name) return name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-    return (prayer.band_id || prayer.id).slice(-2).toUpperCase()
+    return String(prayer.id).slice(-2).toUpperCase()
   }
 
   const getColor = (prayer: Prayer) => {
-    const s = prayer.band_id || prayer.id
+    const s = String(prayer.id)
     const idx = s.charCodeAt(s.length - 1) % ACCENT_COLORS.length
     return ACCENT_COLORS[idx]
   }
@@ -260,7 +258,10 @@ export default function PrayerWallPage() {
             { value: '250', label: 'Bands Active' },
           ].map(s => (
             <div key={s.label} style={{ textAlign: 'center', padding: '16px 24px', background: '#FFFDF8', border: '1px solid rgba(200,169,110,0.34)', borderRadius: 8 }}>
-              <div className="cormorant" style={{ fontSize: 32, fontWeight: 700, color: '#C8A96E' }}>{s.value}</div>
+              {/* These boxes are cream, not navy like the band around them, so
+                  the gold that reads well on the dark hero was landing at about
+                  2:1 here — the headline numbers were nearly invisible. */}
+              <div className="cormorant" style={{ fontSize: 32, fontWeight: 700, color: '#15223B' }}>{s.value}</div>
               <div className="cinzel" style={{ fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#5C6573', marginTop: 2 }}>{s.label}</div>
             </div>
           ))}
@@ -306,30 +307,41 @@ export default function PrayerWallPage() {
                         <span className="cinzel" style={{ fontSize: 11, color: '#0A1628', fontWeight: 700 }}>{getInitials(prayer)}</span>
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="cinzel" style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#5C6573' }}>
+                        <div className="cinzel" style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#454E5E', fontWeight: 600 }}>
                           {publicName(prayer.user_name)}
                         </div>
-                        {location && <div className="inter" style={{ fontSize: 12, color: '#9A7A35', marginTop: 1 }}>📍 {location}</div>}
+                        {/* #9A7A35 on cream is about 3.8:1 — under the 4.5:1
+                            small text needs. #7A5F26 is the same gold, darker. */}
+                        {location && <div className="inter" style={{ fontSize: 12.5, color: '#7A5F26', marginTop: 2 }}>📍 {location}</div>}
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <span className="cinzel" style={{ fontSize: 9, letterSpacing: '0.12em', background: `${color}18`, color, border: `1px solid ${color}44`, padding: '2px 8px', borderRadius: 20, display: 'block', marginBottom: 4 }}>{prayer.isNetwork ? 'Network' : prayer.band_id}</span>
-                        <span className="inter" style={{ fontSize: 11, color: '#5C6573' }}>{timeAgo(prayer.registered_at)}</span>
+                        {/* The band ID used to sit here. It is the key to the
+                            band — it opens its page and the claim flow keys on
+                            it — so it does not belong on a public page. */}
+                        {prayer.isNetwork && (
+                          <span className="cinzel" style={{ fontSize: 9, letterSpacing: '0.12em', background: `${color}18`, color: '#5C6573', border: `1px solid ${color}55`, padding: '2px 8px', borderRadius: 20, display: 'block', marginBottom: 4 }}>Network</span>
+                        )}
+                        <span className="inter" style={{ fontSize: 12, color: '#5C6573' }}>{timeAgo(prayer.registered_at)}</span>
                       </div>
                     </div>
-                    <p className="cormorant" style={{ fontSize: 16, lineHeight: 1.85, color: '#2A3344', fontStyle: 'italic' }}>"{prayer.prayer}"</p>
-                    {prayer.verse && <div className="inter" style={{ fontSize: 12, color: '#9A7A35', marginTop: 10, fontWeight: 500 }}>📖 {prayer.verse}</div>}
+                    {/* Cormorant is a display face: at 16px, weight 400 and
+                        italic it is decorative rather than readable, which is
+                        most of why this page was hard going. Bigger and heavier
+                        keeps the quoted feel and makes the words legible. */}
+                    <p className="cormorant" style={{ fontSize: 19, lineHeight: 1.7, color: '#1E2736', fontStyle: 'italic', fontWeight: 500 }}>&ldquo;{prayer.prayer}&rdquo;</p>
+                    {prayer.verse && <div className="inter" style={{ fontSize: 12.5, color: '#7A5F26', marginTop: 10, fontWeight: 500 }}>📖 {prayer.verse}</div>}
+                    {/* "See Band Journey" used to sit on the left of this row.
+                        It led to a stranger's band and put its ID in the URL,
+                        which is more of someone else's band than a passer-by
+                        needs. Report is all that is left, so it sits right. */}
                     {!prayer.isNetwork && (
-                      <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(10,22,40,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <a href={`/band/${prayer.band_id}`} className="cinzel" style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#5C6573', textDecoration: 'none' }}
-                          onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#9A7A35'}
-                          onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = '#5C6573'}
-                        >See Band Journey →</a>
+                      <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(10,22,40,0.08)', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                         <button
                           onClick={() => reportPrayer(prayer.id)}
                           className="inter"
-                          style={{fontSize:11,color:'#C9CFD6',background:'none',border:'none',cursor:'pointer',fontFamily:'Inter,sans-serif',padding:0,transition:'color 0.2s'}}
-                          onMouseEnter={e=>(e.currentTarget as HTMLButtonElement).style.color='#5C6573'}
-                          onMouseLeave={e=>(e.currentTarget as HTMLButtonElement).style.color='#C9CFD6'}
+                          style={{fontSize:12,color:'#737D8C',background:'none',border:'none',cursor:'pointer',fontFamily:'Inter,sans-serif',padding:0,transition:'color 0.2s'}}
+                          onMouseEnter={e=>(e.currentTarget as HTMLButtonElement).style.color='#B4441F'}
+                          onMouseLeave={e=>(e.currentTarget as HTMLButtonElement).style.color='#737D8C'}
                         >⚑ Report</button>
                       </div>
                     )}

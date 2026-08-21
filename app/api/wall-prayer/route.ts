@@ -49,6 +49,11 @@ export async function POST(req: NextRequest) {
         city: (location ? String(location).trim().slice(0, 120) : null) || null,
         flagged: autoFlag,
         flagged_reason: autoFlag ? AUTO_FLAG_REASON : null,
+        // Anyone can post here without holding the band, so this row must never
+        // be mistaken for possession. claim-band reads the latest registration
+        // to decide who holds a band; unmarked, a wall post made an unowned band
+        // look unheld and therefore claimable by whoever posted it.
+        source: 'wall',
       })
     if (error) {
       console.error('[wall-prayer] insert error:', error)
