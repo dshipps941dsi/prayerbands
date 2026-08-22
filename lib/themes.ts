@@ -396,6 +396,30 @@ export function getTheme(key?: string | null): BandTheme {
   return REGISTRY.default ?? BUILTIN_THEMES.default;
 }
 
+// Which theme should a band actually wear?
+//
+// The batch generator models a band as EITHER artwork (theme: 'vhs') OR a solid
+// colour (theme: 'default', color: 'Pink'). So a themed band names its theme
+// directly, while every colour band in the box says 'default' — which means a
+// "Pink" theme created in the admin lands on nothing at all, however carefully
+// it was designed. Fifty pink bands, fifty black, fifty teal, all still wearing
+// Classic parchment.
+//
+// So fall back to the colour: 'Light Grey' → 'light-grey'. A colour only styles
+// a band if a theme with that key exists, so an unstyled colour still gets
+// Classic rather than nothing.
+export function themeKeyForColor(color?: string | null): string | null {
+  const slug = (color || '').trim().toLowerCase().replace(/\s+/g, '-');
+  return slug && REGISTRY[slug] ? slug : null;
+}
+
+export function resolveThemeKey(theme?: string | null, color?: string | null): string | null {
+  // A theme that names itself and exists always wins; the colour is only ever a
+  // fallback for the plain bands that have no artwork of their own.
+  if (theme && theme !== 'default' && REGISTRY[theme]) return theme;
+  return themeKeyForColor(color) ?? theme ?? null;
+}
+
 // Current dropdown options from the live registry (built-ins + any loaded DB themes).
 export function getThemeOptions(): { id: string; label: string }[] {
   return Object.keys(REGISTRY).map((id) => ({ id, label: REGISTRY[id].label }));

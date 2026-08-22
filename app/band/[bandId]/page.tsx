@@ -193,7 +193,9 @@ export default function BandPage() {
   const [walk, setWalk] = useState<VerseWalk>({ total: 0, run: 0, returning: false })
 
   // Apply this band's color theme (CSS variables on :root).
-  useApplyTheme(status.band?.theme)
+  // Colour matters here: the plain bands all carry theme 'default', so without
+  // it a Pink or Black theme created in the admin would style none of them.
+  useApplyTheme(status.band?.theme, (status.band as { color?: string } | undefined)?.color)
 
   // Fixed theme backdrop: a viewport-pinned layer behind the content so the
   // theme background stays put while the page scrolls. Done with a position:fixed
