@@ -51,6 +51,15 @@ function toPayload(t: T) {
   return theme
 }
 
+// Hex + alpha, for the image wash in the preview. Mirrors pageBackground() in
+// lib/themes.ts so the preview washes an image exactly as the band page does.
+function hexA(hex: string, alpha: number): string {
+  const h = (hex || '').replace('#', '')
+  const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h.padEnd(6, '0').slice(0, 6)
+  const n = parseInt(full, 16) || 0
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
+}
+
 function slugify(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)
 }
@@ -82,6 +91,27 @@ export default function ThemesManager() {
       accentAlt: d.accentAlt, tabBar: d.tabBar, tabActive: d.tabActive, border: d.border, cardAccent: d.cardAccent || t.primary,
     })
     setMsg('Palette re-derived from key colors — Save to keep it.')
+  }
+
+  // Changing a key colour now carries the rest of the palette with it.
+  //
+  // A new theme starts from the Mountain palette, and the nine derived colours
+  // only moved if you found the re-derive button. So picking black for primary
+  // and grey for the background left tabBar on Mountain's navy — and tabBar is
+  // the verse card, which is why the Black theme had a blue verse area sitting
+  // in the middle of it.
+  //
+  // Advanced is the opt-out: once it is open those nine fields are yours, and
+  // deriving over hand-picked colours would be worse than the original bug.
+  function setKeyColor(t: T, patch: Partial<T>) {
+    const next = { ...t, ...patch }
+    if (advanced.has(t.key)) { setField(t.key, patch); return }
+    const d = deriveTheme({ label: next.label, primary: next.primary, background: next.background, accent: next.accent, text: next.text })
+    setField(t.key, {
+      ...patch,
+      surface: d.surface, surfaceAlt: d.surfaceAlt, textMuted: d.textMuted, textOnPrimary: d.textOnPrimary,
+      accentAlt: d.accentAlt, tabBar: d.tabBar, tabActive: d.tabActive, border: d.border, cardAccent: d.cardAccent || next.primary,
+    })
   }
 
   async function save(t: T) {
@@ -133,14 +163,55 @@ export default function ThemesManager() {
   const input: React.CSSProperties = { width: '100%', padding: '8px 10px', borderRadius: 6, border: `1px solid ${C.borderNavy}`, fontSize: 14, fontFamily: 'Inter, sans-serif', background: C.pageBg, color: C.body, boxSizing: 'border-box', outline: 'none' }
 
   // A color field: native swatch picker + hex text input, kept in sync.
-  const colorField = (t: T, k: keyof T, lbl: string) => {
+  // `isKey` marks the four colours the rest of the palette is derived from.
+  const colorField = (t: T, k: keyof T, lbl: string, isKey = false) => {
     const val = String(t[k] || '#000000')
+    const write = (v: string) => {
+      const patch = { [k]: v } as Partial<T>
+      if (isKey) setKeyColor(t, patch); else setField(t.key, patch)
+    }
     return (
       <div style={{ marginBottom: 10 }}>
         <label style={label}>{lbl}</label>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(val) ? val : '#000000'} onChange={e => setField(t.key, { [k]: e.target.value.toUpperCase() } as Partial<T>)} style={{ width: 38, height: 34, border: `1px solid ${C.borderNavy}`, borderRadius: 6, background: 'none', cursor: 'pointer', flexShrink: 0 }} />
-          <input style={{ ...input, fontFamily: 'monospace' }} value={val} onChange={e => setField(t.key, { [k]: e.target.value } as Partial<T>)} />
+          <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(val) ? val : '#000000'} onChange={e => write(e.target.value.toUpperCase())} style={{ width: 38, height: 34, border: `1px solid ${C.borderNavy}`, borderRadius: 6, background: 'none', cursor: 'pointer', flexShrink: 0 }} />
+          <input style={{ ...input, fontFamily: 'monospace' }} value={val} onChange={e => write(e.target.value)} />
+        </div>
+      </div>
+    )
+  }
+
+  // What a band actually looks like in this theme, using the same CSS variables
+  // the band page reads. Colour pickers show you nine squares; this shows you
+  // the verse card that was coming out navy in a black theme.
+  const preview = (t: T) => {
+    const page = t.backgroundImage
+      ? `linear-gradient(${hexA(t.background, t.backgroundImageWash ?? 0.82)}, ${hexA(t.background, t.backgroundImageWash ?? 0.82)}), url("${t.backgroundImage}") center / cover no-repeat, ${t.background}`
+      : t.background
+    return (
+      <div style={{ border: `1px solid ${C.borderNavy}`, borderRadius: 12, overflow: 'hidden', background: page }}>
+        <div style={{ padding: 16 }}>
+          <div style={{ fontFamily: 'Cinzel, serif', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: t.textMuted, marginBottom: 10 }}>Preview</div>
+
+          {/* Verse card — this is the tab-bar colour, the one that looked wrong */}
+          <div style={{ background: t.tabBar, borderLeft: `3px solid ${t.cardAccent}`, borderRadius: 10, padding: '14px 16px', marginBottom: 12 }}>
+            <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 14, lineHeight: 1.6, color: t.textOnPrimary }}>
+              &ldquo;{(t.verseText || 'For I know the plans I have for you, declares the Lord.').slice(0, 110)}&rdquo;
+            </div>
+            <div style={{ fontSize: 11, color: t.tabActive, marginTop: 8, letterSpacing: '0.06em' }}>{t.verseReference || 'Jeremiah 29:11'}</div>
+          </div>
+
+          {/* Surface card */}
+          <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: '13px 15px', marginBottom: 12 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 3 }}>A prayer on this band</div>
+            <div style={{ fontSize: 12.5, color: t.textMuted, lineHeight: 1.55 }}>Carried by someone in Venice, Florida.</div>
+            <div style={{ display: 'inline-block', marginTop: 10, background: t.surfaceAlt, color: t.text, borderRadius: 999, padding: '3px 10px', fontSize: 11 }}>3 stops</div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ flex: 1, background: t.primary, color: t.textOnPrimary, borderRadius: 9, padding: '11px 14px', fontSize: 12.5, fontWeight: 700, textAlign: 'center' }}>Pass it on</div>
+            <div style={{ background: 'transparent', border: `1px solid ${t.accent}`, color: t.accent, borderRadius: 9, padding: '11px 14px', fontSize: 12.5, fontWeight: 700, textAlign: 'center' }}>Share</div>
+          </div>
         </div>
       </div>
     )
@@ -212,12 +283,22 @@ export default function ThemesManager() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 18px' }}>
                   <div style={{ minWidth: 0 }}>{field2('Theme name', <input style={input} value={t.label} onChange={e => setField(t.key, { label: e.target.value })} />, label)}</div>
                   <div />
-                  {colorField(t, 'primary', 'Primary / key color')}
-                  {colorField(t, 'background', 'Background')}
-                  {colorField(t, 'accent', 'Accent / highlight')}
-                  {colorField(t, 'text', 'Text')}
+                  {colorField(t, 'primary', 'Primary / key color', true)}
+                  {colorField(t, 'background', 'Background', true)}
+                  {colorField(t, 'accent', 'Accent / highlight', true)}
+                  {colorField(t, 'text', 'Text', true)}
                 </div>
-                <button onClick={() => reDerive(t)} style={{ background: 'transparent', border: `1px solid ${C.borderNavy}`, color: C.body, borderRadius: 8, padding: '8px 14px', fontSize: 11, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>↻ Re-derive palette from key colors</button>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+                  <button onClick={() => reDerive(t)} style={{ background: 'transparent', border: `1px solid ${C.borderNavy}`, color: C.body, borderRadius: 8, padding: '8px 14px', fontSize: 11, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>↻ Re-derive palette from key colors</button>
+                  <span style={{ fontSize: 12, color: C.secondary }}>
+                    {isAdv
+                      ? 'Advanced is open — the nine colours below stay as you set them.'
+                      : 'The rest of the palette follows the four colours above.'}
+                  </span>
+                </div>
+
+                {/* Live preview — updates as the colours change */}
+                <div style={{ marginBottom: 18 }}>{preview(t)}</div>
 
                 {/* Verse */}
                 <div style={{ marginBottom: 6 }}>{field2('Default verse (optional)', <textarea style={{ ...input, minHeight: 64, resize: 'vertical', fontFamily: 'Georgia, serif' }} value={t.verseText} onChange={e => setField(t.key, { verseText: e.target.value })} placeholder="Shown on the band's first tap" />, label)}</div>
