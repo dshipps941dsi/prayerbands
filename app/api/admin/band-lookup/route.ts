@@ -50,6 +50,18 @@ export async function GET(req: NextRequest) {
 
   const m = matches && matches.length === 1 ? (matches[0] as any) : null
 
+  // Has anyone ever tapped it? Decides whether a band can go back into stock:
+  // its registrations are somebody's stops and prayers, and reselling the band
+  // would send that person's journey to the next customer.
+  let hasStops = false
+  if (m) {
+    const { count } = await admin
+      .from('registrations')
+      .select('id', { count: 'exact', head: true })
+      .eq('band_id', m.band_id)
+    hasStops = (count ?? 0) > 0
+  }
+
   return NextResponse.json({
     candidate,
     match: m && {
@@ -58,6 +70,7 @@ export async function GET(req: NextRequest) {
       color: m.color,
       size: m.size,
       status: m.status,
+      has_stops: hasStops,
       has_owner: !!m.owner_id,
       // Lets the give-away screen treat a band you are holding back yourself as
       // still yours to give, without shipping owner ids to the browser.
