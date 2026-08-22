@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
+import { escapeHtml } from '@/lib/escape-html'
 import Icon, { type IconName } from '@/components/Icon'
 import NotificationsPanel from '@/components/NotificationsPanel'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
@@ -565,7 +566,9 @@ export default function BandPage() {
           latlngs.push(ll)
           const dot = L.divIcon({ className: '', html: `<div style="width:12px;height:12px;background:${gold};border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,0.3)"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] })
           const m = L.marker(ll, { icon: dot }).addTo(map)
-          m.bindPopup(`<div style="font-family:Georgia,serif;font-size:13px"><strong>${publicName(p.user_name, "Someone")}</strong>${(p.city || p.country) ? `<br/><span style="color:#5C6573">${[p.city, p.country].filter(Boolean).join(', ')}</span>` : ''}</div>`)
+          // Names and places are typed by whoever registered the stop, and
+          // bindPopup takes raw HTML, so both are escaped before going in.
+          m.bindPopup(`<div style="font-family:Georgia,serif;font-size:13px"><strong>${escapeHtml(publicName(p.user_name, "Someone"))}</strong>${(p.city || p.country) ? `<br/><span style="color:#5C6573">${escapeHtml([p.city, p.country].filter(Boolean).join(', '))}</span>` : ''}</div>`)
           markers.push(m)
         })
         if (latlngs.length > 1) L.polyline(latlngs, { color: gold, weight: 2, opacity: 0.65, dashArray: '4 6' }).addTo(map)

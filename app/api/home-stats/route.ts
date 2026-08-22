@@ -58,7 +58,7 @@ export async function GET() {
   // it for no better reason than having left the box blank.
   const { data: geoStops } = await supabase
     .from('registrations')
-    .select('user_name, city, state, country, latitude, longitude, prayer, band_id, registered_at')
+    .select('id, user_id, user_name, city, state, country, latitude, longitude, prayer, band_id, registered_at')
     .eq('flagged', false)
     .not('latitude', 'is', null)
     .order('registered_at', { ascending: false })
@@ -83,6 +83,16 @@ export async function GET() {
     return l ? `${f}.${l}.` : `${f}.`
   }
 
+  // The feed never displayed the band ID, but it was still being shipped to the
+  // browser, where anyone could read it out of the network tab. It was only ever
+  // used as a React key and to seed a decorative counter, so an opaque token
+  // does the same job and identifies nothing.
+  const opaque = (s: string): string => {
+    let h = 0x811c9dc5
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) }
+    return (h >>> 0).toString(36)
+  }
+
   const prayersList = (recent || []).map((r: any) => ({
     name: anon(r.user_name),
     initials: initialsOf(r.user_name),
@@ -90,16 +100,34 @@ export async function GET() {
     lat: r.latitude,
     lng: r.longitude,
     prayer: r.prayer,
-    band: r.band_id,
+    key: opaque(`${r.band_id}|${r.registered_at}`),
     registered_at: r.registered_at,
   }))
+
+  // One pin per PERSON, not per band. Keyed on band before, so anyone carrying
+  // several bands appeared several times over — Jackson was four pins in one
+  // town, which reads as four people rather than one person with four bands.
+  //
+  // Identifying "the same person" without an account is guesswork, so this only
+  // merges where it can be sure:
+  //   • signed in  → the account id, exact
+  //   • a guest    → name + town, which is the same person often enough
+  //   • no name    → never merged; two anonymous stops in one town are more
+  //                  likely two people than one, and wrongly merging them
+  //                  deletes somebody from the map
+  const personKey = (r: any): string => {
+    if (r.user_id) return `u:${r.user_id}`
+    const name = (r.user_name || '').trim().toLowerCase()
+    if (!name) return `r:${r.id}`
+    return `g:${name}|${(r.city || '').trim().toLowerCase()}|${(r.country || '').trim().toLowerCase()}`
+  }
 
   const seenAt = new Set<string>()
   const points = (geoStops || [])
     .filter((r: any) => {
-      // geoStops is newest-first, so the first row wins and the pin shows their
-      // latest stop on that band.
-      const key = `${r.band_id}|${(r.user_name || '').trim().toLowerCase()}`
+      // geoStops is newest-first, so the first row wins and a person's pin sits
+      // at the last place they were, not the first.
+      const key = personKey(r)
       if (seenAt.has(key)) return false
       seenAt.add(key)
       return true
@@ -114,7 +142,10 @@ export async function GET() {
     lat: at.lat,
     lng: at.lng,
     prayer: (r.prayer || '').trim() || null,
-    band: r.band_id,
+    // No band_id. It was printed at the top of every popup, and a band ID is
+    // the key to that band — it opens its page and the claim flow keys on it.
+    // The map's job is to show that a band reached somewhere, which needs no
+    // identifier at all.
     }
   })
 

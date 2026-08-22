@@ -4,17 +4,18 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
+import { escapeHtml as esc } from "@/lib/escape-html";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type MapPoint = { lat: number; lng: number; name: string; loc: string; band: string; prayer: string };
-type FeedPrayer = { initials: string; name: string; location: string; text: string; band: string; time: string };
+type MapPoint = { lat: number; lng: number; name: string; loc: string; prayer: string };
+type FeedPrayer = { initials: string; name: string; location: string; text: string; key: string; time: string };
 
 // ─── Sample fallbacks (used until real activity surpasses the floor) ────────────
 const SAMPLE_FEED: FeedPrayer[] = [
-  { initials: "S.P.", name: "Sarah P.", location: "Dallas, TX", text: "Please pray for healing and peace as I go through this uncertain time.", band: "PB-47291", time: "2h ago" },
-  { initials: "J.D.", name: "John D.", location: "Phoenix, AZ", text: "Starting a new job search. Would love your prayers!", band: "PB-18834", time: "5h ago" },
-  { initials: "E.R.", name: "Emily R.", location: "Tampa, FL", text: "Our baby is finally home! Thank you for all your prayers.", band: "PB-92011", time: "1d ago" },
-  { initials: "D.M.", name: "David M.", location: "Columbus, OH", text: "Deployment next week. Pray for my family.", band: "PB-33107", time: "1d ago" },
+  { initials: "S.P.", name: "Sarah P.", location: "Dallas, TX", text: "Please pray for healing and peace as I go through this uncertain time.", key: "sample-1", time: "2h ago" },
+  { initials: "J.D.", name: "John D.", location: "Phoenix, AZ", text: "Starting a new job search. Would love your prayers!", key: "sample-2", time: "5h ago" },
+  { initials: "E.R.", name: "Emily R.", location: "Tampa, FL", text: "Our baby is finally home! Thank you for all your prayers.", key: "sample-3", time: "1d ago" },
+  { initials: "D.M.", name: "David M.", location: "Columbus, OH", text: "Deployment next week. Pray for my family.", key: "sample-4", time: "1d ago" },
 ];
 
 const TOP_COUNTRIES_SAMPLE = [
@@ -124,20 +125,20 @@ function timeAgo(ts?: string) {
 
 // ─── Sample band points for the global map (fallback) ───────────────────────────
 const MAP_POINTS: MapPoint[] = [
-  { lat: 36.17, lng: -86.78, name: "M.R.", loc: "Nashville, USA", band: "PB-47291", prayer: "Lord, cover whoever holds this band with Your peace that passes all understanding." },
-  { lat: 6.52, lng: 3.37, name: "A.O.", loc: "Lagos, Nigeria", band: "PB-18834", prayer: "Father, let Your light shine through every hand this band passes through." },
-  { lat: -23.55, lng: -46.63, name: "C.F.", loc: "São Paulo, Brazil", band: "PB-92011", prayer: "May this band carry hope to someone who needs it today. In Jesus' name." },
-  { lat: 37.57, lng: 126.98, name: "J.K.", loc: "Seoul, South Korea", band: "PB-33107", prayer: "I pray for healing, restoration, and renewal for everyone this touches." },
-  { lat: 51.51, lng: -0.13, name: "S.H.", loc: "London, UK", band: "PB-65498", prayer: "God, let this small band carry Your immeasurable love around the world." },
-  { lat: 40.71, lng: -74.0, name: "D.L.", loc: "New York, USA", band: "PB-20114", prayer: "Be near to the brokenhearted in this city. Let them feel You." },
-  { lat: -33.87, lng: 151.21, name: "E.W.", loc: "Sydney, Australia", band: "PB-77320", prayer: "Carry my friend through her treatment, Lord. Hold her steady." },
-  { lat: 19.08, lng: 72.88, name: "R.P.", loc: "Mumbai, India", band: "PB-51277", prayer: "Provide for the family that holds this next. You see every need." },
-  { lat: -1.29, lng: 36.82, name: "G.M.", loc: "Nairobi, Kenya", band: "PB-39845", prayer: "Let revival start in one heart and travel band to band." },
-  { lat: 19.43, lng: -99.13, name: "L.G.", loc: "Mexico City, Mexico", band: "PB-60223", prayer: "Paz para mi familia. Peace for whoever wears this next." },
-  { lat: 52.52, lng: 13.40, name: "K.B.", loc: "Berlin, Germany", band: "PB-28910", prayer: "Soften hard hearts. Let this little band be a seed of hope." },
-  { lat: 43.65, lng: -79.38, name: "T.N.", loc: "Toronto, Canada", band: "PB-44102", prayer: "Watch over my son tonight wherever he is. Bring him home." },
-  { lat: 14.6, lng: 120.98, name: "M.S.", loc: "Manila, Philippines", band: "PB-81560", prayer: "Strength for every tired parent holding this band. You are faithful." },
-  { lat: 34.05, lng: -118.24, name: "B.C.", loc: "Los Angeles, USA", band: "PB-70488", prayer: "For the one who feels invisible — You see them. You know their name." },
+  { lat: 36.17, lng: -86.78, name: "M.R.", loc: "Nashville, USA", prayer: "Lord, cover whoever holds this band with Your peace that passes all understanding." },
+  { lat: 6.52, lng: 3.37, name: "A.O.", loc: "Lagos, Nigeria", prayer: "Father, let Your light shine through every hand this band passes through." },
+  { lat: -23.55, lng: -46.63, name: "C.F.", loc: "São Paulo, Brazil", prayer: "May this band carry hope to someone who needs it today. In Jesus' name." },
+  { lat: 37.57, lng: 126.98, name: "J.K.", loc: "Seoul, South Korea", prayer: "I pray for healing, restoration, and renewal for everyone this touches." },
+  { lat: 51.51, lng: -0.13, name: "S.H.", loc: "London, UK", prayer: "God, let this small band carry Your immeasurable love around the world." },
+  { lat: 40.71, lng: -74.0, name: "D.L.", loc: "New York, USA", prayer: "Be near to the brokenhearted in this city. Let them feel You." },
+  { lat: -33.87, lng: 151.21, name: "E.W.", loc: "Sydney, Australia", prayer: "Carry my friend through her treatment, Lord. Hold her steady." },
+  { lat: 19.08, lng: 72.88, name: "R.P.", loc: "Mumbai, India", prayer: "Provide for the family that holds this next. You see every need." },
+  { lat: -1.29, lng: 36.82, name: "G.M.", loc: "Nairobi, Kenya", prayer: "Let revival start in one heart and travel band to band." },
+  { lat: 19.43, lng: -99.13, name: "L.G.", loc: "Mexico City, Mexico", prayer: "Paz para mi familia. Peace for whoever wears this next." },
+  { lat: 52.52, lng: 13.40, name: "K.B.", loc: "Berlin, Germany", prayer: "Soften hard hearts. Let this little band be a seed of hope." },
+  { lat: 43.65, lng: -79.38, name: "T.N.", loc: "Toronto, Canada", prayer: "Watch over my son tonight wherever he is. Bring him home." },
+  { lat: 14.6, lng: 120.98, name: "M.S.", loc: "Manila, Philippines", prayer: "Strength for every tired parent holding this band. You are faithful." },
+  { lat: 34.05, lng: -118.24, name: "B.C.", loc: "Los Angeles, USA", prayer: "For the one who feels invisible — You see them. You know their name." },
 ];
 
 // Leaflet world map (unchanged behavior) — tapping a dot opens its prayer.
@@ -162,11 +163,16 @@ function GlobalPrayerMap({ points }: { points: MapPoint[] }) {
       points.slice(0, RECENT).forEach((p) => bounds.push([p.lat, p.lng]));
       points.forEach((p) => {
         const dot = L.divIcon({ className: "", html: '<div class="pb-map-dot"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
+        // The band ID used to head this popup. It is the key to that band, so a
+        // map of where bands have been is exactly the wrong place for it.
+        //
+        // Everything below is written by the public, and bindPopup takes raw
+        // HTML — so it is escaped. Unescaped, a prayer containing markup would
+        // run as script on the home page for every visitor.
         L.marker([p.lat, p.lng], { icon: dot }).addTo(map).bindPopup(
           `<div style="font-family:Georgia,serif;max-width:230px">
-             <div style="font-family:monospace;font-weight:bold;color:#9A7A35;font-size:12px">${p.band}</div>
-             <div style="font-size:13px;color:#15223B;font-weight:600;margin-top:2px">${p.name} · ${p.loc}</div>
-             ${p.prayer ? '<div style="font-size:13px;color:#2A3344;font-style:italic;line-height:1.55;margin-top:7px;border-left:2px solid #C8A96E;padding-left:9px">&ldquo;' + p.prayer + '&rdquo;</div>' : '<div style="font-size:12px;color:#5C6573;margin-top:6px">Carried this band</div>'}
+             <div style="font-size:13px;color:#15223B;font-weight:600">${esc(p.name)} · ${esc(p.loc)}</div>
+             ${p.prayer ? '<div style="font-size:13px;color:#2A3344;font-style:italic;line-height:1.55;margin-top:7px;border-left:2px solid #C8A96E;padding-left:9px">&ldquo;' + esc(p.prayer) + '&rdquo;</div>' : '<div style="font-size:12px;color:#5C6573;margin-top:6px">Carried a band here</div>'}
            </div>`
         );
       });
@@ -232,13 +238,13 @@ export default function HomePage() {
     // whenever real reach was smaller — showing invented pins on a map that
     // looked live. Three real places is enough to be a map of somewhere.
     return liveGeo.length >= 3
-      ? liveGeo.map(p => ({ lat: p.lat, lng: p.lng, name: p.name, loc: p.location, band: p.band, prayer: p.prayer }))
+      ? liveGeo.map(p => ({ lat: p.lat, lng: p.lng, name: p.name, loc: p.location, prayer: p.prayer }))
       : MAP_POINTS;
   }, [live]);
 
   const feed: FeedPrayer[] = useMemo(() => (
     ((live?.prayers || []) as any[]).length >= 4
-      ? (live.prayers as any[]).slice(0, 4).map(p => ({ initials: p.initials, name: p.name, location: p.location, text: p.prayer, band: p.band, time: timeAgo(p.registered_at) }))
+      ? (live.prayers as any[]).slice(0, 4).map(p => ({ initials: p.initials, name: p.name, location: p.location, text: p.prayer, key: p.key, time: timeAgo(p.registered_at) }))
       : SAMPLE_FEED
   ), [live]);
 
@@ -382,9 +388,9 @@ export default function HomePage() {
           <div className="feed-grid">
             {feed.map((p, i) => {
               const answered = i === 2; // highlight one card as an answered prayer
-              const count = prayingCount(p.band);
+              const count = prayingCount(p.key);
               return (
-                <Reveal key={p.band + i} delay={i * 80} className={`feed-card${answered ? " answered" : ""}`}>
+                <Reveal key={p.key + i} delay={i * 80} className={`feed-card${answered ? " answered" : ""}`}>
                   {answered && (
                     <div className="feed-answered"><Ico name="check" size={13} /> Prayer Answered</div>
                   )}
