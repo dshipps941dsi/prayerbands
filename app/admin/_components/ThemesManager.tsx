@@ -12,7 +12,7 @@ const C = {
 }
 
 type T = {
-  key: string; label: string; builtin: boolean; override: boolean; sort_order: number
+  key: string; label: string; builtin: boolean; override: boolean; sort_order: number; bands: number
   primary: string; background: string; surface: string; surfaceAlt: string
   text: string; textMuted: string; textOnPrimary: string
   accent: string; accentAlt: string; tabBar: string; tabActive: string
@@ -24,7 +24,7 @@ type T = {
 // Map an API theme object (BandTheme-ish + flags) to the flat editable shape.
 function fromApi(a: any): T {
   return {
-    key: a.key, label: a.label || '', builtin: !!a.builtin, override: !!a.override, sort_order: a.sort_order ?? 100,
+    key: a.key, label: a.label || '', builtin: !!a.builtin, override: !!a.override, sort_order: a.sort_order ?? 100, bands: a.bands ?? 0,
     primary: a.primary || '#2A5298', background: a.background || '#EEF2F7', surface: a.surface || '#FFFFFF',
     surfaceAlt: a.surfaceAlt || '#DCE6F2', text: a.text || '#0D1F3C', textMuted: a.textMuted || '#5A7BA8',
     textOnPrimary: a.textOnPrimary || '#FFFFFF', accent: a.accent || '#D4A84B', accentAlt: a.accentAlt || '#2D4A2D',
@@ -178,6 +178,18 @@ export default function ThemesManager() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 600, color: C.heading, fontFamily: 'Inter, sans-serif', fontSize: 15 }}>{t.label} {t.builtin && <span style={{ fontSize: 10, color: C.goldText, border: `1px solid ${C.borderNavy}`, borderRadius: 999, padding: '1px 8px', marginLeft: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.override ? 'Built-in · edited' : 'Built-in'}</span>}</div>
                 <div style={{ fontSize: 12, color: C.secondary, fontFamily: 'monospace' }}>{t.key}</div>
+                {/* A theme that styles nothing looks identical to one that
+                    works: it saves, it lists, and the bands carry on looking
+                    exactly as they did. Say which it is. */}
+                {t.bands > 0 ? (
+                  <div style={{ fontSize: 11.5, color: C.secondary, marginTop: 3 }}>
+                    Worn by <strong style={{ color: C.heading }}>{t.bands}</strong> band{t.bands === 1 ? '' : 's'}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 11.5, color: '#B4441F', marginTop: 3, fontWeight: 600 }}>
+                    Styles no bands
+                  </div>
+                )}
               </div>
               <div style={{ fontSize: 20, color: C.secondary }}>{isOpen ? '▾' : '▸'}</div>
             </div>

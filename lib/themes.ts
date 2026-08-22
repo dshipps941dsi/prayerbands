@@ -408,9 +408,22 @@ export function getTheme(key?: string | null): BandTheme {
 // So fall back to the colour: 'Light Grey' → 'light-grey'. A colour only styles
 // a band if a theme with that key exists, so an unstyled colour still gets
 // Classic rather than nothing.
+// The engraved colour and the theme key do not always agree. The bands say
+// "Light Grey"; the store product and the theme are both called Gray. Same
+// mismatch the store had to encode in PRODUCT_VARIANTS, and it fails the same
+// way — silently, with the theme styling nothing and no error anywhere.
+const COLOR_THEME_ALIASES: Record<string, string> = {
+  'light-grey': 'gray',
+  'light-gray': 'gray',
+  grey: 'gray',
+};
+
 export function themeKeyForColor(color?: string | null): string | null {
   const slug = (color || '').trim().toLowerCase().replace(/\s+/g, '-');
-  return slug && REGISTRY[slug] ? slug : null;
+  if (!slug) return null;
+  if (REGISTRY[slug]) return slug;
+  const alias = COLOR_THEME_ALIASES[slug];
+  return alias && REGISTRY[alias] ? alias : null;
 }
 
 export function resolveThemeKey(theme?: string | null, color?: string | null): string | null {
