@@ -15,6 +15,14 @@ const FAQS = [
     a: "No app required. Most modern phones read NFC tags automatically — just tap the band to the back of your phone and a link opens. You can also visit the band's page directly in any web browser.",
   },
   {
+    q: "Does the band track my location?",
+    a: "No. The chip inside the band is passive — no battery, no GPS, and no way to send anything on its own. It holds one short web link and nothing else. It only does anything when someone deliberately holds a phone within an inch or two of it, so it cannot be read across a room and does nothing at all sitting in a drawer. It does not know who is wearing it, and nothing is ever written back to it. The pins on our map come from the city a person types in when they register a band — not from the band. If that box is left blank, we make one rough, city-level guess from the internet connection at that moment so the pin is not empty. There is no ongoing location, no movement history, and never a street address. Take the band off or pass it on, and nothing follows you.",
+  },
+  {
+    q: "Do you sell my personal information?",
+    a: "Never. We do not sell, rent, or trade your information, and we do not hand it to advertisers. The only companies that touch any of it are the ones that keep the site running: Supabase stores our data, Stripe processes payments (we never see your card number), Resend delivers our emails, Vercel hosts the site, and Google Analytics gives us anonymous visitor counts. You also choose what is public — your name can simply be ‘Anonymous’, and leaving a prayer is always optional. You can request a copy of your data, or ask us to delete it, at hello@prayerbands.com.",
+  },
+  {
     q: "How long does shipping take?",
     a: "Orders typically ship within 3 business days. Domestic delivery usually arrives within 5–7 business days after shipping; international can take longer. If you have an urgent need, mention 'URGENT' in your message subject.",
   },
