@@ -466,7 +466,11 @@ function StorePageInner() {
             <span className="section-label">Church & Ministry Packs</span>
             <h2 className="playfair" style={{ fontSize: 36, fontWeight: 600, color: "#15223B" }}>For Communities</h2>
             <div style={{ width: 40, height: 1, background: "#C9CFD6", marginTop: 14, marginBottom: 10 }} />
-            <p className="lato" style={{ fontSize: 15, color: "#5C6573", marginTop: 0, fontWeight: 300 }}>Bulk pricing with a custom ministry prefix (e.g. FBC-XXXXX) and dashboard access.</p>
+            <p className="lato" style={{ fontSize: 15, color: "#5C6573", marginTop: 0, fontWeight: 300 }}>Bulk pricing with a custom ministry prefix (e.g. FBC-XXXXX) and dashboard access. Special and custom designs — your own colors, artwork, or logo — are available on request.</p>
+          </div>
+          <div className="lato" style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "#FFFDF8", border: "1px solid rgba(200,169,110,0.34)", borderLeft: "3px solid #C8A96E", borderRadius: 8, padding: "12px 16px", marginBottom: 28, fontSize: 13.5, color: "#2A3344", lineHeight: 1.6, fontWeight: 300 }}>
+            <span style={{ fontSize: 15, lineHeight: 1.4 }}>🗓️</span>
+            <span>Please allow <strong style={{ fontWeight: 600, color: "#15223B" }}>4–6 weeks</strong> for bulk and custom orders — every band is laser-engraved and programmed to order.</span>
           </div>
           <div className="packs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
             {packProducts.map(pack => {
@@ -506,7 +510,7 @@ function StorePageInner() {
           <div style={{ flex: 1, minWidth: 240 }}>
             <span className="section-label" style={{ color: "#C8A96E" }}>Large Orders</span>
             <h3 className="playfair" style={{ fontSize: 28, color: "#F6F1E4", marginBottom: 12 }}>Need 500+ Bands?</h3>
-            <p className="lato" style={{ fontSize: 15, color: "#C9CFD6", lineHeight: 1.8, fontWeight: 300 }}>We work with denominations, mission organizations, and large congregations for custom quantities and pricing.</p>
+            <p className="lato" style={{ fontSize: 15, color: "#C9CFD6", lineHeight: 1.8, fontWeight: 300 }}>We work with denominations, mission organizations, and large congregations for custom quantities, special designs, and pricing. Bulk and custom orders take about 4–6 weeks to produce and ship.</p>
           </div>
           <a href="/contact" style={{ textDecoration: "none" }}><button style={{ background: "transparent", border: "1.5px solid #C8A96E", color: "#C8A96E", padding: "14px 36px", borderRadius: 4, fontFamily: "'Cinzel', serif", fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>Contact Us</button></a>
         </div>
