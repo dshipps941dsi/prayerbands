@@ -490,7 +490,7 @@ export default function BandPage() {
               {unread > 0 && <span style={{ position: 'absolute', top: -7, right: -9, background: GOLD, color: INK, borderRadius: 10, minWidth: 16, height: 16, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{unread}</span>}
             </button>
           ) : (
-            <a href={`/signin?redirect=${encodeURIComponent(`/band/${bandId}`)}`} style={{ fontFamily: serif, fontSize: 13, fontWeight: 700, color: GOLD, textDecoration: 'none', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '6px 14px', whiteSpace: 'nowrap' }}>Sign in</a>
+            <a href={`/signin?redirect=${encodeURIComponent(`/band/${bandId}`)}`} style={{ fontFamily: serif, fontSize: 13, fontWeight: 700, color: INK, background: GOLD, textDecoration: 'none', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '7px 16px', whiteSpace: 'nowrap' }}>Sign in</a>
           )}
         </div>
         <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} userId={userId} onSeen={() => setUnread(0)} />
@@ -1044,6 +1044,18 @@ export default function BandPage() {
           <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{bandId}</div>
           <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>Currently held by {status.currentHolder?.user_name ?? 'someone'} in {status.currentHolder?.city ?? 'the world'}</div>
         </div>
+        {/* This band is already claimed to an account. A signed-out visitor here
+            is most often its own holder returning without a session (a tag that
+            opened a different browser), so lead with Sign in — not "create an
+            account" they already have, and not a re-claim that would add a
+            duplicate registration to their own band. */}
+        {!userId && (
+          <div style={{ margin: '18px 20px 0', background: 'rgba(200,169,110,0.10)', border: `1px solid ${GOLD}`, borderRadius: 14, padding: '16px 20px', textAlign: 'center' }}>
+            <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Is this your band?</div>
+            <div style={{ fontFamily: body, fontSize: 13, color: GRAY, marginBottom: 12, lineHeight: 1.5 }}>If you registered it, sign in to open your band, your journal, and your prayer partners.</div>
+            <a href={`/signin?redirect=${encodeURIComponent(`/band/${bandId}`)}`} style={{ display: 'inline-block', padding: '11px 30px', background: GOLD, color: INK, borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Sign in ✝</a>
+          </div>
+        )}
         <NetworkConnectPrompt bandId={bandId} />
         {claimStep === 'prompt' && (
           <div style={{ margin: '20px 20px 0', background: 'white', borderRadius: 14, padding: '18px 20px', border: `1px solid ${GOLD}`, textAlign: 'center' }}>
