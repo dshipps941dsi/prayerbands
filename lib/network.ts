@@ -6,15 +6,21 @@
 // user_id, falling back to the band's owner. Returns null if no account holds it
 // (e.g. an anonymous registration on a band that was never linked to a buyer).
 export async function resolveBandRecipient(admin: any, bandId: string): Promise<string | null> {
+  // Who holds this band *right now* — the person a connection should link to.
+  // It's the most recent registration, full stop. We deliberately do NOT skip
+  // past a guest registration to an earlier account-holder: once a band moves
+  // on, it must never resolve back to whoever used to hold it. So if the current
+  // holder registered without an account, there is no UID to connect to and we
+  // return null ("no account yet") rather than the previous owner.
   const { data: regs } = await admin
     .from('registrations')
     .select('user_id, registered_at')
     .eq('band_id', bandId)
-    .not('user_id', 'is', null)
     .order('registered_at', { ascending: false })
     .limit(1)
-  if (regs && regs.length) return regs[0].user_id as string
+  if (regs && regs.length) return (regs[0].user_id as string) ?? null
 
+  // No registrations at all — the band is still with its buyer.
   const { data: band } = await admin
     .from('bands')
     .select('owner_id')
