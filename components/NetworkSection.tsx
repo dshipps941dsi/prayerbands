@@ -81,6 +81,14 @@ interface OtherItem {
   circle_id?: string
 }
 
+// A private label the viewer puts on partners they know (Youth Group, Baseball
+// team). member_ids are the partners' account UIDs.
+interface Group {
+  id: string
+  name: string
+  member_ids: string[]
+}
+
 const GOLD = 'var(--pb-primary, #B8860B)'
 const DARK = 'var(--pb-text, #2C1810)'
 const GRAY = 'var(--pb-text-muted, #8B7355)'
@@ -117,6 +125,13 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [circleRequests, setCircleRequests] = useState<CircleRequest[]>([])
   const [partnerFilter, setPartnerFilter] = useState<'all' | Relation>('all')
   const [othersFilter, setOthersFilter] = useState<'all' | OtherKind>('all')
+  // Partner groups (private labels) + which one is filtering the list + which
+  // partner's "add to group" menu is open + the inline new-group name.
+  const [groups, setGroups] = useState<Group[]>([])
+  const [activeGroup, setActiveGroup] = useState<string | null>(null)
+  const [groupMenuFor, setGroupMenuFor] = useState<string | null>(null)
+  const [newGroupName, setNewGroupName] = useState('')
+  const [showNewGroup, setShowNewGroup] = useState(false)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -126,10 +141,11 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [anonymity, setAnonymity] = useState<'anonymous' | 'first_initial'>('first_initial')
 
   async function load() {
-    const [netRes, circleRes, bandsRes] = await Promise.all([
+    const [netRes, circleRes, bandsRes, groupsRes] = await Promise.all([
       fetch('/api/network/my-network'),
       showPartners ? fetch('/api/circles/open-requests') : Promise.resolve(null),
       showPartners ? fetch('/api/my-bands') : Promise.resolve(null),
+      showPartners ? fetch('/api/network/groups') : Promise.resolve(null),
     ])
     if (netRes.ok) {
       const d = await netRes.json()
@@ -149,7 +165,41 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       const d = await circleRes.json()
       setCircleRequests(d.requests ?? [])
     }
+    if (groupsRes && groupsRes.ok) {
+      const d = await groupsRes.json()
+      setGroups(d.groups ?? [])
+    }
     setLoading(false)
+  }
+
+  // ── Partner groups ───────────────────────────────────────────────────────
+  async function createGroup(name: string): Promise<string | null> {
+    const res = await fetch('/api/network/groups', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    })
+    if (!res.ok) return null
+    const d = await res.json()
+    setGroups(prev => [...prev, d.group])
+    return d.group.id as string
+  }
+
+  async function deleteGroup(id: string) {
+    setGroups(prev => prev.filter(g => g.id !== id))
+    if (activeGroup === id) setActiveGroup(null)
+    await fetch(`/api/network/groups?id=${id}`, { method: 'DELETE' })
+  }
+
+  // Add or remove a partner from a group, updating the list optimistically.
+  async function toggleMember(groupId: string, memberId: string, isMember: boolean) {
+    setGroups(prev => prev.map(g => g.id !== groupId ? g : {
+      ...g,
+      member_ids: isMember ? g.member_ids.filter(m => m !== memberId) : [...g.member_ids, memberId],
+    }))
+    await fetch('/api/network/groups/assign', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ group_id: groupId, member_id: memberId, op: isMember ? 'remove' : 'add' }),
+    })
   }
 
   useEffect(() => {
@@ -250,7 +300,15 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const relationOf = (c: Connection): Relation => c.relation ?? 'direct'
   const directCount = connections.filter(c => relationOf(c) === 'direct').length
   const lineageCount = connections.filter(c => relationOf(c) === 'lineage').length
-  const visiblePartners = connections.filter(c => partnerFilter === 'all' || relationOf(c) === partnerFilter)
+  // A group filter, when active, wins over the Direct/Lineage filter.
+  const activeGroupObj = groups.find(g => g.id === activeGroup) || null
+  const visiblePartners = connections.filter(c =>
+    activeGroupObj
+      ? activeGroupObj.member_ids.includes(c.user_id)
+      : (partnerFilter === 'all' || relationOf(c) === partnerFilter)
+  )
+  const groupsForMember = (uid: string) => groups.filter(g => g.member_ids.includes(uid))
+  const canGroup = (c: Connection) => !!c.connection_id  // formal (accepted) connections only
 
   const relationBadge = (rel: Relation) => (
     <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: rel === 'lineage' ? LINEAGE : GOLD, background: rel === 'lineage' ? 'rgba(107,78,158,0.10)' : '#FFF8E7', border: `1px solid ${rel === 'lineage' ? 'rgba(107,78,158,0.35)' : GOLD}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>
@@ -366,25 +424,81 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         </div>
       ))}
 
-      {/* Direct / Lineage filter */}
+      {/* Direct / Lineage / group filters */}
       {connections.length > 0 && (
-        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-          {chip(partnerFilter === 'all', `All · ${connections.length}`, () => setPartnerFilter('all'))}
-          {chip(partnerFilter === 'direct', `Direct · ${directCount}`, () => setPartnerFilter('direct'))}
-          {chip(partnerFilter === 'lineage', `Lineage · ${lineageCount}`, () => setPartnerFilter('lineage'), LINEAGE)}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+          {chip(partnerFilter === 'all' && !activeGroup, `All · ${connections.length}`, () => { setActiveGroup(null); setPartnerFilter('all') })}
+          {chip(partnerFilter === 'direct' && !activeGroup, `Direct · ${directCount}`, () => { setActiveGroup(null); setPartnerFilter('direct') })}
+          {chip(partnerFilter === 'lineage' && !activeGroup, `Lineage · ${lineageCount}`, () => { setActiveGroup(null); setPartnerFilter('lineage') }, LINEAGE)}
+          {groups.map(g => chip(activeGroup === g.id, `${g.name} · ${g.member_ids.length}`, () => setActiveGroup(activeGroup === g.id ? null : g.id), CIRCLE))}
+          {showNewGroup ? (
+            <span style={{ display: 'inline-flex', gap: 4 }}>
+              <input
+                autoFocus value={newGroupName} onChange={e => setNewGroupName(e.target.value.slice(0, 60))}
+                onKeyDown={async e => { if (e.key === 'Enter' && newGroupName.trim()) { await createGroup(newGroupName.trim()); setNewGroupName(''); setShowNewGroup(false) } if (e.key === 'Escape') { setShowNewGroup(false); setNewGroupName('') } }}
+                placeholder="Group name" style={{ padding: '4px 10px', borderRadius: 16, border: `1px solid ${GOLD}`, fontSize: 11.5, fontFamily: 'Georgia, serif', outline: 'none', width: 110 }}
+              />
+              <button onClick={async () => { if (newGroupName.trim()) { await createGroup(newGroupName.trim()); setNewGroupName(''); setShowNewGroup(false) } }} style={{ padding: '4px 10px', borderRadius: 16, border: 'none', background: GOLD, color: '#fff', fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: 700, cursor: 'pointer' }}>Add</button>
+            </span>
+          ) : (
+            <button onClick={() => setShowNewGroup(true)} style={{ padding: '5px 11px', borderRadius: 16, border: `1px dashed ${BORDER}`, background: '#fff', color: GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', cursor: 'pointer' }}>+ Group</button>
+          )}
+        </div>
+      )}
+      {activeGroupObj && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <span style={{ fontSize: 12, color: GRAY }}>Showing <strong style={{ color: DARK }}>{activeGroupObj.name}</strong></span>
+          <button onClick={() => deleteGroup(activeGroupObj.id)} style={{ background: 'none', border: 'none', color: '#B4441F', fontSize: 11.5, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: 0 }}>Delete group</button>
         </div>
       )}
 
       {/* Partner people */}
-      {visiblePartners.map(c => (
+      {visiblePartners.map(c => {
+        const inGroups = groupsForMember(c.user_id)
+        const menuOpen = groupMenuFor === c.user_id
+        return (
         <div key={c.connection_id ?? `lin-${c.user_id}`} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: BORDER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>🙏</div>
             <p style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0, flex: 1 }}>{c.name}</p>
             {relationBadge(relationOf(c))}
           </div>
+
+          {/* Groups this partner is in, plus a menu to add/remove. Only for
+              formal (accepted) connections — see canGroup. */}
+          {canGroup(c) && (
+            <div style={{ marginTop: 10, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+              {inGroups.map(g => (
+                <span key={g.id} onClick={() => toggleMember(g.id, c.user_id, true)} title="Remove from group"
+                  style={{ fontSize: 11, fontWeight: 600, color: CIRCLE, background: 'rgba(46,125,138,0.10)', border: `1px solid ${CIRCLE}`, borderRadius: 20, padding: '2px 9px', fontFamily: 'Georgia, serif', cursor: 'pointer' }}>
+                  {g.name} ✕
+                </span>
+              ))}
+              <button onClick={() => setGroupMenuFor(menuOpen ? null : c.user_id)}
+                style={{ fontSize: 11, color: menuOpen ? DARK : GRAY, background: 'transparent', border: `1px dashed ${BORDER}`, borderRadius: 20, padding: '3px 10px', fontFamily: 'Georgia, serif', cursor: 'pointer' }}>
+                {menuOpen ? 'Done' : '+ Group'}
+              </button>
+            </div>
+          )}
+
+          {menuOpen && (
+            <div style={{ marginTop: 8, border: `1px solid ${BORDER}`, borderRadius: 8, padding: 8, background: CREAM }}>
+              {groups.length === 0 ? (
+                <div style={{ fontSize: 12, color: GRAY, padding: '2px 4px' }}>No groups yet — add one with “+ Group” in the filter row above.</div>
+              ) : groups.map(g => {
+                const isMember = g.member_ids.includes(c.user_id)
+                return (
+                  <button key={g.id} onClick={() => toggleMember(g.id, c.user_id, isMember)}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '7px 8px', margin: '2px 0', borderRadius: 6, border: 'none', background: isMember ? 'rgba(46,125,138,0.10)' : 'transparent', color: DARK, fontSize: 13, fontFamily: 'Georgia, serif', cursor: 'pointer' }}>
+                    {isMember ? '✓ ' : '＋ '}{g.name}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
-      ))}
+        )
+      })}
 
       {/* Empty states */}
       {connections.length === 0 && pending.length === 0 ? (
