@@ -21,7 +21,11 @@ interface NetworkRequest {
   intercession_count: number
   i_prayed: boolean
   audience?: string
+  list_id?: string | null
 }
+
+// A named bucket a person files their own journal entries into (Family, Health).
+interface JournalList { id: string; name: string }
 
 type Relation = 'direct' | 'lineage'
 type Audience = 'private' | 'network' | 'direct' | 'lineage' | 'wall'
@@ -135,6 +139,13 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [groupMenuFor, setGroupMenuFor] = useState<string | null>(null)
   const [newGroupName, setNewGroupName] = useState('')
   const [showNewGroup, setShowNewGroup] = useState(false)
+  // Journal lists: the set, which one filters My Journal, which one a new entry
+  // is filed into, and the inline new-list name.
+  const [lists, setLists] = useState<JournalList[]>([])
+  const [activeList, setActiveList] = useState<string | null>(null)
+  const [entryList, setEntryList] = useState<string | null>(null)
+  const [newListName, setNewListName] = useState('')
+  const [showNewList, setShowNewList] = useState(false)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -144,11 +155,12 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [anonymity, setAnonymity] = useState<'anonymous' | 'first_initial'>('first_initial')
 
   async function load() {
-    const [netRes, circleRes, bandsRes, groupsRes] = await Promise.all([
+    const [netRes, circleRes, bandsRes, groupsRes, listsRes] = await Promise.all([
       fetch('/api/network/my-network'),
       showPartners ? fetch('/api/circles/open-requests') : Promise.resolve(null),
       showPartners ? fetch('/api/my-bands') : Promise.resolve(null),
       (showPartners || showRequests) ? fetch('/api/network/groups') : Promise.resolve(null),
+      showRequests ? fetch('/api/network/lists') : Promise.resolve(null),
     ])
     if (netRes.ok) {
       const d = await netRes.json()
@@ -173,7 +185,30 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       const d = await groupsRes.json()
       setGroups(d.groups ?? [])
     }
+    if (listsRes && listsRes.ok) {
+      const d = await listsRes.json()
+      setLists(d.lists ?? [])
+    }
     setLoading(false)
+  }
+
+  // ── Journal lists ────────────────────────────────────────────────────────
+  async function createList(name: string): Promise<string | null> {
+    const res = await fetch('/api/network/lists', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    })
+    if (!res.ok) return null
+    const d = await res.json()
+    setLists(prev => [...prev, d.list])
+    return d.list.id as string
+  }
+  async function deleteList(id: string) {
+    setLists(prev => prev.filter(l => l.id !== id))
+    if (activeList === id) setActiveList(null)
+    if (entryList === id) setEntryList(null)
+    setMyRequests(prev => prev.map(r => r.list_id === id ? { ...r, list_id: null } : r))
+    await fetch(`/api/network/lists?id=${id}`, { method: 'DELETE' })
   }
 
   // ── Partner groups ───────────────────────────────────────────────────────
@@ -271,7 +306,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       const res = await fetch('/api/network/prayer-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_text: text.trim(), audience, anonymity }),
+        body: JSON.stringify({ request_text: text.trim(), audience, anonymity, list_id: entryList }),
       })
       if (res.ok) {
         const d = await res.json()
@@ -279,6 +314,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         setText('')
         setShowForm(false)
         setAudience('private')
+        setEntryList(activeList)  // default the next entry to the list you're viewing
       }
     } finally {
       setSubmitting(false)
@@ -597,9 +633,31 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <h4 style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0 }}>My Journal</h4>
           {!showForm && (
-            <button onClick={() => setShowForm(true)} style={{ backgroundColor: GOLD, color: '#fff', border: 'none', borderRadius: 16, padding: '5px 12px', fontSize: 12, fontFamily: 'Georgia, serif', cursor: 'pointer', fontWeight: 600 }}>+ Add</button>
+            <button onClick={() => { setEntryList(activeList); setShowForm(true) }} style={{ backgroundColor: GOLD, color: '#fff', border: 'none', borderRadius: 16, padding: '5px 12px', fontSize: 12, fontFamily: 'Georgia, serif', cursor: 'pointer', fontWeight: 600 }}>+ Add</button>
           )}
         </div>
+
+        {/* Journal list filters — All + your named lists + create */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: activeList ? 8 : 12, flexWrap: 'wrap' }}>
+          {chip(!activeList, `All · ${myRequests.length}`, () => setActiveList(null))}
+          {lists.map(l => chip(activeList === l.id, `${l.name} · ${myRequests.filter(r => r.list_id === l.id).length}`, () => setActiveList(activeList === l.id ? null : l.id), CIRCLE))}
+          {showNewList ? (
+            <span style={{ display: 'inline-flex', gap: 4 }}>
+              <input autoFocus value={newListName} onChange={e => setNewListName(e.target.value.slice(0, 60))}
+                onKeyDown={async e => { if (e.key === 'Enter' && newListName.trim()) { const id = await createList(newListName.trim()); setNewListName(''); setShowNewList(false); if (id) setActiveList(id) } if (e.key === 'Escape') { setShowNewList(false); setNewListName('') } }}
+                placeholder="List name" style={{ padding: '4px 10px', borderRadius: 16, border: `1px solid ${GOLD}`, fontSize: 11.5, fontFamily: 'Georgia, serif', outline: 'none', width: 100 }} />
+              <button onClick={async () => { if (newListName.trim()) { const id = await createList(newListName.trim()); setNewListName(''); setShowNewList(false); if (id) setActiveList(id) } }} style={{ padding: '4px 10px', borderRadius: 16, border: 'none', background: GOLD, color: '#fff', fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: 700, cursor: 'pointer' }}>Add</button>
+            </span>
+          ) : (
+            <button onClick={() => setShowNewList(true)} style={{ padding: '5px 11px', borderRadius: 16, border: `1px dashed ${BORDER}`, background: '#fff', color: GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', cursor: 'pointer' }}>+ List</button>
+          )}
+        </div>
+        {activeList && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <span style={{ fontSize: 12, color: GRAY }}>Showing <strong style={{ color: DARK }}>{lists.find(l => l.id === activeList)?.name}</strong></span>
+            <button onClick={() => deleteList(activeList)} style={{ background: 'none', border: 'none', color: '#B4441F', fontSize: 11.5, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: 0 }}>Delete list</button>
+          </div>
+        )}
 
         {showForm && (
           <div style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, marginBottom: 10 }}>
@@ -628,6 +686,19 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             </div>
             <p style={{ fontSize: 11, color: GRAY, margin: '6px 2px 0', fontStyle: 'italic' }}>{audienceHint(audience)}</p>
 
+            {lists.length > 0 && (
+              <>
+                <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>File into a list <span style={{ textTransform: 'none', letterSpacing: 0 }}>(optional)</span></div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <button onClick={() => setEntryList(null)} style={{ padding: '6px 12px', borderRadius: 16, border: `1px solid ${!entryList ? DARK : BORDER}`, background: !entryList ? '#F5F0E6' : '#fff', color: !entryList ? DARK : GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: !entryList ? 700 : 400, cursor: 'pointer' }}>None</button>
+                  {lists.map(l => {
+                    const active = entryList === l.id
+                    return <button key={l.id} onClick={() => setEntryList(l.id)} style={{ padding: '6px 12px', borderRadius: 16, border: `1px solid ${active ? CIRCLE : BORDER}`, background: active ? 'rgba(46,125,138,0.10)' : '#fff', color: active ? CIRCLE : GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: active ? 700 : 400, cursor: 'pointer' }}>{l.name}</button>
+                  })}
+                </div>
+              </>
+            )}
+
             {audience === 'wall' && (
               <>
                 <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Show on the wall as</div>
@@ -649,11 +720,12 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
           <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: 0 }}>Your journal is empty. Add a prayer — it stays private to you unless you choose to share it.</p>
         )}
 
-        {myRequests.map(r => (
+        {myRequests.filter(r => !activeList || r.list_id === activeList).map(r => (
           <div key={r.id} style={{ backgroundColor: r.is_answered ? '#F5F5F0' : '#fff', border: `1px solid ${r.is_answered ? '#D4D0C8' : BORDER}`, borderRadius: 10, padding: 14, marginBottom: 10, opacity: r.is_answered ? 0.85 : 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
               {r.is_answered && <span style={{ fontSize: 11, fontWeight: 600, color: '#7BAE8E', letterSpacing: '0.08em', textTransform: 'uppercase' }}>✓ Answered</span>}
               {r.audience && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: GRAY, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>{audienceLabel(r.audience)}</span>}
+              {r.list_id && lists.find(l => l.id === r.list_id) && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: CIRCLE, background: 'rgba(46,125,138,0.10)', border: `1px solid ${CIRCLE}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>{lists.find(l => l.id === r.list_id)?.name}</span>}
             </div>
             <p style={{ fontSize: 14, color: DARK, lineHeight: 1.5, margin: '0 0 10px 0', fontStyle: 'italic' }}>&ldquo;{r.request_text}&rdquo;</p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

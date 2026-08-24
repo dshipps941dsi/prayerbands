@@ -109,7 +109,7 @@ export async function GET(_req: NextRequest) {
 
     const { data: myRequests } = await admin
       .from('prayer_network_requests')
-      .select('id, user_id, request_text, is_answered, answered_at, created_at, visibility, audience')
+      .select('id, user_id, request_text, is_answered, answered_at, created_at, visibility, audience, list_id')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
@@ -219,7 +219,7 @@ export async function GET(_req: NextRequest) {
       created_at: c.created_at,
     }))
 
-    const my_requests = ((myRequests ?? []) as any[]).map(r => ({ ...decorate(r), audience: r.audience ?? 'network' }))
+    const my_requests = ((myRequests ?? []) as any[]).map(r => ({ ...decorate(r), audience: r.audience ?? 'network', list_id: r.list_id ?? null }))
 
     return NextResponse.json({
       connections,

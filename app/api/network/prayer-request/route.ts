@@ -44,6 +44,19 @@ export async function POST(req: NextRequest) {
     const vis = audience === 'wall' ? 'public' : 'private'
     const anonymity = body.anonymity
 
+    // Optional journal list — validated as the sender's own, else dropped.
+    let list_id: string | null = null
+    if (body.list_id && /^[0-9a-fA-F-]{36}$/.test(String(body.list_id))) {
+      const svc = createServiceClient()
+      const { data: l } = await svc
+        .from('journal_lists')
+        .select('id')
+        .eq('id', String(body.list_id))
+        .eq('owner_id', user.id)
+        .maybeSingle()
+      if (l) list_id = String(body.list_id)
+    }
+
     // For public requests, freeze a display name now: "Anonymous", or first
     // name + last initial from the user's profile.
     let public_name: string | null = null
@@ -70,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     const { data: request, error } = await supabase
       .from('prayer_network_requests')
-      .insert({ user_id: user.id, request_text: request_text.trim(), visibility: vis, audience, public_name })
+      .insert({ user_id: user.id, request_text: request_text.trim(), visibility: vis, audience, public_name, list_id })
       .select()
       .single()
 
