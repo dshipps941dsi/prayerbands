@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
   const url = req.nextUrl
   const bandFilter = (url.searchParams.get('bandId') || '').trim().toUpperCase()
   const emailFilter = (url.searchParams.get('email') || '').trim().toLowerCase()
+  const nameFilter = (url.searchParams.get('name') || '').trim().toLowerCase()
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '100', 10) || 100, 500)
 
   // ── Single-band history ───────────────────────────────────────────────
@@ -154,7 +155,7 @@ export async function GET(req: NextRequest) {
     ...(transfers ?? []).map(t => t.from_user_id),
     ...(owners ?? []).flatMap(o => [o.old_owner_id, o.new_owner_id]),
   ].filter(Boolean) as string[]
-  const emails = await emailsFor(admin, ids)
+  const [emails, names] = await Promise.all([emailsFor(admin, ids), namesFor(admin, ids)])
 
   // Band styling for every band appearing in the feed, so a row reads as a
   // real object rather than a code.
@@ -188,13 +189,23 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const events: Event[] = [
+  // Every string a name search should match for a row. The name typed on a
+  // registration and the account's own name are frequently different — someone
+  // signs a band "Mason" and the account reads "Mason Struble" — so both are
+  // searched, and neither is shown in place of the other.
+  const searchFor = (...parts: (string | null | undefined)[]) =>
+    parts.filter(Boolean).join(' ').toLowerCase()
+
+  // Inferred rather than annotated: the three mappers return different shapes
+  // and the intersection annotation fights the union rather than checking it.
+  const events = [
     ...(regs ?? []).map(r => ({
       kind: 'registration' as const,
       at: r.registered_at as string,
       band_id: r.band_id as string,
       style: styles.get(r.band_id as string) ?? null,
-      who: r.user_name ?? null,
+      who: r.user_name ?? (r.user_id ? names.get(r.user_id) ?? null : null),
+      _search: searchFor(r.user_name, r.user_id ? names.get(r.user_id) : null),
       email: (r.user_id ? emails.get(r.user_id) : null) ?? r.email ?? null,
       detail: [
         [r.city, r.state, r.country].filter(Boolean).join(', ') || 'no location',
@@ -207,19 +218,29 @@ export async function GET(req: NextRequest) {
       at: t.created_at as string,
       band_id: t.band_id as string,
       style: styles.get(t.band_id as string) ?? null,
-      who: null,
+      // Was always null, so these rows showed no name at all — and would have
+      // dropped out of a name search entirely, for the person they are about.
+      who: t.from_user_id ? names.get(t.from_user_id) ?? null : null,
+      _search: searchFor(t.from_user_id ? names.get(t.from_user_id) : null),
       email: (t.from_user_id ? emails.get(t.from_user_id) : null) ?? null,
       detail: [`passed on (${t.status})`, t.note ? `"${t.note}"` : null].filter(Boolean).join(' · '),
     })),
     ...(owners ?? []).map(o => {
       const from = o.old_owner_id ? emails.get(o.old_owner_id) ?? 'unknown' : null
       const to = o.new_owner_id ? emails.get(o.new_owner_id) ?? 'unknown' : null
+      const toName = o.new_owner_id ? names.get(o.new_owner_id) ?? null : null
+      const fromName = o.old_owner_id ? names.get(o.old_owner_id) ?? null : null
       return {
         kind: 'ownership' as const,
         at: o.changed_at as string,
         band_id: o.band_id as string,
         style: styles.get(o.band_id as string) ?? null,
-        who: null,
+        // The account it landed on, matching `email` below; a release names
+        // whoever let it go, since that is the only person on the row.
+        who: toName ?? fromName,
+        // Both sides are searchable: "why did Jackson lose that band" is asked
+        // as often as "when did he get it".
+        _search: searchFor(toName, fromName),
         // The account the band ended up on — what you filter by when someone
         // says "my band isn't showing".
         email: to,
@@ -230,8 +251,11 @@ export async function GET(req: NextRequest) {
     }),
   ]
     .filter(e => !emailFilter || (e.email || '').toLowerCase().includes(emailFilter))
+    .filter(e => !nameFilter || e._search.includes(nameFilter))
     .sort((a, b) => (a.at < b.at ? 1 : -1))
     .slice(0, limit)
+    // _search is a filtering aid, not something the client needs.
+    .map(({ _search, ...e }) => e as Event)
 
   // ── Inventory ─────────────────────────────────────────────────────────
   // The dashboard's single "available" number hides what actually matters when
@@ -281,4 +305,19 @@ async function emailsFor(admin: ReturnType<typeof createServiceClient>, ids: str
   if (unique.length === 0) return new Map<string, string>()
   const { data } = await admin.from('profiles').select('id, email').in('id', unique)
   return new Map((data ?? []).map(p => [p.id as string, p.email as string]))
+}
+
+// Account names, for the feed's name column and its filter. Separate from the
+// name typed on a registration: the two often differ, and both are worth
+// matching — someone searching "Struble" means the person, not the string they
+// happened to type on a band that day.
+async function namesFor(admin: ReturnType<typeof createServiceClient>, ids: string[]) {
+  const unique = [...new Set(ids)]
+  if (unique.length === 0) return new Map<string, string>()
+  const { data } = await admin.from('profiles').select('id, full_name').in('id', unique)
+  return new Map(
+    (data ?? [])
+      .filter((p: any) => (p.full_name || '').trim())
+      .map((p: any) => [p.id as string, (p.full_name as string).trim()])
+  )
 }

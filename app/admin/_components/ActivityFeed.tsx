@@ -43,6 +43,7 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
   const [error, setError] = useState('')
   const [bandFilter, setBandFilter] = useState('')
   const [emailFilter, setEmailFilter] = useState('')
+  const [nameFilter, setNameFilter] = useState('')
   const [history, setHistory] = useState<any | null>(null)
   const [historyError, setHistoryError] = useState('')
 
@@ -52,6 +53,7 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
       const params = new URLSearchParams()
       if (bandFilter.trim()) params.set('bandId', bandFilter.trim())
       if (emailFilter.trim()) params.set('email', emailFilter.trim())
+      if (nameFilter.trim()) params.set('name', nameFilter.trim())
       const res = await fetch(`/api/admin/activity?${params}`)
       if (!res.ok) { const d = await res.json().catch(() => ({})); setError(d.error || 'Could not load activity.'); return }
       const d = await res.json()
@@ -59,7 +61,7 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
       setInventory(d.inventory || null)
     } catch { setError('Network error.') }
     finally { setLoading(false) }
-  }, [bandFilter, emailFilter])
+  }, [bandFilter, emailFilter, nameFilter])
 
   useEffect(() => { load() }, [load])
 
@@ -133,10 +135,13 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
         <input style={input} placeholder="Band ID (e.g. PB-N2N63)" value={bandFilter} onChange={e => setBandFilter(e.target.value)} />
         <input style={input} placeholder="Email contains…" value={emailFilter} onChange={e => setEmailFilter(e.target.value)} />
+        {/* Matches the name typed on a band AND the account's own name — the
+            two are often different, and either one is a fair way to search. */}
+        <input style={input} placeholder="Name contains…" value={nameFilter} onChange={e => setNameFilter(e.target.value)} />
         <button style={btn} onClick={load}>Refresh</button>
         <button style={{ ...btn, background: 'transparent', color: C.goldText, border: `1px solid ${C.gold}` }} onClick={loadHistory}>Band history</button>
-        {(bandFilter || emailFilter) && (
-          <button style={{ ...btn, background: 'transparent', color: C.secondary, border: `1px solid ${C.borderSilver}` }} onClick={() => { setBandFilter(''); setEmailFilter(''); setHistory(null); setHistoryError('') }}>Clear</button>
+        {(bandFilter || emailFilter || nameFilter) && (
+          <button style={{ ...btn, background: 'transparent', color: C.secondary, border: `1px solid ${C.borderSilver}` }} onClick={() => { setBandFilter(''); setEmailFilter(''); setNameFilter(''); setHistory(null); setHistoryError('') }}>Clear</button>
         )}
       </div>
 
