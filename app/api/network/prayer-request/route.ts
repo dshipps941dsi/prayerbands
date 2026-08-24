@@ -23,9 +23,24 @@ export async function POST(req: NextRequest) {
     // Accept `audience`; tolerate the old `visibility` field for safety.
     // 'private' is a journal entry kept to yourself: saved, but the others-feed
     // (my-network's reaches()) never surfaces it to anyone else.
+    // 'group:<uuid>' shares only with the members of one of your partner groups.
     const AUDIENCES = new Set(['private', 'network', 'direct', 'lineage', 'wall'])
     let audience: string = String(body.audience || '')
-    if (!AUDIENCES.has(audience)) audience = body.visibility === 'public' ? 'wall' : 'network'
+    const groupMatch = /^group:([0-9a-fA-F-]{36})$/.exec(audience)
+    if (groupMatch) {
+      // The group must be the sender's own, or we fall back to private rather
+      // than trust a group id the sender doesn't own.
+      const svc = createServiceClient()
+      const { data: g } = await svc
+        .from('partner_groups')
+        .select('id')
+        .eq('id', groupMatch[1])
+        .eq('owner_id', user.id)
+        .maybeSingle()
+      if (!g) audience = 'private'
+    } else if (!AUDIENCES.has(audience)) {
+      audience = body.visibility === 'public' ? 'wall' : 'network'
+    }
     const vis = audience === 'wall' ? 'public' : 'private'
     const anonymity = body.anonymity
 

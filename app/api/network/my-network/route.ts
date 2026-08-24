@@ -136,21 +136,45 @@ export async function GET(_req: NextRequest) {
       i_prayed: interByReq[r.id]?.mine ?? false,
     })
 
-    // Does a request with this audience, from an author with this info, reach
-    // the viewer? Legacy rows (null audience) behave like 'network'.
-    const reaches = (audience: string | null, info: AuthorInfo) => {
+    // Group-targeted requests ('group:<gid>') reach the viewer only if the
+    // viewer is a member of that group AND the group belongs to the author.
+    // Membership already implies an accepted connection (see the assign API),
+    // so the author is a known connection here.
+    const groupIds = Array.from(new Set(
+      ((theirRequests ?? []) as any[])
+        .map(r => (typeof r.audience === 'string' && r.audience.startsWith('group:')) ? r.audience.slice(6) : null)
+        .filter(Boolean) as string[]
+    ))
+    const viewerGroups = new Set<string>()
+    const groupOwner: Record<string, string> = {}
+    if (groupIds.length) {
+      const [{ data: mem }, { data: grps }] = await Promise.all([
+        admin.from('partner_group_members').select('group_id').eq('member_id', user.id).in('group_id', groupIds),
+        admin.from('partner_groups').select('id, owner_id').in('id', groupIds),
+      ])
+      ;(mem ?? []).forEach((m: any) => viewerGroups.add(m.group_id))
+      ;(grps ?? []).forEach((g: any) => { groupOwner[g.id] = g.owner_id })
+    }
+
+    // Does a request with this audience, from this author, reach the viewer?
+    // Legacy rows (null audience) behave like 'network'.
+    const reaches = (audience: string | null, info: AuthorInfo, authorId: string) => {
       const a = audience || 'network'
       if (a === 'private') return false                     // a journal entry kept to yourself — reaches no one
       if (a === 'wall' || a === 'public') return false      // lives on the prayer wall, not here
+      if (a.startsWith('group:')) {
+        const gid = a.slice(6)
+        return viewerGroups.has(gid) && groupOwner[gid] === authorId
+      }
       if (a === 'direct') return info.connected && info.relation === 'direct'
       if (a === 'lineage') return info.relation === 'lineage'
       return info.connected                                  // 'network' → must be a connection
     }
 
-    // Others' Requests feed: network + lineage requests the viewer is allowed to
-    // see, each tagged with the author's relation for the Direct/Lineage badge.
+    // Others' Requests feed: requests the viewer is allowed to see, each tagged
+    // with the author's relation for the Direct/Lineage badge.
     const others_requests = ((theirRequests ?? []) as any[])
-      .filter(r => { const info = authorInfo[r.user_id]; return info && reaches(r.audience, info) })
+      .filter(r => { const info = authorInfo[r.user_id]; return info && reaches(r.audience, info, r.user_id) })
       .map(r => ({ ...decorate(r), author: nameOf(r.user_id), relation: authorInfo[r.user_id].relation }))
 
     // Partners (people only; requests live in the Others' Requests feed).

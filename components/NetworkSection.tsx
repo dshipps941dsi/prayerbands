@@ -20,7 +20,7 @@ interface NetworkRequest {
   created_at: string
   intercession_count: number
   i_prayed: boolean
-  audience?: Audience
+  audience?: string
 }
 
 type Relation = 'direct' | 'lineage'
@@ -137,7 +137,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [showForm, setShowForm] = useState(false)
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [audience, setAudience] = useState<Audience>('private')
+  const [audience, setAudience] = useState<string>('private')
   const [anonymity, setAnonymity] = useState<'anonymous' | 'first_initial'>('first_initial')
 
   async function load() {
@@ -145,7 +145,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       fetch('/api/network/my-network'),
       showPartners ? fetch('/api/circles/open-requests') : Promise.resolve(null),
       showPartners ? fetch('/api/my-bands') : Promise.resolve(null),
-      showPartners ? fetch('/api/network/groups') : Promise.resolve(null),
+      (showPartners || showRequests) ? fetch('/api/network/groups') : Promise.resolve(null),
     ])
     if (netRes.ok) {
       const d = await netRes.json()
@@ -309,6 +309,10 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   )
   const groupsForMember = (uid: string) => groups.filter(g => g.member_ids.includes(uid))
   const canGroup = (c: Connection) => !!c.connection_id  // formal (accepted) connections only
+  // Labels for audiences, including group:<id> share targets.
+  const groupName = (id: string) => groups.find(g => g.id === id)?.name || 'a group'
+  const audienceLabel = (aud?: string) => !aud ? '' : aud.startsWith('group:') ? groupName(aud.slice(6)) : (AUD_LABEL[aud as Audience] || aud)
+  const audienceHint = (aud: string) => aud.startsWith('group:') ? `Only people in ${groupName(aud.slice(6))}.` : (AUDIENCES.find(a => a.id === aud)?.hint || '')
 
   const relationBadge = (rel: Relation) => (
     <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: rel === 'lineage' ? LINEAGE : GOLD, background: rel === 'lineage' ? 'rgba(107,78,158,0.10)' : '#FFF8E7', border: `1px solid ${rel === 'lineage' ? 'rgba(107,78,158,0.35)' : GOLD}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>
@@ -568,8 +572,18 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                   </button>
                 )
               })}
+              {/* Your partner groups as one-tap share targets. */}
+              {groups.map(g => {
+                const id = `group:${g.id}`
+                const active = audience === id
+                return (
+                  <button key={id} onClick={() => setAudience(id)} title={`Only people in ${g.name}`} style={{ padding: '9px 8px', borderRadius: 8, border: `1px solid ${active ? CIRCLE : BORDER}`, background: active ? 'rgba(46,125,138,0.10)' : '#fff', color: active ? CIRCLE : GRAY, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left' }}>
+                    🏷️ {g.name}
+                  </button>
+                )
+              })}
             </div>
-            <p style={{ fontSize: 11, color: GRAY, margin: '6px 2px 0', fontStyle: 'italic' }}>{AUDIENCES.find(a => a.id === audience)?.hint}</p>
+            <p style={{ fontSize: 11, color: GRAY, margin: '6px 2px 0', fontStyle: 'italic' }}>{audienceHint(audience)}</p>
 
             {audience === 'wall' && (
               <>
@@ -596,7 +610,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
           <div key={r.id} style={{ backgroundColor: r.is_answered ? '#F5F5F0' : '#fff', border: `1px solid ${r.is_answered ? '#D4D0C8' : BORDER}`, borderRadius: 10, padding: 14, marginBottom: 10, opacity: r.is_answered ? 0.85 : 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
               {r.is_answered && <span style={{ fontSize: 11, fontWeight: 600, color: '#7BAE8E', letterSpacing: '0.08em', textTransform: 'uppercase' }}>✓ Answered</span>}
-              {r.audience && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: GRAY, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>{AUD_LABEL[r.audience]}</span>}
+              {r.audience && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: GRAY, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>{audienceLabel(r.audience)}</span>}
             </div>
             <p style={{ fontSize: 14, color: DARK, lineHeight: 1.5, margin: '0 0 10px 0', fontStyle: 'italic' }}>&ldquo;{r.request_text}&rdquo;</p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
