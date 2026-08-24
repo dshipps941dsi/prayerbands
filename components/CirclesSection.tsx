@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface CircleSummary {
@@ -13,119 +13,108 @@ interface CircleSummary {
   open_request_count: number
 }
 
+interface CirclePreview {
+  id: string
+  name: string
+  description: string | null
+  join_code: string
+  member_count: number
+}
+
+// Theme tokens (fall back to the brand palette) so the panels wear the band's
+// theme like the rest of the tab.
+const PRIMARY = 'var(--pb-primary, #B8860B)'
+const TEXT = 'var(--pb-text, #2C1810)'
+const MUTED = 'var(--pb-text-muted, #8B7355)'
+const BORDER = 'var(--pb-border, #D4C5B0)'
+const SURFACE = 'var(--pb-surface, #ffffff)'
+const ON_PRIMARY = 'var(--pb-text-on-primary, #ffffff)'
+
+type Mode = 'list' | 'join' | 'create'
+
+async function copyText(value: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(value)
+    return true
+  } catch {
+    return false
+  }
+}
+
 export default function CirclesSection({ userId }: { userId: string }) {
   const router = useRouter()
   const [circles, setCircles] = useState<CircleSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [isBandHolder, setIsBandHolder] = useState(false)
+  const [mode, setMode] = useState<Mode>('list')
 
-  useEffect(() => {
-    async function load() {
-      const res = await fetch('/api/circles/my-circles')
-      if (res.ok) {
-        const data = await res.json()
-        // Dedupe by id so a circle can't appear twice (e.g. if the user has
-        // both a leader and member row for it).
-        const seen = new Set<string>()
-        const unique = ((data.circles ?? []) as CircleSummary[]).filter(c => {
-          if (seen.has(c.id)) return false
-          seen.add(c.id)
-          return true
-        })
-        setCircles(unique)
-        setIsBandHolder(data.is_band_holder ?? false)
-      }
-      setLoading(false)
+  const reload = useCallback(async () => {
+    const res = await fetch('/api/circles/my-circles')
+    if (res.ok) {
+      const data = await res.json()
+      const seen = new Set<string>()
+      const unique = ((data.circles ?? []) as CircleSummary[]).filter(c => {
+        if (seen.has(c.id)) return false
+        seen.add(c.id)
+        return true
+      })
+      setCircles(unique)
+      setIsBandHolder(data.is_band_holder ?? false)
     }
-    load()
-  }, [userId])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { reload() }, [reload, userId])
 
   if (loading) {
     return (
-      <div style={{ padding: '20px 0', color: 'var(--pb-text-muted, #8B7355)', fontSize: '14px', textAlign: 'center' }}>
+      <div style={{ padding: '20px 0', color: MUTED, fontSize: '14px', textAlign: 'center' }}>
         Loading circles...
       </div>
     )
   }
 
+  // ── Inline panels ─────────────────────────────────────────────
+  if (mode === 'join') {
+    return <JoinPanel onCancel={() => setMode('list')} onJoined={async () => { await reload(); setMode('list') }} />
+  }
+  if (mode === 'create') {
+    return (
+      <CreatePanel
+        onCancel={() => setMode('list')}
+        onDone={async () => { await reload(); setMode('list') }}
+        onOpen={(id) => router.push(`/circles/${id}`)}
+      />
+    )
+  }
+
+  // ── List ──────────────────────────────────────────────────────
+  const pill = (bg: string, color: string, border: string): React.CSSProperties => ({
+    backgroundColor: bg, color, border, borderRadius: '16px', padding: '5px 12px',
+    fontSize: '12px', fontFamily: 'Georgia, serif', cursor: 'pointer', fontWeight: 600,
+  })
+
   return (
     <div style={{ marginBottom: '32px' }}>
-
-      {/* Action buttons — the "Prayer Circles" title is provided by the parent
-          PrayerTabs section header, so we don't repeat it here. */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        marginBottom: '14px'
-      }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => router.push('/circles')}
-            style={{
-              backgroundColor: 'transparent',
-              border: '1px solid var(--pb-border, #D4C5B0)',
-              borderRadius: '16px',
-              padding: '5px 12px',
-              fontSize: '12px',
-              fontFamily: 'Georgia, serif',
-              color: 'var(--pb-text-muted, #8B7355)',
-              cursor: 'pointer'
-            }}
-          >
-            Join
-          </button>
-          {isBandHolder && (
-            <button
-              onClick={() => router.push('/circles/new')}
-              style={{
-                backgroundColor: 'var(--pb-primary, #B8860B)',
-                border: 'none',
-                borderRadius: '16px',
-                padding: '5px 12px',
-                fontSize: '12px',
-                fontFamily: 'Georgia, serif',
-                color: '#fff',
-                cursor: 'pointer',
-                fontWeight: '600'
-              }}
-            >
-              + Create
-            </button>
-          )}
-        </div>
+      {/* Action buttons — the section title comes from PrayerTabs. */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: '14px', gap: '8px' }}>
+        <button onClick={() => setMode('join')} style={pill('transparent', MUTED, `1px solid ${BORDER}`)}>Join</button>
+        {isBandHolder && (
+          <button onClick={() => setMode('create')} style={pill(PRIMARY, ON_PRIMARY, 'none')}>+ Create</button>
+        )}
       </div>
 
       {/* Empty state */}
       {circles.length === 0 && (
-        <div style={{
-          backgroundColor: '#fff',
-          border: '1px dashed var(--pb-border, #D4C5B0)',
-          borderRadius: '12px',
-          padding: '24px',
-          textAlign: 'center'
-        }}>
+        <div style={{ backgroundColor: SURFACE, border: `1px dashed ${BORDER}`, borderRadius: '12px', padding: '24px', textAlign: 'center' }}>
           <p style={{ fontSize: '24px', margin: '0 0 8px 0' }}>🙏</p>
-          <p style={{ fontSize: '14px', color: 'var(--pb-text-muted, #8B7355)', margin: '0 0 14px 0', lineHeight: '1.5' }}>
-            You're not in any Prayer Circles yet.
+          <p style={{ fontSize: '14px', color: MUTED, margin: '0 0 14px 0', lineHeight: '1.5' }}>
+            You&rsquo;re not in any Prayer Circles yet.
             {isBandHolder
               ? ' Create one for someone who needs prayer, or join one with a code.'
               : ' Enter a join code to gather around someone in need.'}
           </p>
-          <button
-            onClick={() => router.push('/circles')}
-            style={{
-              backgroundColor: 'var(--pb-primary, #B8860B)',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '9px 20px',
-              fontSize: '13px',
-              fontFamily: 'Georgia, serif',
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: '600'
-            }}
-          >
+          <button onClick={() => setMode('join')} style={{ backgroundColor: PRIMARY, border: 'none', borderRadius: '8px', padding: '9px 20px', fontSize: '13px', fontFamily: 'Georgia, serif', color: ON_PRIMARY, cursor: 'pointer', fontWeight: 600 }}>
             Enter a Join Code
           </button>
         </div>
@@ -136,70 +125,211 @@ export default function CirclesSection({ userId }: { userId: string }) {
         <div
           key={circle.id}
           onClick={() => router.push(`/circles/${circle.id}`)}
-          style={{
-            backgroundColor: '#fff',
-            border: '1px solid var(--pb-border, #E8DCC8)',
-            borderRadius: '10px',
-            padding: '14px 16px',
-            marginBottom: '10px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            transition: 'border-color 0.15s'
-          }}
+          style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '14px 16px', marginBottom: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'border-color 0.15s' }}
         >
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
-              <p style={{
-                fontFamily: 'Playfair Display, Georgia, serif',
-                fontSize: '15px',
-                fontWeight: '700',
-                color: 'var(--pb-text, #2C1810)',
-                margin: 0,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}>
+              <p style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: '15px', fontWeight: 700, color: TEXT, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {circle.name}
               </p>
               {circle.my_role === 'leader' && (
-                <span style={{
-                  fontSize: '10px',
-                  fontWeight: '600',
-                  color: 'var(--pb-primary, #B8860B)',
-                  backgroundColor: '#FFF8E7',
-                  border: '1px solid #F0D080',
-                  borderRadius: '10px',
-                  padding: '1px 7px',
-                  whiteSpace: 'nowrap'
-                }}>
+                <span style={{ fontSize: '10px', fontWeight: 600, color: PRIMARY, backgroundColor: '#FFF8E7', border: '1px solid #F0D080', borderRadius: '10px', padding: '1px 7px', whiteSpace: 'nowrap' }}>
                   Leader
                 </span>
               )}
             </div>
-            <p style={{ fontSize: '12px', color: 'var(--pb-text-muted, #8B7355)', margin: 0 }}>
+            <p style={{ fontSize: '12px', color: MUTED, margin: 0 }}>
               {circle.member_count} {circle.member_count === 1 ? 'person' : 'people'} praying
               {circle.open_request_count > 0 && (
-                <span style={{ color: 'var(--pb-primary, #B8860B)', fontWeight: '600' }}>
+                <span style={{ color: PRIMARY, fontWeight: 600 }}>
                   {' · '}{circle.open_request_count} open {circle.open_request_count === 1 ? 'request' : 'requests'}
                 </span>
               )}
             </p>
           </div>
-          <div style={{
-            fontSize: '11px',
-            fontWeight: '700',
-            letterSpacing: '0.12em',
-            color: 'var(--pb-border, #D4C5B0)',
-            marginLeft: '12px'
-          }}>
+          <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: BORDER, marginLeft: '12px' }}>
             {circle.join_code}
           </div>
-          <span style={{ marginLeft: '8px', color: 'var(--pb-border, #D4C5B0)', fontSize: '16px' }}>›</span>
+          <span style={{ marginLeft: '8px', color: BORDER, fontSize: '16px' }}>›</span>
         </div>
       ))}
+    </div>
+  )
+}
 
+// ── Join, inline ────────────────────────────────────────────────
+function JoinPanel({ onCancel, onJoined }: { onCancel: () => void; onJoined: () => void | Promise<void> }) {
+  const [code, setCode] = useState('')
+  const [looking, setLooking] = useState(false)
+  const [joining, setJoining] = useState(false)
+  const [circle, setCircle] = useState<CirclePreview | null>(null)
+  const [error, setError] = useState('')
+
+  async function lookup() {
+    const c = code.trim().toUpperCase()
+    if (c.length < 4) return
+    setLooking(true); setError(''); setCircle(null)
+    const res = await fetch(`/api/circles/lookup?code=${encodeURIComponent(c)}`)
+    const data = await res.json()
+    if (!res.ok) setError('No circle found with that code. Check it and try again.')
+    else setCircle(data.circle)
+    setLooking(false)
+  }
+
+  async function join() {
+    if (!circle) return
+    setJoining(true); setError('')
+    const res = await fetch('/api/circles/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ circle_id: circle.id }),
+    })
+    // Already a member is fine — they're in the circle either way.
+    if (res.ok || res.status === 409) { await onJoined(); return }
+    const data = await res.json().catch(() => ({}))
+    setError(data.error || 'Could not join. Please try again.')
+    setJoining(false)
+  }
+
+  return (
+    <div style={{ marginBottom: '32px' }}>
+      <PanelHeader title="Join a circle" onBack={onCancel} />
+      <div style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '18px 16px' }}>
+        <p style={{ fontSize: '13px', color: MUTED, margin: '0 0 12px', lineHeight: 1.5 }}>
+          Someone shares a code (like <strong style={{ color: TEXT }}>GRACE7</strong>). Enter it to join and pray together.
+        </p>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            value={code}
+            onChange={e => { setCode(e.target.value.toUpperCase()); setCircle(null); setError('') }}
+            onKeyDown={e => { if (e.key === 'Enter') lookup() }}
+            placeholder="Join code"
+            maxLength={12}
+            style={{ flex: 1, minWidth: 0, padding: '11px 13px', borderRadius: '9px', border: `1px solid ${BORDER}`, fontSize: '15px', fontFamily: 'monospace', letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT, background: '#fff', outline: 'none' }}
+          />
+          <button
+            onClick={lookup}
+            disabled={looking || code.trim().length < 4}
+            style={{ backgroundColor: code.trim().length >= 4 ? PRIMARY : '#C9CFD6', color: code.trim().length >= 4 ? ON_PRIMARY : '#5C6573', border: 'none', borderRadius: '9px', padding: '0 18px', fontSize: '12px', fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: looking || code.trim().length < 4 ? 'default' : 'pointer', whiteSpace: 'nowrap' }}
+          >
+            {looking ? '…' : 'Look up'}
+          </button>
+        </div>
+
+        {error && <p style={{ fontSize: '13px', color: '#B4441F', margin: '12px 0 0' }}>{error}</p>}
+
+        {circle && (
+          <div style={{ marginTop: '16px', border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '14px 15px' }}>
+            <p style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: '16px', fontWeight: 700, color: TEXT, margin: '0 0 3px' }}>{circle.name}</p>
+            {circle.description && <p style={{ fontSize: '13px', color: MUTED, margin: '0 0 6px', lineHeight: 1.5 }}>{circle.description}</p>}
+            <p style={{ fontSize: '12px', color: MUTED, margin: '0 0 12px' }}>{circle.member_count} {circle.member_count === 1 ? 'person' : 'people'} praying</p>
+            <button
+              onClick={join}
+              disabled={joining}
+              style={{ width: '100%', backgroundColor: PRIMARY, color: ON_PRIMARY, border: 'none', borderRadius: '9px', padding: '12px', fontSize: '12px', fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: joining ? 'default' : 'pointer' }}
+            >
+              {joining ? 'Joining…' : 'Join this circle'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Create, inline ──────────────────────────────────────────────
+function CreatePanel({ onCancel, onDone, onOpen }: { onCancel: () => void; onDone: () => void | Promise<void>; onOpen: (id: string) => void }) {
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [created, setCreated] = useState<{ id: string; join_code: string } | null>(null)
+  const [copied, setCopied] = useState('')
+
+  async function create() {
+    if (!name.trim()) return
+    setLoading(true); setError('')
+    const res = await fetch('/api/circles/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim(), description: description.trim() }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (res.status === 403) { setError('Only band holders can create a circle. Register a band first.'); setLoading(false); return }
+    if (!res.ok) { setError(data.error || 'Something went wrong. Please try again.'); setLoading(false); return }
+    setCreated({ id: data.circle.id, join_code: data.circle.join_code })
+    setLoading(false)
+  }
+
+  async function doCopy(value: string, which: string) {
+    if (await copyText(value)) { setCopied(which); setTimeout(() => setCopied(''), 1600) }
+  }
+
+  const shareUrl = created
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/circles?code=${created.join_code}`
+    : ''
+
+  if (created) {
+    return (
+      <div style={{ marginBottom: '32px' }}>
+        <PanelHeader title="Circle created" onBack={onDone} backLabel="Done" />
+        <div style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '20px 16px', textAlign: 'center' }}>
+          <p style={{ fontSize: '28px', margin: '0 0 6px' }}>🎉</p>
+          <p style={{ fontSize: '14px', color: MUTED, margin: '0 0 16px', lineHeight: 1.5 }}>
+            Share this code with the people you want praying.
+          </p>
+          <button onClick={() => doCopy(created.join_code, 'code')} style={{ display: 'inline-block', background: '#FFF8E7', border: `1px solid #F0D080`, borderRadius: '10px', padding: '12px 22px', margin: '0 0 12px', cursor: 'pointer' }}>
+            <div style={{ fontSize: '22px', fontWeight: 700, letterSpacing: '0.2em', color: PRIMARY, fontFamily: 'monospace' }}>{created.join_code}</div>
+            <div style={{ fontSize: '11px', color: MUTED, marginTop: '3px' }}>{copied === 'code' ? 'Copied!' : 'Tap to copy'}</div>
+          </button>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <button onClick={() => doCopy(shareUrl, 'link')} style={{ flex: 1, background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: '9px', padding: '11px', fontSize: '12px', fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: TEXT, cursor: 'pointer' }}>
+              {copied === 'link' ? 'Link copied!' : 'Copy link'}
+            </button>
+            <button onClick={() => onOpen(created.id)} style={{ flex: 1, background: PRIMARY, color: ON_PRIMARY, border: 'none', borderRadius: '9px', padding: '11px', fontSize: '12px', fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>
+              Open circle
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 13px', borderRadius: '9px', border: `1px solid ${BORDER}`, fontSize: '15px', fontFamily: 'Georgia, serif', color: TEXT, background: '#fff', outline: 'none' }
+
+  return (
+    <div style={{ marginBottom: '32px' }}>
+      <PanelHeader title="Create a circle" onBack={onCancel} />
+      <div style={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '18px 16px' }}>
+        <label style={{ display: 'block', fontSize: '11px', fontFamily: "'Cinzel', Georgia, serif", letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, marginBottom: '5px' }}>Circle name</label>
+        <input value={name} onChange={e => setName(e.target.value.slice(0, 80))} placeholder="e.g. Praying for Grandma" style={inputStyle} />
+        <div style={{ textAlign: 'right', fontSize: '11px', color: MUTED, marginTop: '3px' }}>{name.length}/80</div>
+
+        <label style={{ display: 'block', fontSize: '11px', fontFamily: "'Cinzel', Georgia, serif", letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, margin: '10px 0 5px' }}>What are you praying for? <span style={{ textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
+        <textarea value={description} onChange={e => setDescription(e.target.value.slice(0, 300))} placeholder="A short description of the need." rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
+        <div style={{ textAlign: 'right', fontSize: '11px', color: MUTED, marginTop: '3px' }}>{description.length}/300</div>
+
+        {error && <p style={{ fontSize: '13px', color: '#B4441F', margin: '10px 0 0' }}>{error}</p>}
+
+        <button
+          onClick={create}
+          disabled={loading || !name.trim()}
+          style={{ width: '100%', marginTop: '14px', backgroundColor: name.trim() ? PRIMARY : '#C9CFD6', color: name.trim() ? ON_PRIMARY : '#5C6573', border: 'none', borderRadius: '9px', padding: '13px', fontSize: '12px', fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: name.trim() && !loading ? 'pointer' : 'default' }}
+        >
+          {loading ? 'Creating…' : 'Create circle'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function PanelHeader({ title, onBack, backLabel = 'Back' }: { title: string; onBack: () => void; backLabel?: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+      <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: '16px', fontWeight: 700, color: TEXT }}>{title}</span>
+      <button onClick={onBack} style={{ background: 'transparent', border: 'none', color: MUTED, fontSize: '13px', fontFamily: 'Georgia, serif', cursor: 'pointer', padding: '4px' }}>
+        {backLabel === 'Back' ? '← Back' : backLabel}
+      </button>
     </div>
   )
 }
