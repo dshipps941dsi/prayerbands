@@ -181,36 +181,67 @@ export default function ThemesManager() {
     )
   }
 
-  // What a band actually looks like in this theme, using the same CSS variables
-  // the band page reads. Colour pickers show you nine squares; this shows you
-  // the verse card that was coming out navy in a black theme.
+  // What a band actually looks like in this theme — a phone-framed mock of the
+  // real band page, painted from the same tokens the live page reads, so it
+  // repaints as the pickers move. The "real page" link opens an actual band with
+  // this theme forced on (?previewTheme=), for a true on-device look.
   const preview = (t: T) => {
     const page = t.backgroundImage
       ? `linear-gradient(${hexA(t.background, t.backgroundImageWash ?? 0.82)}, ${hexA(t.background, t.backgroundImageWash ?? 0.82)}), url("${t.backgroundImage}") center / cover no-repeat, ${t.background}`
       : t.background
+    const tabs: [string, boolean][] = [['Requests', true], ['Partners', false], ['Circles', false]]
     return (
-      <div style={{ border: `1px solid ${C.borderNavy}`, borderRadius: 12, overflow: 'hidden', background: page }}>
-        <div style={{ padding: 16 }}>
-          <div style={{ fontFamily: 'Cinzel, serif', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: t.textMuted, marginBottom: 10 }}>Preview</div>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ fontFamily: 'Cinzel, serif', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.secondary }}>Live preview</div>
+          <a href={`/band/PB-TEST1?previewTheme=${encodeURIComponent(t.key)}`} target="_blank" rel="noopener noreferrer"
+             style={{ fontSize: 11, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase', color: C.goldText, textDecoration: 'none', border: `1px solid ${C.borderNavy}`, borderRadius: 999, padding: '5px 12px' }}>
+            View on a real band page &#8599;
+          </a>
+        </div>
 
-          {/* Verse card — this is the tab-bar colour, the one that looked wrong */}
-          <div style={{ background: t.tabBar, borderLeft: `3px solid ${t.cardAccent}`, borderRadius: 10, padding: '14px 16px', marginBottom: 12 }}>
-            <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 14, lineHeight: 1.6, color: t.textOnPrimary }}>
-              &ldquo;{(t.verseText || 'For I know the plans I have for you, declares the Lord.').slice(0, 110)}&rdquo;
+        {/* Phone frame */}
+        <div style={{ maxWidth: 320, margin: '0 auto', background: '#0A0A0A', borderRadius: 30, padding: 8, boxShadow: '0 18px 50px rgba(10,22,40,0.22)' }}>
+          <div style={{ borderRadius: 23, overflow: 'hidden', background: page }}>
+            <div style={{ padding: '16px 15px 18px' }}>
+              {/* App bar */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <div style={{ width: 16, height: 16, borderRadius: '50%', background: t.primary, border: `1.5px solid ${t.accent}` }} />
+                  <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 700, fontSize: 15, color: t.text }}>Prayer Bands</span>
+                </div>
+                <span style={{ fontSize: 9.5, fontFamily: 'monospace', color: t.textMuted, background: t.surfaceAlt, borderRadius: 999, padding: '2px 8px' }}>PB-TEST1</span>
+              </div>
+
+              {/* Daily-verse hero */}
+              <div style={{ background: t.tabBar, borderLeft: `3px solid ${t.cardAccent}`, borderRadius: 12, padding: '16px 16px 15px', marginBottom: 14 }}>
+                <div style={{ fontFamily: 'Cinzel, serif', fontSize: 8.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: t.tabActive, marginBottom: 9 }}>Today&rsquo;s Verse</div>
+                <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 15, lineHeight: 1.65, color: t.textOnPrimary }}>
+                  &ldquo;{(t.verseText || 'For I know the plans I have for you, declares the Lord.').slice(0, 120)}&rdquo;
+                </div>
+                <div style={{ fontSize: 11, color: t.tabActive, marginTop: 9, letterSpacing: '0.06em' }}>{t.verseReference || 'Jeremiah 29:11'}</div>
+              </div>
+
+              {/* Prayers tab bar */}
+              <div style={{ display: 'flex', gap: 4, background: t.surface, border: `1px solid ${t.border}`, borderRadius: 11, padding: 4, marginBottom: 12 }}>
+                {tabs.map(([lbl, active]) => (
+                  <div key={lbl} style={{ flex: 1, textAlign: 'center', padding: '7px 4px', borderRadius: 8, background: active ? t.primary : 'transparent', color: active ? t.textOnPrimary : t.textMuted, fontFamily: 'Cinzel, serif', fontSize: 9.5, fontWeight: active ? 700 : 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{lbl}</div>
+                ))}
+              </div>
+
+              {/* Journey / prayer card */}
+              <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 11, padding: '13px 15px', marginBottom: 14 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 3 }}>A prayer on this band</div>
+                <div style={{ fontSize: 12.5, color: t.textMuted, lineHeight: 1.55 }}>Carried by someone in Venice, Florida.</div>
+                <div style={{ display: 'inline-block', marginTop: 10, background: t.surfaceAlt, color: t.text, borderRadius: 999, padding: '3px 11px', fontSize: 11, fontWeight: 600 }}>3 stops</div>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ flex: 1, background: t.primary, color: t.textOnPrimary, borderRadius: 10, padding: '11px 14px', fontSize: 12.5, fontWeight: 700, textAlign: 'center' }}>Pass it on</div>
+                <div style={{ background: 'transparent', border: `1px solid ${t.accent}`, color: t.accent, borderRadius: 10, padding: '11px 14px', fontSize: 12.5, fontWeight: 700, textAlign: 'center' }}>Share</div>
+              </div>
             </div>
-            <div style={{ fontSize: 11, color: t.tabActive, marginTop: 8, letterSpacing: '0.06em' }}>{t.verseReference || 'Jeremiah 29:11'}</div>
-          </div>
-
-          {/* Surface card */}
-          <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, padding: '13px 15px', marginBottom: 12 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 3 }}>A prayer on this band</div>
-            <div style={{ fontSize: 12.5, color: t.textMuted, lineHeight: 1.55 }}>Carried by someone in Venice, Florida.</div>
-            <div style={{ display: 'inline-block', marginTop: 10, background: t.surfaceAlt, color: t.text, borderRadius: 999, padding: '3px 10px', fontSize: 11 }}>3 stops</div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 8 }}>
-            <div style={{ flex: 1, background: t.primary, color: t.textOnPrimary, borderRadius: 9, padding: '11px 14px', fontSize: 12.5, fontWeight: 700, textAlign: 'center' }}>Pass it on</div>
-            <div style={{ background: 'transparent', border: `1px solid ${t.accent}`, color: t.accent, borderRadius: 9, padding: '11px 14px', fontSize: 12.5, fontWeight: 700, textAlign: 'center' }}>Share</div>
           </div>
         </div>
       </div>

@@ -195,7 +195,17 @@ export default function BandPage() {
   // Apply this band's color theme (CSS variables on :root).
   // Colour matters here: the plain bands all carry theme 'default', so without
   // it a Pink or Black theme created in the admin would style none of them.
-  useApplyTheme(status.band?.theme, (status.band as { color?: string } | undefined)?.color)
+  //
+  // ?previewTheme=<key> lets an admin see any theme on this real page without
+  // changing the band — purely a visual override, read after mount so it never
+  // affects the server render or the band's stored theme.
+  const [previewTheme] = useState<string | null>(() =>
+    typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('previewTheme')
+  )
+  useApplyTheme(
+    previewTheme ?? status.band?.theme,
+    previewTheme ? null : (status.band as { color?: string } | undefined)?.color
+  )
 
   // Fixed theme backdrop: a viewport-pinned layer behind the content so the
   // theme background stays put while the page scrolls. Done with a position:fixed
