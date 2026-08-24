@@ -86,6 +86,17 @@ export async function POST(req: NextRequest) {
     const hasCustom = items.some(i => i.id === 'custom')
     const totalBands = items.reduce((sum, i) => sum + i.qty * resolved[i.id].bands, 0)
 
+    // Who is buying. Resolved once: it decides both the credit they can spend
+    // and who gets credited for the sale.
+    let buyerId: string | null = null
+    try {
+      const authed = await createClient()
+      const { data: { user: buyer } } = await authed.auth.getUser()
+      buyerId = buyer?.id ?? null
+    } catch {
+      buyerId = null
+    }
+
     // Referral: confirm the code maps to a real profile, then (if a promo code
     // is configured) apply the discount. When a discount is set, Stripe forbids
     // allow_promotion_codes, so we choose one or the other.
@@ -98,6 +109,30 @@ export async function POST(req: NextRequest) {
         .maybeSingle()
       if (refProfile) referrerUserId = refProfile.id as string
     }
+
+    // No code? Fall back to whoever introduced this buyer.
+    //
+    // Credit only ever followed a code somebody had to remember to type, which
+    // assumed the network grows by people passing bands on. In practice they
+    // keep the band and buy one for the next person instead — and that sale
+    // earned their sponsor nothing, even though the relationship was already
+    // recorded when they claimed the band they were given.
+    //
+    // profiles.upline_user_id is that relationship, and it is first-wins: it is
+    // set once, by the first band someone was given, and never moves. So a
+    // second purchase credits the same person as the first.
+    if (!referrerUserId && buyerId) {
+      const { data: me } = await admin
+        .from('profiles')
+        .select('upline_user_id')
+        .eq('id', buyerId)
+        .maybeSingle()
+      if (me?.upline_user_id) referrerUserId = me.upline_user_id as string
+    }
+
+    // Nobody earns a reward for their own order — including by pasting their
+    // own code, which nothing stopped before.
+    if (referrerUserId && referrerUserId === buyerId) referrerUserId = null
     // Store credit the buyer has earned from referrals, spent automatically.
     // Capped at the order total so a discount can never exceed what is owed,
     // and only for a signed-in buyer — credit belongs to an account.
@@ -106,10 +141,8 @@ export async function POST(req: NextRequest) {
     let couponAmount = 0
     let waiveShipping = false
     try {
-      const authed = await createClient()
-      const { data: { user: buyer } } = await authed.auth.getUser()
-      if (buyer) {
-        const balance = await creditBalanceCents(admin, buyer.id)
+      if (buyerId) {
+        const balance = await creditBalanceCents(admin, buyerId)
         if (balance > 0) {
           const goodsTotal = lineItems.reduce(
             (sum, li) => sum + (li.price_data?.unit_amount ?? 0) * (li.quantity ?? 1), 0
@@ -126,7 +159,7 @@ export async function POST(req: NextRequest) {
             creditApplied = Math.min(balance, goodsTotal)
             couponAmount = creditApplied
           }
-          if (creditApplied > 0) creditUserId = buyer.id
+          if (creditApplied > 0) creditUserId = buyerId
         }
       }
     } catch (e) {
@@ -141,7 +174,10 @@ export async function POST(req: NextRequest) {
     const referralDiscount: Stripe.Checkout.SessionCreateParams.Discount | null = promoId
       ? (promoId.startsWith('promo_') ? { promotion_code: promoId } : { coupon: promoId })
       : null
-    const applyReferralDiscount = !!(referrerUserId && referralDiscount) && creditApplied === 0
+    // The buyer's discount is the reward for USING a code. A sponsorship they
+    // never invoked should credit the sponsor without quietly changing the price
+    // the buyer was shown.
+    const applyReferralDiscount = !!(referralCode && referrerUserId && referralDiscount) && creditApplied === 0
 
     let creditCoupon: string | null = null
     if (couponAmount > 0 && creditUserId) {

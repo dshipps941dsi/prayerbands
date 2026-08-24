@@ -548,7 +548,31 @@ async function settleCredit(supabase: any, session: any) {
   }
 
   // 2. Somebody referred this order. Credit them.
-  const referrerUserId = session.metadata?.referrer_user_id || null
+  let referrerUserId = session.metadata?.referrer_user_id || null
+
+  // create-checkout can only read a standing sponsorship for a buyer who was
+  // signed in. Plenty of people check out logged out and pay with the address
+  // their account uses, so resolve it here from the email Stripe collected —
+  // otherwise the sponsor loses the credit purely over a session cookie.
+  if (!referrerUserId) {
+    try {
+      const buyerEmail = session.customer_details?.email || session.customer_email || null
+      if (buyerEmail) {
+        const { data: buyer } = await supabase
+          .from('profiles')
+          .select('id, upline_user_id')
+          .ilike('email', buyerEmail)
+          .maybeSingle()
+        // Never credit somebody for their own order.
+        if (buyer?.upline_user_id && buyer.upline_user_id !== buyer.id) {
+          referrerUserId = buyer.upline_user_id as string
+        }
+      }
+    } catch (e) {
+      console.error('[stripe-webhook] upline lookup failed:', e)
+    }
+  }
+
   if (!referrerUserId) return
 
   try {
@@ -571,7 +595,7 @@ async function settleCredit(supabase: any, session: any) {
     // either way so its status cannot drift from the ledger.
     if (duplicate) return
 
-    const { error: refErr } = await supabase
+    const { data: updatedRefs, error: refErr } = await supabase
       .from('referrals')
       .update({
         status: 'earned',
@@ -580,7 +604,23 @@ async function settleCredit(supabase: any, session: any) {
         earned_at: new Date().toISOString(),
       })
       .eq('stripe_session_id', sessionId)
+      .select('id')
     if (refErr) console.error('[stripe-webhook] referral update error:', refErr)
+
+    // No row to update when the referrer was resolved here rather than at
+    // checkout — the credit is in the ledger either way, but without this the
+    // referrals table would have no record of the sale that earned it.
+    if (!refErr && (!updatedRefs || updatedRefs.length === 0)) {
+      const { error: insErr } = await supabase.from('referrals').insert({
+        referrer_user_id: referrerUserId,
+        stripe_session_id: sessionId,
+        status: 'earned',
+        order_id: order?.id ?? null,
+        credit_cents: creditCents,
+        earned_at: new Date().toISOString(),
+      })
+      if (insErr) console.error('[stripe-webhook] referral insert error:', insErr)
+    }
   } catch (e) {
     console.error('[stripe-webhook] referral credit error:', e)
   }
