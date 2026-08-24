@@ -140,6 +140,7 @@ export async function GET(_req: NextRequest) {
     // the viewer? Legacy rows (null audience) behave like 'network'.
     const reaches = (audience: string | null, info: AuthorInfo) => {
       const a = audience || 'network'
+      if (a === 'private') return false                     // a journal entry kept to yourself — reaches no one
       if (a === 'wall' || a === 'public') return false      // lives on the prayer wall, not here
       if (a === 'direct') return info.connected && info.relation === 'direct'
       if (a === 'lineage') return info.relation === 'lineage'

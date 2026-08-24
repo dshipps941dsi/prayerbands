@@ -1,6 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+
+// Turn whatever someone types into a band code into PB-XXXXX. The code is
+// printed on every band, so a partner can just read it aloud.
+function normalizeBandCode(raw: string): string {
+  const c = raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
+  if (!c) return ''
+  const body = c.startsWith('PB') ? c.slice(2) : c
+  return body ? `PB-${body}` : ''
+}
 
 interface NetworkRequest {
   id: string
@@ -92,8 +102,13 @@ const AUDIENCES: { id: Audience; label: string; hint: string }[] = [
 const AUD_LABEL: Record<Audience, string> = { network: 'Network', direct: 'Direct', lineage: 'Lineage', wall: 'Wall' }
 
 export default function NetworkSection({ userId, section = 'all' }: { userId: string; section?: 'all' | 'partners' | 'requests' }) {
+  const router = useRouter()
   const showPartners = section === 'all' || section === 'partners'
   const showRequests = section === 'all' || section === 'requests'
+  // The viewer's own band code, shown so a partner can enter it to connect.
+  const [myCode, setMyCode] = useState<string | null>(null)
+  const [partnerCode, setPartnerCode] = useState('')
+  const [codeCopied, setCodeCopied] = useState(false)
   const [connections, setConnections] = useState<Connection[]>([])
   const [pending, setPending] = useState<PendingRequest[]>([])
   const [myRequests, setMyRequests] = useState<NetworkRequest[]>([])
@@ -110,9 +125,10 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [anonymity, setAnonymity] = useState<'anonymous' | 'first_initial'>('first_initial')
 
   async function load() {
-    const [netRes, circleRes] = await Promise.all([
+    const [netRes, circleRes, bandsRes] = await Promise.all([
       fetch('/api/network/my-network'),
       showRequests ? fetch('/api/circles/open-requests') : Promise.resolve(null),
+      showPartners ? fetch('/api/my-bands') : Promise.resolve(null),
     ])
     if (netRes.ok) {
       const d = await netRes.json()
@@ -120,6 +136,13 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       setPending(d.pending_requests ?? [])
       setMyRequests(d.my_requests ?? [])
       setOthersReqs(d.others_requests ?? [])
+    }
+    if (bandsRes && bandsRes.ok) {
+      const d = await bandsRes.json()
+      // Any band the viewer holds works as their connect code — someone
+      // entering it lands on that band and connects to its holder (them).
+      const first = (d.bands ?? [])[0]
+      setMyCode(first?.band_id ?? null)
     }
     if (circleRes && circleRes.ok) {
       const d = await circleRes.json()
@@ -289,6 +312,48 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       {section === 'all' && <h3 style={{ fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK, margin: '0 0 14px 0' }}>Prayer Partners</h3>}
 
       {showPartners && (<>
+      {/* Connect a partner in person — enter the code printed on their band,
+          or read yours to them. Routes to their band page, where the existing
+          "Add to Prayer Partners" prompt does the rest. */}
+      <div style={{ backgroundColor: '#fff', border: `1px solid ${GOLD}`, borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GOLD, marginBottom: 10, fontFamily: serif }}>Connect a prayer partner</div>
+
+        {myCode && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '9px 12px', marginBottom: 10 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 10, color: GRAY, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Your code</div>
+              <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: DARK, fontFamily: 'monospace' }}>{myCode}</div>
+            </div>
+            <button
+              onClick={async () => { try { await navigator.clipboard.writeText(myCode); setCodeCopied(true); setTimeout(() => setCodeCopied(false), 1500) } catch {} }}
+              style={{ flexShrink: 0, background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 16, padding: '5px 12px', fontSize: 11.5, fontFamily: serif, color: GRAY, cursor: 'pointer' }}
+            >
+              {codeCopied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+        )}
+
+        <div style={{ fontSize: 12, color: GRAY, marginBottom: 6 }}>Enter their band code to connect:</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            value={partnerCode}
+            onChange={e => setPartnerCode(e.target.value.toUpperCase())}
+            onKeyDown={e => { if (e.key === 'Enter') { const c = normalizeBandCode(partnerCode); if (c.length >= 5) router.push(`/band/${c}`) } }}
+            placeholder="PB-XXXXX"
+            maxLength={12}
+            style={{ flex: 1, minWidth: 0, padding: '10px 12px', borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 15, fontFamily: 'monospace', letterSpacing: '0.08em', textTransform: 'uppercase', color: DARK, background: '#fff', outline: 'none' }}
+          />
+          <button
+            onClick={() => { const c = normalizeBandCode(partnerCode); if (c.length >= 5) router.push(`/band/${c}`) }}
+            disabled={normalizeBandCode(partnerCode).length < 5}
+            style={{ flexShrink: 0, backgroundColor: normalizeBandCode(partnerCode).length >= 5 ? GOLD : BORDER, color: '#fff', border: 'none', borderRadius: 8, padding: '0 18px', fontSize: 13, fontFamily: serif, fontWeight: 600, cursor: normalizeBandCode(partnerCode).length >= 5 ? 'pointer' : 'default' }}
+          >
+            Connect
+          </button>
+        </div>
+        <p style={{ fontSize: 11, color: GRAY, margin: '8px 2px 0', fontStyle: 'italic' }}>The code is printed on every band. You&rsquo;ll land on their page, then tap &ldquo;Add to Prayer Partners.&rdquo;</p>
+      </div>
+
       {/* Pending incoming requests */}
       {pending.map(p => (
         <div key={p.connection_id} style={{ backgroundColor: '#FFF8E7', border: `1px solid #F0D080`, borderRadius: 10, padding: '14px 16px', marginBottom: 10 }}>

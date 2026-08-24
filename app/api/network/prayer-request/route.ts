@@ -21,7 +21,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Accept `audience`; tolerate the old `visibility` field for safety.
-    const AUDIENCES = new Set(['network', 'direct', 'lineage', 'wall'])
+    // 'private' is a journal entry kept to yourself: saved, but the others-feed
+    // (my-network's reaches()) never surfaces it to anyone else.
+    const AUDIENCES = new Set(['private', 'network', 'direct', 'lineage', 'wall'])
     let audience: string = String(body.audience || '')
     if (!AUDIENCES.has(audience)) audience = body.visibility === 'public' ? 'wall' : 'network'
     const vis = audience === 'wall' ? 'public' : 'private'
