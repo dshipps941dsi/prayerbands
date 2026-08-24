@@ -15,7 +15,7 @@ const INK_ON_PRIMARY = 'var(--pb-text-on-primary, #0A1628)'
 
 type Sub = 'requests' | 'partners' | 'circles'
 const SUBTABS: { id: Sub; label: string }[] = [
-  { id: 'requests', label: 'Requests' },
+  { id: 'requests', label: 'Journal' },
   { id: 'partners', label: 'Partners' },
   { id: 'circles', label: 'Circles' },
 ]
@@ -24,12 +24,12 @@ const SUBTABS: { id: Sub; label: string }[] = [
 // section is and where its items come from.
 const INFO: Record<Sub, { title: string; body: string }> = {
   requests: {
-    title: 'Prayer Requests',
-    body: 'Requests are specific needs people ask prayer for. When you share one, you choose who sees it — your whole network, just Direct partners, just Lineage (people a band passed between), or the public wall. “Others’ Requests” are the needs shared with you, filterable by Direct, Lineage, or Circles. Tap 🙏 to let someone know you’re praying.',
+    title: 'My Prayer Journal',
+    body: 'Your journal is your own prayer list. Add what you’re praying for, and mark it answered when God moves. Every entry is private by default — only you can see it, and no one is notified — until you tap to share it with your Direct partners, your Lineage, your whole network, or the public wall.',
   },
   partners: {
     title: 'Prayer Partners',
-    body: 'Partners are the people you’re connected to in prayer, in two kinds. “Lineage” partners are those a band actually passed between — whoever handed you a band or received one from you. “Direct” partners are people you’ve connected with by tapping bands, without a handoff between you. Use the filter to see each group.',
+    body: 'Partners are the people you’re connected to in prayer. To add one in person, use “Connect a prayer partner” at the top — read them the code on your band, or enter theirs. “Lineage” partners are those a band actually passed between; “Direct” partners are people you connected with directly. Below them, “Their Requests” gathers the prayers your partners and circles have shared — tap 🙏 to let them know you’re praying.',
   },
   circles: {
     title: 'Prayer Circles',
@@ -95,6 +95,7 @@ export default function PrayerTabs({ userId }: { userId: string }) {
 
   return (
     <div>
+      <div style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD_TEXT, marginBottom: 8 }}>My Prayer</div>
       <div style={{ display: 'flex', gap: 4, marginBottom: 12, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 4 }}>
         {SUBTABS.map(t => {
           const active = sub === t.id

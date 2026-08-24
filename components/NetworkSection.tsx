@@ -24,7 +24,7 @@ interface NetworkRequest {
 }
 
 type Relation = 'direct' | 'lineage'
-type Audience = 'network' | 'direct' | 'lineage' | 'wall'
+type Audience = 'private' | 'network' | 'direct' | 'lineage' | 'wall'
 
 interface Connection {
   connection_id: string | null
@@ -94,12 +94,13 @@ const KIND_COLOR: Record<OtherKind, string> = { direct: '#9A7A35', lineage: LINE
 const KIND_LABEL: Record<OtherKind, string> = { direct: 'Direct', lineage: 'Lineage', circles: 'Circle' }
 
 const AUDIENCES: { id: Audience; label: string; hint: string }[] = [
+  { id: 'private', label: '🔒 Just me', hint: 'A private journal entry — only you can see it, and no one is notified.' },
   { id: 'network', label: '🙏 My Network', hint: 'Everyone you’re connected to' },
   { id: 'direct', label: '👥 Direct', hint: 'Direct partners only' },
   { id: 'lineage', label: '🔗 Lineage', hint: 'People a band passed between' },
   { id: 'wall', label: '🌍 Public Wall', hint: 'Shared on the public wall' },
 ]
-const AUD_LABEL: Record<Audience, string> = { network: 'Network', direct: 'Direct', lineage: 'Lineage', wall: 'Wall' }
+const AUD_LABEL: Record<Audience, string> = { private: 'Just me', network: 'Network', direct: 'Direct', lineage: 'Lineage', wall: 'Wall' }
 
 export default function NetworkSection({ userId, section = 'all' }: { userId: string; section?: 'all' | 'partners' | 'requests' }) {
   const router = useRouter()
@@ -121,13 +122,13 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [showForm, setShowForm] = useState(false)
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [audience, setAudience] = useState<Audience>('network')
+  const [audience, setAudience] = useState<Audience>('private')
   const [anonymity, setAnonymity] = useState<'anonymous' | 'first_initial'>('first_initial')
 
   async function load() {
     const [netRes, circleRes, bandsRes] = await Promise.all([
       fetch('/api/network/my-network'),
-      showRequests ? fetch('/api/circles/open-requests') : Promise.resolve(null),
+      showPartners ? fetch('/api/circles/open-requests') : Promise.resolve(null),
       showPartners ? fetch('/api/my-bands') : Promise.resolve(null),
     ])
     if (netRes.ok) {
@@ -223,7 +224,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         setMyRequests(prev => [{ ...d.request, intercession_count: 0, i_prayed: false }, ...prev])
         setText('')
         setShowForm(false)
-        setAudience('network')
+        setAudience('private')
       }
     } finally {
       setSubmitting(false)
@@ -396,15 +397,46 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
           {partnerFilter === 'lineage' ? 'No lineage partners yet — pass a band to someone (or receive one) and they’ll appear here.' : 'No direct partners yet — connect with someone by tapping bands.'}
         </p>
       )}
+
+      {/* ── Their Requests — prayers your partners & circles have shared ──── */}
+      <div style={{ marginTop: 26 }}>
+        <h4 style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: '0 0 10px 0' }}>Their Requests</h4>
+
+        {othersFeed.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+            {chip(othersFilter === 'all', `All · ${othersFeed.length}`, () => setOthersFilter('all'))}
+            {chip(othersFilter === 'direct', `Direct · ${oDirect}`, () => setOthersFilter('direct'))}
+            {chip(othersFilter === 'lineage', `Lineage · ${oLineage}`, () => setOthersFilter('lineage'), LINEAGE)}
+            {chip(othersFilter === 'circles', `Circles · ${oCircles}`, () => setOthersFilter('circles'), CIRCLE)}
+          </div>
+        )}
+
+        {othersFeed.length === 0 ? (
+          <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: 0 }}>No requests from others yet. When your partners or circles share a need, it&rsquo;ll appear here.</p>
+        ) : visibleOthers.length === 0 ? (
+          <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: 0 }}>Nothing under this filter right now.</p>
+        ) : visibleOthers.map(o => (
+          <div key={o.key} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 10, padding: 14, marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <span style={{ fontFamily: serif, fontSize: 14, fontWeight: 700, color: DARK }}>{o.author}</span>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: KIND_COLOR[o.kind], background: '#fff', border: `1px solid ${KIND_COLOR[o.kind]}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>
+                {KIND_LABEL[o.kind]}{o.context ? ` · ${o.context}` : ''}
+              </span>
+            </div>
+            <p style={{ fontSize: 14, color: DARK, lineHeight: 1.5, margin: '0 0 10px 0', fontStyle: 'italic' }}>&ldquo;{o.request_text}&rdquo;</p>
+            {prayBtn(o.key, o.i_prayed, o.intercession_count, () => prayOther(o))}
+          </div>
+        ))}
+      </div>
       </>)}
 
       {/* ── My Requests ────────────────────────────────────────────────────── */}
       {showRequests && (
       <div style={{ marginTop: section === 'all' ? 20 : 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <h4 style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0 }}>My Requests</h4>
+          <h4 style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0 }}>My Journal</h4>
           {!showForm && (
-            <button onClick={() => setShowForm(true)} style={{ backgroundColor: GOLD, color: '#fff', border: 'none', borderRadius: 16, padding: '5px 12px', fontSize: 12, fontFamily: 'Georgia, serif', cursor: 'pointer', fontWeight: 600 }}>+ Share</button>
+            <button onClick={() => setShowForm(true)} style={{ backgroundColor: GOLD, color: '#fff', border: 'none', borderRadius: 16, padding: '5px 12px', fontSize: 12, fontFamily: 'Georgia, serif', cursor: 'pointer', fontWeight: 600 }}>+ Add</button>
           )}
         </div>
 
@@ -412,7 +444,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
           <div style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, marginBottom: 10 }}>
             <textarea value={text} onChange={e => setText(e.target.value)} placeholder="What would you like prayer for?" rows={3} maxLength={400} autoFocus style={{ width: '100%', padding: '10px 14px', fontSize: 14, fontFamily: 'Georgia, serif', color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', resize: 'none', boxSizing: 'border-box', lineHeight: 1.6 }} />
 
-            <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Who should see this?</div>
+            <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Keep private, or share it?</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               {AUDIENCES.map(a => {
                 const active = audience === a.id
@@ -436,14 +468,14 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             )}
 
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button onClick={() => { setShowForm(false); setText(''); setAudience('network'); setAnonymity('first_initial') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid var(--pb-border, #D4C5B0)`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={shareRequest} disabled={!text.trim() || submitting} style={{ flex: 2, backgroundColor: text.trim() ? GOLD : 'var(--pb-border, #D4C5B0)', border: 'none', borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: text.trim() ? 'pointer' : 'default' }}>{submitting ? 'Sharing...' : 'Share Request'}</button>
+              <button onClick={() => { setShowForm(false); setText(''); setAudience('private'); setAnonymity('first_initial') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid var(--pb-border, #D4C5B0)`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={shareRequest} disabled={!text.trim() || submitting} style={{ flex: 2, backgroundColor: text.trim() ? GOLD : 'var(--pb-border, #D4C5B0)', border: 'none', borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: text.trim() ? 'pointer' : 'default' }}>{submitting ? (audience === 'private' ? 'Saving...' : 'Sharing...') : (audience === 'private' ? 'Add to Journal' : 'Share Request')}</button>
             </div>
           </div>
         )}
 
         {myRequests.length === 0 && !showForm && (
-          <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: 0 }}>You haven&rsquo;t shared any requests yet.</p>
+          <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: 0 }}>Your journal is empty. Add a prayer — it stays private to you unless you choose to share it.</p>
         )}
 
         {myRequests.map(r => (
@@ -461,37 +493,6 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             </div>
           </div>
         ))}
-
-        {/* ── Others' Requests ───────────────────────────────────────────── */}
-        <div style={{ marginTop: 26 }}>
-          <h4 style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: '0 0 10px 0' }}>Others&rsquo; Requests</h4>
-
-          {othersFeed.length > 0 && (
-            <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
-              {chip(othersFilter === 'all', `All · ${othersFeed.length}`, () => setOthersFilter('all'))}
-              {chip(othersFilter === 'direct', `Direct · ${oDirect}`, () => setOthersFilter('direct'))}
-              {chip(othersFilter === 'lineage', `Lineage · ${oLineage}`, () => setOthersFilter('lineage'), LINEAGE)}
-              {chip(othersFilter === 'circles', `Circles · ${oCircles}`, () => setOthersFilter('circles'), CIRCLE)}
-            </div>
-          )}
-
-          {othersFeed.length === 0 ? (
-            <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: 0 }}>No requests from others yet. When your partners or circles share a need, it&rsquo;ll appear here.</p>
-          ) : visibleOthers.length === 0 ? (
-            <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: 0 }}>Nothing under this filter right now.</p>
-          ) : visibleOthers.map(o => (
-            <div key={o.key} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 10, padding: 14, marginBottom: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <span style={{ fontFamily: serif, fontSize: 14, fontWeight: 700, color: DARK }}>{o.author}</span>
-                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: KIND_COLOR[o.kind], background: '#fff', border: `1px solid ${KIND_COLOR[o.kind]}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>
-                  {KIND_LABEL[o.kind]}{o.context ? ` · ${o.context}` : ''}
-                </span>
-              </div>
-              <p style={{ fontSize: 14, color: DARK, lineHeight: 1.5, margin: '0 0 10px 0', fontStyle: 'italic' }}>&ldquo;{o.request_text}&rdquo;</p>
-              {prayBtn(o.key, o.i_prayed, o.intercession_count, () => prayOther(o))}
-            </div>
-          ))}
-        </div>
       </div>
       )}
     </div>
