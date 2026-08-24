@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { BUILTIN_THEMES } from '@/lib/themes'
+import { bandIdCandidate, bandIdFilter } from '@/lib/band-id'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
@@ -36,8 +37,8 @@ export async function GET(req: NextRequest) {
   const admin = createServiceClient()
   const url = req.nextUrl
   const bandFilter = (url.searchParams.get('bandId') || '').trim().toUpperCase()
-  const emailFilter = (url.searchParams.get('email') || '').trim().toLowerCase()
-  const nameFilter = (url.searchParams.get('name') || '').trim().toLowerCase()
+  // One box for the feed. bandId stays separate: mode=band is an exact lookup.
+  const q = (url.searchParams.get('q') || '').trim()
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '100', 10) || 100, 500)
 
   // ── Single-band history ───────────────────────────────────────────────
@@ -133,22 +134,63 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Merged activity feed ──────────────────────────────────────────────
-  let regQuery = admin.from('registrations')
-    .select('id, band_id, user_id, user_name, email, city, state, country, latitude, longitude, registered_at')
-    .order('registered_at', { ascending: false }).limit(limit)
-  if (bandFilter) regQuery = regQuery.eq('band_id', bandFilter)
+  //
+  // One search box, matching a band, an email or a name — because at the point
+  // of typing you rarely know which you have. "MASON" is a valid band code AND
+  // a person's name, so guessing between them would send half the searches to
+  // an empty screen with nothing to explain it.
+  //
+  // Instead both are run. The band half filters in the database, so a band from
+  // months ago is still found; the person half filters the recent window in
+  // memory. Rows from either are merged, so the box behaves like OR rather than
+  // like a guess.
+  const bandCandidate = q ? bandIdCandidate(q) : null
+  const personQuery = q.toLowerCase()
 
-  let transferQuery = admin.from('band_transfers')
-    .select('id, band_id, from_user_id, note, status, created_at')
-    .order('created_at', { ascending: false }).limit(limit)
-  if (bandFilter) transferQuery = transferQuery.eq('band_id', bandFilter)
+  const recent = () => ({
+    regs: admin.from('registrations')
+      .select('id, band_id, user_id, user_name, email, city, state, country, latitude, longitude, registered_at')
+      .order('registered_at', { ascending: false }).limit(limit),
+    transfers: admin.from('band_transfers')
+      .select('id, band_id, from_user_id, note, status, created_at')
+      .order('created_at', { ascending: false }).limit(limit),
+    owners: admin.from('band_ownership_events')
+      .select('id, band_id, old_owner_id, new_owner_id, changed_at')
+      .order('id', { ascending: false }).limit(limit),
+  })
 
-  let ownerQuery = admin.from('band_ownership_events')
-    .select('id, band_id, old_owner_id, new_owner_id, changed_at')
-    .order('id', { ascending: false }).limit(limit)
-  if (bandFilter) ownerQuery = ownerQuery.eq('band_id', bandFilter)
+  const base = recent()
 
-  const [{ data: regs }, { data: transfers }, { data: owners }] = await Promise.all([regQuery, transferQuery, ownerQuery])
+  // Everything this band matched, wherever it sits in history.
+  let bandRegs: any[] = [], bandTransfers: any[] = [], bandOwners: any[] = []
+  if (bandCandidate) {
+    const scoped = recent()
+    const f = bandIdFilter(bandCandidate)
+    const [a, b, c] = await Promise.all([
+      scoped.regs.or(f), scoped.transfers.or(f), scoped.owners.or(f),
+    ])
+    bandRegs = a.data ?? []; bandTransfers = b.data ?? []; bandOwners = c.data ?? []
+  }
+
+  const [{ data: recentRegs }, { data: recentTransfers }, { data: recentOwners }] =
+    await Promise.all([base.regs, base.transfers, base.owners])
+
+  // Merge the two windows, keeping one row per record.
+  const byId = <T extends { id: any }>(a: T[], b: T[]): T[] => {
+    const seen = new Map<string, T>()
+    for (const row of [...a, ...b]) seen.set(String(row.id), row)
+    return [...seen.values()]
+  }
+  const regs = byId(bandRegs, recentRegs ?? [])
+  const transfers = byId(bandTransfers, recentTransfers ?? [])
+  const owners = byId(bandOwners, recentOwners ?? [])
+  // Which rows arrived because the band matched — they pass the filter on that
+  // alone, without needing to match the name or email too.
+  const bandMatched = new Set<string>([
+    ...bandRegs.map(r => `r${r.id}`),
+    ...bandTransfers.map(t => `t${t.id}`),
+    ...bandOwners.map(o => `o${o.id}`),
+  ])
 
   const ids = [
     ...(regs ?? []).map(r => r.user_id),
@@ -206,6 +248,7 @@ export async function GET(req: NextRequest) {
       style: styles.get(r.band_id as string) ?? null,
       who: r.user_name ?? (r.user_id ? names.get(r.user_id) ?? null : null),
       _search: searchFor(r.user_name, r.user_id ? names.get(r.user_id) : null),
+      _key: 'r' + r.id,
       email: (r.user_id ? emails.get(r.user_id) : null) ?? r.email ?? null,
       detail: [
         [r.city, r.state, r.country].filter(Boolean).join(', ') || 'no location',
@@ -222,6 +265,7 @@ export async function GET(req: NextRequest) {
       // dropped out of a name search entirely, for the person they are about.
       who: t.from_user_id ? names.get(t.from_user_id) ?? null : null,
       _search: searchFor(t.from_user_id ? names.get(t.from_user_id) : null),
+      _key: 't' + t.id,
       email: (t.from_user_id ? emails.get(t.from_user_id) : null) ?? null,
       detail: [`passed on (${t.status})`, t.note ? `"${t.note}"` : null].filter(Boolean).join(' · '),
     })),
@@ -241,6 +285,7 @@ export async function GET(req: NextRequest) {
         // Both sides are searchable: "why did Jackson lose that band" is asked
         // as often as "when did he get it".
         _search: searchFor(toName, fromName),
+        _key: 'o' + o.id,
         // The account the band ended up on — what you filter by when someone
         // says "my band isn't showing".
         email: to,
@@ -250,12 +295,18 @@ export async function GET(req: NextRequest) {
       }
     }),
   ]
-    .filter(e => !emailFilter || (e.email || '').toLowerCase().includes(emailFilter))
-    .filter(e => !nameFilter || e._search.includes(nameFilter))
+    // One box, three things it might be. A row survives if the band matched in
+    // the database, or the person's name or email contains the text.
+    .filter(e =>
+      !q ||
+      bandMatched.has(e._key) ||
+      e._search.includes(personQuery) ||
+      (e.email || '').toLowerCase().includes(personQuery)
+    )
     .sort((a, b) => (a.at < b.at ? 1 : -1))
     .slice(0, limit)
-    // _search is a filtering aid, not something the client needs.
-    .map(({ _search, ...e }) => e as Event)
+    // Filtering aids, not something the client needs.
+    .map(({ _search, _key, ...e }) => e as Event)
 
   // ── Inventory ─────────────────────────────────────────────────────────
   // The dashboard's single "available" number hides what actually matters when

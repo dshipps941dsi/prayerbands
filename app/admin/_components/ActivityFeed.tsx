@@ -41,9 +41,7 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
   const [inventory, setInventory] = useState<Inventory | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [bandFilter, setBandFilter] = useState('')
-  const [emailFilter, setEmailFilter] = useState('')
-  const [nameFilter, setNameFilter] = useState('')
+  const [search, setSearch] = useState('')
   const [history, setHistory] = useState<any | null>(null)
   const [historyError, setHistoryError] = useState('')
 
@@ -51,9 +49,7 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
     setLoading(true); setError('')
     try {
       const params = new URLSearchParams()
-      if (bandFilter.trim()) params.set('bandId', bandFilter.trim())
-      if (emailFilter.trim()) params.set('email', emailFilter.trim())
-      if (nameFilter.trim()) params.set('name', nameFilter.trim())
+      if (search.trim()) params.set('q', search.trim())
       const res = await fetch(`/api/admin/activity?${params}`)
       if (!res.ok) { const d = await res.json().catch(() => ({})); setError(d.error || 'Could not load activity.'); return }
       const d = await res.json()
@@ -61,13 +57,14 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
       setInventory(d.inventory || null)
     } catch { setError('Network error.') }
     finally { setLoading(false) }
-  }, [bandFilter, emailFilter, nameFilter])
+  }, [search])
 
   useEffect(() => { load() }, [load])
 
   async function loadHistory() {
-    const id = bandFilter.trim()
-    if (!id) { setHistoryError('Enter a band ID first.'); return }
+    // Band history needs an actual band, so the search text is read as one.
+    const id = search.trim()
+    if (!id) { setHistoryError('Type a band ID first.'); return }
     setHistory(null); setHistoryError('')
     const res = await fetch(`/api/admin/activity?mode=band&bandId=${encodeURIComponent(id)}`)
     const d = await res.json().catch(() => ({}))
@@ -133,15 +130,20 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
       {show === 'feed' && (<>
       {/* Filters */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
-        <input style={input} placeholder="Band ID (e.g. PB-N2N63)" value={bandFilter} onChange={e => setBandFilter(e.target.value)} />
-        <input style={input} placeholder="Email contains…" value={emailFilter} onChange={e => setEmailFilter(e.target.value)} />
-        {/* Matches the name typed on a band AND the account's own name — the
-            two are often different, and either one is a fair way to search. */}
-        <input style={input} placeholder="Name contains…" value={nameFilter} onChange={e => setNameFilter(e.target.value)} />
+        {/* One box. You rarely know which of the three you are holding when you
+            start typing, and the server matches all of them rather than
+            guessing — "MASON" is both a band code and a person. */}
+        <input
+          style={{ ...input, minWidth: 300, flex: 1 }}
+          placeholder="Search band ID, name, or email…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') load() }}
+        />
         <button style={btn} onClick={load}>Refresh</button>
         <button style={{ ...btn, background: 'transparent', color: C.goldText, border: `1px solid ${C.gold}` }} onClick={loadHistory}>Band history</button>
-        {(bandFilter || emailFilter || nameFilter) && (
-          <button style={{ ...btn, background: 'transparent', color: C.secondary, border: `1px solid ${C.borderSilver}` }} onClick={() => { setBandFilter(''); setEmailFilter(''); setNameFilter(''); setHistory(null); setHistoryError('') }}>Clear</button>
+        {search && (
+          <button style={{ ...btn, background: 'transparent', color: C.secondary, border: `1px solid ${C.borderSilver}` }} onClick={() => { setSearch(''); setHistory(null); setHistoryError('') }}>Clear</button>
         )}
       </div>
 
@@ -247,7 +249,7 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
                   {e.kind === 'transfer' ? 'Passed on' : e.kind === 'ownership' ? 'Claimed' : 'Registered'}
                 </span>
                 <button
-                  onClick={() => { setBandFilter(e.band_id); setHistory(null); setHistoryError('') }}
+                  onClick={() => { setSearch(e.band_id); setHistory(null); setHistoryError('') }}
                   style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'monospace', fontSize: 13, color: C.heading, fontWeight: 700 }}
                 >{e.band_id}</button>
                 {/* What the band physically is, so a row names an object and
