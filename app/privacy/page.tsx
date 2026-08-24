@@ -28,7 +28,7 @@ export default function PrivacyPolicy() {
         <span className="cinzel" style={{fontSize:10,letterSpacing:'0.28em',textTransform:'uppercase',color:'#9A7A35',display:'block',marginBottom:12}}>Legal</span>
         <h1 className="cormorant" style={{fontSize:'clamp(32px,5vw,48px)',fontWeight:700,lineHeight:1.15,marginBottom:8,color:'#15223B'}}>Privacy Policy</h1>
         <div style={{width:48,height:2,background:'linear-gradient(90deg, #C8A96E, #E2C98A)',margin:'0 0 12px'}}/>
-        <p className="cinzel" style={{fontSize:11,color:'#5C6573',letterSpacing:'0.10em',textTransform:'uppercase'}}>Last updated: June 2025</p>
+        <p className="cinzel" style={{fontSize:11,color:'#5C6573',letterSpacing:'0.10em',textTransform:'uppercase'}}>Last updated: August 2026</p>
 
         <h2>Who We Are</h2>
         <p>PrayerBands.com is a faith-based ministry platform. Our mission is to connect people through prayer via physical wristbands with unique IDs. We are based in the United States.</p>
@@ -41,7 +41,7 @@ export default function PrivacyPolicy() {
           <li>Your approximate location (city, state, country)</li>
           <li>Your email address (optional — only if you want journey alerts)</li>
           <li>A prayer or scripture verse you choose to leave (optional)</li>
-          <li>Your IP address (used only to determine your approximate geographic location)</li>
+          <li>Your IP address — used only to place a rough map pin if you leave the location box blank, and never resolved to a street address</li>
         </ul>
 
         <h2>How We Use Your Information</h2>
@@ -55,7 +55,11 @@ export default function PrivacyPolicy() {
         <h2>Browser Storage (localStorage)</h2>
         <p>We use your browser's localStorage — a form of local storage on your device — to remember whether you have previously registered a specific band. This allows us to show you a personalized Daily Verse experience when you tap your band again, instead of showing the registration form.</p>
         <p>This data is stored only on your device and is never transmitted to our servers. It contains only a simple flag (e.g. "registered_PB-XXXXX = true"). You can clear this at any time by clearing your browser's site data.</p>
-        <p>We do not use advertising cookies or third-party tracking cookies.</p>
+
+        <h2>Analytics</h2>
+        <p>We use <strong>Google Analytics</strong> to see how many people visit the site and which pages they read. It is configured not to collect granular location data, so we see a country at most — never your city, and never an address. It does not tell us who you are, and we do not use it to build a profile of you or to follow you onto other websites.</p>
+        <p>We do not use advertising cookies, and we do not allow our analytics to be used for ad targeting or personalization. We do not sell or share analytics data with advertisers.</p>
+        <p>If you would rather not be counted at all, Google offers an opt-out add-on for most browsers, and any browser setting or extension that blocks analytics will block ours too. Nothing on this site stops working if you do.</p>
 
         <h2>Who We Share Your Information With</h2>
         <p>We do not sell your personal information. We share limited data only with:</p>
@@ -64,6 +68,7 @@ export default function PrivacyPolicy() {
           <li><strong>Resend</strong> — our email provider (sends journey alert emails)</li>
           <li><strong>Stripe</strong> — our payment processor (handles orders; we never see your card details)</li>
           <li><strong>Vercel</strong> — our hosting provider</li>
+          <li><strong>Google Analytics</strong> — anonymous, country-level visit statistics (see Analytics above)</li>
         </ul>
         <p>All providers are reputable, GDPR-compliant services.</p>
 
