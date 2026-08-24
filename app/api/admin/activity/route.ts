@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
   if (url.searchParams.get('mode') === 'band' && bandFilter) {
     const { data: band } = await admin
       .from('bands')
-      .select('band_id, status, theme, color, size, batch, owner_id, org_id, dedication_recipient, dedication_note, dedication_viewed, created_at')
+      .select('band_id, status, theme, color, size, batch, owner_id, org_id, upline_user_id, upline_email, dedication_recipient, dedication_note, dedication_viewed, created_at')
       .eq('band_id', bandFilter)
       .maybeSingle()
 
@@ -63,8 +63,39 @@ export async function GET(req: NextRequest) {
         .eq('band_id', bandFilter).order('id', { ascending: true }),
     ])
 
+    // ── Lineage ─────────────────────────────────────────────────────────
+    // The band's history says where the object went. Lineage says what it grew:
+    // who put it into circulation, who joined the network because of it, and
+    // everyone who has since come in under those people.
+    const { data: introducedRows } = await admin
+      .from('profiles')
+      .select('id, email, full_name, created_at')
+      .eq('upline_band_id', bandFilter)
+      .order('created_at', { ascending: true })
+
+    const introduced = await Promise.all((introducedRows ?? []).map(async (p: any) => {
+      // Recursive walk, capped inside the function at 20 levels.
+      const { data: tree } = await admin.rpc('downline_of', { root: p.id, max_depth: 20 })
+      const rows = (tree ?? []) as { user_id: string; depth: number }[]
+      const treeEmails = await emailsFor(admin, rows.map(r => r.user_id))
+      const { data: names } = rows.length
+        ? await admin.from('profiles').select('id, full_name').in('id', rows.map(r => r.user_id))
+        : { data: [] as any[] }
+      const nameById = new Map((names ?? []).map((n: any) => [n.id as string, n.full_name as string | null]))
+      return {
+        id: p.id,
+        email: p.email,
+        name: p.full_name,
+        joined_at: p.created_at,
+        downline: rows
+          .sort((a, b) => a.depth - b.depth)
+          .map(r => ({ depth: r.depth, email: treeEmails.get(r.user_id) ?? null, name: nameById.get(r.user_id) ?? null })),
+      }
+    }))
+
     const ids = [
       band.owner_id,
+      band.upline_user_id,
       ...(regs ?? []).map(r => r.user_id),
       ...(transfers ?? []).map(t => t.from_user_id),
       ...(owners ?? []).flatMap(o => [o.old_owner_id, o.new_owner_id]),
@@ -90,6 +121,13 @@ export async function GET(req: NextRequest) {
         old_email: o.old_owner_id ? emails.get(o.old_owner_id) ?? null : null,
         new_email: o.new_owner_id ? emails.get(o.new_owner_id) ?? null : null,
       })),
+      lineage: {
+        // Credit can sit on an email alone: bands are routinely handed out on
+        // behalf of someone with no account yet, and it attaches on signup.
+        giver_email: band.upline_user_id ? emails.get(band.upline_user_id) ?? null : (band.upline_email ?? null),
+        giver_pending: !band.upline_user_id && !!band.upline_email,
+        introduced,
+      },
     })
   }
 

@@ -178,6 +178,52 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
                 {t.note && <div style={{ fontStyle: 'italic', marginTop: 4 }}>&ldquo;{t.note}&rdquo;</div>}
               </div>
             ))}
+
+            {/* Lineage — the history above says where the object went; this says
+                what it grew. Kept in the same panel so one band ID answers both. */}
+            {history.lineage && (
+              <div style={{ borderTop: `2px solid ${C.borderSilver}`, marginTop: 14, paddingTop: 14 }}>
+                <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 16, fontWeight: 700, color: C.heading, marginBottom: 8 }}>
+                  Lineage
+                </div>
+
+                <div style={{ color: C.secondary, marginBottom: 12 }}>
+                  {history.lineage.giver_email ? (
+                    <>Put into circulation by <strong style={{ color: C.heading }}>{history.lineage.giver_email}</strong>
+                      {history.lineage.giver_pending && <span style={{ color: '#B4441F' }}> (no account yet — credit attaches when they sign up)</span>}
+                    </>
+                  ) : 'No giver recorded — nobody is credited for this band.'}
+                </div>
+
+                {history.lineage.introduced.length === 0 ? (
+                  <div style={{ color: C.secondary }}>Nobody has joined through this band yet.</div>
+                ) : (
+                  history.lineage.introduced.map((p: any) => (
+                    <div key={p.id} style={{ borderTop: `1px solid ${C.borderSilver}`, padding: '10px 0' }}>
+                      <div>
+                        ↳ <strong style={{ color: C.heading }}>{p.name || p.email}</strong>
+                        <span style={{ color: C.secondary }}> joined through this band · {new Date(p.joined_at).toLocaleDateString()}</span>
+                      </div>
+                      {p.downline.length === 0 ? (
+                        <div style={{ color: C.secondary, fontSize: 12, marginTop: 4, paddingLeft: 16 }}>No one under them yet.</div>
+                      ) : (
+                        <>
+                          <div style={{ color: C.secondary, fontSize: 12, margin: '6px 0 4px', paddingLeft: 16 }}>
+                            {p.downline.length} {p.downline.length === 1 ? 'person' : 'people'} below them:
+                          </div>
+                          {p.downline.map((d: any, i: number) => (
+                            <div key={i} style={{ fontSize: 12.5, color: C.body, paddingLeft: 16 + d.depth * 14, marginTop: 2 }}>
+                              <span style={{ color: C.secondary }}>{'└ '}</span>{d.name || d.email || 'unknown'}
+                              <span style={{ color: C.secondary }}> · level {d.depth}</span>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
