@@ -51,6 +51,7 @@ interface OthersApiRequest {
   intercession_count: number
   i_prayed: boolean
   author: string
+  author_id: string
   relation: Relation
 }
 
@@ -72,6 +73,7 @@ interface OtherItem {
   source: 'network' | 'circle'
   kind: OtherKind
   author: string
+  author_id?: string
   context: string
   request_text: string
   created_at: string
@@ -122,6 +124,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [pending, setPending] = useState<PendingRequest[]>([])
   const [myRequests, setMyRequests] = useState<NetworkRequest[]>([])
   const [othersReqs, setOthersReqs] = useState<OthersApiRequest[]>([])
+  const [muted, setMuted] = useState<{ id: string; name: string }[]>([])
   const [circleRequests, setCircleRequests] = useState<CircleRequest[]>([])
   const [partnerFilter, setPartnerFilter] = useState<'all' | Relation>('all')
   const [othersFilter, setOthersFilter] = useState<'all' | OtherKind>('all')
@@ -153,6 +156,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       setPending(d.pending_requests ?? [])
       setMyRequests(d.my_requests ?? [])
       setOthersReqs(d.others_requests ?? [])
+      setMuted(d.muted ?? [])
     }
     if (bandsRes && bandsRes.ok) {
       const d = await bandsRes.json()
@@ -292,6 +296,25 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     }
   }
 
+  // Mute a person's shared prayers (private to you; they're not told), or bring
+  // them back. Muting hides their requests from the feed immediately.
+  async function mute(authorId: string, name: string) {
+    setOthersReqs(prev => prev.filter(r => r.author_id !== authorId))
+    setMuted(prev => prev.some(m => m.id === authorId) ? prev : [...prev, { id: authorId, name }])
+    await fetch('/api/network/mute', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ muted_id: authorId, op: 'mute' }),
+    })
+  }
+  async function unmute(id: string) {
+    setMuted(prev => prev.filter(m => m.id !== id))
+    await fetch('/api/network/mute', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ muted_id: id, op: 'unmute' }),
+    })
+    load()  // bring their requests back into the feed
+  }
+
   if (loading) {
     return <div style={{ padding: '20px 0', color: GRAY, fontSize: 14, textAlign: 'center' }}>Loading your network...</div>
   }
@@ -333,6 +356,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       source: 'network' as const,
       kind: r.relation as OtherKind,
       author: r.author,
+      author_id: r.author_id,
       context: '',
       request_text: r.request_text,
       created_at: r.created_at,
@@ -542,9 +566,28 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
               </span>
             </div>
             <p style={{ fontSize: 14, color: DARK, lineHeight: 1.5, margin: '0 0 10px 0', fontStyle: 'italic' }}>&ldquo;{o.request_text}&rdquo;</p>
-            {prayBtn(o.key, o.i_prayed, o.intercession_count, () => prayOther(o))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {prayBtn(o.key, o.i_prayed, o.intercession_count, () => prayOther(o))}
+              {o.source === 'network' && o.author_id && (
+                <button onClick={() => mute(o.author_id!, o.author)} title={`Mute ${o.author}`} style={{ background: 'none', border: 'none', color: GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>Mute</button>
+              )}
+            </div>
           </div>
         ))}
+
+        {/* Muted people — private to you; unmute brings their prayers back. */}
+        {muted.length > 0 && (
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${BORDER}` }}>
+            <div style={{ fontSize: 11, color: GRAY, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 8 }}>Muted · {muted.length}</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {muted.map(m => (
+                <button key={m.id} onClick={() => unmute(m.id)} title="Unmute" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 20, padding: '4px 10px', fontSize: 11.5, fontFamily: 'Georgia, serif', color: DARK, cursor: 'pointer' }}>
+                  🔕 {m.name} <span style={{ color: GOLD, fontWeight: 700 }}>Unmute</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       </>)}
 

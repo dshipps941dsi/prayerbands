@@ -15,6 +15,11 @@ export async function GET(_req: NextRequest) {
 
     const admin = createServiceClient()
 
+    // People the viewer has muted — their shared prayers are hidden from the
+    // "Their Requests" feed. Private to the viewer; the muted person is not told.
+    const { data: muteRows } = await admin.from('prayer_mutes').select('muted_id').eq('muter_id', user.id)
+    const mutedSet = new Set<string>((muteRows ?? []).map((m: any) => m.muted_id))
+
     const { data: conns } = await supabase
       .from('prayer_network_connections')
       .select('id, requester_id, recipient_id, band_id, status, created_at, updated_at')
@@ -174,8 +179,11 @@ export async function GET(_req: NextRequest) {
     // Others' Requests feed: requests the viewer is allowed to see, each tagged
     // with the author's relation for the Direct/Lineage badge.
     const others_requests = ((theirRequests ?? []) as any[])
-      .filter(r => { const info = authorInfo[r.user_id]; return info && reaches(r.audience, info, r.user_id) })
-      .map(r => ({ ...decorate(r), author: nameOf(r.user_id), relation: authorInfo[r.user_id].relation }))
+      .filter(r => { const info = authorInfo[r.user_id]; return info && !mutedSet.has(r.user_id) && reaches(r.audience, info, r.user_id) })
+      .map(r => ({ ...decorate(r), author: nameOf(r.user_id), author_id: r.user_id, relation: authorInfo[r.user_id].relation }))
+
+    // Muted people, named, so the feed can offer an unmute.
+    const muted = Array.from(mutedSet).map(id => ({ id, name: nameOf(id) }))
 
     // Partners (people only; requests live in the Others' Requests feed).
     const connections = accepted.map((c: any) => {
@@ -219,6 +227,7 @@ export async function GET(_req: NextRequest) {
       others_requests,
       pending_requests,
       my_requests,
+      muted,
       is_band_holder: await isBandHolder(admin, user.id),
     })
   } catch (err) {
