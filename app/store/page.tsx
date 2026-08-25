@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import SiteNav from "@/components/SiteNav";
 import { track } from "@/lib/analytics";
 import SiteFooter from "@/components/SiteFooter";
+import { FREE_SHIPPING_MIN_CENTS, amountToFreeShipping } from "@/lib/shipping";
 
 type PendingReferral = { code: string; referrerUserId?: string };
 
@@ -250,7 +251,12 @@ function StorePageInner() {
   const subtotal = cart.reduce((sum, c) => sum + lineUnit(c) * c.qty, 0);
   const stdSavings = (single - stdUnit) * standardQty;
   const totalItems = cart.reduce((sum, c) => sum + c.qty, 0);
-  const shipping = (pricing["shipping_cost_standard"] ?? 599) / 100;
+  // Free shipping once the subtotal clears the threshold — mirrors the checkout
+  // so the cart total never disagrees with what Stripe charges.
+  const subtotalCents = Math.round(subtotal * 100);
+  const qualifiesFreeShip = subtotalCents >= FREE_SHIPPING_MIN_CENTS;
+  const toFreeShip = amountToFreeShipping(subtotalCents) / 100;
+  const shipping = qualifiesFreeShip ? 0 : (pricing["shipping_cost_standard"] ?? 299) / 100;
   const total = subtotal + shipping;
 
   return (
@@ -592,9 +598,19 @@ function StorePageInner() {
 
                 {stdSavings > 0.001 && <div className="lato" style={{ background: "#ECEEF1", color: "#15223B", borderRadius: 8, padding: "10px 14px", fontSize: 13, marginBottom: 12, textAlign: "center", fontWeight: 700, border: "1px solid rgba(92,101,115,0.20)" }}>✓ Multi-band pricing saved you ${stdSavings.toFixed(2)}</div>}
 
+                {/* Free-shipping progress: nudge toward the threshold, celebrate once cleared. */}
+                <div style={{ background: qualifiesFreeShip ? "#E4F1E8" : "#FBF3E0", border: `1px solid ${qualifiesFreeShip ? "rgba(47,125,91,0.35)" : "rgba(200,169,110,0.40)"}`, borderRadius: 8, padding: "11px 14px", marginBottom: 12 }}>
+                  <div className="lato" style={{ fontSize: 12.5, textAlign: "center", color: qualifiesFreeShip ? "#2F7D5B" : "#9A7A35", fontWeight: 600 }}>
+                    {qualifiesFreeShip ? "🎉 You've unlocked free shipping!" : <>Add <strong>${toFreeShip.toFixed(2)}</strong> more for free shipping 🚚</>}
+                  </div>
+                  <div style={{ height: 5, background: "rgba(92,101,115,0.15)", borderRadius: 99, marginTop: 8, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${Math.min(100, (subtotalCents / FREE_SHIPPING_MIN_CENTS) * 100)}%`, background: qualifiesFreeShip ? "#2F7D5B" : "#C8A96E", borderRadius: 99, transition: "width 0.3s ease" }} />
+                  </div>
+                </div>
+
                 <div style={{ background: "#ECEEF1", borderRadius: 8, padding: "20px 20px", marginBottom: 8, border: "1px solid rgba(92,101,115,0.15)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span className="lato" style={{ fontSize: 13, color: "#5C6573" }}>Subtotal</span><span className="lato" style={{ fontSize: 13, color: "#15223B", fontWeight: 700 }}>${subtotal.toFixed(2)}</span></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span className="lato" style={{ fontSize: 13, color: "#5C6573" }}>Shipping</span><span className="lato" style={{ fontSize: 13, color: "#5C6573" }}>${shipping.toFixed(2)}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span className="lato" style={{ fontSize: 13, color: "#5C6573" }}>Shipping</span><span className="lato" style={{ fontSize: 13, color: qualifiesFreeShip ? "#2F7D5B" : "#5C6573", fontWeight: qualifiesFreeShip ? 700 : 400 }}>{qualifiesFreeShip ? "FREE" : `$${shipping.toFixed(2)}`}</span></div>
                   <div style={{ borderTop: "1px solid rgba(92,101,115,0.20)", paddingTop: 12, marginTop: 8, display: "flex", justifyContent: "space-between" }}><span className="playfair" style={{ fontSize: 18, fontWeight: 600, color: "#15223B" }}>Total</span><span className="playfair" style={{ fontSize: 22, fontWeight: 700, color: "#9A7A35" }}>${total.toFixed(2)}</span></div>
                 </div>
 

@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { getSiteConfig } from '@/lib/getSiteConfig'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { creditBalanceCents } from '@/lib/credit'
+import { FREE_SHIPPING_MIN_CENTS } from '@/lib/shipping'
 
 // Fallback definitions (used only if the products table hasn't been seeded yet),
 // so checkout keeps working before db/products.sql is run.
@@ -86,7 +87,12 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    const shippingCost = await getSiteConfig('shipping_cost_standard')
+    let shippingCost = await getSiteConfig('shipping_cost_standard')
+    // Free shipping over the threshold — makes the "Free Shipping on Orders
+    // $35+" promise in the top bar actually true. Based on the goods subtotal
+    // (before any discount), matching how a "spend $35" offer reads.
+    const goodsSubtotal = lineItems.reduce((s, li) => s + (li.price_data?.unit_amount ?? 0) * (li.quantity ?? 1), 0)
+    if (goodsSubtotal >= FREE_SHIPPING_MIN_CENTS) shippingCost = 0
     const hasCustom = items.some(i => i.id === 'custom')
     const totalBands = items.reduce((sum, i) => sum + i.qty * resolved[i.id].bands, 0)
 
