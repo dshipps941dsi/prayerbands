@@ -23,12 +23,12 @@ const SIZES = [
 ]
 
 type Product = { slug: string; name: string; category: string; theme: string; price: number; sizes: string[]; hasSizes: boolean; images: string[] }
-type Group = 'all' | 'design' | 'color'
+type Group = 'design' | 'color'
 type CartItem = { key: string; slug: string; name: string; size: string | null; qty: number; price: number }
 
 export default function PurchaseTab({ bandId }: { bandId: string }) {
   const [products, setProducts] = useState<Product[]>([])
-  const [group, setGroup] = useState<Group>('all')
+  const [group, setGroup] = useState<Group | null>(null)
   const [slug, setSlug] = useState<string | null>(null)
   const [size, setSize] = useState('M')
   const [qty, setQty] = useState(1)
@@ -49,7 +49,7 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
 
   // A solid-colour band carries no artwork (theme 'default'); everything else is a themed design.
   const isColor = (p: Product) => !p.theme || p.theme === 'default'
-  const inGroup = products.filter(p => group === 'all' ? true : group === 'color' ? isColor(p) : !isColor(p))
+  const inGroup = products.filter(p => group === null ? true : group === 'color' ? isColor(p) : !isColor(p))
 
   useEffect(() => {
     if (inGroup.length === 0) { setSlug(null); return }
@@ -108,18 +108,24 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
         Keep the chain going — build a little order and send it to those on your heart.
       </div>
 
-      {/* Theme vs Colour */}
-      <div style={{ display: 'flex', gap: 4, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 4, marginBottom: 16 }}>
-        {([['all', 'All'], ['design', 'Theme'], ['color', 'Color']] as const).map(([id, label]) => {
+      {/* Theme vs Colour — no filter by default (all bands show). */}
+      <div style={{ display: 'flex', gap: 4, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 4, marginBottom: group ? 8 : 16 }}>
+        {([['design', 'Theme'], ['color', 'Color']] as const).map(([id, label]) => {
           const on = group === id
           return (
-            <button key={id} onClick={() => setGroup(id)}
+            <button key={id} onClick={() => setGroup(on ? null : id)}
               style={{ flex: 1, padding: '9px 4px', border: 'none', borderRadius: 9, background: on ? GOLD : 'transparent', color: on ? INK : GRAY, fontSize: 12, fontWeight: on ? 700 : 500, fontFamily: serif, letterSpacing: '0.04em', cursor: 'pointer' }}>
               {label}
             </button>
           )
         })}
       </div>
+      {group && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <span style={{ fontSize: 12.5, color: GRAY, fontFamily: 'Georgia, serif' }}>Showing {group === 'color' ? 'solid colors' : 'themes'}</span>
+          <button onClick={() => setGroup(null)} style={{ background: 'none', border: 'none', color: GOLD, fontSize: 12.5, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>Clear filter</button>
+        </div>
+      )}
 
       {/* Style tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
