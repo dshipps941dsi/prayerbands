@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { QRCodeSVG } from 'qrcode.react'
 
 // Turn whatever someone types into a band code into PB-XXXXX. The code is
 // printed on every band, so a partner can just read it aloud.
@@ -124,6 +125,9 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [myCode, setMyCode] = useState<string | null>(null)
   const [partnerCode, setPartnerCode] = useState('')
   const [codeCopied, setCodeCopied] = useState(false)
+  // The viewer's permanent connect code + whether their QR is expanded.
+  const [myConnectCode, setMyConnectCode] = useState<string | null>(null)
+  const [showQR, setShowQR] = useState(false)
   const [connections, setConnections] = useState<Connection[]>([])
   const [pending, setPending] = useState<PendingRequest[]>([])
   const [myRequests, setMyRequests] = useState<NetworkRequest[]>([])
@@ -169,6 +173,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       setMyRequests(d.my_requests ?? [])
       setOthersReqs(d.others_requests ?? [])
       setMuted(d.muted ?? [])
+      setMyConnectCode(d.my_connect_code ?? null)
     }
     if (bandsRes && bandsRes.ok) {
       const d = await bandsRes.json()
@@ -453,6 +458,24 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             >
               {codeCopied ? 'Copied' : 'Copy'}
             </button>
+          </div>
+        )}
+
+        {myConnectCode && (
+          <div style={{ marginBottom: 12 }}>
+            <button onClick={() => setShowQR(v => !v)} style={{ background: 'none', border: 'none', color: GOLD, fontSize: 12, fontFamily: serif, fontWeight: 700, cursor: 'pointer', padding: 0 }}>
+              {showQR ? '▴ Hide my QR code' : '▾ Show my QR code'}
+            </button>
+            {showQR && (
+              <div style={{ marginTop: 10, background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 10, padding: 16, textAlign: 'center' }}>
+                <div style={{ display: 'inline-block', background: '#fff', padding: 6, borderRadius: 6 }}>
+                  <QRCodeSVG value={`${typeof window !== 'undefined' ? window.location.origin : 'https://prayerbands.com'}/connect/${myConnectCode}`} size={168} bgColor="#ffffff" fgColor="#15223B" level="M" />
+                </div>
+                <p style={{ fontSize: 12, color: GRAY, margin: '10px 6px 0', lineHeight: 1.5 }}>
+                  Point a phone camera here to connect with you in prayer. It always reaches your account, even after you hand out bands — great for a group, a screen, or a printed card.
+                </p>
+              </div>
+            )}
           </div>
         )}
 

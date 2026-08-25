@@ -20,6 +20,10 @@ export async function GET(_req: NextRequest) {
     const { data: muteRows } = await admin.from('prayer_mutes').select('muted_id').eq('muter_id', user.id)
     const mutedSet = new Set<string>((muteRows ?? []).map((m: any) => m.muted_id))
 
+    // The viewer's own permanent connect code, for their QR / connect link.
+    const { data: myProfile } = await admin.from('profiles').select('connect_code').eq('id', user.id).maybeSingle()
+    const my_connect_code = (myProfile as { connect_code?: string } | null)?.connect_code ?? null
+
     const { data: conns } = await supabase
       .from('prayer_network_connections')
       .select('id, requester_id, recipient_id, band_id, status, created_at, updated_at')
@@ -228,6 +232,7 @@ export async function GET(_req: NextRequest) {
       pending_requests,
       my_requests,
       muted,
+      my_connect_code,
       is_band_holder: await isBandHolder(admin, user.id),
     })
   } catch (err) {
