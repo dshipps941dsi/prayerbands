@@ -880,7 +880,7 @@ export default function BandPage() {
                 </a>
                 {userEmail === 'dshipps941@gmail.com' && (
                   <a href="/admin" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: `1px solid ${GOLD}`, fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
-                    ⚙️ Control Centre
+                    ⚙️ Admin Control Centre
                   </a>
                 )}
                 <a href="/settings" style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
