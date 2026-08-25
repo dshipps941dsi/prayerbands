@@ -181,9 +181,9 @@ export default function BandPage() {
   const [activeTab, setActiveTab] = useState<'home' | 'journey' | 'purchase' | 'account'>('home')
   // Full-screen focus mode: meditate on the verse, or the journal with nothing else.
   const [focus, setFocus] = useState<null | 'verse' | 'prayer'>(null)
-  // Auto-hiding bottom nav: tuck it away while scrolling down to read, and
-  // slide it back the moment the user scrolls up (or reaches the top).
-  const [navHidden, setNavHidden] = useState(false)
+  // Auto-hiding bottom nav: hidden on load for a clean first view, revealed
+  // when the user scrolls up (to navigate), tucked away again on scroll down.
+  const [navHidden, setNavHidden] = useState(true)
   // Journey tab: this band's direct line, or the whole reach web.
   const [journeyView, setJourneyView] = useState<'band' | 'reach'>('band')
   const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null; expires_at: string | null } | null>(null)
@@ -310,13 +310,13 @@ export default function BandPage() {
     fetch(url).then(r => r.json()).then(data => setStatus(data)).catch(() => setStatus({ screen: 'error' }))
   }, [bandId, userId])
 
-  // Auto-hide the bottom nav on scroll-down, reveal on scroll-up. Threshold
-  // avoids flicker on tiny scrolls; always show near the very top.
+  // Reveal the bottom nav on scroll-up, hide it on scroll-down. It starts
+  // hidden (see initial state), so the first view is clean until the user
+  // scrolls. Threshold avoids flicker on tiny scrolls.
   useEffect(() => {
     let lastY = typeof window !== 'undefined' ? window.scrollY : 0
     const onScroll = () => {
       const y = window.scrollY
-      if (y < 48) { setNavHidden(false); lastY = y; return }
       if (Math.abs(y - lastY) < 8) return
       setNavHidden(y > lastY)
       lastY = y
