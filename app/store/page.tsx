@@ -158,16 +158,24 @@ function StorePageInner() {
         .then(data => {
           if (data?.valid) {
             const pending: PendingReferral = { code: ref.trim().toUpperCase(), referrerUserId: data.referrerUserId };
-            try { localStorage.setItem("pendingReferral", JSON.stringify(pending)); } catch {}
+            try { localStorage.setItem("pendingReferral", JSON.stringify({ ...pending, ts: Date.now() })); } catch {}
             setReferral(pending);
           }
         })
         .catch(() => {});
       return;
     }
+    // Show a saved referral only if it's still fresh. A referral with no
+    // timestamp (from before expiry existed) or older than 30 days is dropped —
+    // otherwise a one-time referral link becomes a permanent discount banner.
     try {
       const saved = localStorage.getItem("pendingReferral");
-      if (saved) setReferral(JSON.parse(saved) as PendingReferral);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const fresh = parsed?.code && typeof parsed?.ts === "number" && (Date.now() - parsed.ts) < 30 * 24 * 60 * 60 * 1000;
+        if (fresh) setReferral(parsed as PendingReferral);
+        else localStorage.removeItem("pendingReferral");
+      }
     } catch {}
   }, [searchParams]);
 

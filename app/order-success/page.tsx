@@ -32,6 +32,10 @@ function OrderSuccessInner() {
 
   useEffect(() => {
     if (!sessionId) { setLoading(false); return }
+    // The referral discount is one-and-done — clear it once an order completes
+    // so it can't ride along on every future order, or leave the store banner
+    // showing when no code is active.
+    try { localStorage.removeItem('pendingReferral') } catch {}
     fetch(`/api/order-details?session_id=${sessionId}`)
       .then(r => r.json())
       .then(data => {

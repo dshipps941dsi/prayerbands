@@ -19,7 +19,7 @@ export default function ReferralCapture() {
     // through to the store can never read localStorage before it's written.
     // The store only needs the code (checkout re-derives the referrer server
     // side); validation below simply drops the code if it turns out bogus.
-    try { localStorage.setItem('pendingReferral', JSON.stringify({ code })) } catch {}
+    try { localStorage.setItem('pendingReferral', JSON.stringify({ code, ts: Date.now() })) } catch {}
 
     fetch('/api/referral/validate', {
       method: 'POST',
@@ -30,7 +30,7 @@ export default function ReferralCapture() {
       .then(d => {
         try {
           if (d?.valid) {
-            localStorage.setItem('pendingReferral', JSON.stringify({ code, referrerUserId: d.referrerUserId }))
+            localStorage.setItem('pendingReferral', JSON.stringify({ code, referrerUserId: d.referrerUserId, ts: Date.now() }))
           } else {
             // A bogus code shouldn't leave a false discount banner standing.
             const cur = localStorage.getItem('pendingReferral')
