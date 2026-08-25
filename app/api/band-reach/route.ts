@@ -35,6 +35,18 @@ export async function GET(req: NextRequest) {
     .eq('band_id', bandId)
     .order('registered_at', { ascending: true })
 
+  // Only someone who has actually held this band (or owns it) may see its reach —
+  // otherwise anyone could enumerate band ids and map the whole network's giving
+  // relationships and locations. The per-band journey stays public; the ripple
+  // (which reaches beyond this band) does not.
+  const isHolder = ((stops ?? []) as any[]).some(s => s.user_id === user.id)
+  if (!isHolder) {
+    const { data: band } = await admin.from('bands').select('owner_id').eq('band_id', bandId).maybeSingle()
+    if (!band || band.owner_id !== user.id) {
+      return NextResponse.json({ error: 'Not your band to view.' }, { status: 403 })
+    }
+  }
+
   let prevKey: string | null = null
   for (const s of (stops ?? []) as any[]) {
     const k = keyOf(s)

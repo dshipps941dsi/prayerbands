@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { requestReachesUser, nameFromProfile } from '@/lib/network'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 // Private replies to a shared prayer. A reply goes only to the requester —
 // not a public thread. Others can send one (if the requester allowed replies
@@ -70,6 +71,11 @@ export async function POST(req: NextRequest) {
   const request_id = String(b.request_id || '')
   const body = String(b.body || '').trim().slice(0, 1000)
   if (!request_id || !body) return NextResponse.json({ error: 'request_id and body are required' }, { status: 400 })
+
+  // Keep one person from flooding a requester with replies.
+  if (!(await checkRateLimit(`reply:user:${user.id}`, 30, 3600))) {
+    return NextResponse.json({ error: 'You’ve sent a lot of replies recently. Please wait a bit.' }, { status: 429 })
+  }
 
   const admin = createServiceClient()
   const request = await loadRequest(admin, request_id)
