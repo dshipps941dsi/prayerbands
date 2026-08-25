@@ -181,6 +181,9 @@ export default function BandPage() {
   const [activeTab, setActiveTab] = useState<'home' | 'journey' | 'purchase' | 'account'>('home')
   // Full-screen focus mode: meditate on the verse, or the journal with nothing else.
   const [focus, setFocus] = useState<null | 'verse' | 'prayer'>(null)
+  // Auto-hiding bottom nav: tuck it away while scrolling down to read, and
+  // slide it back the moment the user scrolls up (or reaches the top).
+  const [navHidden, setNavHidden] = useState(false)
   // Journey tab: this band's direct line, or the whole reach web.
   const [journeyView, setJourneyView] = useState<'band' | 'reach'>('band')
   const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null; expires_at: string | null } | null>(null)
@@ -306,6 +309,21 @@ export default function BandPage() {
     const url = `/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}${localHolder ? '&localHolder=true' : ''}`
     fetch(url).then(r => r.json()).then(data => setStatus(data)).catch(() => setStatus({ screen: 'error' }))
   }, [bandId, userId])
+
+  // Auto-hide the bottom nav on scroll-down, reveal on scroll-up. Threshold
+  // avoids flicker on tiny scrolls; always show near the very top.
+  useEffect(() => {
+    let lastY = typeof window !== 'undefined' ? window.scrollY : 0
+    const onScroll = () => {
+      const y = window.scrollY
+      if (y < 48) { setNavHidden(false); lastY = y; return }
+      if (Math.abs(y - lastY) < 8) return
+      setNavHidden(y > lastY)
+      lastY = y
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   // Referral credit, fetched only once someone opens their account tab.
   useEffect(() => {
@@ -690,6 +708,8 @@ export default function BandPage() {
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 200,
         background: DARK, borderTop: '1px solid rgba(255,255,255,0.1)',
         display: 'flex', paddingBottom: 'env(safe-area-inset-bottom)',
+        transform: navHidden ? 'translateY(100%)' : 'translateY(0)',
+        transition: 'transform 0.25s ease',
       }}>
         {tabs.map(tab => (
           <button
@@ -774,16 +794,14 @@ export default function BandPage() {
                 <a href="/my-band" style={{ display: 'inline-block', background: GOLD, color: INK, padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Follow its journey</a>
               </div>
             )}
-            <div style={{ padding: '24px 20px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700 }}>{(regs.length ? regs[regs.length - 1].user_name : '') || 'My Prayer Band'}</div>
-                </div>
+            <div style={{ padding: '14px 20px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(regs.length ? regs[regs.length - 1].user_name : '') || 'My Prayer Band'}</div>
                 {transferStep === 'idle' && !transferComplete && (
                   <button onClick={() => {
                     const accountless = !userId && localStorage.getItem(`holder_${bandId}`) === 'true'
                     setTransferStep(accountless ? 'save_prompt' : 'sheet')
-                  }} style={{ display: 'flex', alignItems: 'center', gap: 8, background: GOLD, color: INK, border: 'none', borderRadius: 10, padding: '10px 18px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Transfer Band</button>
+                  }} style={{ display: 'flex', alignItems: 'center', gap: 6, background: GOLD, color: INK, border: 'none', borderRadius: 10, padding: '8px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Transfer Band</button>
                 )}
               </div>
             </div>
