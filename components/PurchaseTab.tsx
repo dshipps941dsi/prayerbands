@@ -30,9 +30,6 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
   const [group, setGroup] = useState<Group>('design')
   const [slug, setSlug] = useState<string | null>(null)
   const [size, setSize] = useState('M')
-  const [showDedication, setShowDedication] = useState(false)
-  const [recipient, setRecipient] = useState('')
-  const [note, setNote] = useState('')
   const [qty, setQty] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -71,14 +68,10 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
     if (!selected) return
     setLoading(true); setError('')
     try {
-      const customMessage = recipient.trim()
-        ? `For ${recipient.trim()}${note.trim() ? `: ${note.trim()}` : ''}`
-        : note.trim()
       const res = await fetch('/api/create-checkout', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: [{ id: selected.slug, qty, size: selected.hasSizes ? size : undefined }],
-          customMessage,
           returnTo: `/band/${bandId}`,
         }),
       })
@@ -91,7 +84,6 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
   }
 
   const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 600, color: GRAY, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 12px', fontSize: 14, fontFamily: 'Georgia, serif', color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', boxSizing: 'border-box' }
 
   return (
     <div style={{ padding: '24px 20px 40px' }}>
@@ -162,20 +154,11 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
         </div>
       )}
 
-      {/* Dedication */}
-      {!showDedication ? (
-        <button onClick={() => setShowDedication(true)} style={{ background: 'none', border: 'none', color: GOLD, fontSize: 13, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: '0 0 4px', textDecoration: 'underline' }}>
-          + Add a dedication
-        </button>
-      ) : (
-        <div style={{ marginBottom: 4 }}>
-          <label style={labelStyle}>Who is this for?</label>
-          <input value={recipient} onChange={e => setRecipient(e.target.value)} placeholder="Recipient's name" maxLength={80} style={{ ...inputStyle, marginBottom: 12 }} />
-          <label style={labelStyle}>A note from you</label>
-          <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="A short message or prayer…" maxLength={200} rows={3} style={{ ...inputStyle, resize: 'none', lineHeight: 1.5 }} />
-          <div style={{ fontSize: 11, color: '#B0A090', textAlign: 'right', marginTop: 4 }}>{note.length}/200</div>
-        </div>
-      )}
+      {/* A private dedication for each band is added after purchase, via a link
+          in the shipping email — so multi-band orders get a note per band. */}
+      <div style={{ fontSize: 12.5, color: GRAY, fontFamily: 'Georgia, serif', fontStyle: 'italic', lineHeight: 1.5 }}>
+        You can add a private note or blessing for each band after you order — we&rsquo;ll email you a link.
+      </div>
 
       {/* Quantity */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 20 }}>
