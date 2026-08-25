@@ -55,7 +55,7 @@ function readSeen(): Set<Sub> {
   }
 }
 
-export default function PrayerTabs({ userId }: { userId: string }) {
+export default function PrayerTabs({ userId, onExpand }: { userId: string; onExpand?: () => void }) {
   const [sub, setSub] = useState<Sub>('requests')
   // Explicitly opened with the ⓘ, per tab.
   const [opened, setOpened] = useState<Set<Sub>>(new Set())
@@ -95,26 +95,37 @@ export default function PrayerTabs({ userId }: { userId: string }) {
 
   return (
     <div>
-      {/* One line: "My Prayer" + the tab that completes it (Journal / Partners /
-          Circles) + the ⓘ. Replaces a separate eyebrow, tab bar, and a repeated
-          title — reads "My Prayer Journal" and reclaims two rows of height. */}
+      {/* Segmented tabs to switch between the three. */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 12, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 4 }}>
+        {SUBTABS.map(t => {
+          const active = sub === t.id
+          return (
+            <button key={t.id} onClick={() => setSub(t.id)}
+              style={{ flex: 1, padding: '9px 4px', border: 'none', borderRadius: 9, background: active ? GOLD : 'transparent', color: active ? INK_ON_PRIMARY : SLATE, fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "'Cinzel', Georgia, serif", letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.15s' }}>
+              {t.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* The title reads as one phrase that completes with the active tab —
+          "My Prayer" in a light italic, the section in bold. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: showInfo ? 10 : 16 }}>
-        <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 17, fontWeight: 700, color: NAVY, whiteSpace: 'nowrap' }}>My Prayer</span>
-        <div style={{ flex: 1, display: 'flex', gap: 3, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3 }}>
-          {SUBTABS.map(t => {
-            const active = sub === t.id
-            return (
-              <button key={t.id} onClick={() => setSub(t.id)}
-                style={{ flex: 1, padding: '7px 4px', border: 'none', borderRadius: 8, background: active ? GOLD : 'transparent', color: active ? INK_ON_PRIMARY : SLATE, fontSize: 11, fontWeight: active ? 700 : 500, fontFamily: "'Cinzel', Georgia, serif", letterSpacing: '0.04em', textTransform: 'uppercase', cursor: 'pointer' }}>
-                {t.label}
-              </button>
-            )
-          })}
-        </div>
+        <h3 style={{ margin: 0, fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 24, fontWeight: 700, color: NAVY, lineHeight: 1.05 }}>
+          <span style={{ fontStyle: 'italic', fontWeight: 400, color: SLATE }}>My Prayer </span>
+          {SUBTABS.find(t => t.id === sub)?.label}
+        </h3>
+        <div style={{ flex: 1 }} />
         <button onClick={toggleInfo} aria-label={`About ${info.title}`} aria-expanded={showInfo} title={`About ${info.title}`}
-          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '50%', border: `1.5px solid ${showInfo ? GOLD_TEXT : BORDER}`, background: showInfo ? 'rgba(200,169,110,0.14)' : 'transparent', color: showInfo ? GOLD_TEXT : SLATE, fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 12, fontWeight: 700, lineHeight: 1, cursor: 'pointer', padding: 0, flexShrink: 0, transition: 'all 0.15s' }}>
+          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', border: `1.5px solid ${showInfo ? GOLD_TEXT : BORDER}`, background: showInfo ? 'rgba(200,169,110,0.14)' : 'transparent', color: showInfo ? GOLD_TEXT : SLATE, fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 13, fontWeight: 700, lineHeight: 1, cursor: 'pointer', padding: 0, flexShrink: 0, transition: 'all 0.15s' }}>
           i
         </button>
+        {onExpand && (
+          <button onClick={onExpand} aria-label="Focus mode" title="Focus mode"
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', border: `1.5px solid ${BORDER}`, background: 'transparent', color: SLATE, fontSize: 13, lineHeight: 1, cursor: 'pointer', padding: 0, flexShrink: 0 }}>
+            ⛶
+          </button>
+        )}
       </div>
 
       {showInfo && (

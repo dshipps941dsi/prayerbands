@@ -8,6 +8,7 @@ import Icon, { type IconName } from '@/components/Icon'
 import NotificationsPanel from '@/components/NotificationsPanel'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
 import PrayerTabs from '@/components/PrayerTabs'
+import FocusOverlay from '@/components/FocusOverlay'
 import PurchaseTab from '@/components/PurchaseTab'
 import { useApplyTheme } from '@/components/ThemeProvider'
 import SuccessCard from './screens/SuccessCard'
@@ -177,6 +178,8 @@ export default function BandPage() {
   const [expandedPrayer, setExpandedPrayer] = useState<string | null>(null)
   const [verseCategory, setVerseCategory] = useState('all')
   const [activeTab, setActiveTab] = useState<'home' | 'journey' | 'purchase' | 'account'>('home')
+  // Full-screen focus mode: meditate on the verse, or the journal with nothing else.
+  const [focus, setFocus] = useState<null | 'verse' | 'prayer'>(null)
   const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null; expires_at: string | null } | null>(null)
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
@@ -520,7 +523,9 @@ export default function BandPage() {
       <div style={{ margin: '20px 20px 0' }}>
         <div style={{ textAlign: 'center', fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK, marginBottom: 2 }}>{greeting}</div>
         <WalkLine total={walk.total} run={walk.run} onOpenJourney={() => setActiveTab('journey')} />
-        <div style={{ background: `linear-gradient(135deg, ${NAVY}, ${NAVY_LT})`, borderRadius: 14, padding: '24px 20px', color: 'white', textAlign: 'center' }}>
+        <div style={{ position: 'relative', background: `linear-gradient(135deg, ${NAVY}, ${NAVY_LT})`, borderRadius: 14, padding: '24px 20px', color: 'white', textAlign: 'center' }}>
+          <button onClick={() => setFocus('verse')} aria-label="Meditate on this verse" title="Meditate full screen"
+            style={{ position: 'absolute', top: 12, right: 12, width: 30, height: 30, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.85)', fontSize: 13, lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⛶</button>
           <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.6, marginBottom: 12 }}>
             {verseCategory === 'all' ? "Today's Verse" : CATEGORIES.find(c => c.id === verseCategory)?.label}
           </div>
@@ -758,7 +763,7 @@ export default function BandPage() {
 
             <div style={{ padding: '20px 20px 40px' }}>
               {userId ? (
-                <PrayerTabs userId={userId} />
+                <PrayerTabs userId={userId} onExpand={() => setFocus('prayer')} />
               ) : (
                 <div style={{ background: 'white', borderRadius: 14, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
                   <div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div>
@@ -880,6 +885,30 @@ export default function BandPage() {
         )}
         <div style={{ height: 100 }} />
         <BottomNav />
+
+        {/* Full-screen focus: meditate on the verse, or the journal alone. */}
+        {focus === 'verse' && (() => {
+          const v = getVerseForCategory(verseCategory)
+          return (
+            <FocusOverlay onClose={() => setFocus(null)} closeColor="rgba(255,255,255,0.85)"
+              background={`radial-gradient(120% 80% at 50% 0%, ${NAVY_LT} 0%, ${NAVY} 55%, #060D1A 100%)`}>
+              <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '96px 30px', color: 'white', textAlign: 'center' }}>
+                <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.25em', textTransform: 'uppercase', color: GOLD, marginBottom: 28 }}>
+                  {verseCategory === 'all' ? "Today's Verse" : CATEGORIES.find(c => c.id === verseCategory)?.label}
+                </div>
+                <div style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 'clamp(24px, 6.2vw, 34px)', lineHeight: 1.65, maxWidth: 600 }}>&ldquo;{v.text}&rdquo;</div>
+                <div style={{ fontFamily: body, fontSize: 14, letterSpacing: '0.08em', opacity: 0.7, marginTop: 26 }}>{v.ref}</div>
+              </div>
+            </FocusOverlay>
+          )
+        })()}
+        {focus === 'prayer' && userId && (
+          <FocusOverlay onClose={() => setFocus(null)}>
+            <div style={{ maxWidth: 640, margin: '0 auto', padding: '68px 20px 48px' }}>
+              <PrayerTabs userId={userId} />
+            </div>
+          </FocusOverlay>
+        )}
       </div>
     )
   }
