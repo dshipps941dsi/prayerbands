@@ -6,7 +6,7 @@ import SiteNav from "@/components/SiteNav";
 import { track } from "@/lib/analytics";
 import SiteFooter from "@/components/SiteFooter";
 
-type PendingReferral = { code: string; referrerUserId: string };
+type PendingReferral = { code: string; referrerUserId?: string };
 
 // ─── Types ───────────────────────────────────────────────────
 type CartItem = {
@@ -301,10 +301,12 @@ function StorePageInner() {
       {/* NAV — shared site navigation; cart icon opens the drawer here */}
       <SiteNav onCartClick={() => setCartOpen(true)} cartCount={totalItems} />
 
-      {/* Referral discount banner — only when a valid ?ref was applied */}
+      {/* Referral discount banner — only when a valid ?ref was applied.
+          The amount must match the live Stripe coupon behind
+          STRIPE_REFERRAL_PROMO_CODE_ID (FRIEND20 = 20%). */}
       {referral && (
         <div style={{ background: "#F5EFE4", borderBottom: "1px solid rgba(200,169,110,0.34)", textAlign: "center", padding: "11px 20px", fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: "#9A7A35", letterSpacing: "0.02em" }}>
-          You&rsquo;re getting <strong style={{ color: "#5A3E12" }}>5% off</strong> — a gift from someone in the Prayer Bands community 🙏
+          You&rsquo;re getting <strong style={{ color: "#5A3E12" }}>20% off</strong> — a gift from someone in the Prayer Bands community 🙏
         </div>
       )}
 

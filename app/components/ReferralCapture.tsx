@@ -12,8 +12,14 @@ export default function ReferralCapture() {
     try { raw = new URLSearchParams(window.location.search).get('ref') } catch {}
     if (!raw) return
     const code = raw.trim().toUpperCase()
-    // Referral codes look like PB-XXXXX; keep the guard loose but sane.
+    // Referral codes look like GIVE-XXXXXX; keep the guard loose but sane.
     if (!/^[A-Z0-9-]{4,20}$/.test(code)) return
+
+    // Save it IMMEDIATELY — before the validation round-trip — so a quick click
+    // through to the store can never read localStorage before it's written.
+    // The store only needs the code (checkout re-derives the referrer server
+    // side); validation below simply drops the code if it turns out bogus.
+    try { localStorage.setItem('pendingReferral', JSON.stringify({ code })) } catch {}
 
     fetch('/api/referral/validate', {
       method: 'POST',
@@ -22,11 +28,15 @@ export default function ReferralCapture() {
     })
       .then(r => r.json())
       .then(d => {
-        if (d?.valid) {
-          try {
+        try {
+          if (d?.valid) {
             localStorage.setItem('pendingReferral', JSON.stringify({ code, referrerUserId: d.referrerUserId }))
-          } catch {}
-        }
+          } else {
+            // A bogus code shouldn't leave a false discount banner standing.
+            const cur = localStorage.getItem('pendingReferral')
+            if (cur && JSON.parse(cur)?.code === code) localStorage.removeItem('pendingReferral')
+          }
+        } catch {}
       })
       .catch(() => {})
   }, [])
