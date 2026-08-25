@@ -25,15 +25,15 @@ const SUBTABS: { id: Sub; label: string }[] = [
 const INFO: Record<Sub, { title: string; body: string }> = {
   requests: {
     title: 'My Prayer Journal',
-    body: 'Your journal is your own prayer list. Add what you’re praying for, and mark it answered when God moves. Every entry is private by default — only you can see it, and no one is notified — until you tap to share it with your Direct partners, your Lineage, your whole network, or the public wall.',
+    body: 'Your journal is your own prayer list. Add what you’re praying for, mark it answered when God moves, and file entries into lists like Family or Health. Every entry is private by default — only you can see it, and no one is notified — until you tap to share it: with your Direct partners, your Lineage, one of your groups, your whole network, or the public wall. A shared prayer shows the people you sent it to how many are praying — not a chat, just a quiet count.',
   },
   partners: {
     title: 'Prayer Partners',
-    body: 'Partners are the people you’re connected to in prayer. To add one in person, use “Connect a prayer partner” at the top — read them the code on your band, or enter theirs. “Lineage” partners are those a band actually passed between; “Direct” partners are people you connected with directly. Below them, “Their Requests” gathers the prayers your partners and circles have shared — tap 🙏 to let them know you’re praying.',
+    body: 'Partners are the people you’re connected to in prayer. To add one in person, use “Connect a prayer partner” at the top — read them the code on your band (or show your QR), or enter theirs. “Direct” partners are people you connected with directly; “Lineage” partners are those a band actually passed between. You can sort partners into private groups — Youth Group, Baseball Team — that only you can see, then share a prayer to just that group. “Their Requests” gathers prayers your partners and circles have shared: tap 🙏 to pray, or Mute anyone whose requests you’d rather not see (they’re never told).',
   },
   circles: {
     title: 'Prayer Circles',
-    body: 'Circles are private prayer groups — a family, small group, or ministry. You can create one and invite people with a join code, or join someone else’s with their code. Inside a circle, members post requests and pray over each other’s needs together.',
+    body: 'Circles are private prayer groups — a family, small group, or ministry. Create one and invite people with a join code, or join someone else’s with theirs, right here in this tab. Inside a circle, members post requests and tap to pray over each other’s needs — everyone sees the same requests and how many are praying.',
   },
 }
 
