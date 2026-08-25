@@ -130,7 +130,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   // The viewer's own band code, shown so a partner can enter it to connect.
   const [myCode, setMyCode] = useState<string | null>(null)
   const [partnerCode, setPartnerCode] = useState('')
-  const [codeCopied, setCodeCopied] = useState(false)
+  const [codeShared, setCodeShared] = useState(false)
   // The viewer's permanent connect code + whether their QR is expanded.
   const [myConnectCode, setMyConnectCode] = useState<string | null>(null)
   const [showQR, setShowQR] = useState(false)
@@ -316,6 +316,21 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     else intercede(item.request_id)
   }
 
+  // Send someone your connect link the easy way: on a phone this opens the
+  // share sheet (Messages, WhatsApp, email…) with the text already written, so
+  // it's one tap to text a tappable link. On desktop it copies the message.
+  async function sharePartnerConnect() {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://prayerbands.com'
+    const url = myConnectCode ? `${origin}/connect/${myConnectCode}` : origin
+    const message = `Let's pray for one another 🙏 Tap to connect with me on Prayer Bands: ${url}`
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try { await navigator.share({ title: 'Connect on Prayer Bands', text: message }) } catch {}
+      return
+    }
+    try { await navigator.clipboard.writeText(message) } catch {}
+    setCodeShared(true); setTimeout(() => setCodeShared(false), 1800)
+  }
+
   async function shareRequest() {
     if (!text.trim()) return
     setSubmitting(true)
@@ -492,10 +507,11 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
               <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: DARK, fontFamily: 'monospace' }}>{myCode}</div>
             </div>
             <button
-              onClick={async () => { try { await navigator.clipboard.writeText(myCode); setCodeCopied(true); setTimeout(() => setCodeCopied(false), 1500) } catch {} }}
-              style={{ flexShrink: 0, background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 16, padding: '5px 12px', fontSize: 11.5, fontFamily: serif, color: GRAY, cursor: 'pointer' }}
+              onClick={sharePartnerConnect}
+              style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6, background: GOLD, border: 'none', borderRadius: 16, padding: '6px 14px', fontSize: 12, fontWeight: 600, fontFamily: serif, color: '#fff', cursor: 'pointer' }}
             >
-              {codeCopied ? 'Copied' : 'Copy'}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              {codeShared ? 'Copied' : 'Share'}
             </button>
           </div>
         )}
