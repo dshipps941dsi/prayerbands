@@ -7,6 +7,7 @@ import { escapeHtml } from '@/lib/escape-html'
 // and off each holder the bands they gave, and those recipients' bands, spreading
 // outward generation by generation as the lines appear.
 
+const GOLD = 'var(--pb-primary, #C8A96E)'
 const NAVY = 'var(--pb-text, #15223B)'
 const DARK = 'var(--pb-text, #2C1810)'
 const GRAY = 'var(--pb-text-muted, #5C6573)'
@@ -142,33 +143,51 @@ export default function ReachMap({ bandId }: { bandId: string }) {
         <div ref={mapRef} style={{ height: 340, width: '100%' }} />
       </div>
 
-      {/* The names, like the journey list: who gave to whom. */}
+      {/* Lineage: each top giver as a header, then a connected downline of who
+          they gave to, and who those people gave to, generation by generation. */}
       {(() => {
-        const nameById = new Map(data.nodes.map(n => [n.id, n]))
+        const nodeById = new Map(data.nodes.map(n => [n.id, n]))
         const rootId = data.root?.id
         const place = (n?: Node) => [n?.city, n?.country].filter(Boolean).join(', ')
-        const byGiver = new Map<string, Node[]>()
-        data.edges.filter(e => e.kind === 'gift').forEach(e => {
-          const rec = nameById.get(e.to); if (!rec) return
-          ;(byGiver.get(e.from) ?? byGiver.set(e.from, []).get(e.from)!).push(rec)
-        })
-        const givers = Array.from(byGiver.keys())
-          .map(id => ({ node: nameById.get(id), recipients: byGiver.get(id)! }))
-          .filter(g => g.node)
-          .sort((a, b) => (a.node!.depth - b.node!.depth))
+        const childrenMap = new Map<string, string[]>()
+        data.edges.filter(e => e.kind === 'gift').forEach(e => { (childrenMap.get(e.from) ?? childrenMap.set(e.from, []).get(e.from)!).push(e.to) })
+
+        const visited = new Set<string>()
+        const renderNode = (id: string, isRoot: boolean): React.ReactNode => {
+          if (visited.has(id)) return null
+          visited.add(id)
+          const n = nodeById.get(id); if (!n) return null
+          const kids = (childrenMap.get(id) || []).filter(k => !visited.has(k))
+          const label = id === rootId ? 'You' : n.name
+          const gaveCount = (childrenMap.get(id) || []).length
+          return (
+            <div key={id}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: isRoot ? '10px 0 4px' : '5px 0' }}>
+                <span style={{ width: isRoot ? 11 : 8, height: isRoot ? 11 : 8, borderRadius: '50%', background: isRoot ? GOLD : '#fff', border: `2px solid ${GOLD}`, flexShrink: 0, marginTop: isRoot ? 5 : 4 }} />
+                <div style={{ minWidth: 0, lineHeight: 1.4 }}>
+                  <span style={{ fontFamily: serif, fontWeight: 700, fontSize: isRoot ? 15 : 13.5, color: NAVY }}>{label}</span>
+                  {place(n) && <span style={{ fontSize: 12.5, color: GRAY }}> · {place(n)}</span>}
+                  {gaveCount > 0 && <span style={{ fontSize: 12, color: GRAY }}> — gave {gaveCount}</span>}
+                </div>
+              </div>
+              {kids.length > 0 && (
+                <div style={{ marginLeft: isRoot ? 5 : 3, borderLeft: '2px solid rgba(200,169,110,0.45)', paddingLeft: 16 }}>
+                  {kids.map(k => renderNode(k, false))}
+                </div>
+              )}
+            </div>
+          )
+        }
+
+        const roots = data.nodes
+          .filter(n => n.depth === 0 && childrenMap.has(n.id))
+          .sort((a, b) => (a.id === rootId ? -1 : b.id === rootId ? 1 : 0))
+        if (!roots.length) return null
         return (
           <div style={{ marginTop: 18 }}>
-            {givers.map(g => (
-              <div key={g.node!.id} style={{ padding: '10px 0', borderTop: `1px solid ${BORDER}` }}>
-                <div style={{ fontFamily: serif, fontSize: 14.5, fontWeight: 700, color: NAVY }}>
-                  {g.node!.id === rootId ? 'You' : g.node!.name}
-                  <span style={{ color: GRAY, fontWeight: 400, fontSize: 13 }}> gave {g.recipients.length} {g.recipients.length === 1 ? 'band' : 'bands'}</span>
-                </div>
-                <div style={{ fontSize: 13, color: DARK, lineHeight: 1.7, marginTop: 2 }}>
-                  {g.recipients.map((r, i) => (
-                    <span key={r.id + i}>{i > 0 ? ', ' : ''}{r.name}{place(r) ? <span style={{ color: GRAY }}> · {place(r)}</span> : ''}</span>
-                  ))}
-                </div>
+            {roots.map((g, i) => (
+              <div key={g.id} style={{ paddingTop: i > 0 ? 12 : 6, marginTop: i > 0 ? 12 : 0, borderTop: i > 0 ? `1px solid ${BORDER}` : 'none' }}>
+                {renderNode(g.id, true)}
               </div>
             ))}
           </div>
