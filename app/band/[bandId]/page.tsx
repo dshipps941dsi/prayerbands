@@ -795,7 +795,7 @@ export default function BandPage() {
                 )
               })}
             </div>
-            {journeyView === 'band' ? <PrayerChain regs={regs} /> : <ReachMap />}
+            {journeyView === 'band' ? <PrayerChain regs={regs} /> : <ReachMap bandId={bandId} />}
           </div>
         )}
 
