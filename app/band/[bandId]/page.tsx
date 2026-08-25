@@ -184,6 +184,7 @@ export default function BandPage() {
   // Journey tab: this band's direct line, or the whole reach web.
   const [journeyView, setJourneyView] = useState<'band' | 'reach'>('band')
   const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null; expires_at: string | null } | null>(null)
+  const [refShared, setRefShared] = useState(false)
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
   // Bands this person owns or holds, for the header switcher.
@@ -314,6 +315,23 @@ export default function BandPage() {
       .then(d => setCredit({ balance_cents: d.balance_cents ?? 0, referrals: d.referrals ?? 0, code: d.code ?? null, expires_at: d.expires_at ?? null }))
       .catch(() => {})
   }, [activeTab, userId, credit])
+
+  // Share your referral link the easy way. On a phone the share sheet covers
+  // Messages, Facebook, Mail, WhatsApp — every channel in one tap — with the
+  // message and the /store?ref=<code> link already written, so tapping it lands
+  // the friend on the store with the discount applied. Desktop copies it.
+  async function shareReferral() {
+    if (!credit?.code) return
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://prayerbands.com'
+    const link = `${origin}/store?ref=${encodeURIComponent(credit.code)}`
+    const message = `I'm giving out Prayer Bands 🙏 Here's a discount on your first one — tap to shop: ${link}`
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try { await navigator.share({ title: 'A discount on Prayer Bands', text: message }) } catch {}
+      return
+    }
+    try { await navigator.clipboard.writeText(message) } catch {}
+    setRefShared(true); setTimeout(() => setRefShared(false), 1800)
+  }
 
   useEffect(() => {
     if (transferStep !== 'pending') return
@@ -823,8 +841,14 @@ export default function BandPage() {
                       </div>
                     )}
                     {credit.code && (
-                      <div style={{ marginTop: 14, background: 'rgba(255,255,255,0.14)', borderRadius: 9, padding: '10px 13px', fontFamily: 'ui-monospace, monospace', fontSize: 15, letterSpacing: '0.08em' }}>
-                        {credit.code}
+                      <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ flex: 1, minWidth: 0, background: 'rgba(255,255,255,0.14)', borderRadius: 9, padding: '11px 13px', fontFamily: 'ui-monospace, monospace', fontSize: 15, letterSpacing: '0.08em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {credit.code}
+                        </div>
+                        <button onClick={shareReferral} style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 7, background: 'white', color: '#1a4a3a', border: 'none', borderRadius: 9, padding: '11px 16px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                          {refShared ? 'Copied' : 'Share'}
+                        </button>
                       </div>
                     )}
                   </div>
