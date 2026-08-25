@@ -195,38 +195,57 @@ export async function POST(req: NextRequest) {
       creditCoupon = coupon.id
     }
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: lineItems,
-      mode: 'payment',
-      ...(creditCoupon
-        ? { discounts: [{ coupon: creditCoupon }] }
-        : applyReferralDiscount && referralDiscount
-          ? { discounts: [referralDiscount] }
-          : { allow_promotion_codes: true }),
-      automatic_tax: { enabled: process.env.STRIPE_TAX_ENABLED === 'true' },
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}${returnTo}`,
-      customer_email: email || undefined,
-      shipping_address_collection: { allowed_countries: ['US', 'CA', 'GB', 'AU', 'NZ'] },
-      shipping_options: shippingCost > 0 && !waiveShipping
-        ? [{ shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: shippingCost, currency: 'usd' }, display_name: 'Standard Shipping', tax_behavior: 'exclusive', tax_code: 'txcd_92010001' } }]
-        : undefined,
-      metadata: {
-        type: hasCustom ? 'custom' : 'standard',
-        quantity: String(totalBands),
-        customMessage: customMessage || '',
-        verse: verse || '',
-        color: color || 'blue',
-        items: JSON.stringify(items),
-        replaces: replaces ? String(replaces).trim().toUpperCase() : '',
-        referrer_user_id: referrerUserId || '',
-        // Read back by the webhook to record the spend against the ledger.
-        credit_applied_cents: creditApplied > 0 ? String(creditApplied) : '',
-        credit_user_id: creditUserId || '',
-        referral_code: referrerUserId ? referralCode : '',
-      },
-    })
+    // A misconfigured referral coupon — e.g. STRIPE_REFERRAL_PROMO_CODE_ID left
+    // pointing at a test-mode or deleted promotion, which doesn't exist in live
+    // — must never block a real sale. Build the session with the referral
+    // discount, but if Stripe rejects it, retry once without it: the buyer still
+    // checks out (and can still type a promo code), and the referrer is still
+    // credited via the metadata. Same "never block a purchase" rule as credit.
+    const buildSession = (useReferralDiscount: boolean) =>
+      stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: lineItems,
+        mode: 'payment',
+        ...(creditCoupon
+          ? { discounts: [{ coupon: creditCoupon }] }
+          : useReferralDiscount && referralDiscount
+            ? { discounts: [referralDiscount] }
+            : { allow_promotion_codes: true }),
+        automatic_tax: { enabled: process.env.STRIPE_TAX_ENABLED === 'true' },
+        success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}${returnTo}`,
+        customer_email: email || undefined,
+        shipping_address_collection: { allowed_countries: ['US', 'CA', 'GB', 'AU', 'NZ'] },
+        shipping_options: shippingCost > 0 && !waiveShipping
+          ? [{ shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: shippingCost, currency: 'usd' }, display_name: 'Standard Shipping', tax_behavior: 'exclusive', tax_code: 'txcd_92010001' } }]
+          : undefined,
+        metadata: {
+          type: hasCustom ? 'custom' : 'standard',
+          quantity: String(totalBands),
+          customMessage: customMessage || '',
+          verse: verse || '',
+          color: color || 'blue',
+          items: JSON.stringify(items),
+          replaces: replaces ? String(replaces).trim().toUpperCase() : '',
+          referrer_user_id: referrerUserId || '',
+          // Read back by the webhook to record the spend against the ledger.
+          credit_applied_cents: creditApplied > 0 ? String(creditApplied) : '',
+          credit_user_id: creditUserId || '',
+          referral_code: referrerUserId ? referralCode : '',
+        },
+      })
+
+    let session
+    try {
+      session = await buildSession(applyReferralDiscount)
+    } catch (e) {
+      if (applyReferralDiscount) {
+        console.error('[create-checkout] referral discount rejected by Stripe; retrying without it:', e)
+        session = await buildSession(false)
+      } else {
+        throw e
+      }
+    }
 
     // Record the referred checkout (best-effort; never block the redirect).
     if (referrerUserId) {
