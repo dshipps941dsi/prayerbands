@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react'
 
-// A mini store on the band page: choose a style, size, and (for a custom band)
-// a colour, add an optional dedication, and check out — no navigation away.
-// Wired to the existing create-checkout route; styles/prices come from the
-// admin-managed catalog. Subscriptions are intentionally a link out to the full
-// /subscribe page rather than an inline card, to keep this focused on sending.
+// A mini store on the band page: pick a design or a solid colour, see the band
+// image (tap to expand), choose a size, add an optional dedication, and check
+// out inline. Styles/prices/images come from the admin catalog. Subscriptions
+// are a link out to /subscribe to keep this focused on sending one now.
 
 const GOLD = 'var(--pb-primary, #B8860B)'
 const DARK = 'var(--pb-text, #2C1810)'
@@ -17,45 +16,50 @@ const SURFACE = 'var(--pb-surface, #ffffff)'
 const INK = 'var(--pb-text-on-primary, #0f0d09)'
 const serif = 'Playfair Display, Georgia, serif'
 
-const COLORS = [
-  { name: 'Amber Gold', hex: '#C8A96E' },
-  { name: 'Sage Green', hex: '#7BAE8E' },
-  { name: 'Slate Blue', hex: '#7B8FAE' },
-  { name: 'Burgundy', hex: '#AE7B7B' },
-  { name: 'Midnight', hex: '#2C1A0E' },
-  { name: 'Ivory', hex: '#F5EFE4' },
-]
 const SIZES = [
   { id: 'S', label: 'Small' },
   { id: 'M', label: 'Medium' },
   { id: 'L', label: 'Large' },
 ]
 
-type Product = { slug: string; name: string; category: string; price: number; sizes: string[]; hasSizes: boolean }
+type Product = { slug: string; name: string; category: string; theme: string; price: number; sizes: string[]; hasSizes: boolean; images: string[] }
+type Group = 'design' | 'color'
 
 export default function PurchaseTab({ bandId }: { bandId: string }) {
   const [products, setProducts] = useState<Product[]>([])
+  const [group, setGroup] = useState<Group>('design')
   const [slug, setSlug] = useState<string | null>(null)
   const [size, setSize] = useState('M')
-  const [color, setColor] = useState(COLORS[0].name)
   const [showDedication, setShowDedication] = useState(false)
   const [recipient, setRecipient] = useState('')
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [zoom, setZoom] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/products').then(r => r.json()).then(d => {
       const bands: Product[] = (Array.isArray(d.products) ? d.products : []).filter((p: any) => p.category === 'band')
       setProducts(bands)
-      // Default to Standard if present, else the first band.
-      const std = bands.find(p => p.slug === 'standard') || bands[0]
-      if (std) { setSlug(std.slug); if (std.hasSizes) setSize(std.sizes.includes('M') ? 'M' : (std.sizes[0] || 'M')) }
     }).catch(() => {})
   }, [])
 
+  // A solid-colour band carries no design (theme 'default'); everything else is a design.
+  const isColor = (p: Product) => !p.theme || p.theme === 'default'
+  const inGroup = products.filter(p => group === 'color' ? isColor(p) : !isColor(p))
+
+  // Keep a valid selection whenever the group changes.
+  useEffect(() => {
+    if (inGroup.length === 0) { setSlug(null); return }
+    if (!inGroup.some(p => p.slug === slug)) {
+      const first = inGroup.find(p => p.slug === 'standard') || inGroup[0]
+      setSlug(first.slug)
+      if (first.hasSizes && !first.sizes.includes(size)) setSize(first.sizes.includes('M') ? 'M' : (first.sizes[0] || 'M'))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [group, products])
+
   const selected = products.find(p => p.slug === slug) || null
-  const isCustom = slug === 'custom'
 
   async function send() {
     if (!selected) return
@@ -68,8 +72,8 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: [{ id: selected.slug, qty: 1, size: selected.hasSizes ? size : undefined }],
-          color: isCustom ? color : undefined,
           customMessage,
+          returnTo: `/band/${bandId}`,
         }),
       })
       const data = await res.json()
@@ -86,22 +90,49 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
   return (
     <div style={{ padding: '24px 20px 40px' }}>
       <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: DARK, marginBottom: 4 }}>Send a Prayer Band</div>
-      <div style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>
-        Keep the chain going — pick a style and send one to someone on your heart.
+      <div style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 18, lineHeight: 1.5 }}>
+        Keep the chain going — choose a look and send one to someone on your heart.
       </div>
 
-      {/* Style picker */}
-      <label style={labelStyle}>Style</label>
-      <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6, marginBottom: 18, scrollbarWidth: 'none' }}>
-        {products.length === 0 && <div style={{ fontSize: 13, color: GRAY }}>Loading styles…</div>}
-        {products.map(p => {
-          const on = p.slug === slug
+      {/* Design vs Solid colour */}
+      <div style={{ display: 'flex', gap: 4, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 4, marginBottom: 16 }}>
+        {([['design', 'Designs'], ['color', 'Solid Colors']] as const).map(([id, label]) => {
+          const on = group === id
           return (
-            <button key={p.slug} onClick={() => { setSlug(p.slug); if (p.hasSizes && !p.sizes.includes(size)) setSize(p.sizes[0] || 'M') }}
-              style={{ flexShrink: 0, minWidth: 118, textAlign: 'left', background: on ? '#FFF8E7' : SURFACE, border: `1.5px solid ${on ? GOLD : BORDER}`, borderRadius: 12, padding: '12px 14px', cursor: 'pointer' }}>
-              <div style={{ fontFamily: serif, fontSize: 14, fontWeight: 700, color: DARK, marginBottom: 3 }}>{p.name}</div>
-              <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, color: GOLD }}>${p.price.toFixed(2)}</div>
+            <button key={id} onClick={() => setGroup(id)}
+              style={{ flex: 1, padding: '9px 4px', border: 'none', borderRadius: 9, background: on ? GOLD : 'transparent', color: on ? INK : GRAY, fontSize: 12, fontWeight: on ? 700 : 500, fontFamily: serif, letterSpacing: '0.04em', cursor: 'pointer' }}>
+              {label}
             </button>
+          )
+        })}
+      </div>
+
+      {/* Style tiles with a band image */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
+        {products.length === 0 && <div style={{ fontSize: 13, color: GRAY }}>Loading styles…</div>}
+        {inGroup.map(p => {
+          const on = p.slug === slug
+          const img = p.images?.[0]
+          return (
+            <div key={p.slug} onClick={() => { setSlug(p.slug); if (p.hasSizes && !p.sizes.includes(size)) setSize(p.sizes[0] || 'M') }}
+              style={{ background: on ? '#FFF8E7' : SURFACE, border: `1.5px solid ${on ? GOLD : BORDER}`, borderRadius: 12, padding: 8, cursor: 'pointer' }}>
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', borderRadius: 8, overflow: 'hidden', background: CREAM, marginBottom: 8 }}>
+                {img ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={img} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, color: GRAY }}>✝</div>
+                )}
+                {img && (
+                  <button onClick={e => { e.stopPropagation(); setZoom(img) }} aria-label="View larger"
+                    style={{ position: 'absolute', top: 6, right: 6, width: 30, height: 30, borderRadius: '50%', border: 'none', background: 'rgba(10,10,15,0.5)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
+                  </button>
+                )}
+              </div>
+              <div style={{ fontFamily: serif, fontSize: 13.5, fontWeight: 700, color: DARK, lineHeight: 1.2 }}>{p.name}</div>
+              <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: GOLD, marginTop: 2 }}>${p.price.toFixed(2)}</div>
+            </div>
           )
         })}
       </div>
@@ -124,23 +155,6 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
         </div>
       )}
 
-      {/* Colour — custom band only */}
-      {isCustom && (
-        <div style={{ marginBottom: 18 }}>
-          <label style={labelStyle}>Colour</label>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {COLORS.map(c => {
-              const on = color === c.name
-              return (
-                <button key={c.name} onClick={() => setColor(c.name)} title={c.name} aria-label={c.name}
-                  style={{ width: 34, height: 34, borderRadius: '50%', background: c.hex, border: on ? `3px solid ${DARK}` : `2px solid ${BORDER}`, cursor: 'pointer', padding: 0 }} />
-              )
-            })}
-          </div>
-          <div style={{ fontSize: 12, color: GRAY, marginTop: 6 }}>{color}</div>
-        </div>
-      )}
-
       {/* Dedication */}
       {!showDedication ? (
         <button onClick={() => setShowDedication(true)} style={{ background: 'none', border: 'none', color: GOLD, fontSize: 13, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: '0 0 4px', textDecoration: 'underline' }}>
@@ -157,7 +171,7 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
       )}
 
       <button onClick={send} disabled={loading || !selected} style={{ width: '100%', marginTop: 18, backgroundColor: selected ? GOLD : BORDER, color: INK, border: 'none', borderRadius: 10, padding: 14, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: loading || !selected ? 'default' : 'pointer', opacity: loading ? 0.7 : 1 }}>
-        {loading ? 'Starting checkout…' : selected ? `Send this ${selected.name} — $${selected.price.toFixed(2)} →` : 'Send a band →'}
+        {loading ? 'Starting checkout…' : selected ? `Send ${selected.name} — $${selected.price.toFixed(2)} →` : 'Send a band →'}
       </button>
 
       {error && <div style={{ color: '#C0392B', fontSize: 13, textAlign: 'center', marginTop: 14 }}>{error}</div>}
@@ -171,6 +185,17 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
       <div style={{ textAlign: 'center', marginTop: 18 }}>
         <a href="/register" style={{ fontSize: 13, color: GRAY, textDecoration: 'underline' }}>Already have a band to register?</a>
       </div>
+
+      {/* Image lightbox */}
+      {zoom && (
+        <div onClick={() => setZoom(null)} role="dialog" aria-modal="true"
+          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(10,10,15,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, cursor: 'zoom-out' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={zoom} alt="Band design" style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 12, objectFit: 'contain' }} />
+          <button onClick={() => setZoom(null)} aria-label="Close"
+            style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 14px)', right: 16, width: 40, height: 40, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.12)', color: '#fff', fontSize: 20, cursor: 'pointer' }}>✕</button>
+        </div>
+      )}
     </div>
   )
 }

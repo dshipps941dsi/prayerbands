@@ -21,6 +21,10 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { customMessage, verse, color, email, replaces } = body
+    // Where Stripe's "back"/cancel returns to. Relative same-site path only
+    // (must start with a single "/"), so it can't be pointed off-site; defaults
+    // to the store. The mini store passes the band page so cancelling returns there.
+    const returnTo = typeof body.returnTo === 'string' && /^\/(?!\/)/.test(body.returnTo) ? body.returnTo : '/store'
     const referralCode = typeof body.referralCode === 'string' ? body.referralCode.trim().toUpperCase() : ''
 
     let items: { id: string; qty: number; size?: string }[] = Array.isArray(body.items) ? body.items : []
@@ -202,7 +206,7 @@ export async function POST(req: NextRequest) {
           : { allow_promotion_codes: true }),
       automatic_tax: { enabled: process.env.STRIPE_TAX_ENABLED === 'true' },
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/store`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}${returnTo}`,
       customer_email: email || undefined,
       shipping_address_collection: { allowed_countries: ['US', 'CA', 'GB', 'AU', 'NZ'] },
       shipping_options: shippingCost > 0 && !waiveShipping

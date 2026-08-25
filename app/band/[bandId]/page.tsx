@@ -450,7 +450,7 @@ export default function BandPage() {
   function Nav() {
     const currentHolder = status.registrations?.[status.registrations.length - 1]
     return (
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', position: 'sticky', top: 0, zIndex: 100 }}>
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 'calc(16px + env(safe-area-inset-top, 0px))', paddingRight: 24, paddingBottom: 16, paddingLeft: 24, borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', position: 'sticky', top: 0, zIndex: 100 }}>
         <a href="/" aria-label="Prayer Bands home" style={{ display: 'inline-flex', textDecoration: 'none' }}>
           <Logo size={28} withName nameColor={DARK} nameSize={18} />
         </a>
