@@ -546,6 +546,15 @@ export default function BandPage() {
       <div style={{ margin: '20px 20px 0' }}>
         <div style={{ textAlign: 'center', fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK, marginBottom: 2 }}>{greeting}</div>
         <WalkLine total={walk.total} run={walk.run} onOpenJourney={() => setActiveTab('journey')} />
+        {/* Topic chips sit above the verse card — pick a feeling, then the
+            card below shows a verse for it. Breaks up the Home sections. */}
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginTop: 12, marginBottom: 12, paddingBottom: 2, scrollbarWidth: 'none' }}>
+          {CATEGORIES.map(cat => (
+            <button key={cat.id} onClick={() => setVerseCategory(cat.id)} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontFamily: body, fontSize: 12, fontWeight: 600, background: verseCategory === cat.id ? GOLD : 'white', color: verseCategory === cat.id ? INK : GRAY, boxShadow: '0 1px 4px rgba(44,24,16,0.1)', transition: 'all 0.2s' }}>
+              {cat.icon} {cat.label}
+            </button>
+          ))}
+        </div>
         <div onClick={() => setFocus('verse')} role="button" tabIndex={0} aria-label="Meditate on this verse full screen"
           onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setFocus('verse') } }}
           style={{ position: 'relative', background: `linear-gradient(135deg, ${NAVY}, ${NAVY_LT})`, borderRadius: 14, padding: '24px 20px', color: 'white', textAlign: 'center', cursor: 'pointer' }}>
@@ -557,13 +566,6 @@ export default function BandPage() {
           </div>
           <div style={{ fontFamily: serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.7, marginBottom: 12 }}>"{verse.text}"</div>
           <div style={{ fontFamily: body, fontSize: 13, opacity: 0.7, fontWeight: 600 }}>{verse.ref}</div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginTop: 12, paddingBottom: 2, scrollbarWidth: 'none' }}>
-          {CATEGORIES.map(cat => (
-            <button key={cat.id} onClick={() => setVerseCategory(cat.id)} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontFamily: body, fontSize: 12, fontWeight: 600, background: verseCategory === cat.id ? GOLD : 'white', color: verseCategory === cat.id ? INK : GRAY, boxShadow: '0 1px 4px rgba(44,24,16,0.1)', transition: 'all 0.2s' }}>
-              {cat.icon} {cat.label}
-            </button>
-          ))}
         </div>
       </div>
     )
