@@ -7,6 +7,7 @@ import { escapeHtml } from '@/lib/escape-html'
 import { subdivisionCentroid } from '@/lib/locations'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { titleCase, formatState, formatCountry } from '@/lib/text-format'
 
 export async function POST(req: NextRequest) {
   const supabase = createClient(
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     } catch { /* not signed in — anonymous registration */ }
 
     // Normalize + bound user text (the endpoint is public, so validate here).
-    const cleanName = String(name).trim().slice(0, 80)
+    const cleanName = titleCase(String(name).trim().slice(0, 80)) || ''
     if (!cleanName) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
     }
@@ -146,6 +147,12 @@ export async function POST(req: NextRequest) {
     // Auto-flag prayers containing filtered language for admin review (hidden
     // from the public wall until approved). Soft — never blocks the submission.
     const autoFlag = isFlaggable(cleanPrayer)
+
+    // Tidy the capitalisation of the place fields for display, whether typed or
+    // filled in from the IP fallback ("venice, fl" -> "Venice, FL").
+    geoCity = titleCase(geoCity)
+    geoState = formatState(geoState)
+    geoCountry = formatCountry(geoCountry)
 
     const { data, error } = await supabase
       .from('registrations')
