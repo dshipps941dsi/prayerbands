@@ -8,7 +8,9 @@ import { escapeHtml } from '@/lib/escape-html'
 // outward generation by generation as the lines appear.
 
 const NAVY = 'var(--pb-text, #15223B)'
+const DARK = 'var(--pb-text, #2C1810)'
 const GRAY = 'var(--pb-text-muted, #5C6573)'
+const BORDER = 'var(--pb-border, #E8DCC8)'
 const serif = 'Playfair Display, Georgia, serif'
 
 type Node = { id: string; name: string; lat: number | null; lng: number | null; city: string | null; country: string | null; depth: number }
@@ -139,6 +141,39 @@ export default function ReachMap({ bandId }: { bandId: string }) {
       <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(44,24,16,0.12)', boxShadow: '0 1px 6px rgba(44,24,16,0.06)' }}>
         <div ref={mapRef} style={{ height: 340, width: '100%' }} />
       </div>
+
+      {/* The names, like the journey list: who gave to whom. */}
+      {(() => {
+        const nameById = new Map(data.nodes.map(n => [n.id, n]))
+        const rootId = data.root?.id
+        const place = (n?: Node) => [n?.city, n?.country].filter(Boolean).join(', ')
+        const byGiver = new Map<string, Node[]>()
+        data.edges.filter(e => e.kind === 'gift').forEach(e => {
+          const rec = nameById.get(e.to); if (!rec) return
+          ;(byGiver.get(e.from) ?? byGiver.set(e.from, []).get(e.from)!).push(rec)
+        })
+        const givers = Array.from(byGiver.keys())
+          .map(id => ({ node: nameById.get(id), recipients: byGiver.get(id)! }))
+          .filter(g => g.node)
+          .sort((a, b) => (a.node!.depth - b.node!.depth))
+        return (
+          <div style={{ marginTop: 18 }}>
+            {givers.map(g => (
+              <div key={g.node!.id} style={{ padding: '10px 0', borderTop: `1px solid ${BORDER}` }}>
+                <div style={{ fontFamily: serif, fontSize: 14.5, fontWeight: 700, color: NAVY }}>
+                  {g.node!.id === rootId ? 'You' : g.node!.name}
+                  <span style={{ color: GRAY, fontWeight: 400, fontSize: 13 }}> gave {g.recipients.length} {g.recipients.length === 1 ? 'band' : 'bands'}</span>
+                </div>
+                <div style={{ fontSize: 13, color: DARK, lineHeight: 1.7, marginTop: 2 }}>
+                  {g.recipients.map((r, i) => (
+                    <span key={r.id + i}>{i > 0 ? ', ' : ''}{r.name}{place(r) ? <span style={{ color: GRAY }}> · {place(r)}</span> : ''}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      })()}
     </div>
   )
 }
