@@ -176,14 +176,7 @@ export default function BandPage() {
   const [submitting, setSubmitting] = useState(false)
   const [expandedPrayer, setExpandedPrayer] = useState<string | null>(null)
   const [verseCategory, setVerseCategory] = useState('all')
-  const [prayers, setPrayers] = useState<any[]>([])
-  const [prayerTitle, setPrayerTitle] = useState('')
-  const [prayerBody, setPrayerBody] = useState('')
-  const [prayerStep, setPrayerStep] = useState<'list' | 'form' | 'answer'>('list')
-  const [answeringId, setAnsweringId] = useState<string | null>(null)
-  const [testimony, setTestimony] = useState('')
-  const [prayerSubmitting, setPrayerSubmitting] = useState(false)
-  const [activeTab, setActiveTab] = useState<'home' | 'prayers' | 'journey' | 'purchase' | 'account'>('home')
+  const [activeTab, setActiveTab] = useState<'home' | 'journey' | 'purchase' | 'account'>('home')
   const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null; expires_at: string | null } | null>(null)
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
@@ -306,13 +299,6 @@ export default function BandPage() {
     const url = `/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}${localHolder ? '&localHolder=true' : ''}`
     fetch(url).then(r => r.json()).then(data => setStatus(data)).catch(() => setStatus({ screen: 'error' }))
   }, [bandId, userId])
-
-  useEffect(() => {
-    if (!userId || !bandId) return
-    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-    supabase.from('prayer_requests').select('*').eq('user_id', userId).eq('band_id', bandId)
-      .order('created_at', { ascending: false }).then(({ data }) => setPrayers(data ?? []))
-  }, [userId, bandId])
 
   // Referral credit, fetched only once someone opens their account tab.
   useEffect(() => {
@@ -784,23 +770,6 @@ export default function BandPage() {
               )}
             </div>
           </>
-        )}
-
-        {activeTab === 'prayers' && (
-          <div style={{ padding: '24px 20px' }}>
-            {userId ? (
-              <PrayerTabs userId={userId} />
-            ) : (
-              <div style={{ background: 'white', borderRadius: 14, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div>
-                <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Sign in to use your Prayer Partners</div>
-                <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 16, lineHeight: 1.5 }}>
-                  Connect with others in prayer, share requests, and join circles.
-                </div>
-                <a href="/signin" style={{ display: 'inline-block', background: GOLD, color: INK, padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Sign In ✝</a>
-              </div>
-            )}
-          </div>
         )}
 
         {activeTab === 'journey' && (
