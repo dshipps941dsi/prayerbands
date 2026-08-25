@@ -1,7 +1,7 @@
 -- ─────────────────────────────────────────────
 -- Referral program
 -- ─────────────────────────────────────────────
--- Every profile gets a unique referral_code (PB-XXXXX). New shoppers who arrive
+-- Every profile gets a unique referral_code (GIVE-XXXXXX). New shoppers who arrive
 -- with ?ref=<code> get a discount at checkout, and we record the referral.
 --
 -- Profiles are created by a DB trigger on sign-up, so generation is handled at
@@ -14,14 +14,14 @@
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS referral_code TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_referral_code ON profiles(referral_code);
 
--- 2. Code generator — unambiguous alphabet (no I/O/0/1), "PB-" prefix.
+-- 2. Code generator — unambiguous alphabet (no I/O/0/1), "GIVE-" prefix, distinct from band IDs.
 CREATE OR REPLACE FUNCTION gen_referral_code() RETURNS TEXT AS $$
 DECLARE
   chars  TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  result TEXT := 'PB-';
+  result TEXT := 'GIVE-';
   i      INT;
 BEGIN
-  FOR i IN 1..5 LOOP
+  FOR i IN 1..6 LOOP
     result := result || substr(chars, floor(random() * length(chars))::int + 1, 1);
   END LOOP;
   RETURN result;

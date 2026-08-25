@@ -7,7 +7,7 @@
 -- any other way would have no code and no way to refer anyone.
 --
 -- The trigger now issues one with the profile, so it cannot be missed. Format
--- matches lib/referral.ts exactly ("PB-" + 5 characters from an alphabet with
+-- matches lib/referral.ts exactly ("GIVE-" + 6 characters from an alphabet with
 -- no I, O, 0 or 1) — a second format would be worse than none.
 create or replace function public.new_referral_code()
 returns text
@@ -23,8 +23,8 @@ declare
   attempts int := 0;
 begin
   loop
-    code := 'PB-';
-    for i in 1..5 loop
+    code := 'GIVE-';
+    for i in 1..6 loop
       code := code || substr(alphabet, 1 + floor(random() * length(alphabet))::int, 1);
     end loop;
     exit when not exists (select 1 from profiles where referral_code = code);

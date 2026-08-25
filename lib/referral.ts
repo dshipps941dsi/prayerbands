@@ -1,10 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-// Referral code generator — unambiguous alphabet (no I/O/0/1), "PB-" prefix.
+// Referral code generator — unambiguous alphabet (no I/O/0/1), "GIVE-" prefix.
+// Deliberately distinct from a band ID (PB-XXXXX): a band changes hands, a
+// referral code belongs to the account for good.
 export function generateReferralCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let code = 'PB-'
-  for (let i = 0; i < 5; i++) {
+  let code = 'GIVE-'
+  for (let i = 0; i < 6; i++) {
     code += chars[Math.floor(Math.random() * chars.length)]
   }
   return code
