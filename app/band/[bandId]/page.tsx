@@ -9,7 +9,7 @@ import NotificationsPanel from '@/components/NotificationsPanel'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
 import PrayerTabs from '@/components/PrayerTabs'
 import FocusOverlay from '@/components/FocusOverlay'
-import ReachWeb from '@/components/ReachWeb'
+import ReachMap from '@/components/ReachMap'
 import PurchaseTab from '@/components/PurchaseTab'
 import { useApplyTheme } from '@/components/ThemeProvider'
 import SuccessCard from './screens/SuccessCard'
@@ -795,7 +795,7 @@ export default function BandPage() {
                 )
               })}
             </div>
-            {journeyView === 'band' ? <PrayerChain regs={regs} /> : <ReachWeb />}
+            {journeyView === 'band' ? <PrayerChain regs={regs} /> : <ReachMap />}
           </div>
         )}
 
