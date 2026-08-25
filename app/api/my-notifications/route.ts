@@ -160,6 +160,89 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Name resolver for the person-driven items below.
+  const namesFor = async (ids: string[]): Promise<Record<string, string>> => {
+    const uniq = [...new Set(ids)].filter(Boolean)
+    if (!uniq.length) return {}
+    const { data } = await admin.from('profiles').select('id, full_name, email').in('id', uniq)
+    const out: Record<string, string> = {}
+    for (const p of data || []) out[(p as any).id] = (p as any).full_name || ((p as any).email ? (p as any).email.split('@')[0] : 'Someone')
+    return out
+  }
+
+  // 6. Replies to your shared prayers (private to you).
+  {
+    const { data: myReqs } = await admin.from('prayer_network_requests').select('id').eq('user_id', effectiveId)
+    const myReqIds = (myReqs || []).map((r: any) => r.id)
+    if (myReqIds.length) {
+      const { data: replies } = await admin
+        .from('prayer_request_comments')
+        .select('id, user_id, body, created_at')
+        .in('request_id', myReqIds)
+        .neq('user_id', effectiveId)
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(30)
+      const names = await namesFor((replies || []).map((r: any) => r.user_id))
+      for (const r of replies || []) {
+        items.push({ id: `reply-${r.id}`, type: 'reply', icon: '💬', ts: r.created_at,
+          title: `${names[r.user_id] || 'Someone'} replied to your prayer`, detail: r.body })
+      }
+    }
+  }
+
+  // 7. Prayer requests a partner shared with you (network / group — never wall
+  // or private). Group-audience requests only reach you if you're in the group.
+  {
+    const { data: conns } = await admin.from('prayer_network_connections')
+      .select('requester_id, recipient_id').eq('status', 'accepted')
+      .or(`requester_id.eq.${effectiveId},recipient_id.eq.${effectiveId}`)
+    const partnerIds = [...new Set((conns || []).map((c: any) => c.requester_id === effectiveId ? c.recipient_id : c.requester_id))]
+    if (partnerIds.length) {
+      const { data: shared } = await admin.from('prayer_network_requests')
+        .select('id, user_id, request_text, audience, created_at')
+        .in('user_id', partnerIds)
+        .eq('is_answered', false)
+        .neq('visibility', 'public')
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(40)
+      const groupReqs = (shared || []).filter((r: any) => typeof r.audience === 'string' && r.audience.startsWith('group:'))
+      const inGroups = new Set<string>()
+      if (groupReqs.length) {
+        const gids = [...new Set(groupReqs.map((r: any) => r.audience.slice(6)))]
+        const { data: mem } = await admin.from('partner_group_members').select('group_id').eq('member_id', effectiveId).in('group_id', gids)
+        ;(mem || []).forEach((m: any) => inGroups.add(m.group_id))
+      }
+      const reaching = (shared || []).filter((r: any) => {
+        const a = r.audience || 'network'
+        if (a === 'private') return false
+        if (a.startsWith('group:')) return inGroups.has(a.slice(6))
+        return true
+      }).slice(0, 8)
+      const names = await namesFor(reaching.map((r: any) => r.user_id))
+      for (const r of reaching) {
+        items.push({ id: `netreq-${r.id}`, type: 'network_request', icon: '🙏', ts: r.created_at,
+          title: `${names[r.user_id] || 'A partner'} asked for prayer`, detail: r.request_text })
+      }
+    }
+  }
+
+  // 8. Pending connection requests — someone wants to be your prayer partner.
+  {
+    const { data: pend } = await admin.from('prayer_network_connections')
+      .select('id, requester_id, created_at')
+      .eq('recipient_id', effectiveId).eq('status', 'pending')
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(20)
+    const names = await namesFor((pend || []).map((c: any) => c.requester_id))
+    for (const c of pend || []) {
+      items.push({ id: `conn-${c.id}`, type: 'connection', icon: '🤝', ts: c.created_at,
+        title: `${names[c.requester_id] || 'Someone'} wants to connect in prayer`, detail: 'Open Partners to accept.' })
+    }
+  }
+
   const { data: profile } = await admin.from('profiles').select('notifications_last_seen, dismissed_notifications').eq('id', effectiveId).maybeSingle()
   const dismissed = new Set(Array.isArray(profile?.dismissed_notifications) ? profile.dismissed_notifications : [])
 
