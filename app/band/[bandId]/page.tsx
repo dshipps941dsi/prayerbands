@@ -847,7 +847,7 @@ export default function BandPage() {
             {userId ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {credit && (credit.balance_cents > 0 || credit.referrals > 0 || credit.code) && (
-                  <div style={{ background: 'linear-gradient(135deg, #1a4a3a, #2E7D6B)', borderRadius: 12, padding: '18px 20px', color: 'white' }}>
+                  <div style={{ background: `linear-gradient(135deg, ${NAVY}, ${NAVY_LT})`, borderRadius: 12, padding: '18px 20px', color: 'white' }}>
                     <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.75, marginBottom: 6 }}>Referral credit</div>
                     <div style={{ fontFamily: serif, fontSize: 30, fontWeight: 700, lineHeight: 1 }}>
                       ${(credit.balance_cents / 100).toFixed(2)}
@@ -867,7 +867,7 @@ export default function BandPage() {
                         <div style={{ flex: 1, minWidth: 0, background: 'rgba(255,255,255,0.14)', borderRadius: 9, padding: '11px 13px', fontFamily: 'ui-monospace, monospace', fontSize: 15, letterSpacing: '0.08em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {credit.code}
                         </div>
-                        <button onClick={shareReferral} style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 7, background: 'white', color: '#1a4a3a', border: 'none', borderRadius: 9, padding: '11px 16px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                        <button onClick={shareReferral} style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 7, background: 'white', color: NAVY, border: 'none', borderRadius: 9, padding: '11px 16px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                           {refShared ? 'Copied' : 'Share'}
                         </button>
@@ -883,9 +883,6 @@ export default function BandPage() {
                     ⚙️ Control Centre
                   </a>
                 )}
-                <a href="/store" style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
-                  <Icon name="shop-bag" size={18} color={DARK} bg="white" /> Purchase More Bands
-                </a>
                 <a href="/settings" style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
                   <Icon name="settings" size={18} color={DARK} bg="white" /> Settings
                 </a>
