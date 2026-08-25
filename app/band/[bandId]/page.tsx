@@ -785,7 +785,7 @@ export default function BandPage() {
         {activeTab === 'journey' && (
           <div>
             <div style={{ display: 'flex', gap: 4, background: 'white', border: '1px solid rgba(44,24,16,0.1)', borderRadius: 12, padding: 4, margin: '20px 20px 0' }}>
-              {([['band', 'This Band'], ['reach', 'My Reach']] as const).map(([id, label]) => {
+              {([['band', 'The Journey'], ['reach', 'The Ripple']] as const).map(([id, label]) => {
                 const on = journeyView === id
                 return (
                   <button key={id} onClick={() => setJourneyView(id)}

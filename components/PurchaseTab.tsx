@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 
-// A mini store on the band page: pick a design or a solid colour, see the band
-// image (tap to expand), choose a size, add an optional dedication, and check
-// out inline. Styles/prices/images come from the admin catalog. Subscriptions
-// are a link out to /subscribe to keep this focused on sending one now.
+// A mini store on the band page: pick a theme or a colour, see the band image
+// (tap to expand), choose a size and quantity, and add it to a cart. Mix styles
+// and sizes, then send the whole cart to Stripe. A per-band dedication is added
+// after purchase via the shipping email; subscriptions link out to /subscribe.
 
 const GOLD = 'var(--pb-primary, #B8860B)'
 const DARK = 'var(--pb-text, #2C1810)'
@@ -24,6 +24,7 @@ const SIZES = [
 
 type Product = { slug: string; name: string; category: string; theme: string; price: number; sizes: string[]; hasSizes: boolean; images: string[] }
 type Group = 'design' | 'color'
+type CartItem = { key: string; slug: string; name: string; size: string | null; qty: number; price: number }
 
 export default function PurchaseTab({ bandId }: { bandId: string }) {
   const [products, setProducts] = useState<Product[]>([])
@@ -31,13 +32,12 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
   const [slug, setSlug] = useState<string | null>(null)
   const [size, setSize] = useState('M')
   const [qty, setQty] = useState(1)
+  const [cart, setCart] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [zoom, setZoom] = useState<string | null>(null)
   const [failed, setFailed] = useState<Set<string>>(new Set())
 
-  // Prefer a real (absolute) image URL — some catalog rows list a relative path
-  // first that isn't in /public (e.g. Mountains), which renders blank.
   const imgOf = (p: Product) => (p.images || []).find(u => /^https?:\/\//.test(u)) || p.images?.[0] || ''
 
   useEffect(() => {
@@ -47,31 +47,46 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
     }).catch(() => {})
   }, [])
 
-  // A solid-colour band carries no design (theme 'default'); everything else is a design.
+  // A solid-colour band carries no artwork (theme 'default'); everything else is a themed design.
   const isColor = (p: Product) => !p.theme || p.theme === 'default'
   const inGroup = products.filter(p => group === 'color' ? isColor(p) : !isColor(p))
 
-  // Keep a valid selection whenever the group changes.
   useEffect(() => {
     if (inGroup.length === 0) { setSlug(null); return }
     if (!inGroup.some(p => p.slug === slug)) {
-      const first = inGroup.find(p => p.slug === 'standard') || inGroup[0]
-      setSlug(first.slug)
-      if (first.hasSizes && !first.sizes.includes(size)) setSize(first.sizes.includes('M') ? 'M' : (first.sizes[0] || 'M'))
+      const firstP = inGroup.find(p => p.slug === 'standard') || inGroup[0]
+      setSlug(firstP.slug)
+      if (firstP.hasSizes && !firstP.sizes.includes(size)) setSize(firstP.sizes.includes('M') ? 'M' : (firstP.sizes[0] || 'M'))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [group, products])
 
   const selected = products.find(p => p.slug === slug) || null
+  const cartCount = cart.reduce((s, c) => s + c.qty, 0)
+  const cartTotal = cart.reduce((s, c) => s + c.qty * c.price, 0)
 
-  async function send() {
+  function addToCart() {
     if (!selected) return
+    const sz = selected.hasSizes ? size : null
+    const key = `${selected.slug}|${sz ?? ''}`
+    setCart(prev => {
+      const found = prev.find(c => c.key === key)
+      if (found) return prev.map(c => c.key === key ? { ...c, qty: c.qty + qty } : c)
+      return [...prev, { key, slug: selected.slug, name: selected.name, size: sz, qty, price: selected.price }]
+    })
+    setQty(1)
+  }
+  const removeItem = (key: string) => setCart(prev => prev.filter(c => c.key !== key))
+  const setItemQty = (key: string, q: number) => setCart(prev => prev.map(c => c.key === key ? { ...c, qty: Math.max(1, q) } : c))
+
+  async function checkout() {
+    if (!cart.length) return
     setLoading(true); setError('')
     try {
       const res = await fetch('/api/create-checkout', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: [{ id: selected.slug, qty, size: selected.hasSizes ? size : undefined }],
+          items: cart.map(c => ({ id: c.slug, qty: c.qty, size: c.size || undefined })),
           returnTo: `/band/${bandId}`,
         }),
       })
@@ -84,17 +99,18 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
   }
 
   const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 600, color: GRAY, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }
+  const stepBtn: React.CSSProperties = { width: 30, height: 30, borderRadius: '50%', border: `1.5px solid ${BORDER}`, background: SURFACE, color: DARK, fontSize: 17, lineHeight: 1, cursor: 'pointer', flexShrink: 0 }
 
   return (
     <div style={{ padding: '24px 20px 40px' }}>
       <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: DARK, marginBottom: 4 }}>Send a Prayer Band</div>
       <div style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 18, lineHeight: 1.5 }}>
-        Keep the chain going — choose a look and send one to someone on your heart.
+        Keep the chain going — build a little order and send it to those on your heart.
       </div>
 
-      {/* Design vs Solid colour */}
+      {/* Theme vs Colour */}
       <div style={{ display: 'flex', gap: 4, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 4, marginBottom: 16 }}>
-        {([['design', 'Designs'], ['color', 'Solid Colors']] as const).map(([id, label]) => {
+        {([['design', 'Theme'], ['color', 'Color']] as const).map(([id, label]) => {
           const on = group === id
           return (
             <button key={id} onClick={() => setGroup(id)}
@@ -105,7 +121,7 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
         })}
       </div>
 
-      {/* Style tiles with a band image */}
+      {/* Style tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
         {products.length === 0 && <div style={{ fontSize: 13, color: GRAY }}>Loading styles…</div>}
         {inGroup.map(p => {
@@ -138,7 +154,7 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
 
       {/* Size */}
       {selected?.hasSizes && (
-        <div style={{ marginBottom: 18 }}>
+        <div style={{ marginBottom: 16 }}>
           <label style={labelStyle}>Size</label>
           <div style={{ display: 'flex', gap: 8 }}>
             {SIZES.filter(s => selected.sizes.includes(s.id)).map(s => {
@@ -154,29 +170,50 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
         </div>
       )}
 
-      {/* A private dedication for each band is added after purchase, via a link
-          in the shipping email — so multi-band orders get a note per band. */}
-      <div style={{ fontSize: 12.5, color: GRAY, fontFamily: 'Georgia, serif', fontStyle: 'italic', lineHeight: 1.5 }}>
-        You can add a private note or blessing for each band after you order — we&rsquo;ll email you a link.
-      </div>
-
-      {/* Quantity */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 20 }}>
-        <span style={{ fontSize: 13, color: GRAY, fontFamily: 'Georgia, serif' }}>How many?</span>
+      {/* Quantity + add to cart */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <span style={{ fontSize: 13, color: GRAY, fontFamily: 'Georgia, serif' }}>Quantity</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <button onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Fewer" style={{ width: 34, height: 34, borderRadius: '50%', border: `1.5px solid ${BORDER}`, background: SURFACE, color: DARK, fontSize: 20, lineHeight: 1, cursor: 'pointer' }}>−</button>
+          <button onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Fewer" style={{ ...stepBtn, fontSize: 20 }}>−</button>
           <span style={{ minWidth: 22, textAlign: 'center', fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK }}>{qty}</span>
-          <button onClick={() => setQty(q => Math.min(20, q + 1))} aria-label="More" style={{ width: 34, height: 34, borderRadius: '50%', border: `1.5px solid ${BORDER}`, background: SURFACE, color: DARK, fontSize: 18, lineHeight: 1, cursor: 'pointer' }}>+</button>
+          <button onClick={() => setQty(q => Math.min(20, q + 1))} aria-label="More" style={stepBtn}>+</button>
         </div>
       </div>
 
-      <button onClick={send} disabled={loading || !selected} style={{ width: '100%', marginTop: 14, backgroundColor: selected ? GOLD : BORDER, color: INK, border: 'none', borderRadius: 10, padding: 14, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: loading || !selected ? 'default' : 'pointer', opacity: loading ? 0.7 : 1 }}>
-        {loading ? 'Starting checkout…'
-          : !selected ? 'Send a band →'
-          : qty > 1 ? `Send ${qty} ${selected.name} bands → `
-          : `Send a ${selected.name} band → `}
+      <button onClick={addToCart} disabled={!selected} style={{ width: '100%', backgroundColor: 'transparent', color: DARK, border: `1.5px solid ${GOLD}`, borderRadius: 10, padding: 12, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: selected ? 'pointer' : 'default', opacity: selected ? 1 : 0.5 }}>
+        {selected ? `+ Add ${qty > 1 ? `${qty} ` : ''}${selected.name}${qty > 1 ? ' bands' : ''} to cart` : '+ Add to cart'}
       </button>
-      {selected && <div style={{ textAlign: 'center', fontSize: 12.5, color: GRAY, marginTop: 8 }}>${(selected.price * qty).toFixed(2)}{qty > 1 ? ` for ${qty}` : ''}</div>}
+
+      {/* Cart */}
+      {cart.length > 0 && (
+        <div style={{ marginTop: 20, background: SURFACE, border: `1px solid ${GOLD}`, borderRadius: 14, padding: 16 }}>
+          <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, marginBottom: 10 }}>Your order</div>
+          {cart.map(c => (
+            <div key={c.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: `1px solid ${BORDER}` }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: serif, fontSize: 14, fontWeight: 700, color: DARK }}>{c.name}{c.size ? ` · ${c.size}` : ''}</div>
+                <div style={{ fontSize: 12, color: GRAY }}>${c.price.toFixed(2)} each</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button onClick={() => setItemQty(c.key, c.qty - 1)} aria-label="Fewer" style={{ ...stepBtn, width: 26, height: 26, fontSize: 16 }}>−</button>
+                <span style={{ minWidth: 16, textAlign: 'center', fontFamily: serif, fontWeight: 700, color: DARK }}>{c.qty}</span>
+                <button onClick={() => setItemQty(c.key, c.qty + 1)} aria-label="More" style={{ ...stepBtn, width: 26, height: 26, fontSize: 15 }}>+</button>
+              </div>
+              <button onClick={() => removeItem(c.key)} aria-label="Remove" style={{ background: 'none', border: 'none', color: GRAY, fontSize: 16, cursor: 'pointer', padding: 2 }}>✕</button>
+            </div>
+          ))}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 12, paddingTop: 10, borderTop: `1px solid ${BORDER}` }}>
+            <span style={{ fontSize: 13, color: GRAY }}>{cartCount} {cartCount === 1 ? 'band' : 'bands'}</span>
+            <span style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: DARK }}>${cartTotal.toFixed(2)}</span>
+          </div>
+          <button onClick={checkout} disabled={loading} style={{ width: '100%', marginTop: 12, backgroundColor: GOLD, color: INK, border: 'none', borderRadius: 10, padding: 14, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+            {loading ? 'Starting checkout…' : `Check out · ${cartCount} ${cartCount === 1 ? 'band' : 'bands'} →`}
+          </button>
+          <div style={{ fontSize: 12, color: GRAY, textAlign: 'center', marginTop: 10, fontStyle: 'italic', fontFamily: 'Georgia, serif', lineHeight: 1.5 }}>
+            You can add a private note or blessing for each band after you order — we&rsquo;ll email you a link.
+          </div>
+        </div>
+      )}
 
       {error && <div style={{ color: '#C0392B', fontSize: 13, textAlign: 'center', marginTop: 14 }}>{error}</div>}
 
