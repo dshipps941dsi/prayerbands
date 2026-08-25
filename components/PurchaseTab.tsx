@@ -23,12 +23,12 @@ const SIZES = [
 ]
 
 type Product = { slug: string; name: string; category: string; theme: string; price: number; sizes: string[]; hasSizes: boolean; images: string[] }
-type Group = 'design' | 'color'
+type Group = 'all' | 'design' | 'color'
 type CartItem = { key: string; slug: string; name: string; size: string | null; qty: number; price: number }
 
 export default function PurchaseTab({ bandId }: { bandId: string }) {
   const [products, setProducts] = useState<Product[]>([])
-  const [group, setGroup] = useState<Group>('design')
+  const [group, setGroup] = useState<Group>('all')
   const [slug, setSlug] = useState<string | null>(null)
   const [size, setSize] = useState('M')
   const [qty, setQty] = useState(1)
@@ -49,7 +49,7 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
 
   // A solid-colour band carries no artwork (theme 'default'); everything else is a themed design.
   const isColor = (p: Product) => !p.theme || p.theme === 'default'
-  const inGroup = products.filter(p => group === 'color' ? isColor(p) : !isColor(p))
+  const inGroup = products.filter(p => group === 'all' ? true : group === 'color' ? isColor(p) : !isColor(p))
 
   useEffect(() => {
     if (inGroup.length === 0) { setSlug(null); return }
@@ -110,7 +110,7 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
 
       {/* Theme vs Colour */}
       <div style={{ display: 'flex', gap: 4, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 4, marginBottom: 16 }}>
-        {([['design', 'Theme'], ['color', 'Color']] as const).map(([id, label]) => {
+        {([['all', 'All'], ['design', 'Theme'], ['color', 'Color']] as const).map(([id, label]) => {
           const on = group === id
           return (
             <button key={id} onClick={() => setGroup(id)}
