@@ -4,6 +4,7 @@ import "./globals.css";
 import CookieBanner from "./components/CookieBanner";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import ClickTracker from "./components/ClickTracker";
+import ReferralCapture from "./components/ReferralCapture";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,6 +56,7 @@ export default function RootLayout({
         <CookieBanner />
         <GoogleAnalytics />
         <ClickTracker />
+        <ReferralCapture />
       </body>
     </html>
   );

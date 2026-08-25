@@ -323,10 +323,12 @@ export default function BandPage() {
   async function shareReferral() {
     if (!credit?.code) return
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://prayerbands.com'
-    const link = `${origin}/store?ref=${encodeURIComponent(credit.code)}`
-    const message = `I'm giving out Prayer Bands 🙏 Here's a discount on your first one — tap to shop: ${link}`
+    // Land them on the home page — the code is captured site-wide and follows
+    // them to checkout, so the link is a warm invitation, not a store push.
+    const link = `${origin}/?ref=${encodeURIComponent(credit.code)}`
+    const message = `Join me in prayer with your first Prayer Band 🙏 Tap to begin — my discount is already waiting for you: ${link}`
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      try { await navigator.share({ title: 'A discount on Prayer Bands', text: message }) } catch {}
+      try { await navigator.share({ title: 'Join me in prayer', text: message }) } catch {}
       return
     }
     try { await navigator.clipboard.writeText(message) } catch {}
