@@ -36,6 +36,23 @@ export default function ReachMap() {
     if (data.root.lat != null && data.root.lng != null) posById.set(data.root.id, { lat: data.root.lat, lng: data.root.lng, name: data.root.name, city: data.root.city, country: data.root.country })
     data.nodes.forEach(n => { if (n.lat != null && n.lng != null) posById.set(n.id, { lat: n.lat, lng: n.lng, name: n.name, city: n.city, country: n.country }) })
 
+    // Fan out people who share a spot (a town where several registered) so they
+    // read as distinct dots instead of one, while true geography stays put.
+    const cell = (lat: number, lng: number) => `${lat.toFixed(1)}|${lng.toFixed(1)}`
+    const groups: Record<string, string[]> = {}
+    posById.forEach((p, id) => { (groups[cell(p.lat, p.lng)] ??= []).push(id) })
+    Object.values(groups).forEach(ids => {
+      if (ids.length <= 1) return
+      ids.forEach((id, i) => {
+        if (i === 0) return // one stays at the true centre
+        const ang = (i / ids.length) * 2 * Math.PI
+        const r = 0.12 + 0.05 * Math.floor(i / 8)
+        const p = posById.get(id)!
+        p.lat += r * Math.sin(ang)
+        p.lng += r * Math.cos(ang)
+      })
+    })
+
     const render = () => {
       const L = (window as any).L
       if (!L || !mapRef.current) return
