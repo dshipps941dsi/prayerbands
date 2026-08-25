@@ -523,9 +523,12 @@ export default function BandPage() {
       <div style={{ margin: '20px 20px 0' }}>
         <div style={{ textAlign: 'center', fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK, marginBottom: 2 }}>{greeting}</div>
         <WalkLine total={walk.total} run={walk.run} onOpenJourney={() => setActiveTab('journey')} />
-        <div style={{ position: 'relative', background: `linear-gradient(135deg, ${NAVY}, ${NAVY_LT})`, borderRadius: 14, padding: '24px 20px', color: 'white', textAlign: 'center' }}>
-          <button onClick={() => setFocus('verse')} aria-label="Meditate on this verse" title="Meditate full screen"
-            style={{ position: 'absolute', top: 12, right: 12, width: 30, height: 30, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.85)', fontSize: 13, lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⛶</button>
+        <div onClick={() => setFocus('verse')} role="button" tabIndex={0} aria-label="Meditate on this verse full screen"
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setFocus('verse') } }}
+          style={{ position: 'relative', background: `linear-gradient(135deg, ${NAVY}, ${NAVY_LT})`, borderRadius: 14, padding: '24px 20px', color: 'white', textAlign: 'center', cursor: 'pointer' }}>
+          <div aria-hidden="true" style={{ position: 'absolute', top: 8, right: 8, width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.22)', background: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
+          </div>
           <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.6, marginBottom: 12 }}>
             {verseCategory === 'all' ? "Today's Verse" : CATEGORIES.find(c => c.id === verseCategory)?.label}
           </div>
