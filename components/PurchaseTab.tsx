@@ -33,9 +33,15 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
   const [showDedication, setShowDedication] = useState(false)
   const [recipient, setRecipient] = useState('')
   const [note, setNote] = useState('')
+  const [qty, setQty] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [zoom, setZoom] = useState<string | null>(null)
+  const [failed, setFailed] = useState<Set<string>>(new Set())
+
+  // Prefer a real (absolute) image URL — some catalog rows list a relative path
+  // first that isn't in /public (e.g. Mountains), which renders blank.
+  const imgOf = (p: Product) => (p.images || []).find(u => /^https?:\/\//.test(u)) || p.images?.[0] || ''
 
   useEffect(() => {
     fetch('/api/products').then(r => r.json()).then(d => {
@@ -71,7 +77,7 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
       const res = await fetch('/api/create-checkout', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: [{ id: selected.slug, qty: 1, size: selected.hasSizes ? size : undefined }],
+          items: [{ id: selected.slug, qty, size: selected.hasSizes ? size : undefined }],
           customMessage,
           returnTo: `/band/${bandId}`,
         }),
@@ -112,18 +118,19 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
         {products.length === 0 && <div style={{ fontSize: 13, color: GRAY }}>Loading styles…</div>}
         {inGroup.map(p => {
           const on = p.slug === slug
-          const img = p.images?.[0]
+          const img = imgOf(p)
+          const broken = !img || failed.has(img)
           return (
             <div key={p.slug} onClick={() => { setSlug(p.slug); if (p.hasSizes && !p.sizes.includes(size)) setSize(p.sizes[0] || 'M') }}
               style={{ background: on ? '#FFF8E7' : SURFACE, border: `1.5px solid ${on ? GOLD : BORDER}`, borderRadius: 12, padding: 8, cursor: 'pointer' }}>
-              <div style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', borderRadius: 8, overflow: 'hidden', background: CREAM, marginBottom: 8 }}>
-                {img ? (
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', borderRadius: 8, overflow: 'hidden', background: CREAM, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {!broken ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={img} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={img} alt={p.name} onError={() => setFailed(prev => new Set(prev).add(img))} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 6, boxSizing: 'border-box' }} />
                 ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, color: GRAY }}>✝</div>
+                  <div style={{ fontSize: 28, color: GRAY }}>✝</div>
                 )}
-                {img && (
+                {!broken && (
                   <button onClick={e => { e.stopPropagation(); setZoom(img) }} aria-label="View larger"
                     style={{ position: 'absolute', top: 6, right: 6, width: 30, height: 30, borderRadius: '50%', border: 'none', background: 'rgba(10,10,15,0.5)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
@@ -170,9 +177,23 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
         </div>
       )}
 
-      <button onClick={send} disabled={loading || !selected} style={{ width: '100%', marginTop: 18, backgroundColor: selected ? GOLD : BORDER, color: INK, border: 'none', borderRadius: 10, padding: 14, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: loading || !selected ? 'default' : 'pointer', opacity: loading ? 0.7 : 1 }}>
-        {loading ? 'Starting checkout…' : selected ? `Send ${selected.name} — $${selected.price.toFixed(2)} →` : 'Send a band →'}
+      {/* Quantity */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 20 }}>
+        <span style={{ fontSize: 13, color: GRAY, fontFamily: 'Georgia, serif' }}>How many?</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <button onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Fewer" style={{ width: 34, height: 34, borderRadius: '50%', border: `1.5px solid ${BORDER}`, background: SURFACE, color: DARK, fontSize: 20, lineHeight: 1, cursor: 'pointer' }}>−</button>
+          <span style={{ minWidth: 22, textAlign: 'center', fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK }}>{qty}</span>
+          <button onClick={() => setQty(q => Math.min(20, q + 1))} aria-label="More" style={{ width: 34, height: 34, borderRadius: '50%', border: `1.5px solid ${BORDER}`, background: SURFACE, color: DARK, fontSize: 18, lineHeight: 1, cursor: 'pointer' }}>+</button>
+        </div>
+      </div>
+
+      <button onClick={send} disabled={loading || !selected} style={{ width: '100%', marginTop: 14, backgroundColor: selected ? GOLD : BORDER, color: INK, border: 'none', borderRadius: 10, padding: 14, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: loading || !selected ? 'default' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+        {loading ? 'Starting checkout…'
+          : !selected ? 'Send a band →'
+          : qty > 1 ? `Send ${qty} ${selected.name} bands → `
+          : `Send a ${selected.name} band → `}
       </button>
+      {selected && <div style={{ textAlign: 'center', fontSize: 12.5, color: GRAY, marginTop: 8 }}>${(selected.price * qty).toFixed(2)}{qty > 1 ? ` for ${qty}` : ''}</div>}
 
       {error && <div style={{ color: '#C0392B', fontSize: 13, textAlign: 'center', marginTop: 14 }}>{error}</div>}
 
