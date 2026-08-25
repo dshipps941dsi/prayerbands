@@ -95,32 +95,24 @@ export default function PrayerTabs({ userId }: { userId: string }) {
 
   return (
     <div>
-      <div style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD_TEXT, marginBottom: 8 }}>My Prayer</div>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 12, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 4 }}>
-        {SUBTABS.map(t => {
-          const active = sub === t.id
-          return (
-            <button
-              key={t.id}
-              onClick={() => setSub(t.id)}
-              style={{ flex: 1, padding: '9px 4px', border: 'none', borderRadius: 9, background: active ? GOLD : 'transparent', color: active ? INK_ON_PRIMARY : SLATE, fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "'Cinzel', Georgia, serif", letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}
-            >
-              {t.label}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Active section title + info toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: showInfo ? 10 : 18 }}>
-        <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 18, fontWeight: 700, color: NAVY }}>{info.title}</span>
-        <button
-          onClick={toggleInfo}
-          aria-label={`What ${info.title.toLowerCase()} are`}
-          aria-expanded={showInfo}
-          title={`About ${info.title}`}
-          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: '50%', border: `1.5px solid ${showInfo ? GOLD_TEXT : BORDER}`, background: showInfo ? 'rgba(200,169,110,0.14)' : 'transparent', color: showInfo ? GOLD_TEXT : SLATE, fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 12, fontWeight: 700, lineHeight: 1, cursor: 'pointer', padding: 0, flexShrink: 0, transition: 'all 0.15s' }}
-        >
+      {/* One line: "My Prayer" + the tab that completes it (Journal / Partners /
+          Circles) + the ⓘ. Replaces a separate eyebrow, tab bar, and a repeated
+          title — reads "My Prayer Journal" and reclaims two rows of height. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: showInfo ? 10 : 16 }}>
+        <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 17, fontWeight: 700, color: NAVY, whiteSpace: 'nowrap' }}>My Prayer</span>
+        <div style={{ flex: 1, display: 'flex', gap: 3, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3 }}>
+          {SUBTABS.map(t => {
+            const active = sub === t.id
+            return (
+              <button key={t.id} onClick={() => setSub(t.id)}
+                style={{ flex: 1, padding: '7px 4px', border: 'none', borderRadius: 8, background: active ? GOLD : 'transparent', color: active ? INK_ON_PRIMARY : SLATE, fontSize: 11, fontWeight: active ? 700 : 500, fontFamily: "'Cinzel', Georgia, serif", letterSpacing: '0.04em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                {t.label}
+              </button>
+            )
+          })}
+        </div>
+        <button onClick={toggleInfo} aria-label={`About ${info.title}`} aria-expanded={showInfo} title={`About ${info.title}`}
+          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '50%', border: `1.5px solid ${showInfo ? GOLD_TEXT : BORDER}`, background: showInfo ? 'rgba(200,169,110,0.14)' : 'transparent', color: showInfo ? GOLD_TEXT : SLATE, fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 12, fontWeight: 700, lineHeight: 1, cursor: 'pointer', padding: 0, flexShrink: 0, transition: 'all 0.15s' }}>
           i
         </button>
       </div>

@@ -467,8 +467,8 @@ export default function BandPage() {
               ))}
             </select>
           )}
-          {status.screen === 'personal_space' && currentHolder?.user_name && (
-            <div style={{ fontFamily: serif, fontSize: 13, fontWeight: 600, color: DARK, textAlign: 'right' }}>{currentHolder.user_name}</div>
+          {myBands.length <= 1 && (
+            <span style={{ fontFamily: 'monospace', fontSize: 12, color: GRAY, letterSpacing: '0.06em' }}>{bandId}</span>
           )}
           {userId ? (
             <button onClick={() => setNotifOpen(true)} aria-label="Notifications" title="Notifications" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
@@ -744,8 +744,7 @@ export default function BandPage() {
             <div style={{ padding: '24px 20px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700 }}>{bandId}</div>
-                  <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginTop: 2 }}>{regs.length === 0 ? 'Just arrived' : 'Held by you'}</div>
+                  <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700 }}>{(regs.length ? regs[regs.length - 1].user_name : '') || 'My Prayer Band'}</div>
                 </div>
                 {transferStep === 'idle' && !transferComplete && (
                   <button onClick={() => {
