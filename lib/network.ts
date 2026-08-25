@@ -41,3 +41,33 @@ export async function isBandHolder(admin: any, userId: string): Promise<boolean>
 export function nameFromProfile(profile: { full_name?: string | null; email?: string | null } | null | undefined): string {
   return profile?.full_name || profile?.email?.split('@')[0] || 'A fellow believer'
 }
+
+// Can this viewer see a shared prayer request (so they may reply to it)? Mirrors
+// the my-network feed's audience rules. Under-permits rather than over-permits:
+// lineage-only partners without a formal connection are treated as unable to
+// reply, which is the safe direction.
+export async function requestReachesUser(
+  admin: any,
+  viewerId: string,
+  requesterId: string,
+  audience: string | null,
+): Promise<boolean> {
+  if (viewerId === requesterId) return true
+  const a = audience || 'network'
+  if (a === 'private') return false
+  if (a === 'wall' || a === 'public') return true
+  if (a.startsWith('group:')) {
+    const gid = a.slice(6)
+    const { data: mem } = await admin.from('partner_group_members')
+      .select('group_id').eq('group_id', gid).eq('member_id', viewerId).maybeSingle()
+    if (!mem) return false
+    const { data: g } = await admin.from('partner_groups').select('owner_id').eq('id', gid).maybeSingle()
+    return (g as { owner_id?: string } | null)?.owner_id === requesterId
+  }
+  // direct / lineage / network — an accepted connection between the two.
+  const { data: conn } = await admin.from('prayer_network_connections')
+    .select('id').eq('status', 'accepted')
+    .or(`and(requester_id.eq.${viewerId},recipient_id.eq.${requesterId}),and(requester_id.eq.${requesterId},recipient_id.eq.${viewerId})`)
+    .maybeSingle()
+  return !!conn
+}

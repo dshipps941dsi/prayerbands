@@ -105,7 +105,7 @@ export async function GET(_req: NextRequest) {
     const { data: theirRequests } = authorIds.length
       ? await admin
           .from('prayer_network_requests')
-          .select('id, user_id, request_text, is_answered, created_at, visibility, audience')
+          .select('id, user_id, request_text, is_answered, created_at, visibility, audience, allow_comments')
           .in('user_id', authorIds)
           .eq('is_answered', false)
           .order('created_at', { ascending: false })
@@ -113,7 +113,7 @@ export async function GET(_req: NextRequest) {
 
     const { data: myRequests } = await admin
       .from('prayer_network_requests')
-      .select('id, user_id, request_text, is_answered, answered_at, created_at, visibility, audience, list_id')
+      .select('id, user_id, request_text, is_answered, answered_at, created_at, visibility, audience, list_id, allow_comments')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
@@ -135,6 +135,21 @@ export async function GET(_req: NextRequest) {
         interByReq[i.request_id] = entry
       })
     }
+    // Replies (private to the requester): count for the requester's own entries,
+    // and whether the viewer has already replied on someone else's.
+    const replyCount: Record<string, number> = {}
+    const iReplied = new Set<string>()
+    if (reqIds.length) {
+      const { data: cmts } = await admin
+        .from('prayer_request_comments')
+        .select('request_id, user_id')
+        .in('request_id', reqIds)
+      ;(cmts ?? []).forEach((c: any) => {
+        replyCount[c.request_id] = (replyCount[c.request_id] ?? 0) + 1
+        if (c.user_id === user.id) iReplied.add(c.request_id)
+      })
+    }
+
     const decorate = (r: any) => ({
       id: r.id,
       request_text: r.request_text,
@@ -184,7 +199,7 @@ export async function GET(_req: NextRequest) {
     // with the author's relation for the Direct/Lineage badge.
     const others_requests = ((theirRequests ?? []) as any[])
       .filter(r => { const info = authorInfo[r.user_id]; return info && !mutedSet.has(r.user_id) && reaches(r.audience, info, r.user_id) })
-      .map(r => ({ ...decorate(r), author: nameOf(r.user_id), author_id: r.user_id, relation: authorInfo[r.user_id].relation }))
+      .map(r => ({ ...decorate(r), author: nameOf(r.user_id), author_id: r.user_id, relation: authorInfo[r.user_id].relation, allow_comments: !!r.allow_comments, i_replied: iReplied.has(r.id) }))
 
     // Muted people, named, so the feed can offer an unmute.
     const muted = Array.from(mutedSet).map(id => ({ id, name: nameOf(id) }))
@@ -223,7 +238,7 @@ export async function GET(_req: NextRequest) {
       created_at: c.created_at,
     }))
 
-    const my_requests = ((myRequests ?? []) as any[]).map(r => ({ ...decorate(r), audience: r.audience ?? 'network', list_id: r.list_id ?? null }))
+    const my_requests = ((myRequests ?? []) as any[]).map(r => ({ ...decorate(r), audience: r.audience ?? 'network', list_id: r.list_id ?? null, allow_comments: !!r.allow_comments, reply_count: replyCount[r.id] ?? 0 }))
 
     return NextResponse.json({
       connections,

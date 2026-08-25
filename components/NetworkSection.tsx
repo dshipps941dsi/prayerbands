@@ -23,6 +23,8 @@ interface NetworkRequest {
   i_prayed: boolean
   audience?: string
   list_id?: string | null
+  allow_comments?: boolean
+  reply_count?: number
 }
 
 // A named bucket a person files their own journal entries into (Family, Health).
@@ -58,6 +60,8 @@ interface OthersApiRequest {
   author: string
   author_id: string
   relation: Relation
+  allow_comments?: boolean
+  i_replied?: boolean
 }
 
 interface CircleRequest {
@@ -79,6 +83,8 @@ interface OtherItem {
   kind: OtherKind
   author: string
   author_id?: string
+  allow_comments?: boolean
+  i_replied?: boolean
   context: string
   request_text: string
   created_at: string
@@ -157,6 +163,12 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [submitting, setSubmitting] = useState(false)
   const [audience, setAudience] = useState<string>('private')
   const [anonymity, setAnonymity] = useState<'anonymous' | 'first_initial'>('first_initial')
+  // Opt-in private replies to a shared prayer, and the per-request reply UI.
+  const [allowReplies, setAllowReplies] = useState(false)
+  const [openReplyId, setOpenReplyId] = useState<string | null>(null)
+  const [repliesFor, setRepliesFor] = useState<Record<string, { id: string; body: string; author: string }[]>>({})
+  const [replyDraft, setReplyDraft] = useState<Record<string, string>>({})
+  const [replyBusy, setReplyBusy] = useState(false)
 
   async function load() {
     const [netRes, circleRes, bandsRes, groupsRes, listsRes] = await Promise.all([
@@ -311,7 +323,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       const res = await fetch('/api/network/prayer-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_text: text.trim(), audience, anonymity, list_id: entryList }),
+        body: JSON.stringify({ request_text: text.trim(), audience, anonymity, list_id: entryList, allow_comments: allowReplies && audience !== 'private' }),
       })
       if (res.ok) {
         const d = await res.json()
@@ -319,11 +331,36 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         setText('')
         setShowForm(false)
         setAudience('private')
+        setAllowReplies(false)
         setEntryList(activeList)  // default the next entry to the list you're viewing
       }
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // Private replies to a shared prayer (requester sees all; a replier sees own).
+  async function toggleReplies(id: string) {
+    if (openReplyId === id) { setOpenReplyId(null); return }
+    setOpenReplyId(id)
+    if (!repliesFor[id]) {
+      const res = await fetch(`/api/network/prayer-request/replies?request_id=${id}`)
+      if (res.ok) { const d = await res.json(); setRepliesFor(prev => ({ ...prev, [id]: d.replies ?? [] })) }
+    }
+  }
+  async function sendReply(id: string) {
+    const text = (replyDraft[id] || '').trim()
+    if (!text) return
+    setReplyBusy(true)
+    const res = await fetch('/api/network/prayer-request/replies', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ request_id: id, body: text }),
+    })
+    if (res.ok) {
+      setReplyDraft(prev => ({ ...prev, [id]: '' }))
+      setOthersReqs(prev => prev.map(r => r.id === id ? { ...r, i_replied: true } : r))
+    }
+    setReplyBusy(false)
   }
 
   async function markAnswered(requestId: string, isAnswered: boolean) {
@@ -398,6 +435,8 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       kind: r.relation as OtherKind,
       author: r.author,
       author_id: r.author_id,
+      allow_comments: r.allow_comments,
+      i_replied: r.i_replied,
       context: '',
       request_text: r.request_text,
       created_at: r.created_at,
@@ -631,6 +670,25 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                 <button onClick={() => mute(o.author_id!, o.author)} title={`Mute ${o.author}`} style={{ background: 'none', border: 'none', color: GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>Mute</button>
               )}
             </div>
+
+            {/* Reply privately to the requester (only if they opened replies). */}
+            {o.source === 'network' && o.allow_comments && (
+              o.i_replied ? (
+                <div style={{ marginTop: 10, fontSize: 12, color: '#4A8A6A', fontFamily: 'Georgia, serif' }}>✓ Reply sent to {o.author}</div>
+              ) : (
+                <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                  <input
+                    value={replyDraft[o.request_id] || ''}
+                    onChange={e => setReplyDraft(prev => ({ ...prev, [o.request_id]: e.target.value }))}
+                    onKeyDown={e => { if (e.key === 'Enter') sendReply(o.request_id) }}
+                    placeholder={`Reply privately to ${o.author}…`}
+                    maxLength={1000}
+                    style={{ flex: 1, minWidth: 0, padding: '8px 11px', borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 13, fontFamily: 'Georgia, serif', color: DARK, background: CREAM, outline: 'none' }}
+                  />
+                  <button onClick={() => sendReply(o.request_id)} disabled={replyBusy || !(replyDraft[o.request_id] || '').trim()} style={{ flexShrink: 0, background: (replyDraft[o.request_id] || '').trim() ? GOLD : BORDER, color: '#fff', border: 'none', borderRadius: 8, padding: '0 14px', fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: 700, cursor: (replyDraft[o.request_id] || '').trim() ? 'pointer' : 'default' }}>Send</button>
+                </div>
+              )
+            )}
           </div>
         ))}
 
@@ -732,8 +790,15 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
               </>
             )}
 
+            {audience !== 'private' && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, cursor: 'pointer' }}>
+                <input type="checkbox" checked={allowReplies} onChange={e => setAllowReplies(e.target.checked)} style={{ width: 15, height: 15, accentColor: GOLD, cursor: 'pointer', flexShrink: 0 }} />
+                <span style={{ fontSize: 12.5, color: GRAY, fontFamily: 'Georgia, serif' }}>Let people reply privately to me</span>
+              </label>
+            )}
+
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button onClick={() => { setShowForm(false); setText(''); setAudience('private'); setAnonymity('first_initial') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid var(--pb-border, #D4C5B0)`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => { setShowForm(false); setText(''); setAudience('private'); setAllowReplies(false); setAnonymity('first_initial') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid var(--pb-border, #D4C5B0)`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
               <button onClick={shareRequest} disabled={!text.trim() || submitting} style={{ flex: 2, backgroundColor: text.trim() ? GOLD : 'var(--pb-border, #D4C5B0)', border: 'none', borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: text.trim() ? 'pointer' : 'default' }}>{submitting ? (audience === 'private' ? 'Saving...' : 'Sharing...') : (audience === 'private' ? 'Add to Journal' : 'Share Request')}</button>
             </div>
           </div>
@@ -757,6 +822,27 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                 {r.is_answered ? 'Reopen' : 'Mark Answered ✓'}
               </button>
             </div>
+
+            {/* Private replies you've received on this prayer (only you see these). */}
+            {r.allow_comments && (
+              <div style={{ marginTop: 10, paddingTop: 8, borderTop: `1px solid ${BORDER}` }}>
+                <button onClick={() => toggleReplies(r.id)} style={{ background: 'none', border: 'none', color: CIRCLE, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+                  💬 {r.reply_count ?? 0} {(r.reply_count ?? 0) === 1 ? 'reply' : 'replies'}{openReplyId === r.id ? ' ▴' : ' ▾'}
+                </button>
+                {openReplyId === r.id && (
+                  <div style={{ marginTop: 8 }}>
+                    {(repliesFor[r.id] ?? []).length === 0 ? (
+                      <p style={{ fontSize: 12, color: GRAY, fontStyle: 'italic', margin: 0 }}>No replies yet.</p>
+                    ) : (repliesFor[r.id] ?? []).map(c => (
+                      <div key={c.id} style={{ marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: DARK, fontFamily: serif }}>{c.author}</span>
+                        <p style={{ fontSize: 13, color: DARK, margin: '2px 0 0', lineHeight: 1.5 }}>{c.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     const { data: request, error } = await supabase
       .from('prayer_network_requests')
-      .insert({ user_id: user.id, request_text: request_text.trim(), visibility: vis, audience, public_name, list_id })
+      .insert({ user_id: user.id, request_text: request_text.trim(), visibility: vis, audience, public_name, list_id, allow_comments: body.allow_comments === true && audience !== 'private' })
       .select()
       .single()
 
