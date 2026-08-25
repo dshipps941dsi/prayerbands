@@ -9,6 +9,7 @@ import NotificationsPanel from '@/components/NotificationsPanel'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
 import PrayerTabs from '@/components/PrayerTabs'
 import FocusOverlay from '@/components/FocusOverlay'
+import ReachWeb from '@/components/ReachWeb'
 import PurchaseTab from '@/components/PurchaseTab'
 import { useApplyTheme } from '@/components/ThemeProvider'
 import SuccessCard from './screens/SuccessCard'
@@ -180,6 +181,8 @@ export default function BandPage() {
   const [activeTab, setActiveTab] = useState<'home' | 'journey' | 'purchase' | 'account'>('home')
   // Full-screen focus mode: meditate on the verse, or the journal with nothing else.
   const [focus, setFocus] = useState<null | 'verse' | 'prayer'>(null)
+  // Journey tab: this band's direct line, or the whole reach web.
+  const [journeyView, setJourneyView] = useState<'band' | 'reach'>('band')
   const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null; expires_at: string | null } | null>(null)
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
@@ -780,8 +783,19 @@ export default function BandPage() {
         )}
 
         {activeTab === 'journey' && (
-          <div style={{ padding: '0' }}>
-            <PrayerChain regs={regs} />
+          <div>
+            <div style={{ display: 'flex', gap: 4, background: 'white', border: '1px solid rgba(44,24,16,0.1)', borderRadius: 12, padding: 4, margin: '20px 20px 0' }}>
+              {([['band', 'This Band'], ['reach', 'My Reach']] as const).map(([id, label]) => {
+                const on = journeyView === id
+                return (
+                  <button key={id} onClick={() => setJourneyView(id)}
+                    style={{ flex: 1, padding: '9px 4px', border: 'none', borderRadius: 9, background: on ? GOLD : 'transparent', color: on ? INK : GRAY, fontSize: 12, fontWeight: on ? 700 : 500, fontFamily: serif, letterSpacing: '0.04em', cursor: 'pointer', transition: 'all 0.15s' }}>
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+            {journeyView === 'band' ? <PrayerChain regs={regs} /> : <ReachWeb />}
           </div>
         )}
 
