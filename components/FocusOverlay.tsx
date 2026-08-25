@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 // A full-screen focus layer: tap a section's expand control to fill the screen
 // with just that section, an ✕ to close. Locks background scroll, closes on
@@ -17,12 +17,18 @@ export default function FocusOverlay({
   closeColor?: string
   children: React.ReactNode
 }) {
+  // Soft fade-in (and a gentle rise for the content), honoring reduced-motion.
+  const [shown, setShown] = useState(false)
+  const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
   useEffect(() => {
+    const raf = requestAnimationFrame(() => setShown(true))
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
+      cancelAnimationFrame(raf)
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = prev
     }
@@ -37,6 +43,8 @@ export default function FocusOverlay({
         background: background || 'var(--pb-background, #F6F1E4)',
         color: 'var(--pb-text, #2C1810)',
         overflowY: 'auto', WebkitOverflowScrolling: 'touch',
+        opacity: reduce || shown ? 1 : 0,
+        transition: reduce ? 'none' : 'opacity 0.5s ease',
       }}
     >
       <button
@@ -52,7 +60,13 @@ export default function FocusOverlay({
       >
         ✕
       </button>
-      {children}
+      <div style={{
+        opacity: reduce || shown ? 1 : 0,
+        transform: reduce || shown ? 'none' : 'translateY(14px)',
+        transition: reduce ? 'none' : 'opacity 0.6s ease 0.05s, transform 0.6s ease 0.05s',
+      }}>
+        {children}
+      </div>
     </div>
   )
 }
