@@ -36,6 +36,15 @@ const when = (iso: string) => {
 // `show` splits the two audiences this data serves: the live feed belongs with
 // moderation under Activity, while stock levels belong with Orders, next to the
 // fulfilment work that consumes them.
+// One label for a stock row: the theme (title-cased) for themed bands, else the
+// engraved colour. Combines the old Design + Colour columns into one.
+function styleLabel(r: { theme: string; color: string }): string {
+  const t = (r.theme || '').trim()
+  if (t && t !== 'default' && t !== '—') return t.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  const c = (r.color || '').trim()
+  return c && c !== '—' ? c : 'Classic'
+}
+
 export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed' | 'inventory' }) {
   const [events, setEvents] = useState<Event[]>([])
   const [inventory, setInventory] = useState<Inventory | null>(null)
@@ -105,15 +114,17 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, fontFamily: 'Inter, sans-serif' }}>
                   <thead>
                     <tr style={{ textAlign: 'left', color: C.secondary, fontSize: 11 }}>
-                      <th style={{ padding: '6px 8px' }}>Design</th><th style={{ padding: '6px 8px' }}>Colour</th>
+                      <th style={{ padding: '6px 8px' }}>Style</th>
                       <th style={{ padding: '6px 8px' }}>Size</th><th style={{ padding: '6px 8px' }}>Left</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {inventory.breakdown.map((r, i) => (
+                    {[...inventory.breakdown]
+                      .map(r => ({ ...r, _style: styleLabel(r) }))
+                      .sort((a, b) => a._style.localeCompare(b._style) || a.size.localeCompare(b.size))
+                      .map((r, i) => (
                       <tr key={i} style={{ borderTop: `1px solid ${C.borderSilver}` }}>
-                        <td style={{ padding: '6px 8px', color: C.body }}>{r.theme}</td>
-                        <td style={{ padding: '6px 8px', color: C.body }}>{r.color}</td>
+                        <td style={{ padding: '6px 8px', color: C.body }}>{r._style}</td>
                         <td style={{ padding: '6px 8px', color: C.body }}>{r.size}</td>
                         <td style={{ padding: '6px 8px', fontWeight: 700, color: r.count <= 5 ? '#B4441F' : C.heading }}>{r.count}</td>
                       </tr>
