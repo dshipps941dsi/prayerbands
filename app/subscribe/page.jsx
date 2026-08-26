@@ -52,7 +52,7 @@ const PLANS = [
     bands: 2,
     interval: "month",
     intervalCount: 1,
-    retailPrice: 23.98,
+    retailPrice: 11.99,
     discount: 25,
     bandPrice: 8.995,
     shipping: 0,
@@ -842,26 +842,15 @@ export default function SubscribePage() {
         {/* Step Indicators */}
         <div className="steps">
             <div className="step-item">
-              <div className={`step-dot ${step >= 1 ? (step > 1 ? 'done' : 'active') : ''}`}>
-                {step > 1 ? '✓' : '1'}
-              </div>
-              <span className={`step-label ${step === 1 ? 'active' : step > 1 ? 'done' : ''}`}>Plan</span>
+              <div className={`step-dot ${step > 1 ? 'done' : 'active'}`}>{step > 1 ? '✓' : '1'}</div>
+              <span className={`step-label ${step === 1 ? 'active' : 'done'}`}>Plan</span>
             </div>
             <div className="step-connector">
               <div className="step-line" />
             </div>
             <div className="step-item">
-              <div className={`step-dot ${step >= 2 ? (step > 2 ? 'done' : 'active') : ''}`}>
-                {step > 2 ? '✓' : '2'}
-              </div>
-              <span className={`step-label ${step === 2 ? 'active' : step > 2 ? 'done' : ''}`}>Band</span>
-            </div>
-            <div className="step-connector">
-              <div className="step-line" />
-            </div>
-            <div className="step-item">
-              <div className={`step-dot ${step >= 3 ? 'active' : ''}`}>3</div>
-              <span className={`step-label ${step === 3 ? 'active' : ''}`}>Confirm</span>
+              <div className={`step-dot ${step >= 2 ? 'active' : ''}`}>2</div>
+              <span className={`step-label ${step === 2 ? 'active' : ''}`}>Confirm</span>
             </div>
           </div>
 
@@ -897,7 +886,7 @@ export default function SubscribePage() {
                       <span className="plan-period">/ {p.intervalCount > 1 ? `${p.intervalCount} mo` : 'mo'}</span>
                     </div>
                     <p className="plan-savings">
-                      {p.discount}% off retail · {p.bands > 1 ? `${p.bands} bands included` : '1 band included'}
+                      {p.discount}% off · {p.bands > 1 ? `${p.bands} bands of credit` : '1 band of credit'}
                     </p>
 
                     <ul className="plan-perks">
@@ -925,61 +914,17 @@ export default function SubscribePage() {
 
               <div style={{ maxWidth: 480, margin: '40px auto 0', padding: '0 24px' }}>
                 <button className="btn-primary" onClick={() => setStep(2)}>
-                  Continue — Choose Your Band →
+                  Continue — Review →
                 </button>
               </div>
             </>
           )}
 
-          {/* ── STEP 2: CHOOSE BAND DESIGN ── */}
-          {step === 2 && (
-            <div className="color-section">
-              <p className="section-title">Choose Your Band</p>
-              <p className="section-sub">Pick the band we&rsquo;ll ship with your subscription. You can set color &amp; size anytime from your dashboard.</p>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, maxWidth: 760, margin: '0 auto 8px', textAlign: 'left' }}>
-                {bandDesigns.length === 0 && (
-                  <p className="section-sub" style={{ gridColumn: '1 / -1', textAlign: 'center' }}>Loading bands…</p>
-                )}
-                {bandDesigns.map(d => {
-                  const isSel = bandDesign === d.slug;
-                  const accent = d.color || '#C8A96E';
-                  return (
-                    <div key={d.slug} onClick={() => setBandDesign(d.slug)} style={{
-                      cursor: 'pointer',
-                      background: '#FFFDF8',
-                      border: `2px solid ${isSel ? accent : 'rgba(10,22,40,0.10)'}`,
-                      borderRadius: 14,
-                      padding: '20px 22px',
-                      boxShadow: isSel ? `0 8px 28px ${accent}44` : '0 2px 10px rgba(10,22,40,0.06)',
-                      transition: 'all 0.2s',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <span style={{ fontSize: 26 }}>{d.icon || '✝'}</span>
-                        {d.tag && <span style={{ fontSize: 10, fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase', color: accent, border: `1px solid ${accent}55`, borderRadius: 20, padding: '2px 10px' }}>{d.tag}</span>}
-                      </div>
-                      <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, fontWeight: 700, color: '#15223B', margin: '0 0 4px' }}>{d.name}</p>
-                      <p style={{ fontSize: 13, color: '#5C6573', lineHeight: 1.5, margin: '0 0 12px' }}>{d.description}</p>
-                      <div style={{ fontFamily: "'Cinzel', serif", fontSize: 12, fontWeight: 600, letterSpacing: '0.04em', color: accent }}>{isSel ? '✓ Selected' : 'Select'}</div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <button className="btn-primary" onClick={() => setStep(3)} disabled={!bandDesign}>
-                Continue — Review Your Order →
-              </button>
-              <button className="btn-secondary" onClick={() => setStep(1)}>
-                ← Back to Plans
-              </button>
-            </div>
-          )}
-
-          {/* ── STEP 3: CONFIRM ── */}
-          {step === 3 && plan && (
+          {/* ── STEP 2: CONFIRM ── */}
+          {step === 2 && plan && (
             <div className="summary-card">
               <p className="section-title">Review Your Subscription</p>
-              <p className="section-sub">Everything looks good? Let's get you set up.</p>
+              <p className="section-sub">Each cycle we add credit to your account — send a band, personalized then, whenever someone needs prayer.</p>
 
               <div className="summary-box">
                 <div className="summary-row">
@@ -991,29 +936,25 @@ export default function SubscribePage() {
                   <span className="summary-value">{plan.cadence}</span>
                 </div>
                 <div className="summary-row">
-                  <span className="summary-label">Bands per shipment</span>
-                  <span className="summary-value">{plan.bands}</span>
-                </div>
-                <div className="summary-row">
-                  <span className="summary-label">Band</span>
-                  <span className="summary-value">{selectedDesign ? selectedDesign.name : 'Standard Band'}</span>
-                </div>
-                <div className="summary-row">
-                  <span className="summary-label">Band price</span>
-                  <span className="summary-value">${(plan.bandPrice * plan.bands).toFixed(2)}</span>
+                  <span className="summary-label">Credit each cycle</span>
+                  <span className="summary-value">${(plan.retailPrice * plan.bands).toFixed(2)}{plan.bands > 1 ? ` (${plan.bands} bands)` : ''}</span>
                 </div>
                 <div className="summary-row">
                   <span className="summary-label">You save</span>
                   <span className="summary-savings">
-                    ${((plan.retailPrice * plan.bands) - (plan.bandPrice * plan.bands)).toFixed(2)} ({plan.discount}% off)
+                    ${((plan.retailPrice - plan.bandPrice) * plan.bands).toFixed(2)} ({plan.discount}% off)
                   </span>
                 </div>
                 <div className="summary-row">
                   <span className="summary-label">Shipping</span>
-                  <span className="summary-value">${plan.shipping.toFixed(2)} / shipment</span>
+                  <span className="summary-value">Free when you send</span>
+                </div>
+                <div className="summary-row">
+                  <span className="summary-label">Credit expires</span>
+                  <span className="summary-value">Never</span>
                 </div>
                 <div className="summary-row total">
-                  <span>Total</span>
+                  <span>You pay</span>
                   <span>${plan.total.toFixed(2)} / {plan.intervalCount > 1 ? `${plan.intervalCount} mo` : 'mo'}</span>
                 </div>
               </div>
@@ -1025,8 +966,8 @@ export default function SubscribePage() {
               >
                 {loading ? 'Redirecting to Checkout...' : `Subscribe for $${plan.total.toFixed(2)} / ${plan.intervalCount > 1 ? `${plan.intervalCount} mo` : 'mo'} →`}
               </button>
-              <button className="btn-secondary" onClick={() => setStep(2)}>
-                ← Back to Band
+              <button className="btn-secondary" onClick={() => setStep(1)}>
+                ← Back to Plans
               </button>
             </div>
           )}
