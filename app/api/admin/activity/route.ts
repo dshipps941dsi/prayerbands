@@ -298,7 +298,7 @@ export async function GET(req: NextRequest) {
     // Session test seed (PB-TEST / PB-DMO…) is kept in the database so it can
     // still be used for testing, but it shouldn't clutter the live feed. Hide
     // it by default; searching its band ID directly still pulls it up.
-    .filter(e => bandMatched.has(e._key) || !/^PB-(TEST|DMO)/i.test(e.band_id))
+    .filter(e => bandMatched.has(e._key) || !/^PB-(TEST|DMO|TH)/i.test(e.band_id))
     // One box, three things it might be. A row survives if the band matched in
     // the database, or the person's name or email contains the text.
     .filter(e =>
