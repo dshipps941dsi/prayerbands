@@ -5,6 +5,7 @@ import CookieBanner from "./components/CookieBanner";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import ClickTracker from "./components/ClickTracker";
 import ReferralCapture from "./components/ReferralCapture";
+import RegisterSW from "./components/RegisterSW";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,6 +21,7 @@ import type { Viewport } from "next";
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#0A1628',
 }
 export const metadata: Metadata = {
   metadataBase: new URL("https://prayerbands.com"),
@@ -39,6 +41,15 @@ export const metadata: Metadata = {
     description: "A global prayer movement. Every band carries a prayer.",
     images: ["/home/og.jpg"],
   },
+  icons: {
+    icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Prayer Bands",
+    statusBarStyle: "black-translucent",
+  },
 }
 
 export default function RootLayout({
@@ -57,6 +68,7 @@ export default function RootLayout({
         <GoogleAnalytics />
         <ClickTracker />
         <ReferralCapture />
+        <RegisterSW />
       </body>
     </html>
   );
