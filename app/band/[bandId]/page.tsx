@@ -872,13 +872,13 @@ export default function BandPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {credit && (credit.balance_cents > 0 || credit.referrals > 0 || credit.code) && (
                   <div style={{ background: `linear-gradient(135deg, ${NAVY}, ${NAVY_LT})`, borderRadius: 12, padding: '18px 20px', color: 'white' }}>
-                    <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.75, marginBottom: 6 }}>Referral credit</div>
+                    <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.75, marginBottom: 6 }}>Store credit</div>
                     <div style={{ fontFamily: serif, fontSize: 30, fontWeight: 700, lineHeight: 1 }}>
                       ${(credit.balance_cents / 100).toFixed(2)}
                     </div>
                     <div style={{ fontFamily: body, fontSize: 13, opacity: 0.85, marginTop: 8, lineHeight: 1.5 }}>
-                      {credit.referrals > 0
-                        ? `From ${credit.referrals} order${credit.referrals === 1 ? '' : 's'} placed through you. It comes off your next order automatically.`
+                      {credit.balance_cents > 0
+                        ? 'Comes off your next order automatically — from referrals and any subscription.'
                         : 'Share your code below. When someone orders with it, credit lands here.'}
                     </div>
                     {credit.expires_at && credit.balance_cents > 0 && (

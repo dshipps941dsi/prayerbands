@@ -471,8 +471,8 @@ function StorePageInner() {
             <div style={{ fontSize: 52 }}>🔁</div>
             <div style={{ flex: 1, minWidth: 260 }}>
               <span className="section-label" style={{ color: "#C8A96E" }}>Subscribe & Save</span>
-              <h3 className="playfair" style={{ fontSize: 30, fontWeight: 600, marginBottom: 10, color: "#F6F1E4" }}>A Band Delivered to Your Door, Every Month</h3>
-              <p className="lato" style={{ fontSize: 15, color: "#C9CFD6", lineHeight: 1.8, fontWeight: 300 }}>Make intercession a rhythm. Subscribe and save up to 25% — bands ship automatically, ready to give away. Cancel anytime.</p>
+              <h3 className="playfair" style={{ fontSize: 30, fontWeight: 600, marginBottom: 10, color: "#F6F1E4" }}>Band Credit, Every Month — Send Whenever</h3>
+              <p className="lato" style={{ fontSize: 15, color: "#C9CFD6", lineHeight: 1.8, fontWeight: 300 }}>Make intercession a rhythm. Subscribe and save up to 25% — credit lands in your account each cycle to send a band the moment someone needs prayer. Free shipping, never expires, cancel anytime.</p>
             </div>
             <button style={{ background: "#C8A96E", border: "none", color: "#0A1628", padding: "14px 36px", borderRadius: 4, fontFamily: "'Cinzel', serif", fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>View Plans →</button>
           </div>
