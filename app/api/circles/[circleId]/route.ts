@@ -113,9 +113,24 @@ export async function GET(
       i_prayed: !!user && intercessions.some(i => i.request_id === r.id && i.user_id === user.id)
     }))
 
+    // Resolve member identity (name + avatar) so the circle can show who's
+    // praying together. Request authors stay unattributed — a circle prayer is
+    // shown to everyone but not tied to a face.
+    const memberIds = (members ?? []).map((m: any) => m.user_id).filter(Boolean)
+    const profById: Record<string, { full_name: string | null; avatar_icon: string | null }> = {}
+    if (memberIds.length > 0) {
+      const { data: profs } = await admin.from('profiles').select('id, full_name, avatar_icon').in('id', memberIds)
+      ;(profs ?? []).forEach((p: any) => { profById[p.id] = { full_name: p.full_name ?? null, avatar_icon: p.avatar_icon ?? null } })
+    }
+    const membersEnriched = (members ?? []).map((m: any) => ({
+      ...m,
+      name: profById[m.user_id]?.full_name ?? null,
+      avatar: profById[m.user_id]?.avatar_icon ?? null,
+    }))
+
     return NextResponse.json({
       circle,
-      members: members ?? [],
+      members: membersEnriched,
       requests: requestsWithCounts,
       my_role: membership?.role ?? null,
       my_user_id: user?.id ?? null,

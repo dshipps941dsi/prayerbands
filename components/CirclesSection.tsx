@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
+import AvatarBadge from './AvatarBadge'
 
 interface CircleSummary {
   id: string
@@ -403,6 +404,7 @@ interface CircleReq { id: string; request_text: string; is_answered: boolean; in
 function CircleView({ circleId, onBack }: { circleId: string; onBack: () => void | Promise<void> }) {
   const [circle, setCircle] = useState<{ name: string; description: string | null; join_code: string } | null>(null)
   const [requests, setRequests] = useState<CircleReq[]>([])
+  const [members, setMembers] = useState<{ id: string; user_id: string; name: string | null; avatar: string | null }[]>([])
   const [isMember, setIsMember] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -429,6 +431,7 @@ function CircleView({ circleId, onBack }: { circleId: string; onBack: () => void
     const d = await res.json()
     setCircle(d.circle)
     setRequests(d.requests ?? [])
+    setMembers(d.members ?? [])
     setIsMember(!!d.is_member)
     setLoading(false)
   }, [circleId])
@@ -497,6 +500,19 @@ function CircleView({ circleId, onBack }: { circleId: string; onBack: () => void
       {showQR && <div style={{ marginBottom: 12 }}><CircleQR url={circleShareUrl} name={circle.name} /></div>}
 
       {circle.description && <p style={{ fontSize: '13px', color: MUTED, margin: '0 0 14px', lineHeight: 1.5 }}>{circle.description}</p>}
+
+      {members.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <div style={{ display: 'flex' }}>
+            {members.slice(0, 7).map((m, i) => (
+              <div key={m.id} style={{ marginLeft: i === 0 ? 0 : -8 }}>
+                <AvatarBadge icon={m.avatar} name={m.name} size={30} ring />
+              </div>
+            ))}
+          </div>
+          <span style={{ fontSize: 12, color: MUTED }}>{members.length} {members.length === 1 ? 'person' : 'people'} praying together</span>
+        </div>
+      )}
 
       {isMember && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
