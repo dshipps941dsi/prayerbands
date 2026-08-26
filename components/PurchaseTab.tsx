@@ -101,6 +101,45 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
   const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 600, color: GRAY, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }
   const stepBtn: React.CSSProperties = { width: 30, height: 30, borderRadius: '50%', border: `1.5px solid ${BORDER}`, background: SURFACE, color: DARK, fontSize: 17, lineHeight: 1, cursor: 'pointer', flexShrink: 0 }
 
+  // Lay the tiles out in rows of two so the size + add-to-cart panel can drop in
+  // directly beneath the row of whichever band was tapped — no scrolling to the
+  // bottom of the grid and back up for every pick.
+  const rows: Product[][] = []
+  for (let i = 0; i < inGroup.length; i += 2) rows.push(inGroup.slice(i, i + 2))
+
+  const configPanel = selected ? (
+    <div style={{ background: '#FFFBF2', border: `1.5px solid ${GOLD}`, borderRadius: 12, padding: '14px', marginBottom: 14 }}>
+      <div style={{ fontFamily: serif, fontSize: 14, fontWeight: 700, color: DARK, marginBottom: 12 }}>{selected.name} — ${selected.price.toFixed(2)}</div>
+      {selected.hasSizes && (
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Size</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {SIZES.filter(s => selected.sizes.includes(s.id)).map(s => {
+              const on = size === s.id
+              return (
+                <button key={s.id} onClick={() => setSize(s.id)}
+                  style={{ flex: 1, padding: '9px 6px', borderRadius: 9, border: `1.5px solid ${on ? GOLD : BORDER}`, background: on ? '#FFF8E7' : SURFACE, color: on ? DARK : GRAY, fontFamily: 'Georgia, serif', fontSize: 13, fontWeight: on ? 700 : 500, cursor: 'pointer' }}>
+                  {s.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <span style={{ fontSize: 13, color: GRAY, fontFamily: 'Georgia, serif' }}>Quantity</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <button onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Fewer" style={{ ...stepBtn, fontSize: 20 }}>−</button>
+          <span style={{ minWidth: 22, textAlign: 'center', fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK }}>{qty}</span>
+          <button onClick={() => setQty(q => Math.min(20, q + 1))} aria-label="More" style={stepBtn}>+</button>
+        </div>
+      </div>
+      <button onClick={addToCart} style={{ width: '100%', backgroundColor: GOLD, color: INK, border: 'none', borderRadius: 10, padding: 12, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+        + Add {qty > 1 ? `${qty} ` : ''}{selected.name}{qty > 1 ? ' bands' : ''} to cart
+      </button>
+    </div>
+  ) : null
+
   return (
     <div style={{ padding: '24px 20px 40px' }}>
       <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: DARK, marginBottom: 4 }}>Send a Prayer Band</div>
@@ -127,68 +166,42 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
         </div>
       )}
 
-      {/* Style tiles */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
-        {products.length === 0 && <div style={{ fontSize: 13, color: GRAY }}>Loading styles…</div>}
-        {inGroup.map(p => {
-          const on = p.slug === slug
-          const img = imgOf(p)
-          const broken = !img || failed.has(img)
-          return (
-            <div key={p.slug} onClick={() => { setSlug(p.slug); if (p.hasSizes && !p.sizes.includes(size)) setSize(p.sizes[0] || 'M') }}
-              style={{ background: on ? '#FFF8E7' : SURFACE, border: `1.5px solid ${on ? GOLD : BORDER}`, borderRadius: 12, padding: 8, cursor: 'pointer' }}>
-              <div style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', borderRadius: 8, overflow: 'hidden', background: CREAM, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {!broken ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={img} alt={p.name} onError={() => setFailed(prev => new Set(prev).add(img))} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 6, boxSizing: 'border-box' }} />
-                ) : (
-                  <div style={{ fontSize: 28, color: GRAY }}>✝</div>
-                )}
-                {!broken && (
-                  <button onClick={e => { e.stopPropagation(); setZoom(img) }} aria-label="View larger"
-                    style={{ position: 'absolute', top: 6, right: 6, width: 30, height: 30, borderRadius: '50%', border: 'none', background: 'rgba(10,10,15,0.5)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
-                  </button>
-                )}
-              </div>
-              <div style={{ fontFamily: serif, fontSize: 13.5, fontWeight: 700, color: DARK, lineHeight: 1.2 }}>{p.name}</div>
-              <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: GOLD, marginTop: 2 }}>${p.price.toFixed(2)}</div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Size */}
-      {selected?.hasSizes && (
-        <div style={{ marginBottom: 16 }}>
-          <label style={labelStyle}>Size</label>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {SIZES.filter(s => selected.sizes.includes(s.id)).map(s => {
-              const on = size === s.id
+      {/* Style tiles — tapping one drops its size + add-to-cart right below the
+          row it's in, so you never scroll to the bottom of the grid and back. */}
+      {products.length === 0 && <div style={{ fontSize: 13, color: GRAY, marginBottom: 18 }}>Loading styles…</div>}
+      {rows.map((row, ri) => (
+        <div key={`row-${ri}`}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            {row.map(p => {
+              const on = p.slug === slug
+              const img = imgOf(p)
+              const broken = !img || failed.has(img)
               return (
-                <button key={s.id} onClick={() => setSize(s.id)}
-                  style={{ flex: 1, padding: '9px 6px', borderRadius: 9, border: `1.5px solid ${on ? GOLD : BORDER}`, background: on ? '#FFF8E7' : SURFACE, color: on ? DARK : GRAY, fontFamily: 'Georgia, serif', fontSize: 13, fontWeight: on ? 700 : 500, cursor: 'pointer' }}>
-                  {s.label}
-                </button>
+                <div key={p.slug} onClick={() => { setSlug(on ? '' : p.slug); if (p.hasSizes && !p.sizes.includes(size)) setSize(p.sizes[0] || 'M') }}
+                  style={{ background: on ? '#FFF8E7' : SURFACE, border: `1.5px solid ${on ? GOLD : BORDER}`, borderRadius: 12, padding: 8, cursor: 'pointer' }}>
+                  <div style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', borderRadius: 8, overflow: 'hidden', background: CREAM, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {!broken ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={img} alt={p.name} onError={() => setFailed(prev => new Set(prev).add(img))} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 6, boxSizing: 'border-box' }} />
+                    ) : (
+                      <div style={{ fontSize: 28, color: GRAY }}>✝</div>
+                    )}
+                    {!broken && (
+                      <button onClick={e => { e.stopPropagation(); setZoom(img) }} aria-label="View larger"
+                        style={{ position: 'absolute', top: 6, right: 6, width: 30, height: 30, borderRadius: '50%', border: 'none', background: 'rgba(10,10,15,0.5)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ fontFamily: serif, fontSize: 13.5, fontWeight: 700, color: DARK, lineHeight: 1.2 }}>{p.name}</div>
+                  <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: GOLD, marginTop: 2 }}>${p.price.toFixed(2)}</div>
+                </div>
               )
             })}
           </div>
+          {selected && row.some(p => p.slug === selected.slug) && configPanel}
         </div>
-      )}
-
-      {/* Quantity + add to cart */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ fontSize: 13, color: GRAY, fontFamily: 'Georgia, serif' }}>Quantity</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <button onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Fewer" style={{ ...stepBtn, fontSize: 20 }}>−</button>
-          <span style={{ minWidth: 22, textAlign: 'center', fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK }}>{qty}</span>
-          <button onClick={() => setQty(q => Math.min(20, q + 1))} aria-label="More" style={stepBtn}>+</button>
-        </div>
-      </div>
-
-      <button onClick={addToCart} disabled={!selected} style={{ width: '100%', backgroundColor: 'transparent', color: DARK, border: `1.5px solid ${GOLD}`, borderRadius: 10, padding: 12, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: selected ? 'pointer' : 'default', opacity: selected ? 1 : 0.5 }}>
-        {selected ? `+ Add ${qty > 1 ? `${qty} ` : ''}${selected.name}${qty > 1 ? ' bands' : ''} to cart` : '+ Add to cart'}
-      </button>
+      ))}
 
       {/* Cart */}
       {cart.length > 0 && (
