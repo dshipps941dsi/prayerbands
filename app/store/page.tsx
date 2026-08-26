@@ -136,6 +136,10 @@ function StorePageInner() {
   const [sizes, setSizes] = useState<Record<string, string>>({});
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [bandFilter, setBandFilter] = useState<'all' | 'themed' | 'solid'>('all');
+  // Sticky auto-discount bar: hidden at the top, slides up once the shopper
+  // scrolls into the bands so the offer follows them without stealing top space.
+  const [showDealBar, setShowDealBar] = useState(false);
+  const [dealDismissed, setDealDismissed] = useState(false);
 
   useEffect(() => {
     fetch("/api/pricing").then(r => r.json()).then(d => { if (d.pricing) setPricing(d.pricing); }).catch(() => {});
@@ -181,6 +185,14 @@ function StorePageInner() {
   }, [searchParams]);
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 2800); };
+
+  // Reveal the sticky discount bar once the shopper has scrolled past the hero.
+  useEffect(() => {
+    const onScroll = () => setShowDealBar(window.scrollY > 240);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Fallback catalog (used only until db/products.sql is run) so the store never breaks.
   const fallback: Product[] = [
@@ -345,13 +357,8 @@ function StorePageInner() {
         </div>
 
         {storeTab === "buy" && (<>
-        {/* AUTO-DISCOUNT BANNER */}
-        <div style={{ background: "#0E1E38", color: "#F6F1E4", borderRadius: 12, padding: "11px 20px", marginBottom: 22, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap", textAlign: "center", border: "1px solid rgba(200,169,110,0.25)" }}>
-          <span style={{ fontSize: 20 }}>🎉</span>
-          <span className="lato" style={{ fontSize: 14, letterSpacing: "0.02em", lineHeight: 1.6 }}>
-            Buy more, save automatically — <strong style={{ color: "#E2C98A" }}>3+ bands ${tier3.toFixed(2)}/ea</strong> · <strong style={{ color: "#E2C98A" }}>5+ bands ${tier5.toFixed(2)}/ea</strong>. The discount applies right in your cart.
-          </span>
-        </div>
+        {/* Auto-discount now lives in a sticky footer bar (see end of page) so
+            it stays visible while browsing without eating the top of the page. */}
 
         {/* INDIVIDUAL BANDS */}
         <div style={{ marginBottom: 80 }}>
@@ -628,6 +635,17 @@ function StorePageInner() {
           </div>
         </div>
       )}
+      {/* Sticky auto-discount bar — slides up on scroll, buy tab only. */}
+      {storeTab === "buy" && (
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "#0E1E38", color: "#F6F1E4", borderTop: "1px solid rgba(200,169,110,0.35)", boxShadow: "0 -4px 20px rgba(10,22,40,0.28)", padding: "10px 44px calc(10px + env(safe-area-inset-bottom))", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, textAlign: "center", transform: (showDealBar && !dealDismissed) ? "translateY(0)" : "translateY(105%)", transition: "transform 0.3s ease" }}>
+          <span style={{ fontSize: 18 }}>🎉</span>
+          <span className="lato" style={{ fontSize: 13.5, letterSpacing: "0.02em", lineHeight: 1.4 }}>
+            Buy more, save automatically — <strong style={{ color: "#E2C98A" }}>3+ ${tier3.toFixed(2)}/ea</strong> · <strong style={{ color: "#E2C98A" }}>5+ ${tier5.toFixed(2)}/ea</strong>, applied in your cart.
+          </span>
+          <button onClick={() => setDealDismissed(true)} aria-label="Dismiss" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(246,241,228,0.6)", fontSize: 20, lineHeight: 1, cursor: "pointer", padding: 4 }}>×</button>
+        </div>
+      )}
+
       <SiteFooter />
     </div>
   );
