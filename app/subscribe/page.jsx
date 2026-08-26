@@ -1,8 +1,7 @@
 'use client'
 import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
-import SiteHeader from "../components/SiteHeader";
-import SiteFooter from "@/components/SiteFooter";
+import { useRouter } from "next/navigation";
 
 const PLANS = [
   {
@@ -77,6 +76,11 @@ const BAND_COLORS = [
 ];
 
 export default function SubscribePage() {
+  const router = useRouter();
+  const goBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) router.back();
+    else window.location.href = "/my-band";
+  };
   const [selected, setSelected] = useState("monthly");
   const [bandColor, setBandColor] = useState("sky");
   const [step, setStep] = useState(1); // 1 = plan, 2 = color, 3 = confirm
@@ -154,7 +158,12 @@ export default function SubscribePage() {
 
   return (
     <>
-      <SiteHeader />
+      <div style={{ position: "sticky", top: 0, zIndex: 20, display: "flex", alignItems: "center", padding: "calc(12px + env(safe-area-inset-top, 0px)) 16px 12px", background: "rgba(10,22,40,0.97)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderBottom: "1px solid rgba(200,169,110,0.25)" }}>
+        <button onClick={goBack} aria-label="Back" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#C8A96E", fontFamily: "'Cinzel', serif", fontSize: 13, fontWeight: 700, letterSpacing: "0.06em", cursor: "pointer", padding: 0 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+          Back
+        </button>
+      </div>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
 
@@ -1020,7 +1029,6 @@ export default function SubscribePage() {
           </div>
         </div>
       </div>
-      <SiteFooter />
     </>
   );
 }

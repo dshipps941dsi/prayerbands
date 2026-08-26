@@ -11,6 +11,9 @@ export default function manifest(): MetadataRoute.Manifest {
     // person's current band and redirects to it (or the dashboard / sign-in),
     // rather than opening the marketing home page.
     start_url: '/my-band',
+    // Whole site is in scope, so Settings, Subscribe, Store, etc. all stay
+    // inside the installed app window instead of kicking out to the browser.
+    scope: '/',
     display: 'standalone',
     background_color: '#0A1628',
     theme_color: '#0A1628',
