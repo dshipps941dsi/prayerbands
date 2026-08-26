@@ -259,6 +259,24 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
             style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 14px)', right: 16, width: 40, height: 40, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.12)', color: '#fff', fontSize: 20, cursor: 'pointer' }}>✕</button>
         </div>
       )}
+
+      {/* Sticky cart footer — flows in as bands are added. Sits below the band
+          nav's z-index, so it shows while you shop and tucks under the nav when
+          you scroll up to navigate. A spacer keeps content clear of it. */}
+      {cart.length > 0 && (
+        <>
+          <div style={{ height: 78 }} />
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 150, padding: '10px 16px calc(10px + env(safe-area-inset-bottom, 0px))', background: 'var(--pb-tab-bar, #0E1E38)', borderTop: '1px solid rgba(200,169,110,0.35)', boxShadow: '0 -6px 24px rgba(10,22,40,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ color: '#F5EDD8', lineHeight: 1.2 }}>
+              <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700 }}>🛒 {cartCount} {cartCount === 1 ? 'band' : 'bands'}</div>
+              <div style={{ fontSize: 12.5, opacity: 0.8 }}>${cartTotal.toFixed(2)}</div>
+            </div>
+            <button onClick={checkout} disabled={loading} style={{ flexShrink: 0, background: GOLD, color: INK, border: 'none', borderRadius: 10, padding: '11px 22px', fontFamily: serif, fontSize: 14.5, fontWeight: 700, cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+              {loading ? 'Starting…' : 'Checkout →'}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
