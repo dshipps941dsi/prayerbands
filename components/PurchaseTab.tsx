@@ -109,7 +109,10 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
 
   const configPanel = selected ? (
     <div style={{ background: '#FFFBF2', border: `1.5px solid ${GOLD}`, borderRadius: 12, padding: '14px', marginBottom: 14 }}>
-      <div style={{ fontFamily: serif, fontSize: 14, fontWeight: 700, color: DARK, marginBottom: 12 }}>{selected.name} — ${selected.price.toFixed(2)}</div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
+        <div style={{ fontFamily: serif, fontSize: 14, fontWeight: 700, color: DARK }}>{selected.name} — ${selected.price.toFixed(2)}</div>
+        <button onClick={() => setSlug('')} aria-label="Close" style={{ flexShrink: 0, background: 'none', border: 'none', color: GRAY, fontSize: 22, lineHeight: 1, cursor: 'pointer', padding: 0, marginTop: -3 }}>×</button>
+      </div>
       {selected.hasSizes && (
         <div style={{ marginBottom: 14 }}>
           <label style={labelStyle}>Size</label>
