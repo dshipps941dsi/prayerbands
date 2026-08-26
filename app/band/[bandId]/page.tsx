@@ -189,7 +189,7 @@ export default function BandPage() {
   const [journeyView, setJourneyView] = useState<'band' | 'reach'>('band')
   const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null; expires_at: string | null } | null>(null)
   const [refShared, setRefShared] = useState(false)
-  const [myProfile, setMyProfile] = useState<{ avatar_icon: string | null; full_name: string | null } | null>(null)
+  const [myProfile, setMyProfile] = useState<{ avatar_icon: string | null; full_name: string | null; avatar_initials: string | null; avatar_font: string | null } | null>(null)
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
   // Bands this person owns or holds, for the header switcher.
@@ -331,8 +331,8 @@ export default function BandPage() {
   useEffect(() => {
     if (!userId) { setMyProfile(null); return }
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-    supabase.from('profiles').select('avatar_icon, full_name').eq('id', userId).maybeSingle()
-      .then(({ data }) => setMyProfile(data ? { avatar_icon: (data as any).avatar_icon ?? null, full_name: (data as any).full_name ?? null } : null))
+    supabase.from('profiles').select('avatar_icon, full_name, avatar_initials, avatar_font').eq('id', userId).maybeSingle()
+      .then(({ data }) => setMyProfile(data ? { avatar_icon: (data as any).avatar_icon ?? null, full_name: (data as any).full_name ?? null, avatar_initials: (data as any).avatar_initials ?? null, avatar_font: (data as any).avatar_font ?? null } : null))
   }, [userId])
 
   // Referral credit, fetched only once someone opens their account tab.
@@ -859,7 +859,7 @@ export default function BandPage() {
           <div style={{ padding: '24px 20px' }}>
             {userId ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                <AvatarBadge icon={myProfile?.avatar_icon} name={myProfile?.full_name || (regs.length ? regs[regs.length - 1].user_name : '')} size={48} />
+                <AvatarBadge icon={myProfile?.avatar_icon} initials={myProfile?.avatar_initials} font={myProfile?.avatar_font} name={myProfile?.full_name || (regs.length ? regs[regs.length - 1].user_name : '')} size={48} />
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{myProfile?.full_name || 'Account'}</div>
                   <a href="/settings" style={{ fontFamily: body, fontSize: 12, color: GOLD, textDecoration: 'none' }}>Edit avatar &amp; profile →</a>

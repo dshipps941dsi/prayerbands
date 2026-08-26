@@ -5,13 +5,15 @@ import Link from "next/link";
 import { createBrowserClient } from "@supabase/ssr";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
-import { AVATAR_ICONS } from "@/lib/avatars";
+import { AVATAR_ICONS, AVATAR_FONTS, initialsFor, fontStack } from "@/lib/avatars";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [avatarInitials, setAvatarInitials] = useState<string>("single");
+  const [avatarFont, setAvatarFont] = useState<string>("serif");
   const [savingName, setSavingName] = useState(false);
   const [nameMsg, setNameMsg] = useState("");
   const [pw, setPw] = useState("");
@@ -33,9 +35,11 @@ export default function SettingsPage() {
         return;
       }
       setEmail(user.email || "");
-      const { data: profile } = await sb.from("profiles").select("full_name, email_notifications, avatar_icon").eq("id", user.id).maybeSingle();
+      const { data: profile } = await sb.from("profiles").select("full_name, email_notifications, avatar_icon, avatar_initials, avatar_font").eq("id", user.id).maybeSingle();
       setName(profile?.full_name || user.user_metadata?.full_name || "");
       setAvatar(profile?.avatar_icon ?? null);
+      setAvatarInitials(profile?.avatar_initials ?? "single");
+      setAvatarFont(profile?.avatar_font ?? "serif");
       setEmailNotif(profile?.email_notifications !== false);
       setLoading(false);
     })();
@@ -63,6 +67,19 @@ export default function SettingsPage() {
     if (!user) { window.location.href = "/signin"; return; }
     const { error } = await sb.from("profiles").update({ avatar_icon: icon }).eq("id", user.id);
     if (error) setAvatar(prev);
+  }
+
+  async function saveInitials(style: string) {
+    setAvatarInitials(style);
+    const sb = supabase();
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) await sb.from("profiles").update({ avatar_initials: style }).eq("id", user.id);
+  }
+  async function saveFont(fontKey: string) {
+    setAvatarFont(fontKey);
+    const sb = supabase();
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) await sb.from("profiles").update({ avatar_font: fontKey }).eq("id", user.id);
   }
 
   async function toggleNotif() {
@@ -147,12 +164,12 @@ export default function SettingsPage() {
               <div className="set-card-title">Profile</div>
               <label className="set-label">Your Avatar</label>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-                <div style={{ width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#C8A96E,#E2C98A)", color: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontSize: avatar ? 27 : 22, fontWeight: 700, flexShrink: 0, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
-                  {avatar || (name.trim()[0]?.toUpperCase() || "✝")}
+                <div style={{ width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#C8A96E,#E2C98A)", color: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontSize: avatar ? 27 : (initialsFor(name, avatarInitials).length >= 2 ? 19 : 22), fontWeight: 700, flexShrink: 0, fontFamily: avatar ? "'Cormorant Garamond', Georgia, serif" : fontStack(avatarFont) }}>
+                  {avatar || initialsFor(name, avatarInitials)}
                 </div>
-                <span style={{ fontSize: 13, color: "#5C6573" }}>{avatar ? "Tap it again to go back to your initial." : "Pick an icon, or keep your initial."}</span>
+                <span style={{ fontSize: 13, color: "#5C6573" }}>{avatar ? "Tap it again to go back to your initials." : "Pick an icon, or style your initials below."}</span>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, marginBottom: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, marginBottom: 14 }}>
                 {AVATAR_ICONS.map(ic => (
                   <button key={ic} onClick={() => saveAvatar(avatar === ic ? null : ic)} aria-label={`Avatar ${ic}`}
                     style={{ aspectRatio: "1", borderRadius: 10, border: `1.5px solid ${avatar === ic ? "#C8A96E" : "rgba(92,101,115,0.20)"}`, background: avatar === ic ? "#FFF8E7" : "#fff", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 1 }}>
@@ -160,6 +177,30 @@ export default function SettingsPage() {
                   </button>
                 ))}
               </div>
+
+              {/* Initials styling — only relevant when no icon is chosen. */}
+              {!avatar && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                    {([["single", "First initial"], ["double", "First + Last"]] as const).map(([val, lbl]) => (
+                      <button key={val} onClick={() => saveInitials(val)}
+                        style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: `1.5px solid ${avatarInitials === val ? "#C8A96E" : "rgba(92,101,115,0.20)"}`, background: avatarInitials === val ? "#FFF8E7" : "#fff", color: avatarInitials === val ? "#9A7A35" : "#5C6573", fontSize: 12.5, fontFamily: "'Inter', sans-serif", fontWeight: avatarInitials === val ? 700 : 400, cursor: "pointer" }}>
+                        {lbl}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                    {AVATAR_FONTS.map(f => (
+                      <button key={f.key} onClick={() => saveFont(f.key)}
+                        style={{ padding: "8px 4px 6px", borderRadius: 8, border: `1.5px solid ${avatarFont === f.key ? "#C8A96E" : "rgba(92,101,115,0.20)"}`, background: avatarFont === f.key ? "#FFF8E7" : "#fff", cursor: "pointer", textAlign: "center" }}>
+                        <div style={{ fontFamily: f.stack, fontSize: 18, fontWeight: 700, color: "#15223B", lineHeight: 1.1 }}>{initialsFor(name, avatarInitials)}</div>
+                        <div style={{ fontSize: 10, color: "#9A7A35", fontFamily: "'Inter', sans-serif", marginTop: 3 }}>{f.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <label className="set-label">Display Name</label>
               <input className="set-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
               <label className="set-label">Email</label>

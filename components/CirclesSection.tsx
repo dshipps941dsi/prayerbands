@@ -404,7 +404,7 @@ interface CircleReq { id: string; request_text: string; is_answered: boolean; in
 function CircleView({ circleId, onBack }: { circleId: string; onBack: () => void | Promise<void> }) {
   const [circle, setCircle] = useState<{ name: string; description: string | null; join_code: string } | null>(null)
   const [requests, setRequests] = useState<CircleReq[]>([])
-  const [members, setMembers] = useState<{ id: string; user_id: string; name: string | null; avatar: string | null }[]>([])
+  const [members, setMembers] = useState<{ id: string; user_id: string; name: string | null; avatar?: { icon: string | null; initials: string | null; font: string | null } }[]>([])
   const [isMember, setIsMember] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -506,7 +506,7 @@ function CircleView({ circleId, onBack }: { circleId: string; onBack: () => void
           <div style={{ display: 'flex' }}>
             {members.slice(0, 7).map((m, i) => (
               <div key={m.id} style={{ marginLeft: i === 0 ? 0 : -8 }}>
-                <AvatarBadge icon={m.avatar} name={m.name} size={30} ring />
+                <AvatarBadge {...(m.avatar || {})} name={m.name} size={30} ring />
               </div>
             ))}
           </div>

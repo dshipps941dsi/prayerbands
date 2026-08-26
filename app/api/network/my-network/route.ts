@@ -83,12 +83,15 @@ export async function GET(_req: NextRequest) {
     if (otherIds.size > 0) {
       const { data: profs } = await admin
         .from('profiles')
-        .select('id, full_name, email, avatar_icon')
+        .select('id, full_name, email, avatar_icon, avatar_initials, avatar_font')
         .in('id', Array.from(otherIds))
       ;(profs ?? []).forEach((p: any) => { profilesById[p.id] = p })
     }
     const nameOf = (id: string) => nameFromProfile(profilesById[id])
-    const avatarOf = (id: string) => (profilesById[id]?.avatar_icon ?? null) as string | null
+    const avatarOf = (id: string) => {
+      const p = profilesById[id]
+      return { icon: p?.avatar_icon ?? null, initials: p?.avatar_initials ?? null, font: p?.avatar_font ?? null }
+    }
 
     // Everyone whose requests could reach the viewer: accepted connections and
     // lineage people (band handoff). Track each author's relation + whether

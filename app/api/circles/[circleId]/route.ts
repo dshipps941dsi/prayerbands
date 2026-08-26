@@ -117,15 +117,15 @@ export async function GET(
     // praying together. Request authors stay unattributed — a circle prayer is
     // shown to everyone but not tied to a face.
     const memberIds = (members ?? []).map((m: any) => m.user_id).filter(Boolean)
-    const profById: Record<string, { full_name: string | null; avatar_icon: string | null }> = {}
+    const profById: Record<string, any> = {}
     if (memberIds.length > 0) {
-      const { data: profs } = await admin.from('profiles').select('id, full_name, avatar_icon').in('id', memberIds)
-      ;(profs ?? []).forEach((p: any) => { profById[p.id] = { full_name: p.full_name ?? null, avatar_icon: p.avatar_icon ?? null } })
+      const { data: profs } = await admin.from('profiles').select('id, full_name, avatar_icon, avatar_initials, avatar_font').in('id', memberIds)
+      ;(profs ?? []).forEach((p: any) => { profById[p.id] = p })
     }
     const membersEnriched = (members ?? []).map((m: any) => ({
       ...m,
       name: profById[m.user_id]?.full_name ?? null,
-      avatar: profById[m.user_id]?.avatar_icon ?? null,
+      avatar: { icon: profById[m.user_id]?.avatar_icon ?? null, initials: profById[m.user_id]?.avatar_initials ?? null, font: profById[m.user_id]?.avatar_font ?? null },
     }))
 
     return NextResponse.json({
