@@ -239,10 +239,21 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
 
       {error && <div style={{ color: '#C0392B', fontSize: 13, textAlign: 'center', marginTop: 14 }}>{error}</div>}
 
-      {/* Subscription lives on its own page — a small link, not a big card. */}
-      <div style={{ marginTop: 22, paddingTop: 18, borderTop: `1px solid ${BORDER}`, textAlign: 'center' }}>
-        <div style={{ fontSize: 13, color: GRAY, marginBottom: 6, fontFamily: 'Georgia, serif' }}>Want a new band to give every month?</div>
-        <a href="/subscribe" style={{ fontSize: 14, color: GOLD, fontFamily: serif, fontWeight: 700, textDecoration: 'none' }}>Become a monthly sender →</a>
+      {/* Subscription — a compact credit-model teaser; the full flow is /subscribe. */}
+      <div style={{ marginTop: 24, background: 'linear-gradient(135deg, var(--pb-tab-bar, #0E1E38), #132544)', borderRadius: 14, padding: '20px 20px 22px', color: '#F5EDD8', textAlign: 'center' }}>
+        <div style={{ fontSize: 22, marginBottom: 6 }}>🔁</div>
+        <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Give every month — send whenever</div>
+        <div style={{ fontFamily: 'Georgia, serif', fontSize: 13, opacity: 0.85, lineHeight: 1.55, marginBottom: 14, maxWidth: 340, marginLeft: 'auto', marginRight: 'auto' }}>
+          Subscribe and band credit lands in your account each cycle — send one the moment someone needs prayer, personalized then. Save up to 25%, free shipping, never expires.
+        </div>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+          {([['Monthly', '20% off'], ['Quarterly', '15% off'], ['Bundle', '25% off']] as const).map(([n, d]) => (
+            <div key={n} style={{ background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 20, padding: '5px 12px', fontSize: 11.5 }}>
+              <span style={{ fontWeight: 700 }}>{n}</span> · {d}
+            </div>
+          ))}
+        </div>
+        <a href="/subscribe" style={{ display: 'inline-block', background: GOLD, color: INK, borderRadius: 10, padding: '11px 24px', fontFamily: serif, fontSize: 14.5, fontWeight: 700, textDecoration: 'none' }}>See subscription plans →</a>
       </div>
 
       <div style={{ textAlign: 'center', marginTop: 18 }}>
