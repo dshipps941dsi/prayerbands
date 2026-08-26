@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
+import AvatarBadge from './AvatarBadge'
 
 // Turn whatever someone types into a band code into PB-XXXXX. The code is
 // printed on every band, so a partner can just read it aloud.
@@ -37,6 +38,7 @@ interface Connection {
   connection_id: string | null
   user_id: string
   name: string
+  avatar?: string | null
   band_id: string | null
   since: string | null
   relation?: Relation
@@ -46,6 +48,7 @@ interface PendingRequest {
   connection_id: string
   requester_id: string
   name: string
+  avatar?: string | null
   band_id: string | null
   created_at: string
 }
@@ -138,7 +141,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [pending, setPending] = useState<PendingRequest[]>([])
   const [myRequests, setMyRequests] = useState<NetworkRequest[]>([])
   const [othersReqs, setOthersReqs] = useState<OthersApiRequest[]>([])
-  const [muted, setMuted] = useState<{ id: string; name: string }[]>([])
+  const [muted, setMuted] = useState<{ id: string; name: string; avatar?: string | null }[]>([])
   const [circleRequests, setCircleRequests] = useState<CircleRequest[]>([])
   const [partnerFilter, setPartnerFilter] = useState<'all' | Relation>('all')
   const [othersFilter, setOthersFilter] = useState<'all' | OtherKind>('all')
@@ -558,7 +561,10 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       {/* Pending incoming requests */}
       {pending.map(p => (
         <div key={p.connection_id} style={{ backgroundColor: '#FFF8E7', border: `1px solid #F0D080`, borderRadius: 10, padding: '14px 16px', marginBottom: 10 }}>
-          <p style={{ fontSize: 14, color: DARK, margin: '0 0 10px 0' }}><strong>{p.name}</strong> wants to connect with you in prayer.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <AvatarBadge icon={p.avatar} name={p.name} size={32} />
+            <p style={{ fontSize: 14, color: DARK, margin: 0 }}><strong>{p.name}</strong> wants to connect with you in prayer.</p>
+          </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => respond(p.connection_id, 'accepted')} disabled={busy === p.connection_id} style={{ flex: 1, backgroundColor: GOLD, color: '#fff', border: 'none', borderRadius: 8, padding: '9px', fontSize: 13, fontFamily: 'Georgia, serif', fontWeight: 600, cursor: 'pointer' }}>{busy === p.connection_id ? '...' : 'Accept'}</button>
             <button onClick={() => respond(p.connection_id, 'declined')} disabled={busy === p.connection_id} style={{ flex: 1, backgroundColor: 'transparent', color: GRAY, border: `1px solid var(--pb-border, #D4C5B0)`, borderRadius: 8, padding: '9px', fontSize: 13, fontFamily: 'Georgia, serif', cursor: 'pointer' }}>Decline</button>
@@ -601,7 +607,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         return (
         <div key={c.connection_id ?? `lin-${c.user_id}`} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: BORDER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>🙏</div>
+            <AvatarBadge icon={c.avatar} name={c.name} size={36} />
             <p style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0, flex: 1 }}>{c.name}</p>
             {relationBadge(relationOf(c))}
           </div>

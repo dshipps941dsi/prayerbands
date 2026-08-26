@@ -83,11 +83,12 @@ export async function GET(_req: NextRequest) {
     if (otherIds.size > 0) {
       const { data: profs } = await admin
         .from('profiles')
-        .select('id, full_name, email')
+        .select('id, full_name, email, avatar_icon')
         .in('id', Array.from(otherIds))
       ;(profs ?? []).forEach((p: any) => { profilesById[p.id] = p })
     }
     const nameOf = (id: string) => nameFromProfile(profilesById[id])
+    const avatarOf = (id: string) => (profilesById[id]?.avatar_icon ?? null) as string | null
 
     // Everyone whose requests could reach the viewer: accepted connections and
     // lineage people (band handoff). Track each author's relation + whether
@@ -199,10 +200,10 @@ export async function GET(_req: NextRequest) {
     // with the author's relation for the Direct/Lineage badge.
     const others_requests = ((theirRequests ?? []) as any[])
       .filter(r => { const info = authorInfo[r.user_id]; return info && !mutedSet.has(r.user_id) && reaches(r.audience, info, r.user_id) })
-      .map(r => ({ ...decorate(r), author: nameOf(r.user_id), author_id: r.user_id, relation: authorInfo[r.user_id].relation, allow_comments: !!r.allow_comments, i_replied: iReplied.has(r.id) }))
+      .map(r => ({ ...decorate(r), author: nameOf(r.user_id), author_avatar: avatarOf(r.user_id), author_id: r.user_id, relation: authorInfo[r.user_id].relation, allow_comments: !!r.allow_comments, i_replied: iReplied.has(r.id) }))
 
     // Muted people, named, so the feed can offer an unmute.
-    const muted = Array.from(mutedSet).map(id => ({ id, name: nameOf(id) }))
+    const muted = Array.from(mutedSet).map(id => ({ id, name: nameOf(id), avatar: avatarOf(id) }))
 
     // Partners (people only; requests live in the Others' Requests feed).
     const connections = accepted.map((c: any) => {
@@ -211,6 +212,7 @@ export async function GET(_req: NextRequest) {
         connection_id: c.id,
         user_id: otherId,
         name: nameOf(otherId),
+        avatar: avatarOf(otherId),
         band_id: c.band_id,
         since: c.updated_at,
         relation: lineageIds.has(otherId) ? 'lineage' : 'direct',
@@ -225,6 +227,7 @@ export async function GET(_req: NextRequest) {
         connection_id: null,
         user_id: id,
         name: nameOf(id),
+        avatar: avatarOf(id),
         band_id: lineageBandByUser[id] ?? null,
         since: null,
         relation: 'lineage' as const,
@@ -234,6 +237,7 @@ export async function GET(_req: NextRequest) {
       connection_id: c.id,
       requester_id: c.requester_id,
       name: nameOf(c.requester_id),
+      avatar: avatarOf(c.requester_id),
       band_id: c.band_id,
       created_at: c.created_at,
     }))
