@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { QRCodeSVG } from 'qrcode.react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
 
 interface CircleSummary {
   id: string
@@ -311,16 +311,7 @@ function CreatePanel({ onCancel, onDone, onOpen }: { onCancel: () => void; onDon
           <button onClick={() => setShowQR(v => !v)} style={{ background: 'none', border: 'none', color: PRIMARY, fontSize: '12px', fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.04em', cursor: 'pointer', marginTop: '12px', padding: 0 }}>
             {showQR ? '▴ Hide QR code' : '▾ Show QR code for a flyer'}
           </button>
-          {showQR && (
-            <div style={{ marginTop: '10px', background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '16px' }}>
-              <div style={{ display: 'inline-block', background: '#fff', padding: '6px', borderRadius: '6px' }}>
-                <QRCodeSVG value={shareUrl} size={168} bgColor="#ffffff" fgColor="#15223B" level="M" />
-              </div>
-              <p style={{ fontSize: '12px', color: MUTED, margin: '10px 6px 0', lineHeight: 1.5 }}>
-                Point a phone camera here to join &ldquo;{name}&rdquo; — great for a flyer at church, a screen, or a group text.
-              </p>
-            </div>
-          )}
+          {showQR && <div style={{ marginTop: '10px' }}><CircleQR url={shareUrl} name={name} /></div>}
           <div>
             <button onClick={() => doCopy(shareUrl, 'link')} style={{ background: 'none', border: 'none', color: MUTED, fontSize: '12px', fontFamily: 'Georgia, serif', cursor: 'pointer', marginTop: '10px', textDecoration: 'underline' }}>
               {copied === 'link' ? 'Link copied!' : 'Or copy the link'}
@@ -355,6 +346,41 @@ function CreatePanel({ onCancel, onDone, onOpen }: { onCancel: () => void; onDon
           {loading ? 'Creating…' : 'Create circle'}
         </button>
       </div>
+    </div>
+  )
+}
+
+// Scannable circle invite: a crisp SVG on screen, plus a hidden high-res
+// canvas used to hand the user a printable PNG for a flyer.
+function CircleQR({ url, name }: { url: string; name: string }) {
+  const holder = useRef<HTMLDivElement>(null)
+  function download() {
+    const canvas = holder.current?.querySelector('canvas') as HTMLCanvasElement | null
+    if (!canvas) return
+    try {
+      const a = document.createElement('a')
+      const slug = (name || 'invite').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'invite'
+      a.download = `prayer-circle-${slug}.png`
+      a.href = canvas.toDataURL('image/png')
+      a.click()
+    } catch {}
+  }
+  return (
+    <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 10, padding: 16, textAlign: 'center' }}>
+      <div style={{ display: 'inline-block', background: '#fff', padding: 6, borderRadius: 6 }}>
+        <QRCodeSVG value={url} size={168} bgColor="#ffffff" fgColor="#15223B" level="M" marginSize={2} />
+      </div>
+      {/* Off-screen, high-resolution canvas — the source for the PNG download. */}
+      <div ref={holder} aria-hidden style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}>
+        <QRCodeCanvas value={url} size={1024} bgColor="#ffffff" fgColor="#15223B" level="M" marginSize={4} />
+      </div>
+      <p style={{ fontSize: '12px', color: MUTED, margin: '10px 6px 12px', lineHeight: 1.5 }}>
+        Point a phone camera here to join &ldquo;{name}&rdquo; — great for a flyer at church, a screen, or a group text.
+      </p>
+      <button onClick={download} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 9, padding: '9px 16px', fontSize: '12px', fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.04em', color: TEXT, cursor: 'pointer' }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Download QR (PNG)
+      </button>
     </div>
   )
 }
@@ -468,16 +494,7 @@ function CircleView({ circleId, onBack }: { circleId: string; onBack: () => void
         <div style={{ flex: 1 }} />
         <a href={`/circles/${circleId}`} style={{ fontSize: '11.5px', color: MUTED, fontFamily: 'Georgia, serif', textDecoration: 'none' }}>Manage &#8599;</a>
       </div>
-      {showQR && (
-        <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 10, padding: 16, textAlign: 'center', marginBottom: 12 }}>
-          <div style={{ display: 'inline-block', background: '#fff', padding: 6, borderRadius: 6 }}>
-            <QRCodeSVG value={circleShareUrl} size={168} bgColor="#ffffff" fgColor="#15223B" level="M" />
-          </div>
-          <p style={{ fontSize: 12, color: MUTED, margin: '10px 6px 0', lineHeight: 1.5 }}>
-            Point a phone camera here to join &ldquo;{circle.name}&rdquo; — great for a flyer at church, a screen, or a group text.
-          </p>
-        </div>
-      )}
+      {showQR && <div style={{ marginBottom: 12 }}><CircleQR url={circleShareUrl} name={circle.name} /></div>}
 
       {circle.description && <p style={{ fontSize: '13px', color: MUTED, margin: '0 0 14px', lineHeight: 1.5 }}>{circle.description}</p>}
 
