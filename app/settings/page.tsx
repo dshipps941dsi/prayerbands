@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createBrowserClient } from "@supabase/ssr";
-import SiteHeader from "../components/SiteHeader";
-import SiteFooter from "@/components/SiteFooter";
+import { useRouter } from "next/navigation";
 import { AVATAR_ICONS, AVATAR_FONTS, initialsFor, fontStack } from "@/lib/avatars";
 
 export default function SettingsPage() {
@@ -23,8 +22,15 @@ export default function SettingsPage() {
   const [emailNotif, setEmailNotif] = useState(true);
   const [savingNotif, setSavingNotif] = useState(false);
 
+  const router = useRouter();
   const supabase = () =>
     createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+
+  // Return into the app (the band experience) rather than the marketing site.
+  function goBack() {
+    if (typeof window !== "undefined" && window.history.length > 1) router.back();
+    else window.location.href = "/my-band";
+  }
 
   useEffect(() => {
     (async () => {
@@ -148,9 +154,11 @@ export default function SettingsPage() {
         .set-switch[data-on="true"] .set-knob { transform: translateX(22px); }
       `}</style>
 
-      <SiteHeader />
-
-      <section className="set-hero">
+      <section className="set-hero" style={{ position: "relative" }}>
+        <button onClick={goBack} aria-label="Back" style={{ position: "absolute", left: 16, top: "calc(16px + env(safe-area-inset-top, 0px))", display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.10)", border: "1px solid rgba(200,169,110,0.35)", borderRadius: 20, padding: "7px 14px", color: "#F5EDD8", fontFamily: "'Cinzel', serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", cursor: "pointer" }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+          Back
+        </button>
         <div className="set-eyebrow">✝ Your Account</div>
         <h1 className="set-title">Settings</h1>
       </section>
@@ -259,8 +267,6 @@ export default function SettingsPage() {
           </>
         )}
       </div>
-
-      <SiteFooter />
     </div>
   );
 }
