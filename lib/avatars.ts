@@ -2,9 +2,9 @@
 // without image uploads. Stored as the emoji itself on profiles.avatar_icon;
 // null falls back to initials. Keep the set tight and on-theme.
 export const AVATAR_ICONS = [
-  '✝️', '🕊️', '🙏', '🔥', '🕯️', '📖',
-  '⭐', '🌿', '❤️', '🐟', '👑', '🌻',
-  '☀️', '🌙', '🌊', '🏔️', '🌈', '⚓',
+  '✝️', '🕊️', '🙏', '🕯️', '📖', '⭐',
+  '🌿', '❤️', '🐟', '👑', '🌻', '☀️',
+  '🌙', '🌊', '🏔️', '⚓',
 ] as const
 
 export type AvatarIcon = typeof AVATAR_ICONS[number]
