@@ -287,7 +287,7 @@ function StorePageInner() {
         input, textarea, select { width: 100%; padding: 10px 14px; border: 1px solid rgba(92,101,115,0.30); border-radius: 4px; background: #FFFDF8; font-family: 'Inter', sans-serif; font-size: 14px; color: #15223B; outline: none; transition: border-color 0.2s; }
         input:focus, textarea:focus, select:focus { border-color: #C8A96E; }
         textarea { resize: vertical; min-height: 72px; }
-        .store-tabs { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; width: fit-content; max-width: 100%; margin: 0 auto 48px; padding: 6px; background: #FFFDF8; border: 1px solid rgba(200,169,110,0.40); border-radius: 999px; box-shadow: 0 3px 16px rgba(10,22,40,0.10); }
+        .store-tabs { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; width: fit-content; max-width: 100%; margin: 0 auto 24px; padding: 6px; background: #FFFDF8; border: 1px solid rgba(200,169,110,0.40); border-radius: 999px; box-shadow: 0 3px 16px rgba(10,22,40,0.10); }
         .store-tab { background: transparent; border: none; border-radius: 999px; padding: 12px 28px; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #5C6573; cursor: pointer; font-weight: 600; transition: color 0.18s, background 0.18s, box-shadow 0.18s; white-space: nowrap; }
         .store-tab:hover { color: #15223B; background: rgba(200,169,110,0.12); }
         .store-tab--active, .store-tab--active:hover { color: #F5EDD8; background: linear-gradient(135deg, #0E1E38 0%, #0A1628 100%); box-shadow: 0 3px 12px rgba(10,22,40,0.30); }
@@ -325,14 +325,13 @@ function StorePageInner() {
       )}
 
       {/* HERO */}
-      <section style={{ padding: "72px 32px 56px", textAlign: "center", background: "radial-gradient(ellipse 70% 80% at 50% 0%, rgba(200,169,110,0.16) 0%, transparent 60%), linear-gradient(180deg, #0A1628 0%, #0E1E38 55%, #0A1628 100%)", borderBottom: "1px solid rgba(200,169,110,0.34)" }}>
-        <span className="section-label" style={{ color: "#C8A96E" }}>The Store</span>
-        <h1 className="playfair" style={{ fontSize: "clamp(36px, 5vw, 60px)", fontWeight: 700, lineHeight: 1.15, marginBottom: 16, color: "#F5EDD8" }}>Send a Prayer Into<br /><em style={{ color: "#C8A96E" }}>the World</em></h1>
-        <div style={{ width: 48, height: 2, background: "linear-gradient(90deg, #C8A96E, #E2C98A)", margin: "0 auto 20px" }} />
-        <p className="lato" style={{ fontSize: 16, color: "rgba(245,237,216,0.78)", maxWidth: 480, margin: "0 auto", lineHeight: 1.8, fontWeight: 300 }}>Every band ships NFC-enabled and laser-engraved with a unique ID. One tap opens its digital journey.</p>
+      <section style={{ padding: "30px 32px 26px", textAlign: "center", background: "radial-gradient(ellipse 70% 80% at 50% 0%, rgba(200,169,110,0.16) 0%, transparent 60%), linear-gradient(180deg, #0A1628 0%, #0E1E38 55%, #0A1628 100%)", borderBottom: "1px solid rgba(200,169,110,0.34)" }}>
+        <span className="section-label" style={{ color: "#C8A96E", marginBottom: "6px" }}>The Store</span>
+        <h1 className="playfair" style={{ fontSize: "clamp(26px, 4vw, 42px)", fontWeight: 700, lineHeight: 1.1, marginBottom: 8, color: "#F5EDD8" }}>Send a Prayer Into <em style={{ color: "#C8A96E" }}>the World</em></h1>
+        <p className="lato" style={{ fontSize: 14, color: "rgba(245,237,216,0.72)", maxWidth: 440, margin: "0 auto", lineHeight: 1.55, fontWeight: 300 }}>Every band ships NFC-enabled and laser-engraved with a unique ID — one tap opens its digital journey.</p>
       </section>
 
-      <div style={{ maxWidth: 1160, margin: "0 auto", padding: "64px 32px" }}>
+      <div style={{ maxWidth: 1160, margin: "0 auto", padding: "24px 32px 64px" }}>
 
         {/* STORE TABS */}
         <div className="store-tabs">
@@ -347,8 +346,8 @@ function StorePageInner() {
 
         {storeTab === "buy" && (<>
         {/* AUTO-DISCOUNT BANNER */}
-        <div style={{ background: "#0E1E38", color: "#F6F1E4", borderRadius: 12, padding: "16px 24px", marginBottom: 32, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap", textAlign: "center", border: "1px solid rgba(200,169,110,0.25)" }}>
-          <span style={{ fontSize: 22 }}>🎉</span>
+        <div style={{ background: "#0E1E38", color: "#F6F1E4", borderRadius: 12, padding: "11px 20px", marginBottom: 22, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap", textAlign: "center", border: "1px solid rgba(200,169,110,0.25)" }}>
+          <span style={{ fontSize: 20 }}>🎉</span>
           <span className="lato" style={{ fontSize: 14, letterSpacing: "0.02em", lineHeight: 1.6 }}>
             Buy more, save automatically — <strong style={{ color: "#E2C98A" }}>3+ bands ${tier3.toFixed(2)}/ea</strong> · <strong style={{ color: "#E2C98A" }}>5+ bands ${tier5.toFixed(2)}/ea</strong>. The discount applies right in your cart.
           </span>
@@ -356,15 +355,14 @@ function StorePageInner() {
 
         {/* INDIVIDUAL BANDS */}
         <div style={{ marginBottom: 80 }}>
-          <div style={{ marginBottom: 28 }}>
+          <div style={{ marginBottom: 16 }}>
             <span className="section-label">Individual Bands</span>
-            <h2 className="playfair" style={{ fontSize: 36, fontWeight: 600, color: "#15223B" }}>For Personal Giving</h2>
-            <div style={{ width: 40, height: 1, background: "#C9CFD6", marginTop: 14 }} />
+            <h2 className="playfair" style={{ fontSize: 26, fontWeight: 600, color: "#15223B", marginTop: 2 }}>For Personal Giving</h2>
           </div>
 
           {/* Filter: themed vs solid color bands */}
           {hasThemed && (
-            <div style={{ display: "flex", gap: 8, marginBottom: 28, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
               {([["all", "All Bands"], ["themed", "Themed"], ["solid", "Solid Color"]] as const).map(([val, label]) => (
                 <button key={val} onClick={() => setBandFilter(val)} className="lato" style={{
                   padding: "8px 18px", borderRadius: 24, cursor: "pointer", fontSize: 12, letterSpacing: "0.04em",
