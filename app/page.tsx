@@ -224,7 +224,7 @@ export default function HomePage() {
     (typeof real === "number" && real > floor) ? compact(real) : compact(floor) + "+";
 
   const stats = [
-    { value: statValue(live?.stats?.prayers, 12400), label: "Prayers Shared" },
+    { value: statValue(live?.stats?.prayers, 12400), label: "Prayers Lifted" },
     { value: statValue(live?.stats?.people, 8200), label: "Lives Impacted" },
     { value: statValue(live?.stats?.countries, 32), label: "Countries" },
     { value: statValue(live?.stats?.cities, 640), label: "Cities" },

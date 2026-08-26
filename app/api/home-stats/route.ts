@@ -12,13 +12,27 @@ export async function GET() {
     process.env.SUPABASE_SERVICE_KEY!
   )
 
-  const { count: prayers } = await supabase
-    .from('registrations')
-    .select('*', { count: 'exact', head: true })
-    .not('prayer', 'is', null)
+  // "Prayers Lifted" counts prayer wherever it happens, not just prayers
+  // written on a band: band prayers + circle requests + journal/network prayers
+  // + every intercession (a 🙏 tap praying over someone else's need). A member
+  // with no band who prays over ten circle requests now counts as ten, not zero
+  // — because prayer, not hardware, is the point.
+  const [
+    { count: regPrayers },
+    { count: circleReq },
+    { count: netReq },
+    { count: circleInt },
+    { count: netInt },
+  ] = await Promise.all([
     // Registering without writing anything stores an empty string, which
-    // counted as a prayer and overstated the headline figure.
-    .neq('prayer', '')
+    // shouldn't count as a prayer.
+    supabase.from('registrations').select('*', { count: 'exact', head: true }).not('prayer', 'is', null).neq('prayer', ''),
+    supabase.from('circle_prayer_requests').select('*', { count: 'exact', head: true }),
+    supabase.from('prayer_network_requests').select('*', { count: 'exact', head: true }),
+    supabase.from('circle_intercessions').select('*', { count: 'exact', head: true }),
+    supabase.from('prayer_network_intercessions').select('*', { count: 'exact', head: true }),
+  ])
+  const prayers = (regPrayers || 0) + (circleReq || 0) + (netReq || 0) + (circleInt || 0) + (netInt || 0)
 
   const { count: bands } = await supabase
     .from('bands')
