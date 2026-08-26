@@ -6,7 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type CreditEntry = {
   delta_cents: number
-  reason: 'referral' | 'redemption' | 'adjustment' | 'expiry'
+  reason: 'referral' | 'redemption' | 'adjustment' | 'expiry' | 'subscription'
   created_at: string
   note: string | null
 }

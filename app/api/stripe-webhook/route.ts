@@ -242,6 +242,29 @@ const sessionShipping = (session: any) => {
 }
 
 // Creates the subscription record + its first shipment when checkout completes.
+// Credit-based subscriptions: each paid cycle drops store credit worth the full
+// retail value of the plan's bands into the subscriber's account. It never
+// expires; they redeem it whenever someone needs prayer (no auto-shipment).
+// Idempotent on the invoice/session id, so a replayed webhook can't double-credit.
+async function grantSubscriptionCredit(
+  supabase: any,
+  userId: string,
+  plan: any,
+  idemKey: string,
+): Promise<{ recorded: boolean; duplicate: boolean }> {
+  const { data: cfg } = await supabase.from('site_config').select('value').eq('key', 'band_price_single').maybeSingle()
+  const retail = parseInt(cfg?.value ?? '1199', 10) || 1199
+  const bands = plan?.bands_per_cycle || 1
+  return recordCredit(supabase, {
+    user_id: userId,
+    delta_cents: retail * bands,
+    reason: 'subscription',
+    stripe_session_id: idemKey,
+    expires_at: null,
+    note: `${plan?.name ?? 'Subscription'} — ${bands} band${bands === 1 ? '' : 's'} of credit`,
+  })
+}
+
 async function handleSubscriptionCheckout(
   stripe: Stripe,
   supabase: any,
@@ -296,28 +319,11 @@ async function handleSubscriptionCheckout(
       return
     }
 
-    // First shipment — we have the shipping address here at checkout time.
-    // Upsert on stripe_invoice_id so a duplicate event can't ship twice.
-    const { data: shipInserted } = await supabase
-      .from('subscription_shipments')
-      .upsert(
-        {
-          subscription_id: subRow.id,
-          user_id: userId,
-          status: 'pending',
-          bands_quantity: plan?.bands_per_cycle || 1,
-          band_color: bandColor,
-          band_design: bandDesign,
-          ...ship,
-          stripe_invoice_id: typeof session.invoice === 'string' ? session.invoice : null,
-        },
-        { onConflict: 'stripe_invoice_id', ignoreDuplicates: true },
-      )
-      .select('id')
-
-    // Only email on the first delivery — a replayed event inserts no new
-    // shipment row, so skip the activation emails to avoid duplicates.
-    if (shipInserted && shipInserted.length > 0) {
+    // First cycle: drop the plan's credit into their account (no auto-shipment —
+    // they redeem it whenever someone needs prayer). Idempotent on the invoice id.
+    const idemKey = typeof session.invoice === 'string' ? session.invoice : session.id
+    const credited = await grantSubscriptionCredit(supabase, userId, plan, idemKey)
+    if (credited.recorded && !credited.duplicate) {
       await sendSubscriptionEmails(session, plan, bandColor)
     }
   } catch (err) {
@@ -345,43 +351,14 @@ async function handleInvoicePaid(stripe: Stripe, supabase: any, invoice: Stripe.
 
     const { data: plan } = await supabase
       .from('subscription_plans')
-      .select('bands_per_cycle')
+      .select('name, bands_per_cycle')
       .eq('id', sub.plan_id)
       .single()
 
-    // Upsert on stripe_invoice_id so a retried/replayed renewal invoice can't
-    // create a duplicate shipment for the same billing cycle. ignoreDuplicates
-    // means a repeat delivery is DO NOTHING and returns no row — we use that to
-    // skip the period update + renewal email so retries stay fully no-op.
-    const { data: shipInserted, error: shipErr } = await supabase
-      .from('subscription_shipments')
-      .upsert(
-        {
-          subscription_id: sub.id,
-          user_id: sub.user_id,
-          status: 'pending',
-          bands_quantity: plan?.bands_per_cycle || 1,
-          band_color: sub.band_color,
-          band_design: sub.band_design,
-          shipping_name: sub.shipping_name,
-          shipping_line1: sub.shipping_line1,
-          shipping_line2: sub.shipping_line2,
-          shipping_city: sub.shipping_city,
-          shipping_state: sub.shipping_state,
-          shipping_zip: sub.shipping_zip,
-          shipping_country: sub.shipping_country,
-          stripe_invoice_id: invoice.id,
-        },
-        { onConflict: 'stripe_invoice_id', ignoreDuplicates: true },
-      )
-      .select('id')
-
-    if (shipErr) {
-      console.error('Renewal shipment upsert error:', shipErr)
-      return
-    }
-    // Already processed this invoice — nothing new inserted, so stop here.
-    if (!shipInserted || shipInserted.length === 0) return
+    // Credit this cycle — idempotent on the invoice id, so a replayed renewal
+    // can't double-credit. Nothing ships; the subscriber redeems as needs arise.
+    const credited = await grantSubscriptionCredit(supabase, sub.user_id, plan, invoice.id as string)
+    if (!credited.recorded || credited.duplicate) return
 
     // Advance the stored cycle window.
     const subscription = await stripe.subscriptions.retrieve(subId)
@@ -395,25 +372,6 @@ async function handleInvoicePaid(stripe: Stripe, supabase: any, invoice: Stripe.
         next_ship_date: period.end,
       })
       .eq('id', sub.id)
-
-    try {
-      const { Resend } = await import('resend')
-      const resend = new Resend(process.env.RESEND_API_KEY)
-      await resend.emails.send({
-        from: 'Prayer Bands <bands@prayerbands.com>',
-        to: ['dshipps941@gmail.com'],
-        subject: `✝ Subscription renewal — ${plan?.bands_per_cycle || 1}x ${sub.band_color} band to ship`,
-        html: `<div style="font-family:sans-serif;max-width:400px;margin:0 auto;padding:24px">
-          <h2 style="color:#1a5fa0">Subscription Renewal ✝</h2>
-          <p><strong>Ship to:</strong> ${sub.shipping_name || 'N/A'}</p>
-          <p><strong>Bands:</strong> ${plan?.bands_per_cycle || 1} × ${sub.band_color}</p>
-          <p><strong>Plan:</strong> ${sub.plan_id}</p>
-          <a href="https://dashboard.stripe.com/subscriptions" style="background:#2b7bc4;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px">View in Stripe →</a>
-        </div>`,
-      })
-    } catch (e) {
-      console.error('Renewal email error:', e)
-    }
   } catch (err) {
     console.error('Invoice processing error:', err)
   }

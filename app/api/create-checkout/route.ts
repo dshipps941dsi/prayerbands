@@ -107,6 +107,18 @@ export async function POST(req: NextRequest) {
       buyerId = null
     }
 
+    // Active subscribers get free shipping on every redemption — a subscriber perk.
+    if (buyerId && shippingCost > 0) {
+      const { data: activeSub } = await admin
+        .from('subscriptions')
+        .select('id')
+        .eq('user_id', buyerId)
+        .eq('status', 'active')
+        .limit(1)
+        .maybeSingle()
+      if (activeSub) shippingCost = 0
+    }
+
     // Referral: confirm the code maps to a real profile, then (if a promo code
     // is configured) apply the discount. When a discount is set, Stripe forbids
     // allow_promotion_codes, so we choose one or the other.
