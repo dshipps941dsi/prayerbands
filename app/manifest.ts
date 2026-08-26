@@ -7,7 +7,10 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Prayer Bands',
     short_name: 'Prayer Bands',
     description: "Carry His Word around the world. Tap your band for a daily verse and follow its journey.",
-    start_url: '/',
+    // Launch straight into the band experience: /my-band resolves the signed-in
+    // person's current band and redirects to it (or the dashboard / sign-in),
+    // rather than opening the marketing home page.
+    start_url: '/my-band',
     display: 'standalone',
     background_color: '#0A1628',
     theme_color: '#0A1628',
