@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
 
 interface CircleSummary {
   id: string
@@ -248,6 +249,7 @@ function CreatePanel({ onCancel, onDone, onOpen }: { onCancel: () => void; onDon
   const [error, setError] = useState('')
   const [created, setCreated] = useState<{ id: string; join_code: string } | null>(null)
   const [copied, setCopied] = useState('')
+  const [showQR, setShowQR] = useState(false)
 
   async function create() {
     if (!name.trim()) return
@@ -268,6 +270,18 @@ function CreatePanel({ onCancel, onDone, onOpen }: { onCancel: () => void; onDon
     if (await copyText(value)) { setCopied(which); setTimeout(() => setCopied(''), 1600) }
   }
 
+  // Share the circle invite the easy way: the phone's share sheet covers
+  // socials, email, and messages in one tap, with the join link pre-written.
+  // Desktop copies the message.
+  async function shareCircle() {
+    const msg = `Join me in prayer in "${name}" on Prayer Bands 🙏 Tap to join: ${shareUrl}`
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try { await navigator.share({ title: 'Join my prayer circle', text: msg }) } catch {}
+      return
+    }
+    if (await copyText(msg)) { setCopied('share'); setTimeout(() => setCopied(''), 1600) }
+  }
+
   const shareUrl = created
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/circles?code=${created.join_code}`
     : ''
@@ -286,11 +300,30 @@ function CreatePanel({ onCancel, onDone, onOpen }: { onCancel: () => void; onDon
             <div style={{ fontSize: '11px', color: MUTED, marginTop: '3px' }}>{copied === 'code' ? 'Copied!' : 'Tap to copy'}</div>
           </button>
           <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-            <button onClick={() => doCopy(shareUrl, 'link')} style={{ flex: 1, background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: '9px', padding: '11px', fontSize: '12px', fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: TEXT, cursor: 'pointer' }}>
-              {copied === 'link' ? 'Link copied!' : 'Copy link'}
+            <button onClick={shareCircle} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: PRIMARY, color: ON_PRIMARY, border: 'none', borderRadius: '9px', padding: '11px', fontSize: '12px', fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              {copied === 'share' ? 'Copied!' : 'Share'}
             </button>
-            <button onClick={() => onOpen(created.id)} style={{ flex: 1, background: PRIMARY, color: ON_PRIMARY, border: 'none', borderRadius: '9px', padding: '11px', fontSize: '12px', fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>
+            <button onClick={() => onOpen(created.id)} style={{ flex: 1, background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: '9px', padding: '11px', fontSize: '12px', fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: TEXT, cursor: 'pointer' }}>
               Open circle
+            </button>
+          </div>
+          <button onClick={() => setShowQR(v => !v)} style={{ background: 'none', border: 'none', color: PRIMARY, fontSize: '12px', fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.04em', cursor: 'pointer', marginTop: '12px', padding: 0 }}>
+            {showQR ? '▴ Hide QR code' : '▾ Show QR code for a flyer'}
+          </button>
+          {showQR && (
+            <div style={{ marginTop: '10px', background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '16px' }}>
+              <div style={{ display: 'inline-block', background: '#fff', padding: '6px', borderRadius: '6px' }}>
+                <QRCodeSVG value={shareUrl} size={168} bgColor="#ffffff" fgColor="#15223B" level="M" />
+              </div>
+              <p style={{ fontSize: '12px', color: MUTED, margin: '10px 6px 0', lineHeight: 1.5 }}>
+                Point a phone camera here to join &ldquo;{name}&rdquo; — great for a flyer at church, a screen, or a group text.
+              </p>
+            </div>
+          )}
+          <div>
+            <button onClick={() => doCopy(shareUrl, 'link')} style={{ background: 'none', border: 'none', color: MUTED, fontSize: '12px', fontFamily: 'Georgia, serif', cursor: 'pointer', marginTop: '10px', textDecoration: 'underline' }}>
+              {copied === 'link' ? 'Link copied!' : 'Or copy the link'}
             </button>
           </div>
         </div>
@@ -350,6 +383,19 @@ function CircleView({ circleId, onBack }: { circleId: string; onBack: () => void
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
+  const [showQR, setShowQR] = useState(false)
+
+  const circleShareUrl = circle ? `${typeof window !== 'undefined' ? window.location.origin : ''}/circles?code=${circle.join_code}` : ''
+  async function shareThisCircle() {
+    if (!circle) return
+    const msg = `Join me in prayer in "${circle.name}" on Prayer Bands 🙏 Tap to join: ${circleShareUrl}`
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try { await navigator.share({ title: 'Join my prayer circle', text: msg }) } catch {}
+      return
+    }
+    if (await copyText(msg)) { setShareCopied(true); setTimeout(() => setShareCopied(false), 1500) }
+  }
 
   const loadCircle = useCallback(async () => {
     const res = await fetch(`/api/circles/${circleId}`)
@@ -405,15 +451,33 @@ function CircleView({ circleId, onBack }: { circleId: string; onBack: () => void
     <div style={{ marginBottom: '32px' }}>
       <PanelHeader title={circle.name} onBack={onBack} />
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
         <button
           onClick={async () => { if (await copyText(circle.join_code)) { setCopied(true); setTimeout(() => setCopied(false), 1500) } }}
           style={{ background: '#FFF8E7', border: `1px solid #F0D080`, borderRadius: 20, padding: '5px 12px', fontSize: 12, fontFamily: 'monospace', letterSpacing: '0.1em', color: PRIMARY, fontWeight: 700, cursor: 'pointer' }}
         >
           {circle.join_code}{copied ? ' · Copied' : ''}
         </button>
+        <button onClick={shareThisCircle} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: PRIMARY, color: ON_PRIMARY, border: 'none', borderRadius: 20, padding: '6px 13px', fontSize: 12, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, cursor: 'pointer' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          {shareCopied ? 'Copied' : 'Share'}
+        </button>
+        <button onClick={() => setShowQR(v => !v)} style={{ background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 20, padding: '6px 12px', fontSize: 12, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, color: TEXT, cursor: 'pointer' }}>
+          {showQR ? 'Hide QR' : 'QR'}
+        </button>
+        <div style={{ flex: 1 }} />
         <a href={`/circles/${circleId}`} style={{ fontSize: '11.5px', color: MUTED, fontFamily: 'Georgia, serif', textDecoration: 'none' }}>Manage &#8599;</a>
       </div>
+      {showQR && (
+        <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 10, padding: 16, textAlign: 'center', marginBottom: 12 }}>
+          <div style={{ display: 'inline-block', background: '#fff', padding: 6, borderRadius: 6 }}>
+            <QRCodeSVG value={circleShareUrl} size={168} bgColor="#ffffff" fgColor="#15223B" level="M" />
+          </div>
+          <p style={{ fontSize: 12, color: MUTED, margin: '10px 6px 0', lineHeight: 1.5 }}>
+            Point a phone camera here to join &ldquo;{circle.name}&rdquo; — great for a flyer at church, a screen, or a group text.
+          </p>
+        </div>
+      )}
 
       {circle.description && <p style={{ fontSize: '13px', color: MUTED, margin: '0 0 14px', lineHeight: 1.5 }}>{circle.description}</p>}
 
