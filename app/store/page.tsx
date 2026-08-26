@@ -122,7 +122,9 @@ function BandCarousel({ images, color, icon, tag }: { images: string[]; color: s
 function StorePageInner() {
   const searchParams = useSearchParams();
   const [referral, setReferral] = useState<PendingReferral | null>(null);
-  const [storeTab, setStoreTab] = useState<'buy' | 'subscribe' | 'community'>('buy');
+  const [storeTab, setStoreTab] = useState<'buy' | 'subscribe' | 'bulk' | 'community'>('buy');
+  const [bulkQty, setBulkQty] = useState<Record<string, number>>({});
+  const [bulkLoading, setBulkLoading] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [customColor, setCustomColor] = useState(COLORS[0].name);
@@ -271,6 +273,44 @@ function StorePageInner() {
   const shipping = qualifiesFreeShip ? 0 : (pricing["shipping_cost_standard"] ?? 299) / 100;
   const total = subtotal + shipping;
 
+  // ── Bulk order builder ──────────────────────────────────────────────────
+  // Giftable band styles with sizes (skip the personalized "custom" band and
+  // packs). Quantities keyed by `${slug}|${size}`. Pricing mirrors the server:
+  // the multi-band tier is keyed on the combined multi-eligible quantity, so a
+  // big assorted order earns the same 3+/5+ discount the cart does.
+  const bulkStyles = bandProducts.filter(p => p.hasSizes && p.slug !== "custom");
+  const bulkProdBySlug: Record<string, Product> = Object.fromEntries(bandProducts.map(p => [p.slug, p]));
+  const bulkItems = Object.entries(bulkQty)
+    .filter(([, q]) => q > 0)
+    .map(([k, q]) => { const [slug, size] = k.split("|"); return { slug, size, qty: q }; });
+  const bulkDiscountQty = bulkItems.reduce((s, i) => s + (bulkProdBySlug[i.slug]?.multiDiscount ? i.qty : 0), 0);
+  const bulkTierPct = (tiers?: { min_qty: number; percent: number }[]) =>
+    (tiers ?? []).filter(t => bulkDiscountQty >= t.min_qty).reduce((m, t) => Math.max(m, t.percent), 0);
+  const bulkUnit = (p: Product) => p.multiDiscount ? p.price * (1 - bulkTierPct(p.discountTiers) / 100) : p.price;
+  const bulkBands = bulkItems.reduce((s, i) => s + i.qty, 0);
+  const bulkSubtotal = bulkItems.reduce((s, i) => { const p = bulkProdBySlug[i.slug]; return s + (p ? bulkUnit(p) : 0) * i.qty; }, 0);
+  const bulkSavings = bulkItems.reduce((s, i) => { const p = bulkProdBySlug[i.slug]; return s + (p && p.multiDiscount ? (p.price - bulkUnit(p)) * i.qty : 0); }, 0);
+  const bulkFreeShip = Math.round(bulkSubtotal * 100) >= FREE_SHIPPING_MIN_CENTS;
+  const bulkShip = bulkFreeShip ? 0 : (pricing["shipping_cost_standard"] ?? 299) / 100;
+  const bulkTotal = bulkSubtotal + bulkShip;
+  const setBulkCell = (slug: string, size: string, val: string) => setBulkQty(prev => {
+    const n = { ...prev }; const k = `${slug}|${size}`;
+    const q = Math.max(0, Math.min(999, Math.floor(Number(val) || 0)));
+    if (q) n[k] = q; else delete n[k];
+    return n;
+  });
+  async function bulkCheckout() {
+    if (!bulkBands) return;
+    setBulkLoading(true);
+    track('begin_checkout', { currency: 'USD', value: bulkSubtotal, items: bulkItems.map(i => ({ item_id: i.slug, quantity: i.qty })) });
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: bulkItems.map(i => ({ id: i.slug, qty: i.qty, size: i.size })), returnTo: '/store', referralCode: referral?.code || '' }),
+    });
+    const data = await res.json();
+    if (data.url) { window.location.href = data.url; } else { showToast('Something went wrong — please try again'); setBulkLoading(false); }
+  }
+
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", background: "#F6F1E4", color: "#2A3344", minHeight: "100vh" }}>
       <style>{`
@@ -349,8 +389,9 @@ function StorePageInner() {
         <div className="store-tabs">
           {([
             { id: "buy", label: "Buy a Band" },
-            { id: "subscribe", label: "Subscribe to Bands" },
-            { id: "community", label: "Bands for Communities" },
+            { id: "subscribe", label: "Subscribe" },
+            { id: "bulk", label: "Bulk Order" },
+            { id: "community", label: "Communities" },
           ] as const).map(t => (
             <button key={t.id} onClick={() => setStoreTab(t.id)} className={`store-tab ${storeTab === t.id ? "store-tab--active" : ""}`}>{t.label}</button>
           ))}
@@ -477,6 +518,53 @@ function StorePageInner() {
             <button style={{ background: "#C8A96E", border: "none", color: "#0A1628", padding: "14px 36px", borderRadius: 4, fontFamily: "'Cinzel', serif", fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>View Plans →</button>
           </div>
         </a>
+        )}
+
+        {storeTab === "bulk" && (
+          <div style={{ maxWidth: 720, margin: "0 auto" }}>
+            <div style={{ marginBottom: 20 }}>
+              <span className="section-label">Bulk Order</span>
+              <h2 className="playfair" style={{ fontSize: 26, fontWeight: 600, color: "#15223B", marginTop: 2 }}>Build an assorted order</h2>
+              <p className="lato" style={{ fontSize: 14, color: "#5C6573", marginTop: 8, lineHeight: 1.6, fontWeight: 300 }}>
+                Enter quantities by style and size — perfect for handing out 20–30 at a group, church, or event. Ships to you; you distribute. The multi-band discount applies automatically (3+ ${tier3.toFixed(2)}/ea · 5+ ${tier5.toFixed(2)}/ea), and shipping is free over $35.
+              </p>
+            </div>
+
+            {bulkStyles.length === 0 && <p className="lato" style={{ color: "#5C6573", fontStyle: "italic" }}>Loading styles…</p>}
+
+            <div style={{ display: "grid", gap: 10, marginBottom: 20 }}>
+              {bulkStyles.map(p => (
+                <div key={p.slug} style={{ background: "#FFFDF8", border: "1px solid rgba(200,169,110,0.30)", borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="playfair" style={{ fontSize: 15.5, fontWeight: 600, color: "#15223B" }}>{p.name}</div>
+                    <div className="lato" style={{ fontSize: 12, color: "#9A7A35" }}>${bulkUnit(p).toFixed(2)} each{p.multiDiscount && bulkTierPct(p.discountTiers) > 0 ? " · bulk price" : ""}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    {SIZES.filter(s => p.sizes.includes(s.id)).map(s => (
+                      <label key={s.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                        <span className="lato" style={{ fontSize: 11, color: "#5C6573", fontWeight: 600 }}>{s.id}</span>
+                        <input type="number" inputMode="numeric" min={0} value={bulkQty[`${p.slug}|${s.id}`] || ""} onChange={e => setBulkCell(p.slug, s.id, e.target.value)} placeholder="0"
+                          style={{ width: 52, textAlign: "center", padding: "8px 4px", borderRadius: 8, border: "1px solid rgba(10,22,40,0.15)", fontSize: 15, fontFamily: "'Inter', sans-serif", color: "#15223B", background: "#fff", outline: "none" }} />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: "#ECEEF1", borderRadius: 10, padding: "18px 20px", border: "1px solid rgba(92,101,115,0.15)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span className="lato" style={{ fontSize: 13, color: "#5C6573" }}>Bands</span><span className="lato" style={{ fontSize: 13, color: "#15223B", fontWeight: 700 }}>{bulkBands}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span className="lato" style={{ fontSize: 13, color: "#5C6573" }}>Subtotal</span><span className="lato" style={{ fontSize: 13, color: "#15223B", fontWeight: 700 }}>${bulkSubtotal.toFixed(2)}</span></div>
+              {bulkSavings > 0.001 && <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span className="lato" style={{ fontSize: 13, color: "#2F7D5B" }}>Multi-band savings</span><span className="lato" style={{ fontSize: 13, color: "#2F7D5B", fontWeight: 700 }}>−${bulkSavings.toFixed(2)}</span></div>}
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span className="lato" style={{ fontSize: 13, color: "#5C6573" }}>Shipping</span><span className="lato" style={{ fontSize: 13, color: bulkFreeShip ? "#2F7D5B" : "#5C6573", fontWeight: bulkFreeShip ? 700 : 400 }}>{bulkFreeShip ? "FREE" : `$${bulkShip.toFixed(2)}`}</span></div>
+              <div style={{ borderTop: "1px solid rgba(92,101,115,0.20)", paddingTop: 12, marginTop: 8, display: "flex", justifyContent: "space-between" }}><span className="playfair" style={{ fontSize: 18, fontWeight: 600, color: "#15223B" }}>Total</span><span className="playfair" style={{ fontSize: 22, fontWeight: 700, color: "#9A7A35" }}>${bulkTotal.toFixed(2)}</span></div>
+            </div>
+
+            <button className="checkout-btn" disabled={bulkLoading || bulkBands === 0} onClick={bulkCheckout} style={{ marginTop: 14 }}>
+              {bulkLoading ? "Redirecting…" : bulkBands === 0 ? "Add quantities above" : `Checkout ${bulkBands} band${bulkBands === 1 ? "" : "s"} — $${bulkTotal.toFixed(2)} →`}
+            </button>
+            <p className="lato" style={{ fontSize: 11, textAlign: "center", color: "#5C6573", marginTop: 12, letterSpacing: "0.05em" }}>Ships to you to hand out · Secure checkout via Stripe</p>
+          </div>
         )}
 
         {storeTab === "community" && (<>
