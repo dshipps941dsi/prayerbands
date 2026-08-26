@@ -5,11 +5,13 @@ import Link from "next/link";
 import { createBrowserClient } from "@supabase/ssr";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { AVATAR_ICONS } from "@/lib/avatars";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [avatar, setAvatar] = useState<string | null>(null);
   const [savingName, setSavingName] = useState(false);
   const [nameMsg, setNameMsg] = useState("");
   const [pw, setPw] = useState("");
@@ -31,8 +33,9 @@ export default function SettingsPage() {
         return;
       }
       setEmail(user.email || "");
-      const { data: profile } = await sb.from("profiles").select("full_name, email_notifications").eq("id", user.id).maybeSingle();
+      const { data: profile } = await sb.from("profiles").select("full_name, email_notifications, avatar_icon").eq("id", user.id).maybeSingle();
       setName(profile?.full_name || user.user_metadata?.full_name || "");
+      setAvatar(profile?.avatar_icon ?? null);
       setEmailNotif(profile?.email_notifications !== false);
       setLoading(false);
     })();
@@ -48,6 +51,18 @@ export default function SettingsPage() {
     if (!error) { await sb.auth.updateUser({ data: { full_name: name.trim() } }); setNameMsg("saved"); setTimeout(() => setNameMsg(""), 2500); }
     else setNameMsg(error.message || "Could not save.");
     setSavingName(false);
+  }
+
+  // Saves immediately on pick (optimistic). Tapping the current one clears it,
+  // falling back to the initial.
+  async function saveAvatar(icon: string | null) {
+    const prev = avatar;
+    setAvatar(icon);
+    const sb = supabase();
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = "/signin"; return; }
+    const { error } = await sb.from("profiles").update({ avatar_icon: icon }).eq("id", user.id);
+    if (error) setAvatar(prev);
   }
 
   async function toggleNotif() {
@@ -130,6 +145,21 @@ export default function SettingsPage() {
           <>
             <div className="set-card">
               <div className="set-card-title">Profile</div>
+              <label className="set-label">Your Avatar</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                <div style={{ width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#C8A96E,#E2C98A)", color: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontSize: avatar ? 27 : 22, fontWeight: 700, flexShrink: 0, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                  {avatar || (name.trim()[0]?.toUpperCase() || "✝")}
+                </div>
+                <span style={{ fontSize: 13, color: "#5C6573" }}>{avatar ? "Tap it again to go back to your initial." : "Pick an icon, or keep your initial."}</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6, marginBottom: 16 }}>
+                {AVATAR_ICONS.map(ic => (
+                  <button key={ic} onClick={() => saveAvatar(avatar === ic ? null : ic)} aria-label={`Avatar ${ic}`}
+                    style={{ aspectRatio: "1", borderRadius: 10, border: `1.5px solid ${avatar === ic ? "#C8A96E" : "rgba(92,101,115,0.20)"}`, background: avatar === ic ? "#FFF8E7" : "#fff", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 1 }}>
+                    {ic}
+                  </button>
+                ))}
+              </div>
               <label className="set-label">Display Name</label>
               <input className="set-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
               <label className="set-label">Email</label>
