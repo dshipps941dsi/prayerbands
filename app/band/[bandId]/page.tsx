@@ -317,17 +317,20 @@ export default function BandPage() {
     fetch(url).then(r => r.json()).then(data => setStatus(data)).catch(() => setStatus({ screen: 'error' }))
   }, [bandId, userId])
 
-  // Scroll direction drives the chrome: scroll UP reveals the bottom nav and
-  // hides the top header; scroll DOWN does the opposite. The header transform is
-  // derived from navHidden (they're always inverse), so one bit tracks both. Nav
-  // starts hidden / header shown, so the first view is clean. Threshold avoids
-  // flicker on tiny scrolls.
+  // Scroll direction drives the chrome, matching the thumb: scrolling DOWN the
+  // page (content rising, heading toward the bottom) reveals the bottom nav and
+  // hides the top header — like pulling the footer up. Scrolling back UP toward
+  // the top brings the header back and tucks the nav away. At the very top the
+  // header is always shown / nav hidden, so it can never get stuck off-screen.
+  // The header transform is derived from navHidden (always inverse), so this one
+  // bit tracks both. Threshold avoids flicker on tiny scrolls.
   useEffect(() => {
     let lastY = typeof window !== 'undefined' ? window.scrollY : 0
     const onScroll = () => {
       const y = window.scrollY
+      if (y <= 4) { setNavHidden(true); lastY = y; return } // at top: header shown, nav tucked
       if (Math.abs(y - lastY) < 8) return
-      setNavHidden(y > lastY)
+      setNavHidden(y < lastY) // scrolling up -> hide nav / show header; down -> show nav / hide header
       lastY = y
     }
     window.addEventListener('scroll', onScroll, { passive: true })
