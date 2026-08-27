@@ -380,12 +380,14 @@ export default function BandPage() {
     // no band or account needed, and carries the sharer's referral code so a
     // shared verse can also earn credit if they later get a band.
     const link = `${origin}/verse?v=${verseSlug(v.ref)}${credit?.code ? `&ref=${encodeURIComponent(credit.code)}` : ''}`
-    const message = `"${v.text}" — ${v.ref}\n\nA daily verse from Prayer Bands 🙏 ${link}`
+    // Keep the link out of the text — the share sheet appends `url` itself, so
+    // putting it in both shows it twice.
+    const message = `"${v.text}" — ${v.ref}\n\nA daily verse from Prayer Bands 🙏`
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       try { await navigator.share({ title: v.ref, text: message, url: link }) } catch {}
       return
     }
-    try { await navigator.clipboard.writeText(message) } catch {}
+    try { await navigator.clipboard.writeText(`${message} ${link}`) } catch {}
     setVerseShared(true); setTimeout(() => setVerseShared(false), 1800)
   }
 
