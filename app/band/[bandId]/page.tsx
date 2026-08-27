@@ -17,7 +17,7 @@ import SuccessCard from './screens/SuccessCard'
 import { COUNTRIES, subdivisionsFor } from '@/lib/locations'
 import { publicName } from '@/lib/public-name'
 import { track } from '@/lib/analytics'
-import { CATEGORIES, getVerseForCategory } from '@/lib/verses'
+import { CATEGORIES, getVerseForCategory, verseSlug } from '@/lib/verses'
 import { recordVerseView, type VerseWalk } from '@/lib/verseWalk'
 import WalkLine from '@/components/band/WalkLine'
 
@@ -376,9 +376,13 @@ export default function BandPage() {
   async function shareVerse() {
     const v = getVerseForCategory(verseCategory)
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://prayerbands.com'
-    const message = `"${v.text}" — ${v.ref}\n\nA daily verse from Prayer Bands 🙏 ${origin}`
+    // Land recipients on the public verse page — it shows this exact verse with
+    // no band or account needed, and carries the sharer's referral code so a
+    // shared verse can also earn credit if they later get a band.
+    const link = `${origin}/verse?v=${verseSlug(v.ref)}${credit?.code ? `&ref=${encodeURIComponent(credit.code)}` : ''}`
+    const message = `"${v.text}" — ${v.ref}\n\nA daily verse from Prayer Bands 🙏 ${link}`
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      try { await navigator.share({ title: v.ref, text: message }) } catch {}
+      try { await navigator.share({ title: v.ref, text: message, url: link }) } catch {}
       return
     }
     try { await navigator.clipboard.writeText(message) } catch {}

@@ -121,6 +121,18 @@ export const CATEGORIES = [
   { id: 'relationships', label: 'Relationships', icon: '🤝' },
 ]
 
+// A stable, URL-safe id for a verse, derived from its reference. Refs are
+// unique in VERSES, so this round-trips: "Jeremiah 29:11" -> "jeremiah-29-11",
+// "Psalm 23:1-3" -> "psalm-23-1-3". Used by the public /verse share page.
+export function verseSlug(ref: string): string {
+  return ref.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
+export function getVerseBySlug(slug: string): Verse | null {
+  if (!slug) return null
+  return VERSES.find(v => verseSlug(v.ref) === slug) || null
+}
+
 export function getDailyVerse(): Verse {
   const start = new Date(new Date().getFullYear(), 0, 0)
   const now = new Date()
