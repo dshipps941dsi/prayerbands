@@ -11,6 +11,7 @@ import CustomerDetail from './_components/CustomerDetail'
 import ActivityFeed from './_components/ActivityFeed'
 import StockSync from './_components/StockSync'
 import DedicationsManager from './_components/DedicationsManager'
+import TeamManager from './_components/TeamManager'
 import { parseOrderItems, orderItemLabel } from '@/lib/fulfillment'
 
 // Prayer Bands brand palette
@@ -46,7 +47,7 @@ type View =
   | 'orders' | 'sales' | 'shipments' | 'inventory'
   | 'recent' | 'prayers' | 'flagged' | 'dedications'
   | 'bands' | 'products' | 'pricing' | 'themes' | 'generate'
-  | 'customers'
+  | 'customers' | 'team'
 
 const SECTIONS: { key: string; label: string; views: { id: View; label: string }[] }[] = [
   { key: 'orders', label: 'Orders', views: [
@@ -70,6 +71,7 @@ const SECTIONS: { key: string; label: string; views: { id: View; label: string }
   ] },
   { key: 'people', label: 'People', views: [
     { id: 'customers', label: 'Customers' },
+    { id: 'team', label: 'Team' },
   ] },
 ]
 
@@ -954,6 +956,8 @@ export default function AdminPage() {
         )}
 
         {crmUserId && <CustomerDetail userId={crmUserId} onClose={() => setCrmUserId(null)} />}
+
+        {activeTab === 'team' && <TeamManager C={C} />}
 
         {/* BAND MANAGEMENT TAB — bands, products, pricing */}
         {/* Catalog views are top-level now: the old nested sub-bar was a
