@@ -106,6 +106,8 @@ export default function AdminPage() {
   const [filter, setFilter] = useState('pending')
   const [markingShipped, setMarkingShipped] = useState<number | null>(null)
   const [assigningBands, setAssigningBands] = useState<number | null>(null)
+  const [refundVal, setRefundVal] = useState<Record<number, string>>({})
+  const [refundBusy, setRefundBusy] = useState<number | null>(null)
   const [availableBands, setAvailableBands] = useState<number>(0)
   const [selectedBands, setSelectedBands] = useState<{[orderId: number]: string[]}>({})
   const [trackingInputs, setTrackingInputs] = useState<{[orderId: number]: string}>({})
@@ -311,6 +313,30 @@ export default function AdminPage() {
       await loadStats()
     } finally {
       setAssigningBands(null)
+    }
+  }
+
+  // Refund an order in whole or part via Stripe. Confirms first — it moves money.
+  async function refundOrder(order: Order) {
+    const raw = (refundVal[order.id] || '').trim()
+    const amountCents = raw ? Math.round(parseFloat(raw) * 100) : null
+    if (raw && (!Number.isFinite(amountCents!) || amountCents! <= 0)) { alert('Enter a valid dollar amount, or leave blank to refund the full remaining amount.'); return }
+    const label = amountCents ? `$${(amountCents / 100).toFixed(2)}` : 'the full remaining amount'
+    if (!confirm(`Refund ${label} to ${order.customer_email || 'the buyer'}? This moves money via Stripe and can't be undone here.`)) return
+    setRefundBusy(order.id)
+    try {
+      const res = await fetch('/api/admin/refund-order', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id, amountCents }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { alert(d.error || 'Refund failed.'); return }
+      alert(`Refunded $${(d.refunded_cents / 100).toFixed(2)}.` + (d.fully_refunded ? ' Order marked cancelled.' : ` $${(d.remaining_cents / 100).toFixed(2)} still refundable.`))
+      setRefundVal(prev => ({ ...prev, [order.id]: '' }))
+      await loadOrders()
+      await loadStats()
+    } finally {
+      setRefundBusy(null)
     }
   }
 
@@ -801,6 +827,33 @@ export default function AdminPage() {
                                 {markingShipped === order.id ? 'Sending...' : 'Mark as Shipped'}
                               </button>
                             </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Refund (admin): whole or partial — for shortfalls, gifts
+                          gone wrong, or cancellations. Available even after shipping. */}
+                      {order.status !== 'cancelled' && (
+                        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${C.borderSilver}`, display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '12px', color: C.secondary }}>Refund:</span>
+                          <input
+                            value={refundVal[order.id] || ''}
+                            onChange={e => setRefundVal(prev => ({ ...prev, [order.id]: e.target.value }))}
+                            placeholder="Amount $ (blank = full)"
+                            inputMode="decimal"
+                            style={{ width: '160px', padding: '7px 10px', border: `1px solid ${C.borderSilver}`, borderRadius: '6px', fontSize: '13px' }}
+                          />
+                          <button
+                            onClick={() => refundOrder(order)}
+                            disabled={refundBusy === order.id}
+                            style={{ padding: '7px 14px', background: 'transparent', color: '#B4423A', border: '1px solid #B4423A', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}
+                          >
+                            {refundBusy === order.id ? 'Refunding…' : 'Refund'}
+                          </button>
+                          {Array.isArray(order.order_metadata?.refunds) && order.order_metadata.refunds.length > 0 && (
+                            <span style={{ fontSize: '12px', color: C.secondary }}>
+                              Already refunded ${((order.order_metadata.refunds.reduce((s: number, r: any) => s + (r.amount || 0), 0)) / 100).toFixed(2)}
+                            </span>
                           )}
                         </div>
                       )}
