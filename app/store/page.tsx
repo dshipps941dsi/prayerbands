@@ -6,6 +6,8 @@ import SiteNav from "@/components/SiteNav";
 import { track } from "@/lib/analytics";
 import SiteFooter from "@/components/SiteFooter";
 import { FREE_SHIPPING_MIN_CENTS, amountToFreeShipping } from "@/lib/shipping";
+import { track } from "@/lib/analytics";
+import { readGaIds } from "@/lib/ga4";
 
 type PendingReferral = { code: string; referrerUserId?: string };
 
@@ -311,7 +313,7 @@ function StorePageInner() {
     track('begin_checkout', { currency: 'USD', value: bulkSubtotal, items: bulkItems.map(i => ({ item_id: i.slug, quantity: i.qty })) });
     const res = await fetch('/api/create-checkout', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: bulkItems.map(i => ({ id: i.slug, qty: i.qty, size: i.size })), returnTo: '/store', referralCode: referral?.code || '' }),
+            body: JSON.stringify({ ...readGaIds(), items: bulkItems.map(i => ({ id: i.slug, qty: i.qty, size: i.size })), returnTo: '/store', referralCode: referral?.code || '' }),
     });
     const data = await res.json();
     if (data.url) { window.location.href = data.url; } else { showToast('Something went wrong — please try again'); setBulkLoading(false); }
@@ -741,7 +743,7 @@ function StorePageInner() {
                   track('begin_checkout', { currency: 'USD', value: subtotal, items: cart.map(c => ({ item_id: c.id, item_name: c.name, quantity: c.qty, price: lineUnit(c) })) })
                   const res = await fetch('/api/create-checkout', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ items: cart.map(c => ({ id: c.id, qty: c.qty, size: c.size })), customMessage: customMsg || '', verse: customVerse || '', color: customColor || 'Amber Gold', replaces: replaces || '', referralCode: referral?.code || '', recipientName: isGift ? giftName.trim() : '' })
+                                        body: JSON.stringify({ ...readGaIds(), items: cart.map(c => ({ id: c.id, qty: c.qty, size: c.size })), customMessage: customMsg || '', verse: customVerse || '', color: customColor || 'Amber Gold', replaces: replaces || '', referralCode: referral?.code || '', recipientName: isGift ? giftName.trim() : '' })
                   })
                   const data = await res.json()
                   if (data.url) { window.location.href = data.url } else { showToast('Something went wrong — please try again'); setCheckoutLoading(false) }

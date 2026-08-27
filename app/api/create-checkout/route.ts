@@ -22,6 +22,8 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { customMessage, verse, color, email, replaces } = body
+    const gaClientId = typeof body.gaClientId === 'string' ? body.gaClientId.slice(0, 64) : ''
+    const gaSessionId = typeof body.gaSessionId === 'string' ? body.gaSessionId.slice(0, 32) : ''
     // Where Stripe's "back"/cancel returns to. Relative same-site path only
     // (must start with a single "/"), so it can't be pointed off-site; defaults
     // to the store. The mini store passes the band page so cancelling returns there.
@@ -250,6 +252,8 @@ export async function POST(req: NextRequest) {
           credit_applied_cents: creditApplied > 0 ? String(creditApplied) : '',
           credit_user_id: creditUserId || '',
           referral_code: referrerUserId ? referralCode : '',
+          ga_client_id: gaClientId,
+          ga_session_id: gaSessionId,
           // Explicit gift recipient from our own cart — the reliable source for
           // who the band ships to, rather than hoping the buyer typed the
           // recipient into Stripe's shipping name field.
