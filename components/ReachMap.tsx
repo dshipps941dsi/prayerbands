@@ -52,17 +52,18 @@ export default function ReachMap({ bandId }: { bandId: string }) {
       })
     })
 
-    // Colour each branch (everyone who descends from one depth-0 giver) its own
-    // hue, so the lines read as separate connections instead of one gold web.
-    // The band's own journey (the chain) stays gold. A branch's colour is keyed
-    // to its depth-0 root, so every generation under the same giver matches.
+    // Colour each branch its own hue so the lines read as separate connections
+    // instead of one gold web. A "branch" is a direct recipient (depth 1) and
+    // everyone under them — so each person you gave to gets a colour, and their
+    // sub-downline matches it. The band's own journey (the chain) stays gold.
     const BRANCH_COLORS = ['#2B6CB0', '#2B8C5A', '#B8328A', '#D97706', '#6B46C1', '#0E7490', '#DC2626', '#B45309']
     const parentOf = new Map<string, string>()
     data.edges.filter(e => e.kind === 'gift').forEach(e => parentOf.set(e.to, e.from))
     const depthOf = new Map(data.nodes.map(n => [n.id, n.depth]))
+    // Walk up to the depth-1 ancestor (the direct recipient that starts the branch).
     const branchRoot = (id: string): string => {
       let cur = id
-      while (parentOf.has(cur) && (depthOf.get(cur) ?? 0) > 0) cur = parentOf.get(cur)!
+      while (parentOf.has(cur) && (depthOf.get(cur) ?? 0) > 1) cur = parentOf.get(cur)!
       return cur
     }
     const branchColorByRoot = new Map<string, string>()
