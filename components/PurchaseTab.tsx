@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { FREE_SHIPPING_MIN_CENTS, amountToFreeShipping } from '@/lib/shipping'
 
 // A mini store on the band page: pick a theme or a colour, see the band image
 // (tap to expand), choose a size and quantity, and add it to a cart. Mix styles
@@ -64,6 +65,9 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
   const selected = products.find(p => p.slug === slug) || null
   const cartCount = cart.reduce((s, c) => s + c.qty, 0)
   const cartTotal = cart.reduce((s, c) => s + c.qty * c.price, 0)
+  const cartCents = Math.round(cartTotal * 100)
+  const freeShip = cartCents >= FREE_SHIPPING_MIN_CENTS
+  const toFreeShip = amountToFreeShipping(cartCents) / 100
 
   function addToCart() {
     if (!selected) return
@@ -210,6 +214,17 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
       {cart.length > 0 && (
         <div style={{ marginTop: 20, background: SURFACE, border: `1px solid ${GOLD}`, borderRadius: 14, padding: 16 }}>
           <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, marginBottom: 10 }}>Your order</div>
+
+          {/* Free-shipping progress — a nudge toward $35. */}
+          <div style={{ background: freeShip ? 'rgba(47,125,91,0.10)' : '#FBF3E0', border: `1px solid ${freeShip ? 'rgba(47,125,91,0.35)' : 'rgba(200,169,110,0.40)'}`, borderRadius: 8, padding: '10px 12px', marginBottom: 12 }}>
+            <div style={{ fontSize: 12.5, textAlign: 'center', color: freeShip ? '#2F7D5B' : '#9A7A35', fontWeight: 600, fontFamily: 'Georgia, serif' }}>
+              {freeShip ? "🎉 You've unlocked free shipping!" : <>Add <strong>${toFreeShip.toFixed(2)}</strong> more for free shipping 🚚</>}
+            </div>
+            <div style={{ height: 5, background: 'rgba(92,101,115,0.15)', borderRadius: 99, marginTop: 8, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${Math.min(100, (cartCents / FREE_SHIPPING_MIN_CENTS) * 100)}%`, background: freeShip ? '#2F7D5B' : GOLD, borderRadius: 99, transition: 'width 0.3s ease' }} />
+            </div>
+          </div>
+
           {cart.map(c => (
             <div key={c.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: `1px solid ${BORDER}` }}>
               <div style={{ flex: 1, minWidth: 0 }}>
