@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { isTeamAdmin } from '@/lib/team';
+import { isTeamMember } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { variantForSlug, parseOrderItems, reconcilePack, type OrderItem, type PackBand } from '@/lib/fulfillment'
 
@@ -10,7 +10,7 @@ const ADMIN_EMAIL = 'dshipps941@gmail.com'
 async function isAdmin(): Promise<boolean> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  return await isTeamAdmin(user)
+  return await isTeamMember(user)
 }
 
 function normalizeBandId(raw: unknown): string {

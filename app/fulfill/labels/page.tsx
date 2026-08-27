@@ -63,7 +63,8 @@ export default function LabelsPage() {
   useEffect(() => {
     ;(async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user?.email === ADMIN_EMAIL) { setAuthorized(true); load() }
+      const role = await fetch('/api/me/role').then(r => r.json()).then(d => d.role).catch(() => null)
+      if (role === 'admin' || role === 'fulfillment') { setAuthorized(true); load() }
       else { setAuthorized(false); setDeniedAs(user?.email ?? null); setLoading(false) }
     })()
   }, [load])

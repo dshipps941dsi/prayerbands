@@ -76,8 +76,9 @@ export default function AdminContactsPage() {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user?.email === ADMIN_EMAIL) setAuthorized(true);
+    supabase.auth.getUser().then(async () => {
+      const role = await fetch('/api/me/role').then(r => r.json()).then(d => d.role).catch(() => null);
+      if (role === 'admin') setAuthorized(true);
       else { window.location.href = "/signin"; }
     });
   }, []);

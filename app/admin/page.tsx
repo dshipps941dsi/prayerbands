@@ -205,7 +205,8 @@ export default function AdminPage() {
 
   async function checkAuth() {
     const { data: { user } } = await supabase.auth.getUser()
-    if (user?.email === ADMIN_EMAIL) {
+    const role = await fetch('/api/me/role').then(r => r.json()).then(d => d.role).catch(() => null)
+    if (role === 'admin') {
       setAuthorized(true)
       setDeniedAs(null)
       loadAll()

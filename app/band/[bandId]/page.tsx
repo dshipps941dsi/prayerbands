@@ -190,6 +190,7 @@ export default function BandPage() {
   const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null; expires_at: string | null } | null>(null)
   const [refShared, setRefShared] = useState(false)
   const [myProfile, setMyProfile] = useState<{ avatar_icon: string | null; full_name: string | null; avatar_initials: string | null; avatar_font: string | null } | null>(null)
+  const [myRole, setMyRole] = useState<string | null>(null)
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
   // Bands this person owns or holds, for the header switcher.
@@ -333,6 +334,7 @@ export default function BandPage() {
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     supabase.from('profiles').select('avatar_icon, full_name, avatar_initials, avatar_font').eq('id', userId).maybeSingle()
       .then(({ data }) => setMyProfile(data ? { avatar_icon: (data as any).avatar_icon ?? null, full_name: (data as any).full_name ?? null, avatar_initials: (data as any).avatar_initials ?? null, avatar_font: (data as any).avatar_font ?? null } : null))
+    fetch('/api/me/role').then(r => r.json()).then(d => setMyRole(d.role ?? null)).catch(() => setMyRole(null))
   }, [userId])
 
   // Referral credit, fetched only once someone opens their account tab.
@@ -902,9 +904,9 @@ export default function BandPage() {
                 <a href="/dashboard" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
                   📊 My Dashboard
                 </a>
-                {userEmail === 'dshipps941@gmail.com' && (
-                  <a href="/admin" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: `1px solid ${GOLD}`, fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
-                    ⚙️ Admin Control Centre
+                {(myRole === 'admin' || myRole === 'fulfillment') && (
+                  <a href={myRole === 'admin' ? '/admin' : '/fulfill'} style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: `1px solid ${GOLD}`, fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
+                    {myRole === 'admin' ? '⚙️ Admin Control Centre' : '📦 Fulfillment'}
                   </a>
                 )}
                 <a href="/settings" style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>

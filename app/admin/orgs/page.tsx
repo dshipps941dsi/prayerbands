@@ -29,7 +29,8 @@ export default function AdminOrgs() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user || user.email !== ADMIN_EMAIL) {
+      const role = await fetch('/api/me/role').then(r => r.json()).then(d => d.role).catch(() => null)
+      if (role !== 'admin') {
         window.location.href = '/signin'
         return
       }

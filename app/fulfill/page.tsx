@@ -84,7 +84,8 @@ export default function FulfillPage() {
   useEffect(() => {
     ;(async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user?.email === ADMIN_EMAIL) { setAuthorized(true); loadOrders() }
+      const role = await fetch('/api/me/role').then(r => r.json()).then(d => d.role).catch(() => null)
+      if (role === 'admin' || role === 'fulfillment') { setAuthorized(true); loadOrders() }
       else { setAuthorized(false); setDeniedAs(user?.email ?? null); setLoading(false) }
     })()
   }, [loadOrders])

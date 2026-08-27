@@ -76,11 +76,12 @@ export default function HandoutPage() {
   useEffect(() => {
     ;(async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user?.email === ADMIN_EMAIL) {
+      const role = await fetch('/api/me/role').then(r => r.json()).then(d => d.role).catch(() => null)
+      if (role === 'admin' || role === 'fulfillment') {
         setAuthorized(true)
         // Bands you give out are credited to you unless you say otherwise, so the
         // common case needs no typing and cannot be forgotten.
-        setUplineEmail(prev => prev || user.email || '')
+        setUplineEmail(prev => prev || user?.email || '')
       } else { setAuthorized(false); setDeniedAs(user?.email ?? null) }
       setLoading(false)
     })()
