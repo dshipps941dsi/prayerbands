@@ -790,7 +790,7 @@ export default function AdminPage() {
                           {!isShipped && bands.length < qty && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
                               <div style={{ fontSize: '12px', color: C.secondary }}>
-                                {bands.length} of {qty} band{qty > 1 ? 's' : ''} assigned \u- tap each band you're shipping, or type its ID:
+                                {bands.length} of {qty} band{qty > 1 ? 's' : ''} assigned - tap each band you're shipping, or type its ID:
                               </div>
                               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                                 <button
@@ -816,7 +816,7 @@ export default function AdminPage() {
                                   disabled={scanBusy === order.id || !(scanVal[order.id] || '').trim()}
                                   style={{ padding: '8px 16px', background: C.gold, color: C.navy, border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontWeight: '600' }}
                                 >
-                                  {scanBusy === order.id ? 'Adding\u...' : 'Assign Band'}
+                                  {scanBusy === order.id ? 'Adding...' : 'Assign Band'}
                                 </button>
                                 <button
                                   onClick={() => assignBands(order)}
@@ -824,7 +824,7 @@ export default function AdminPage() {
                                   title="Auto-pick matching bands from stock instead of scanning"
                                   style={{ padding: '8px 14px', background: 'transparent', color: C.secondary, border: `1px solid ${C.borderSilver}`, borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}
                                 >
-                                  {assigningBands === order.id ? 'Auto\u...' : 'Auto-fill'}
+                                  {assigningBands === order.id ? 'Auto...' : 'Auto-fill'}
                                 </button>
                               </div>
                             </div>
