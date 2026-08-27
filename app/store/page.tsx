@@ -125,6 +125,7 @@ function StorePageInner() {
   const [storeTab, setStoreTab] = useState<'buy' | 'subscribe' | 'bulk' | 'community'>('buy');
   const [bulkQty, setBulkQty] = useState<Record<string, number>>({});
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkImgBroken, setBulkImgBroken] = useState<Record<string, boolean>>({});
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [customColor, setCustomColor] = useState(COLORS[0].name);
@@ -535,10 +536,19 @@ function StorePageInner() {
 
             <div style={{ display: "grid", gap: 10, marginBottom: 20 }}>
               {bulkStyles.map(p => (
-                <div key={p.slug} style={{ background: "#FFFDF8", border: "1px solid rgba(200,169,110,0.30)", borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div className="playfair" style={{ fontSize: 15.5, fontWeight: 600, color: "#15223B" }}>{p.name}</div>
-                    <div className="lato" style={{ fontSize: 12, color: "#9A7A35" }}>${bulkUnit(p).toFixed(2)} each{p.multiDiscount && bulkTierPct(p.discountTiers) > 0 ? " · bulk price" : ""}</div>
+                <div key={p.slug} style={{ background: "#FFFDF8", border: "1px solid rgba(200,169,110,0.30)", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
+                    {p.images && p.images[0] && !bulkImgBroken[p.slug] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.images[0]} alt="" onError={() => setBulkImgBroken(b => ({ ...b, [p.slug]: true }))}
+                        style={{ width: 46, height: 46, borderRadius: 8, objectFit: "contain", background: "#fff", border: "1px solid rgba(200,169,110,0.25)", flexShrink: 0, padding: 3, boxSizing: "border-box" }} />
+                    ) : (
+                      <div style={{ width: 46, height: 46, borderRadius: 8, background: p.color || "#C8A96E", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20, flexShrink: 0 }}>{p.icon || "✝"}</div>
+                    )}
+                    <div style={{ minWidth: 0 }}>
+                      <div className="playfair" style={{ fontSize: 15.5, fontWeight: 600, color: "#15223B" }}>{p.name}</div>
+                      <div className="lato" style={{ fontSize: 12, color: "#9A7A35" }}>${bulkUnit(p).toFixed(2)} each{p.multiDiscount && bulkTierPct(p.discountTiers) > 0 ? " · bulk price" : ""}</div>
+                    </div>
                   </div>
                   <div style={{ display: "flex", gap: 10 }}>
                     {SIZES.filter(s => p.sizes.includes(s.id)).map(s => (
