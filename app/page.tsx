@@ -477,7 +477,9 @@ export default function HomePage() {
                 { d: "Feb 2", t: "Prayer answered — praise report" },
                 { d: "Mar 1", t: "John gifted the band to his brother" },
               ].map((e, i) => (
-                <div key={i} className="impact-row"><span className="impact-dot" /><span className="impact-date">{e.d}</span><span className="impact-event">{e.t}</span></div>
+                <Reveal key={i} delay={i * 150}>
+                  <div className="impact-row"><span className="impact-dot" /><span className="impact-date">{e.d}</span><span className="impact-event">{e.t}</span></div>
+                </Reveal>
               ))}
             </div>
           </Reveal>
