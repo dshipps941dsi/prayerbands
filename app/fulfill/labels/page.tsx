@@ -179,7 +179,7 @@ export default function LabelsPage() {
                 />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontWeight: 600, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 16 }}>
-                    {o.customer_name || o.customer_email || 'Unnamed'}
+                    {o.shipping_address?.name || o.customer_name || o.customer_email || 'Unnamed'}
                   </div>
                   <div style={{ fontSize: 12, color: C.secondary, marginTop: 2 }}>
                     Order #{o.id} · {new Date(o.created_at).toLocaleDateString()} · {o.status}
@@ -249,7 +249,7 @@ export default function LabelsPage() {
                     <span style={{ fontFamily: 'ui-monospace, monospace', color: C.goldText, flexShrink: 0 }}>{startAt + i}</span>
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {addressLines({
-                        name: o.customer_name || o.customer_email,
+                        name: o.shipping_address?.name || o.customer_name || o.customer_email,
                         line1: o.shipping_address?.line1,
                         line2: o.shipping_address?.line2,
                         city: o.shipping_address?.city,

@@ -53,7 +53,9 @@ export async function POST(req: NextRequest) {
     if (!o || !addr || !addr.line1) { missing.push(id); continue }
     labels.push({
       address: {
-        name: o.customer_name || o.customer_email,
+        // Label goes to the shipping recipient (gift recipient) when named,
+        // else the buyer — never ship a gift under the buyer's name.
+        name: addr.name || o.customer_name || o.customer_email,
         line1: addr.line1,
         line2: addr.line2,
         city: addr.city,

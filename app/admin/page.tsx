@@ -430,7 +430,11 @@ export default function AdminPage() {
   const shippingAddr = (order: Order) => {
     const a = order.shipping_address
     if (!a) return 'No address on file'
-    return [a.line1, a.line2, a.city, a.state, a.postal_code, a.country].filter(Boolean).join(', ')
+    // Ship to the recipient named on the shipping form (the gift recipient),
+    // falling back to the buyer for older orders that saved no shipping name.
+    const who = a.name || order.customer_name
+    const addr = [a.line1, a.line2, a.city, a.state, a.postal_code, a.country].filter(Boolean).join(', ')
+    return who ? `${who}, ${addr}` : addr
   }
 
   if (loading) return (

@@ -58,7 +58,12 @@ export async function POST(req: NextRequest) {
         // sessionShipping() knows every field name Stripe has used; the two paths
         // that used to be inlined here are both gone in the current API version,
         // so every order was being saved with no address at all.
-        shipping_address: sessionShipping(session).address || null,
+        // Keep the shipping recipient's NAME alongside the address — for gift
+        // orders (most of them) that's who the band ships to, not the buyer.
+        shipping_address: (() => {
+          const s = sessionShipping(session)
+          return s.address ? { ...s.address, name: s.name || null } : null
+        })(),
         order_metadata: session.metadata,
         org_id: session.metadata?.org_id || null,
       })
