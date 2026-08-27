@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
@@ -14,7 +15,7 @@ const ALLOWED: Record<string, string> = {
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (user?.email !== ADMIN_EMAIL) {
+  if (!(await isTeamAdmin(user))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

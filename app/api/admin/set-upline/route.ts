@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { findAuthUserByEmail } from '@/lib/find-auth-user'
 
@@ -20,7 +21,7 @@ async function callerEmail(): Promise<string | null> {
 //
 // POST { email, band_ids: string[] }
 export async function POST(req: NextRequest) {
-  if ((await callerEmail()) !== ADMIN_EMAIL) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Not authorized' }, { status: 401 })
   }
 

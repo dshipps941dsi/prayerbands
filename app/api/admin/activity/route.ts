@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { BUILTIN_THEMES } from '@/lib/themes'
 import { bandIdCandidate, bandIdFilter } from '@/lib/band-id'
@@ -30,7 +31,7 @@ type Event = {
 // account, a stop with no coordinates) were invisible from the admin panel and
 // only showed up in direct SQL.
 export async function GET(req: NextRequest) {
-  if ((await callerEmail()) !== ADMIN_EMAIL) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Not authorized' }, { status: 401 })
   }
 

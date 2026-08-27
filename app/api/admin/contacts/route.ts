@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isTeamAdmin } from '@/lib/team';
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
@@ -16,7 +17,7 @@ async function requireAdmin(): Promise<boolean> {
     { cookies: { getAll() { return cookieStore.getAll() }, setAll() {} } }
   )
   const { data: { user } } = await authed.auth.getUser()
-  return user?.email === ADMIN_EMAIL
+  return await isTeamAdmin(user)
 }
 
 function svc() {

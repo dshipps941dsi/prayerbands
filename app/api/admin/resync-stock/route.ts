@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { availableFor, orphanStock, type OpenOrder, type StockBand } from '@/lib/inventory'
 import { isMapped } from '@/lib/fulfillment'
@@ -8,7 +9,7 @@ const ADMIN_EMAIL = 'dshipps941@gmail.com'
 async function isAdmin(): Promise<boolean> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  return user?.email === ADMIN_EMAIL
+  return await isTeamAdmin(user)
 }
 
 // The storefront counts bands live, so product_variants.stock no longer decides

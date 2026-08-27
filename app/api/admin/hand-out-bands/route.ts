@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 // TODO(stage 2): replace with a profiles.role check.
@@ -7,7 +8,7 @@ const ADMIN_EMAIL = 'dshipps941@gmail.com'
 async function adminUser() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  return user?.email === ADMIN_EMAIL ? user : null
+  return (await isTeamAdmin(user)) ? user : null
 }
 
 // Bands leave the shelf for reasons other than a sale. Keeping the list closed

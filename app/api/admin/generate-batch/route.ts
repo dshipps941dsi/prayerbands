@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
@@ -9,7 +10,7 @@ const MAX_TOTAL = 2000
 async function isAdmin(): Promise<boolean> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  return user?.email === ADMIN_EMAIL
+  return await isTeamAdmin(user)
 }
 
 function genId(existing: Set<string>): string {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
@@ -6,7 +7,7 @@ const ADMIN_EMAIL = 'dshipps941@gmail.com'
 async function isAdmin(): Promise<boolean> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  return user?.email === ADMIN_EMAIL
+  return await isTeamAdmin(user)
 }
 
 // Every dedication in one place. Until now a dedication could only be read one

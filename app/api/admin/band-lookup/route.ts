@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { bandIdCandidate, bandIdFilter } from '@/lib/band-id'
 
@@ -8,7 +9,7 @@ const ADMIN_EMAIL = 'dshipps941@gmail.com'
 async function adminUser() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  return user?.email === ADMIN_EMAIL ? user : null
+  return (await isTeamAdmin(user)) ? user : null
 }
 
 // GET /api/admin/band-lookup?id=PB-UNVBS

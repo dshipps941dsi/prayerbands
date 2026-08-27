@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { findAuthUserByEmail } from '@/lib/find-auth-user'
 
@@ -7,7 +8,7 @@ const ADMIN_EMAIL = 'dshipps941@gmail.com'
 async function isAdmin(): Promise<boolean> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  return user?.email === ADMIN_EMAIL
+  return await isTeamAdmin(user)
 }
 
 // POST { email, band_ids: string[] }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isTeamAdmin } from '@/lib/team';
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
     }
   )
   const { data: { user } } = await authed.auth.getUser()
-  if (!user || user.email !== ADMIN_EMAIL) {
+  if (!(await isTeamAdmin(user))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

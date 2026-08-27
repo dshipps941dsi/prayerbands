@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { buildLabelSheet, buildCalibrationSheet, LABELS_PER_SHEET, type SheetLabel } from '@/lib/label-sheet'
 
@@ -9,7 +10,7 @@ const ADMIN_EMAIL = 'dshipps941@gmail.com'
 async function isAdmin(): Promise<boolean> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  return user?.email === ADMIN_EMAIL
+  return await isTeamAdmin(user)
 }
 
 // POST /api/admin/label-sheet { orderIds: number[], startAt?: number }
