@@ -188,6 +188,9 @@ export default function BandPage() {
   // Auto-hiding bottom nav: hidden on load for a clean first view, revealed
   // when the user scrolls up (to navigate), tucked away again on scroll down.
   const [navHidden, setNavHidden] = useState(true)
+  // When the page is too short to scroll, the reveal-on-scroll gesture never
+  // fires — so show both bars outright rather than trapping the nav off-screen.
+  const [pageScrollable, setPageScrollable] = useState(true)
   // Journey tab: this band's direct line, or the whole reach web.
   const [journeyView, setJourneyView] = useState<'band' | 'reach'>('band')
   const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null; expires_at: string | null } | null>(null)
@@ -336,6 +339,16 @@ export default function BandPage() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  // Track whether the page can actually scroll. Re-checked on tab change and
+  // resize, plus once after layout settles (verse/maps load async).
+  useEffect(() => {
+    const check = () => setPageScrollable(document.documentElement.scrollHeight > window.innerHeight + 8)
+    check()
+    const t = setTimeout(check, 350)
+    window.addEventListener('resize', check)
+    return () => { clearTimeout(t); window.removeEventListener('resize', check) }
+  }, [activeTab])
 
   // The signed-in person's avatar + name, for the account header and nav.
   useEffect(() => {
@@ -531,7 +544,7 @@ export default function BandPage() {
   function Nav() {
     const currentHolder = status.registrations?.[status.registrations.length - 1]
     return (
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 'calc(16px + env(safe-area-inset-top, 0px))', paddingRight: 24, paddingBottom: 16, paddingLeft: 24, borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', position: 'sticky', top: 0, zIndex: 100, transform: navHidden ? 'translateY(0)' : 'translateY(-100%)', transition: 'transform 0.3s ease' }}>
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 'calc(16px + env(safe-area-inset-top, 0px))', paddingRight: 24, paddingBottom: 16, paddingLeft: 24, borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', position: 'sticky', top: 0, zIndex: 100, transform: (pageScrollable && !navHidden) ? 'translateY(-100%)' : 'translateY(0)', transition: 'transform 0.3s ease' }}>
         <a href="/" aria-label="Prayer Bands home" style={{ display: 'inline-flex', textDecoration: 'none' }}>
           <Logo size={28} withName nameColor={DARK} nameSize={18} />
         </a>
@@ -758,7 +771,7 @@ export default function BandPage() {
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 200,
         background: DARK, borderTop: '1px solid rgba(255,255,255,0.1)',
         display: 'flex', paddingBottom: 'env(safe-area-inset-bottom)',
-        transform: navHidden ? 'translateY(100%)' : 'translateY(0)',
+        transform: (pageScrollable && navHidden) ? 'translateY(100%)' : 'translateY(0)',
         transition: 'transform 0.25s ease',
       }}>
         {tabs.map(tab => (
