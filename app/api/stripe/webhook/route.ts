@@ -53,16 +53,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
-  const session = event.data.object as Stripe.Checkout.Session;
-
-  // Only count money that actually landed. `checkout.session.completed` also
-  // fires for unpaid sessions when the payment method settles asynchronously.
-  if (session.payment_status !== 'paid') {
-    return NextResponse.json({ received: true, skipped: 'not paid' });
-  }
+  const sessionId = (event.data.object as Stripe.Checkout.Session).id;
 
   try {
-    await recordPurchase(session);
+    await recordPurchase(sessionId);
   } catch (err) {
     // Never fail the webhook over analytics — Stripe would retry the whole
     // event, and a 500 here looks like a delivery failure in your dashboard.
@@ -72,7 +66,25 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
-async function recordPurchase(session: Stripe.Checkout.Session) {
+async function recordPurchase(sessionId: string) {
+  // Re-fetch rather than using the delivered payload.
+  //
+  // Stripe renders each webhook body at whatever API version the endpoint was
+  // created with, and this endpoint is pinned to 2012-06-18 — years before
+  // Checkout Sessions existed. Fields the code depends on (payment_status,
+  // amount_total, total_details) can be absent or shaped differently in that
+  // rendering, and the failure is silent: the code would decide the order
+  // wasn't paid and skip it. Retrieving the session directly returns it at the
+  // SDK's own API version, so this works no matter how the endpoint is pinned.
+  const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+  // Only count money that actually landed. `checkout.session.completed` also
+  // fires for unpaid sessions when the payment method settles asynchronously.
+  if (session.payment_status !== 'paid') {
+    console.log(`[ga4-webhook] ${sessionId} not paid (${session.payment_status}), skipping`);
+    return;
+  }
+
   const md = (session.metadata ?? {}) as Record<string, string>;
 
   // client_id is what joins this purchase to the visitor GA4 already knows.
