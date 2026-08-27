@@ -281,6 +281,8 @@ function StorePageInner() {
   // the multi-band tier is keyed on the combined multi-eligible quantity, so a
   // big assorted order earns the same 3+/5+ discount the cart does.
   const bulkStyles = bandProducts.filter(p => p.hasSizes && p.slug !== "custom");
+  // Prefer a real (absolute) image over any stale relative placeholder path.
+  const bulkImg = (p: Product) => (p.images || []).find(u => /^https?:\/\//.test(u)) || (p.images || [])[0] || "";
   const bulkProdBySlug: Record<string, Product> = Object.fromEntries(bandProducts.map(p => [p.slug, p]));
   const bulkItems = Object.entries(bulkQty)
     .filter(([, q]) => q > 0)
@@ -538,9 +540,9 @@ function StorePageInner() {
               {bulkStyles.map(p => (
                 <div key={p.slug} style={{ background: "#FFFDF8", border: "1px solid rgba(200,169,110,0.30)", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
-                    {p.images && p.images[0] && !bulkImgBroken[p.slug] ? (
+                    {bulkImg(p) && !bulkImgBroken[p.slug] ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.images[0]} alt="" onError={() => setBulkImgBroken(b => ({ ...b, [p.slug]: true }))}
+                      <img src={bulkImg(p)} alt="" onError={() => setBulkImgBroken(b => ({ ...b, [p.slug]: true }))}
                         style={{ width: 46, height: 46, borderRadius: 8, objectFit: "contain", background: "#fff", border: "1px solid rgba(200,169,110,0.25)", flexShrink: 0, padding: 3, boxSizing: "border-box" }} />
                     ) : (
                       <div style={{ width: 46, height: 46, borderRadius: 8, background: p.color || "#C8A96E", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20, flexShrink: 0 }}>{p.icon || "✝"}</div>
