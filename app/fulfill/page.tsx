@@ -385,9 +385,14 @@ export default function FulfillPage() {
                     </div>
                   ))}
                   {!problems.unavailable?.length && !problems.shortfalls?.length && !!problems.mismatches?.length && (
-                    <button onClick={() => pack(true)} disabled={busy} style={{ ...btn(C.red, '#fff'), marginTop: 10, padding: '10px 16px', minHeight: 40 }}>
-                      Pack anyway
-                    </button>
+                    <>
+                      <div style={{ fontSize: 12.5, color: C.body, lineHeight: 1.6, marginTop: 8 }}>
+                        These bands don&apos;t match the order&apos;s design or size. Substitute them anyway?
+                      </div>
+                      <button onClick={() => pack(true)} disabled={busy} style={{ ...btn(C.red, '#fff'), marginTop: 10, padding: '10px 16px', minHeight: 40 }}>
+                        Substitute &amp; Pack
+                      </button>
+                    </>
                   )}
                 </div>
               )}
