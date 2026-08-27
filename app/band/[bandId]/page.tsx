@@ -187,10 +187,10 @@ export default function BandPage() {
   const [focus, setFocus] = useState<null | 'verse' | 'prayer'>(null)
   // Auto-hiding bottom nav: hidden on load for a clean first view, revealed
   // when the user scrolls up (to navigate), tucked away again on scroll down.
-  const [navHidden, setNavHidden] = useState(true)
-  // When the page is too short to scroll, the reveal-on-scroll gesture never
-  // fires — so show both bars outright rather than trapping the nav off-screen.
-  const [pageScrollable, setPageScrollable] = useState(true)
+  // The bottom nav is the main navigation, so it's always visible. Only the top
+  // header auto-hides: it slides away as you scroll down to read and returns
+  // when you scroll back up (and is always shown at the top of the page).
+  const [headerHidden, setHeaderHidden] = useState(false)
   // Journey tab: this band's direct line, or the whole reach web.
   const [journeyView, setJourneyView] = useState<'band' | 'reach'>('band')
   const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null; expires_at: string | null } | null>(null)
@@ -320,35 +320,21 @@ export default function BandPage() {
     fetch(url).then(r => r.json()).then(data => setStatus(data)).catch(() => setStatus({ screen: 'error' }))
   }, [bandId, userId])
 
-  // Scroll direction drives the chrome, matching the thumb: scrolling DOWN the
-  // page (content rising, heading toward the bottom) reveals the bottom nav and
-  // hides the top header — like pulling the footer up. Scrolling back UP toward
-  // the top brings the header back and tucks the nav away. At the very top the
-  // header is always shown / nav hidden, so it can never get stuck off-screen.
-  // The header transform is derived from navHidden (always inverse), so this one
-  // bit tracks both. Threshold avoids flicker on tiny scrolls.
+  // Auto-hide only the top header: hide it as you scroll DOWN (more room to
+  // read), bring it back as you scroll UP, and always show it at the very top.
+  // The bottom nav never moves. Threshold avoids flicker on tiny scrolls.
   useEffect(() => {
     let lastY = typeof window !== 'undefined' ? window.scrollY : 0
     const onScroll = () => {
       const y = window.scrollY
-      if (y <= 4) { setNavHidden(true); lastY = y; return } // at top: header shown, nav tucked
+      if (y <= 4) { setHeaderHidden(false); lastY = y; return } // at top: header always shown
       if (Math.abs(y - lastY) < 8) return
-      setNavHidden(y < lastY) // scrolling up -> hide nav / show header; down -> show nav / hide header
+      setHeaderHidden(y > lastY) // scroll down -> hide header; scroll up -> show it
       lastY = y
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
-
-  // Track whether the page can actually scroll. Re-checked on tab change and
-  // resize, plus once after layout settles (verse/maps load async).
-  useEffect(() => {
-    const check = () => setPageScrollable(document.documentElement.scrollHeight > window.innerHeight + 8)
-    check()
-    const t = setTimeout(check, 350)
-    window.addEventListener('resize', check)
-    return () => { clearTimeout(t); window.removeEventListener('resize', check) }
-  }, [activeTab])
 
   // The signed-in person's avatar + name, for the account header and nav.
   useEffect(() => {
@@ -544,7 +530,7 @@ export default function BandPage() {
   function Nav() {
     const currentHolder = status.registrations?.[status.registrations.length - 1]
     return (
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 'calc(16px + env(safe-area-inset-top, 0px))', paddingRight: 24, paddingBottom: 16, paddingLeft: 24, borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', position: 'sticky', top: 0, zIndex: 100, transform: (pageScrollable && !navHidden) ? 'translateY(-100%)' : 'translateY(0)', transition: 'transform 0.3s ease' }}>
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 'calc(16px + env(safe-area-inset-top, 0px))', paddingRight: 24, paddingBottom: 16, paddingLeft: 24, borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', position: 'sticky', top: 0, zIndex: 100, transform: headerHidden ? 'translateY(-100%)' : 'translateY(0)', transition: 'transform 0.3s ease' }}>
         <a href="/" aria-label="Prayer Bands home" style={{ display: 'inline-flex', textDecoration: 'none' }}>
           <Logo size={28} withName nameColor={DARK} nameSize={18} />
         </a>
@@ -771,7 +757,7 @@ export default function BandPage() {
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 200,
         background: DARK, borderTop: '1px solid rgba(255,255,255,0.1)',
         display: 'flex', paddingBottom: 'env(safe-area-inset-bottom)',
-        transform: (pageScrollable && navHidden) ? 'translateY(100%)' : 'translateY(0)',
+        transform: 'translateY(0)', // bottom nav is always visible — it's the main navigation
         transition: 'transform 0.25s ease',
       }}>
         {tabs.map(tab => (
