@@ -73,7 +73,6 @@ const body  = "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif
 
 // Give $2 / Get $2 referral promo — a ~60-day test from 2026-08-27. After this
 // date the Home banner stops showing (the referral mechanics keep working).
-const PROMO_ENDS_MS = Date.parse('2026-10-27T00:00:00Z')
 
 function Avatar({ letter, color, size = 44 }: { letter: string; color: string; size?: number }) {
   return (
@@ -195,10 +194,6 @@ export default function BandPage() {
   const [refShared, setRefShared] = useState(false)
   const [myProfile, setMyProfile] = useState<{ avatar_icon: string | null; full_name: string | null; avatar_initials: string | null; avatar_font: string | null } | null>(null)
   const [myRole, setMyRole] = useState<string | null>(null)
-  const [promoDismissed, setPromoDismissed] = useState<boolean>(() => {
-    try { return typeof window !== 'undefined' && localStorage.getItem('promoDismissed_give2') === '1' } catch { return false }
-  })
-  function dismissPromo() { setPromoDismissed(true); try { localStorage.setItem('promoDismissed_give2', '1') } catch {} }
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
   // Bands this person owns or holds, for the header switcher.
@@ -810,21 +805,6 @@ export default function BandPage() {
 
         {activeTab === 'home' && (
           <>
-            {/* Give $2 / Get $2 referral promo — pinned at the top so the share
-                link isn't buried in the Account tab. */}
-            {credit?.code && !promoDismissed && Date.now() < PROMO_ENDS_MS && (
-              <div style={{ margin: '14px 20px 0', background: `linear-gradient(135deg, ${NAVY}, ${NAVY_LT})`, color: '#F5EDD8', borderRadius: 14, padding: '16px 18px', position: 'relative' }}>
-                <button onClick={dismissPromo} aria-label="Dismiss" style={{ position: 'absolute', top: 8, right: 10, background: 'none', border: 'none', color: 'rgba(245,237,216,0.55)', fontSize: 18, lineHeight: 1, cursor: 'pointer', padding: 4 }}>×</button>
-                <div style={{ fontFamily: serif, fontSize: 17, fontWeight: 700, marginBottom: 4 }}>🎁 Give $2, Get $2</div>
-                <div style={{ fontFamily: body, fontSize: 13, opacity: 0.9, lineHeight: 1.5, marginBottom: 12, maxWidth: 340 }}>
-                  Share Prayer Bands — your friend gets <strong>$2 off</strong> their first band, and you get <strong>$2 in store credit</strong> when they order.
-                </div>
-                <button onClick={shareReferral} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: GOLD, color: INK, border: 'none', borderRadius: 10, padding: '10px 18px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                  {refShared ? 'Copied' : 'Share your link'}
-                </button>
-              </div>
-            )}
             {transferStep === 'pending' && <PendingBanner />}
             {transferComplete && (
               <div style={{ margin: '20px 20px 0', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>

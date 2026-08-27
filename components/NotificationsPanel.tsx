@@ -31,6 +31,8 @@ type Notif = {
   ts: string
   requestId?: string
   circleId?: string
+  shareUrl?: string
+  shareText?: string
 }
 
 function timeAgo(ts: string): string {
@@ -68,6 +70,23 @@ export default function NotificationsPanel({
   const [seenTs, setSeenTs] = useState(0)
   const [prayed, setPrayed] = useState<Set<string>>(new Set())
   const [loadingMore, setLoadingMore] = useState(false)
+  const [shared, setShared] = useState(false)
+
+  async function sharePromo(n: Notif) {
+    const url = n.shareUrl || ''
+    const text = n.shareText || url
+    try {
+      if (typeof navigator !== 'undefined' && (navigator as any).share) {
+        await (navigator as any).share({ text, url })
+        return
+      }
+    } catch { /* user cancelled or unsupported — fall through to copy */ }
+    try {
+      await navigator.clipboard.writeText(url)
+      setShared(true)
+      setTimeout(() => setShared(false), 2000)
+    } catch { /* clipboard blocked — nothing more we can do */ }
+  }
 
   const fetchNotifs = useCallback(async (d: number) => {
     const res = await fetch(`/api/my-notifications?days=${d}`)
@@ -166,13 +185,16 @@ export default function NotificationsPanel({
                       </div>
                       {n.detail && <div style={{ fontSize: 13, color: isPrayerLike ? BODY : GRAY, fontStyle: isPrayerLike ? 'italic' : 'normal', marginTop: 2, fontFamily: isPrayerLike ? serif : sans }}>{isPrayerLike ? `“${n.detail}”` : n.detail}</div>}
                       {n.band_id && <div style={{ fontSize: 11, color: GOLD_TEXT, fontFamily: 'monospace', marginTop: 3 }}>{n.band_id}</div>}
-                      {(n.type === 'prayer_request' || n.type === 'circle_request') && (
+                      {(n.type === 'prayer_request' || n.type === 'circle_request' || n.type === 'promo') && (
                         <div style={{ marginTop: 9, display: 'flex', gap: 8 }}>
                           {n.type === 'prayer_request' && (
                             <button onClick={() => pray(n.requestId)} disabled={!!n.requestId && prayed.has(n.requestId)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: n.requestId && prayed.has(n.requestId) ? `${GOLD}22` : GOLD, color: n.requestId && prayed.has(n.requestId) ? GOLD_TEXT : NAVY, fontSize: 11, fontWeight: 700, cursor: n.requestId && prayed.has(n.requestId) ? 'default' : 'pointer', fontFamily: cinzel, letterSpacing: '0.04em' }}>{n.requestId && prayed.has(n.requestId) ? '✓ Prayed' : '🙏 Pray'}</button>
                           )}
                           {n.type === 'circle_request' && (
                             <a href={`/circles/${n.circleId}`} style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${GOLD_BORDER}`, background: CARD, color: GOLD_TEXT, fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: cinzel, letterSpacing: '0.04em' }}>Open circle →</a>
+                          )}
+                          {n.type === 'promo' && (
+                            <button onClick={() => sharePromo(n)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: GOLD, color: NAVY, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: cinzel, letterSpacing: '0.04em' }}>{shared ? '✓ Copied' : 'Share your link'}</button>
                           )}
                         </div>
                       )}

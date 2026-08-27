@@ -5,6 +5,12 @@ import { cookies } from 'next/headers'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
+// "Give $2, Get $2" referral promo — surfaced as an inbox notification (not a
+// banner over the daily moment). Shows while now < PROMO_END_MS; ts is fixed at
+// the start so it reads as NEW once, then settles into the feed.
+const PROMO_START = '2026-08-27T00:00:00Z'
+const PROMO_END_MS = Date.parse('2026-10-27T00:00:00Z')
+
 // Notifications are DERIVED — there's no notifications table. We assemble a
 // recent feed from the events a band owner cares about: their bands being
 // registered/prayed over, their orders shipping, and subscription bands
@@ -243,8 +249,21 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const { data: profile } = await admin.from('profiles').select('notifications_last_seen, dismissed_notifications').eq('id', effectiveId).maybeSingle()
+  const { data: profile } = await admin.from('profiles').select('notifications_last_seen, dismissed_notifications, referral_code').eq('id', effectiveId).maybeSingle()
   const dismissed = new Set(Array.isArray(profile?.dismissed_notifications) ? profile.dismissed_notifications : [])
+
+  // 9. Give $2, Get $2 promo — one gentle inbox nudge with a share action.
+  if (Date.now() < PROMO_END_MS && profile?.referral_code) {
+    const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://prayerbands.com'
+    const link = `${site}/?ref=${profile.referral_code}`
+    items.push({
+      id: 'promo-g2g2', type: 'promo', icon: '🎁', ts: PROMO_START,
+      title: 'Give $2, Get $2',
+      detail: 'Share Prayer Bands — your friend gets $2 off their first band, and you get $2 in store credit when they order.',
+      shareUrl: link,
+      shareText: `Join me in prayer with your first Prayer Band 🙏 Here's $2 off to begin — tap: ${link}`,
+    })
+  }
 
   const visible = items.filter(n => !dismissed.has(n.id))
   visible.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime())
