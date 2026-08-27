@@ -106,6 +106,8 @@ export default function AdminPage() {
   const [filter, setFilter] = useState('pending')
   const [markingShipped, setMarkingShipped] = useState<number | null>(null)
   const [assigningBands, setAssigningBands] = useState<number | null>(null)
+  const [scanVal, setScanVal] = useState<Record<number, string>>({})
+  const [scanBusy, setScanBusy] = useState<number | null>(null)
   const [availableBands, setAvailableBands] = useState<number>(0)
   const [selectedBands, setSelectedBands] = useState<{[orderId: number]: string[]}>({})
   const [trackingInputs, setTrackingInputs] = useState<{[orderId: number]: string}>({})
@@ -311,6 +313,63 @@ export default function AdminPage() {
       await loadStats()
     } finally {
       setAssigningBands(null)
+    }
+  }
+
+  // Hand-picked assignment: the fulfiller taps (NFC) or types the exact band ID
+  // going in the envelope; the server validates it's available and matches an
+  // unfilled line before allocating it. One core call, shared by tap and type.
+  async function assignBandToOrder(order: Order, bandId: string): Promise<boolean> {
+    const id = (bandId || '').trim()
+    if (!id) return false
+    setScanBusy(order.id)
+    try {
+      const res = await fetch('/api/admin/assign-order-band', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id, bandId: id }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { alert(d.error || 'Could not assign that band.'); return false }
+      setScanVal(prev => ({ ...prev, [order.id]: '' }))
+      await loadOrders()
+      await loadStats()
+      return true
+    } finally {
+      setScanBusy(null)
+    }
+  }
+
+  function scanAssign(order: Order) {
+    return assignBandToOrder(order, scanVal[order.id] || '')
+  }
+
+  // Tap-to-assign via Web NFC (Android Chrome). Reads the band's NFC URL, pulls
+  // the PB-… id out of it, and assigns it. iPhone Safari has no Web NFC, so the
+  // typed-entry field is the fallback there.
+  async function tapAssign(order: Order) {
+    const Reader = (typeof window !== 'undefined') ? (window as any).NDEFReader : null
+    if (!Reader) {
+      alert('Tap-to-read needs NFC — it works in Chrome on Android. On iPhone, type the band ID instead (the native app will add tap later).')
+      return
+    }
+    try {
+      const reader = new Reader()
+      await reader.scan()
+      reader.onreading = async (event: any) => {
+        let found = ''
+        for (const rec of event.message?.records || []) {
+          try {
+            const txt = new TextDecoder(rec.encoding || 'utf-8').decode(rec.data)
+            const m = txt.match(/PB-[A-Z0-9-]{3,}/i)
+            if (m) { found = m[0].toUpperCase(); break }
+          } catch { /* skip records we can't decode */ }
+        }
+        if (!found) { alert('Read a tag, but no band ID was on it. Type the ID instead.'); return }
+        setScanVal(prev => ({ ...prev, [order.id]: found }))
+        await assignBandToOrder(order, found)
+      }
+    } catch {
+      alert('Could not start NFC. Make sure NFC is on and you granted permission.')
     }
   }
 
@@ -728,26 +787,47 @@ export default function AdminPage() {
                       {/* Actions */}
                       {!isShipped && (
                         <div style={{ display: 'flex', gap: '10px', marginTop: '14px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                          {needsAssignment && (
-                            <button
-                              onClick={() => assignBands(order)}
-                              disabled={assigningBands === order.id}
-                              style={{
-                                padding: '8px 18px',
-                                background: C.gold,
-                                color: C.navy,
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '11px',
-                                fontFamily: 'Cinzel, serif',
-                                textTransform: 'uppercase' as const,
-                                letterSpacing: '0.05em',
-                                fontWeight: '600',
-                              }}
-                            >
-                              {assigningBands === order.id ? 'Assigning...' : `Assign ${qty} Band${qty > 1 ? 's' : ''} \u2192`}
-                            </button>
+                          {!isShipped && bands.length < qty && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+                              <div style={{ fontSize: '12px', color: C.secondary }}>
+                                {bands.length} of {qty} band{qty > 1 ? 's' : ''} assigned \u2014 tap each band you're shipping, or type its ID:
+                              </div>
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <button
+                                  onClick={() => tapAssign(order)}
+                                  disabled={scanBusy === order.id}
+                                  title="Tap an NFC band to assign it (Android Chrome)"
+                                  style={{ padding: '8px 16px', background: C.navy, color: '#F5EDD8', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontWeight: '600' }}
+                                >
+                                  \ud83d\udcf1 Tap a Band
+                                </button>
+                                <input
+                                  value={scanVal[order.id] || ''}
+                                  onChange={e => setScanVal(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                  onKeyDown={e => { if (e.key === 'Enter') scanAssign(order) }}
+                                  placeholder="Scan / enter band ID (e.g. PB-XXXXX)"
+                                  autoCapitalize="characters"
+                                  autoCorrect="off"
+                                  spellCheck={false}
+                                  style={{ flex: 1, minWidth: '180px', padding: '8px 12px', border: `1px solid ${C.borderSilver}`, borderRadius: '6px', fontFamily: 'monospace', fontSize: '13px' }}
+                                />
+                                <button
+                                  onClick={() => scanAssign(order)}
+                                  disabled={scanBusy === order.id || !(scanVal[order.id] || '').trim()}
+                                  style={{ padding: '8px 16px', background: C.gold, color: C.navy, border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontWeight: '600' }}
+                                >
+                                  {scanBusy === order.id ? 'Adding\u2026' : 'Assign Band'}
+                                </button>
+                                <button
+                                  onClick={() => assignBands(order)}
+                                  disabled={assigningBands === order.id}
+                                  title="Auto-pick matching bands from stock instead of scanning"
+                                  style={{ padding: '8px 14px', background: 'transparent', color: C.secondary, border: `1px solid ${C.borderSilver}`, borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}
+                                >
+                                  {assigningBands === order.id ? 'Auto\u2026' : 'Auto-fill'}
+                                </button>
+                              </div>
+                            </div>
                           )}
 
                           {needsShipping && (
