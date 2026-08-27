@@ -192,6 +192,7 @@ export default function BandPage() {
   const [journeyView, setJourneyView] = useState<'band' | 'reach'>('band')
   const [credit, setCredit] = useState<{ balance_cents: number; referrals: number; code: string | null; expires_at: string | null } | null>(null)
   const [refShared, setRefShared] = useState(false)
+  const [verseShared, setVerseShared] = useState(false)
   const [myProfile, setMyProfile] = useState<{ avatar_icon: string | null; full_name: string | null; avatar_initials: string | null; avatar_font: string | null } | null>(null)
   const [myRole, setMyRole] = useState<string | null>(null)
   const [claimingOwnership, setClaimingOwnership] = useState(false)
@@ -367,6 +368,21 @@ export default function BandPage() {
     }
     try { await navigator.clipboard.writeText(message) } catch {}
     setRefShared(true); setTimeout(() => setRefShared(false), 1800)
+  }
+
+  // Share the day's verse — the text and reference, with a nudge to the site so
+  // whoever receives it can get a band of their own. Native sheet on mobile,
+  // clipboard on desktop.
+  async function shareVerse() {
+    const v = getVerseForCategory(verseCategory)
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://prayerbands.com'
+    const message = `"${v.text}" — ${v.ref}\n\nA daily verse from Prayer Bands 🙏 ${origin}`
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try { await navigator.share({ title: v.ref, text: message }) } catch {}
+      return
+    }
+    try { await navigator.clipboard.writeText(message) } catch {}
+    setVerseShared(true); setTimeout(() => setVerseShared(false), 1800)
   }
 
   useEffect(() => {
@@ -599,7 +615,14 @@ export default function BandPage() {
             {verseCategory === 'all' ? "Today's Verse" : CATEGORIES.find(c => c.id === verseCategory)?.label}
           </div>
           <div style={{ fontFamily: serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.7, marginBottom: 12 }}>"{verse.text}"</div>
-          <div style={{ fontFamily: body, fontSize: 13, opacity: 0.7, fontWeight: 600 }}>{verse.ref}</div>
+          <div style={{ fontFamily: body, fontSize: 13, opacity: 0.7, fontWeight: 600, marginBottom: 16 }}>{verse.ref}</div>
+          <button
+            onClick={e => { e.stopPropagation(); shareVerse() }}
+            aria-label="Share this verse"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(255,255,255,0.14)', color: 'white', border: '1px solid rgba(255,255,255,0.28)', borderRadius: 9, padding: '8px 16px', fontFamily: body, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            {verseShared ? 'Copied' : 'Share verse'}
+          </button>
         </div>
       </div>
     )
