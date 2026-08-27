@@ -56,7 +56,9 @@ export default function ReachMap({ bandId }: { bandId: string }) {
     // instead of one gold web. A "branch" is a direct recipient (depth 1) and
     // everyone under them — so each person you gave to gets a colour, and their
     // sub-downline matches it. The band's own journey (the chain) stays gold.
-    const BRANCH_COLORS = ['#2B6CB0', '#2B8C5A', '#B8328A', '#D97706', '#6B46C1', '#0E7490', '#DC2626', '#B45309']
+    // Hues of gold/bronze rather than a rainbow, so branches stay on-theme.
+    // The brand gold itself is reserved for the chain, so it's left out here.
+    const BRANCH_COLORS = ['#8A6A28', '#D9BE86', '#B8860B', '#6E5220', '#E0C88A', '#A67C3D', '#C99A3B', '#5C4318']
     const parentOf = new Map<string, string>()
     data.edges.filter(e => e.kind === 'gift').forEach(e => parentOf.set(e.to, e.from))
     const depthOf = new Map(data.nodes.map(n => [n.id, n.depth]))
