@@ -149,6 +149,7 @@ function StorePageInner() {
     const r = new URLSearchParams(window.location.search).get("replaces");
     if (r) setReplaces(r.trim().toUpperCase());
     if (window.location.hash === "#packs") setStoreTab("community");
+    if (window.location.hash === "#bulk") setStoreTab("bulk");
   }, []);
 
   // Referral: if ?ref= is present, validate it and remember it; otherwise show

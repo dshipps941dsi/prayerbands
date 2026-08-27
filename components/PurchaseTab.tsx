@@ -256,6 +256,14 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
         <a href="/subscribe" style={{ display: 'inline-block', background: GOLD, color: INK, borderRadius: 10, padding: '11px 24px', fontFamily: serif, fontSize: 14.5, fontWeight: 700, textDecoration: 'none' }}>See subscription plans →</a>
       </div>
 
+      <div style={{ marginTop: 18, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontFamily: serif, fontSize: 14.5, fontWeight: 700, color: DARK }}>Need 20+ to hand out?</div>
+          <div style={{ fontFamily: 'Georgia, serif', fontSize: 12.5, color: GRAY, lineHeight: 1.4 }}>Build an assorted order by style &amp; size — shipped to you.</div>
+        </div>
+        <a href="/store#bulk" style={{ flexShrink: 0, background: 'transparent', color: DARK, border: `1.5px solid ${GOLD}`, borderRadius: 10, padding: '9px 16px', fontFamily: serif, fontSize: 13.5, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>Bulk order →</a>
+      </div>
+
       <div style={{ textAlign: 'center', marginTop: 18 }}>
         <a href="/register" style={{ fontSize: 13, color: GRAY, textDecoration: 'underline' }}>Already have a band to register?</a>
       </div>
