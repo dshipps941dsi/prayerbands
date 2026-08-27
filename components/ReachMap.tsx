@@ -52,6 +52,29 @@ export default function ReachMap({ bandId }: { bandId: string }) {
       })
     })
 
+    // Colour each branch (everyone who descends from one depth-0 giver) its own
+    // hue, so the lines read as separate connections instead of one gold web.
+    // The band's own journey (the chain) stays gold. A branch's colour is keyed
+    // to its depth-0 root, so every generation under the same giver matches.
+    const BRANCH_COLORS = ['#2B6CB0', '#2B8C5A', '#B8328A', '#D97706', '#6B46C1', '#0E7490', '#DC2626', '#B45309']
+    const parentOf = new Map<string, string>()
+    data.edges.filter(e => e.kind === 'gift').forEach(e => parentOf.set(e.to, e.from))
+    const depthOf = new Map(data.nodes.map(n => [n.id, n.depth]))
+    const branchRoot = (id: string): string => {
+      let cur = id
+      while (parentOf.has(cur) && (depthOf.get(cur) ?? 0) > 0) cur = parentOf.get(cur)!
+      return cur
+    }
+    const branchColorByRoot = new Map<string, string>()
+    const colorForBranch = (id: string): string => {
+      const root = branchRoot(id)
+      if (!branchColorByRoot.has(root)) branchColorByRoot.set(root, BRANCH_COLORS[branchColorByRoot.size % BRANCH_COLORS.length])
+      return branchColorByRoot.get(root)!
+    }
+    // Lock in colours up front (in gift order) so they're stable, not dependent
+    // on the reveal animation's timing.
+    data.edges.filter(e => e.kind === 'gift').sort((a, b) => a.depth - b.depth).forEach(e => colorForBranch(e.to))
+
     const render = () => {
       const L = (window as any).L
       if (!L || !mapRef.current) return
@@ -69,7 +92,11 @@ export default function ReachMap({ bandId }: { bandId: string }) {
         const p = pos.get(id); if (!p) return
         const isRoot = id === rootId
         const sz = isRoot ? 15 : p.depth === 0 ? 12 : 10
-        const dot = L.divIcon({ className: '', html: `<div style="width:${sz}px;height:${sz}px;background:${isRoot || p.depth === 0 ? gold : '#fff'};border-radius:50%;border:${isRoot ? 0 : 2}px solid ${gold};box-shadow:0 0 6px rgba(0,0,0,0.35)"></div>`, iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] })
+        // Depth-0 (this band's own holders) stay gold; branch recipients take
+        // their branch colour so a dot ties back to its line.
+        const branchC = p.depth > 0 ? colorForBranch(id) : gold
+        const fill = isRoot || p.depth === 0 ? gold : '#fff'
+        const dot = L.divIcon({ className: '', html: `<div style="width:${sz}px;height:${sz}px;background:${fill};border-radius:50%;border:${isRoot ? 0 : 2}px solid ${branchC};box-shadow:0 0 6px rgba(0,0,0,0.35)"></div>`, iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] })
         const m = L.marker([p.lat, p.lng], { icon: dot }).addTo(map)
         const place = [p.city, p.country].filter(Boolean).join(', ')
         m.bindPopup(`<div style="font-family:Georgia,serif;font-size:13px"><strong>${isRoot ? 'You' : escapeHtml(p.name)}</strong>${place ? `<br/><span style="color:#5C6573">${escapeHtml(place)}</span>` : ''}</div>`)
@@ -79,7 +106,7 @@ export default function ReachMap({ bandId }: { bandId: string }) {
         if (!a || !b) return
         L.polyline([[a.lat, a.lng], [b.lat, b.lng]], e.kind === 'chain'
           ? { color: gold, weight: 2, opacity: 0.7, dashArray: '4 6' }
-          : { color: gold, weight: 1.5, opacity: 0.5 }).addTo(map)
+          : { color: colorForBranch(e.to), weight: 2, opacity: 0.75 }).addTo(map)
       }
 
       // The band's own chain and its stops appear at once; the branching gifts
