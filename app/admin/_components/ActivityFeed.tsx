@@ -109,8 +109,8 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
                   </div>
                 ))}
               </div>
-              <div style={{ fontSize: 12, color: C.secondary, marginBottom: 8 }}>Unclaimed stock by design, colour and size — what you can actually ship.</div>
-              <div style={{ overflowX: 'auto' }}>
+              <div style={{ fontSize: 12, color: C.secondary, marginBottom: 8 }}>Unclaimed stock by style and size — what you can actually ship. Rows with 5 or fewer left are flagged.</div>
+              <div style={{ overflowX: 'auto', maxWidth: 440 }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, fontFamily: 'Inter, sans-serif' }}>
                   <thead>
                     <tr style={{ textAlign: 'left', color: C.secondary, fontSize: 11 }}>
@@ -123,10 +123,12 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
                       .map(r => ({ ...r, _style: styleLabel(r) }))
                       .sort((a, b) => a._style.localeCompare(b._style) || a.size.localeCompare(b.size))
                       .map((r, i) => (
-                      <tr key={i} style={{ borderTop: `1px solid ${C.borderSilver}` }}>
-                        <td style={{ padding: '6px 8px', color: C.body }}>{r._style}</td>
-                        <td style={{ padding: '6px 8px', color: C.body }}>{r.size}</td>
-                        <td style={{ padding: '6px 8px', fontWeight: 700, color: r.count <= 5 ? '#B4441F' : C.heading }}>{r.count}</td>
+                      <tr key={i} style={{ borderTop: `1px solid ${C.borderSilver}`, background: r.count <= 5 ? 'rgba(180,68,31,0.09)' : 'transparent' }}>
+                        <td style={{ padding: '7px 8px', color: r.count <= 5 ? '#B4441F' : C.body, fontWeight: r.count <= 5 ? 600 : 400 }}>{r._style}</td>
+                        <td style={{ padding: '7px 8px', color: r.count <= 5 ? '#B4441F' : C.body }}>{r.size}</td>
+                        <td style={{ padding: '7px 8px', fontWeight: 700, color: r.count <= 5 ? '#B4441F' : C.heading, whiteSpace: 'nowrap' }}>
+                          {r.count}{r.count <= 5 && <span style={{ marginLeft: 6, fontSize: 9, fontFamily: 'Cinzel, serif', letterSpacing: '0.06em', color: '#B4441F', border: '1px solid rgba(180,68,31,0.4)', borderRadius: 10, padding: '1px 6px' }}>LOW</span>}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
