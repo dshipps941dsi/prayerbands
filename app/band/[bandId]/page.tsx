@@ -317,9 +317,11 @@ export default function BandPage() {
     fetch(url).then(r => r.json()).then(data => setStatus(data)).catch(() => setStatus({ screen: 'error' }))
   }, [bandId, userId])
 
-  // Reveal the bottom nav on scroll-up, hide it on scroll-down. It starts
-  // hidden (see initial state), so the first view is clean until the user
-  // scrolls. Threshold avoids flicker on tiny scrolls.
+  // Scroll direction drives the chrome: scroll UP reveals the bottom nav and
+  // hides the top header; scroll DOWN does the opposite. The header transform is
+  // derived from navHidden (they're always inverse), so one bit tracks both. Nav
+  // starts hidden / header shown, so the first view is clean. Threshold avoids
+  // flicker on tiny scrolls.
   useEffect(() => {
     let lastY = typeof window !== 'undefined' ? window.scrollY : 0
     const onScroll = () => {
@@ -526,7 +528,7 @@ export default function BandPage() {
   function Nav() {
     const currentHolder = status.registrations?.[status.registrations.length - 1]
     return (
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 'calc(16px + env(safe-area-inset-top, 0px))', paddingRight: 24, paddingBottom: 16, paddingLeft: 24, borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', position: 'sticky', top: 0, zIndex: 100 }}>
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 'calc(16px + env(safe-area-inset-top, 0px))', paddingRight: 24, paddingBottom: 16, paddingLeft: 24, borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', position: 'sticky', top: 0, zIndex: 100, transform: navHidden ? 'translateY(0)' : 'translateY(-100%)', transition: 'transform 0.3s ease' }}>
         <a href="/" aria-label="Prayer Bands home" style={{ display: 'inline-flex', textDecoration: 'none' }}>
           <Logo size={28} withName nameColor={DARK} nameSize={18} />
         </a>
