@@ -387,7 +387,10 @@ export default function HomePage() {
           </Reveal>
           <div className="feed-grid">
             {feed.map((p, i) => {
-              const answered = i === 2; // highlight one card as an answered prayer
+              // Parked until a real answered prayer drives it — hard-coding the
+              // 3rd card as "answered" mislabeled whatever prayer/verse landed
+              // there. Feature (badge + styling below) kept for that day.
+              const answered = false;
               const count = prayingCount(p.key);
               return (
                 <Reveal key={p.key + i} delay={i * 80} className={`feed-card${answered ? " answered" : ""}`}>
