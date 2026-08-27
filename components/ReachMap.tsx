@@ -58,7 +58,7 @@ export default function ReachMap({ bandId }: { bandId: string }) {
       if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null }
       const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false, scrollWheelZoom: false })
       mapInstance.current = map
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map)
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '&copy; Esri' }).addTo(map)
 
       const pts = Array.from(pos.values()).map(p => [p.lat, p.lng])
       if (pts.length === 1) map.setView(pts[0], 5)

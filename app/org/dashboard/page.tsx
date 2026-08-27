@@ -72,7 +72,7 @@ function OrgMap({ orgId, green }: { orgId: string, green: string }) {
       if (!valid.length || !mapRef.current) return
       const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false })
       mapInstanceRef.current = map
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map)
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '&copy; Esri' }).addTo(map)
       const markers: any[] = []
       valid.forEach(p => {
         const dot = L.divIcon({ className: '', html: '<div style="width:12px;height:12px;background:' + (mode === 'current' ? green : '#e8526a') + ';border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,0.3);"></div>', iconSize: [12, 12], iconAnchor: [6, 6] })

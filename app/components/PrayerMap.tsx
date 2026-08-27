@@ -71,8 +71,9 @@ export default function PrayerMap({ points, height = 400, showToggle = true }: P
     const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false })
     mapInstanceRef.current = map
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
+      attribution: '&copy; Esri',
     }).addTo(map)
 
     // Custom red dot icon

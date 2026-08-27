@@ -119,7 +119,7 @@ function BoundedMap({ points }: { points: MapPoint[] }) {
         maxBoundsViscosity: 1.0,
       })
       mapInstanceRef.current = map
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, noWrap: true }).addTo(map)
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, noWrap: true, attribution: '&copy; Esri' }).addTo(map)
       const markers: any[] = []
       valid.forEach(p => {
         const dot = L.divIcon({
@@ -378,7 +378,7 @@ function DashboardMap({ bands, points }: { bands: Band[]; points: MapPoint[] }) 
       if (!valid.length || !mapRef.current) return
       const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false })
       mapInstanceRef.current = map
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map)
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '&copy; Esri' }).addTo(map)
       const markers: any[] = []
       valid.forEach(p => {
         const dot = L.divIcon({

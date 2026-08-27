@@ -617,7 +617,7 @@ export default function BandPage() {
         if (!valid.length) return
         const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false, scrollWheelZoom: false })
         mapInstanceRef.current = map
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '&copy; Esri' }).addTo(map)
         const latlngs: any[] = []
         const markers: any[] = []
         valid.forEach(p => {

@@ -153,7 +153,7 @@ function GlobalPrayerMap({ points }: { points: MapPoint[] }) {
       if (instRef.current) { instRef.current.remove(); instRef.current = null; }
       const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false, scrollWheelZoom: true, worldCopyJump: true, minZoom: 1 });
       instRef.current = map;
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
+      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: '&copy; Esri' }).addTo(map);
       // Frame on the newest stops rather than every pin. Fitting all of them
       // just reproduced the old whole-world view, with everything recent
       // squeezed into one corner. Opening where the latest activity is puts the
