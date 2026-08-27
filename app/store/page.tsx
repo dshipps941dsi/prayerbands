@@ -133,6 +133,8 @@ function StorePageInner() {
   const [customMsg, setCustomMsg] = useState("");
   const [toast, setToast] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [isGift, setIsGift] = useState(false);
+  const [giftName, setGiftName] = useState("");
   const [pricing, setPricing] = useState<Record<string, number>>({});
   const [catalog, setCatalog] = useState<Product[]>([]);
   const [replaces, setReplaces] = useState("");
@@ -721,16 +723,29 @@ function StorePageInner() {
                   <div style={{ borderTop: "1px solid rgba(92,101,115,0.20)", paddingTop: 12, marginTop: 8, display: "flex", justifyContent: "space-between" }}><span className="playfair" style={{ fontSize: 18, fontWeight: 600, color: "#15223B" }}>Total</span><span className="playfair" style={{ fontSize: 22, fontWeight: 700, color: "#9A7A35" }}>${total.toFixed(2)}</span></div>
                 </div>
 
-                <button className="checkout-btn" disabled={checkoutLoading || cart.length === 0} onClick={async () => {
+                <div style={{ background: "#FBF7EE", border: "1px solid rgba(200,169,110,0.4)", borderRadius: 8, padding: "12px 14px", marginBottom: 12 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, color: "#15223B", cursor: "pointer", fontWeight: 600 }}>
+                    <input type="checkbox" checked={isGift} onChange={e => setIsGift(e.target.checked)} style={{ width: 16, height: 16 }} />
+                    This is a gift for someone else
+                  </label>
+                  {isGift && (
+                    <>
+                      <input value={giftName} onChange={e => setGiftName(e.target.value)} placeholder="Recipient's full name" style={{ width: "100%", marginTop: 10, padding: "10px 12px", border: "1px solid rgba(92,101,115,0.3)", borderRadius: 6, fontSize: 14 }} />
+                      <p className="lato" style={{ fontSize: 11, color: "#5C6573", marginTop: 6, lineHeight: 1.5 }}>The band ships to this person at the address you enter next. Leave the gift box unchecked if it's for you.</p>
+                    </>
+                  )}
+                </div>
+
+                <button className="checkout-btn" disabled={checkoutLoading || cart.length === 0 || (isGift && !giftName.trim())} onClick={async () => {
                   setCheckoutLoading(true)
                   track('begin_checkout', { currency: 'USD', value: subtotal, items: cart.map(c => ({ item_id: c.id, item_name: c.name, quantity: c.qty, price: lineUnit(c) })) })
                   const res = await fetch('/api/create-checkout', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ items: cart.map(c => ({ id: c.id, qty: c.qty, size: c.size })), customMessage: customMsg || '', verse: customVerse || '', color: customColor || 'Amber Gold', replaces: replaces || '', referralCode: referral?.code || '' })
+                    body: JSON.stringify({ items: cart.map(c => ({ id: c.id, qty: c.qty, size: c.size })), customMessage: customMsg || '', verse: customVerse || '', color: customColor || 'Amber Gold', replaces: replaces || '', referralCode: referral?.code || '', recipientName: isGift ? giftName.trim() : '' })
                   })
                   const data = await res.json()
                   if (data.url) { window.location.href = data.url } else { showToast('Something went wrong — please try again'); setCheckoutLoading(false) }
-                }}>{checkoutLoading ? 'Redirecting...' : `Proceed to Checkout — $${total.toFixed(2)}`}</button>
+                }}>{checkoutLoading ? 'Redirecting...' : (isGift && !giftName.trim()) ? "Enter the recipient's name" : `Proceed to Checkout — $${total.toFixed(2)}`}</button>
                 <p className="lato" style={{ fontSize: 11, textAlign: "center", color: "#5C6573", marginTop: 12, letterSpacing: "0.05em" }}>Secure checkout via Stripe · Ships in 3-5 days</p>
               </>
             )}

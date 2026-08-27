@@ -62,7 +62,10 @@ export async function POST(req: NextRequest) {
         // orders (most of them) that's who the band ships to, not the buyer.
         shipping_address: (() => {
           const s = sessionShipping(session)
-          return s.address ? { ...s.address, name: s.name || null } : null
+          // Explicit gift recipient (from our cart) wins over Stripe's shipping
+          // name field, which the buyer may have filled with their own name.
+          const giftName = (session.metadata?.recipient_name || '').trim()
+          return s.address ? { ...s.address, name: giftName || s.name || null } : null
         })(),
         order_metadata: session.metadata,
         org_id: session.metadata?.org_id || null,

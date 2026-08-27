@@ -250,6 +250,10 @@ export async function POST(req: NextRequest) {
           credit_applied_cents: creditApplied > 0 ? String(creditApplied) : '',
           credit_user_id: creditUserId || '',
           referral_code: referrerUserId ? referralCode : '',
+          // Explicit gift recipient from our own cart — the reliable source for
+          // who the band ships to, rather than hoping the buyer typed the
+          // recipient into Stripe's shipping name field.
+          recipient_name: (typeof body.recipientName === 'string' ? body.recipientName.trim() : '').slice(0, 120),
         },
       })
 
