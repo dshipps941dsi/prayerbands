@@ -688,9 +688,12 @@ export default function AdminPage() {
                       </div>
 
                       {/* Personalization — read before fulfilling */}
-                      {(order.order_metadata?.customMessage || order.order_metadata?.verse || order.order_metadata?.color) && (
+                      {(order.order_metadata?.customMessage || order.order_metadata?.verse || (order.order_metadata?.color && !(order.order_metadata?.items && order.order_metadata.items !== '[]'))) && (
                         <div style={{ marginBottom: '12px', padding: '12px 16px', background: 'rgba(200,169,110,0.10)', border: `1px solid ${C.borderGold}`, borderRadius: '6px', fontSize: '13px', lineHeight: '1.65', color: C.body }}>
-                          {order.order_metadata?.color && (
+                          {/* Only the legacy single-color field, and only when there
+                              are no structured line items (which are the real source
+                              of truth and are shown as "Ordered:" above). */}
+                          {order.order_metadata?.color && !(order.order_metadata?.items && order.order_metadata.items !== '[]') && (
                             <div><strong style={{ color: C.heading }}>Band color:</strong> {order.order_metadata.color}</div>
                           )}
                           {order.order_metadata?.customMessage && (

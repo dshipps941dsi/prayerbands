@@ -19,7 +19,7 @@ export const PRODUCT_VARIANTS: Record<string, Variant> = {
   volleyball: { name: 'Volleyball', theme: 'volleyball' },
   // The store calls it Gray; the bands were engraved as "Light Grey". The
   // spelling has to match the band exactly or the design matches nothing.
-  gray: { name: 'Gray', theme: 'default', color: 'Light Grey' },
+  gray: { name: 'Light Grey', theme: 'default', color: 'Light Grey' },
   // Bulk / custom orders aren't a single design — ship assorted.
   custom: { name: 'Custom', assorted: true },
   'pack-50': { name: 'Starter Pack', assorted: true },
