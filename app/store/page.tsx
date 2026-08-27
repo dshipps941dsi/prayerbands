@@ -6,7 +6,6 @@ import SiteNav from "@/components/SiteNav";
 import { track } from "@/lib/analytics";
 import SiteFooter from "@/components/SiteFooter";
 import { FREE_SHIPPING_MIN_CENTS, amountToFreeShipping } from "@/lib/shipping";
-import { track } from "@/lib/analytics";
 import { readGaIds } from "@/lib/ga4";
 
 type PendingReferral = { code: string; referrerUserId?: string };
