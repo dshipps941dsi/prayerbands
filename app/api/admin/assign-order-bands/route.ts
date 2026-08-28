@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { variantForSlug, parseOrderItems, matchesDesign } from '@/lib/fulfillment'
+import { variantForSlug, parseOrderItems, matchesDesign, parseRecipients, matchRecipientsToBands } from '@/lib/fulfillment'
 
 const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
@@ -92,5 +92,16 @@ export async function POST(req: NextRequest) {
 
   await admin.from('orders').update({ assigned_band_ids: assigned, status: 'processing' }).eq('id', orderId)
 
-  return NextResponse.json({ assigned, count: assigned.length, shortfalls, owner_linked: ownerLinked })
+  // Pre-dedicate each assigned band to the recipient the buyer named at checkout.
+  const recipients = parseRecipients(order.order_metadata)
+  let dedicated = 0
+  if (recipients.length) {
+    const assignedRows = available.filter(b => assigned.includes(b.band_id))
+    for (const m of matchRecipientsToBands(recipients, assignedRows)) {
+      await admin.from('bands').update({ dedication_recipient: m.recipient || null, dedication_note: m.note || null }).eq('band_id', m.band_id)
+      dedicated++
+    }
+  }
+
+  return NextResponse.json({ assigned, count: assigned.length, shortfalls, owner_linked: ownerLinked, dedicated })
 }

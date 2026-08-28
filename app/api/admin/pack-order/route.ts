@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isTeamMember } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { variantForSlug, parseOrderItems, reconcilePack, type OrderItem, type PackBand } from '@/lib/fulfillment'
+import { variantForSlug, parseOrderItems, reconcilePack, parseRecipients, matchRecipientsToBands, type OrderItem, type PackBand } from '@/lib/fulfillment'
 
 // TODO(stage 2): replace with a profiles.role check so packers can reach this
 // without being the owner's Google account.
@@ -121,6 +121,14 @@ export async function POST(req: NextRequest) {
   }
 
   await admin.from('orders').update({ assigned_band_ids: bandIds, status: 'processing' }).eq('id', orderId)
+
+  // Pre-dedicate each packed band to the recipient the buyer named at checkout.
+  const recipients = parseRecipients(order.order_metadata)
+  if (recipients.length) {
+    for (const m of matchRecipientsToBands(recipients, ordered)) {
+      await admin.from('bands').update({ dedication_recipient: m.recipient || null, dedication_note: m.note || null }).eq('band_id', m.band_id)
+    }
+  }
 
   return NextResponse.json({ packed: true, assigned: bandIds, count: bandIds.length, mismatches, owner_linked: ownerLinked })
 }

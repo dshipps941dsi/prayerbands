@@ -79,6 +79,41 @@ export function matchesDesign(b: { theme: string | null; color: string | null },
   return !!v.assorted || (b.theme === v.theme && (!v.color || b.color === v.color))
 }
 
+// ── Per-band recipients (from checkout personalization) ─────────────────────
+// The cart lets a buyer name who each band is for; those ride through as
+// rcp_0..rcp_{n-1} metadata keys and are attached to the actual bands here at
+// assign/pack time, so each band greets the right person on its first tap.
+export type Recipient = { slug: string; size: string | null; name: string; note: string }
+
+export function parseRecipients(meta: any): Recipient[] {
+  const n = parseInt(meta?.rcp_n || '0', 10)
+  if (!Number.isFinite(n) || n <= 0) return []
+  const out: Recipient[] = []
+  for (let i = 0; i < n; i++) {
+    try {
+      const r = JSON.parse(meta[`rcp_${i}`])
+      if (r && (r.name || r.note)) out.push({ slug: String(r.slug || ''), size: r.size ?? null, name: String(r.name || ''), note: String(r.note || '') })
+    } catch { /* skip a malformed entry */ }
+  }
+  return out
+}
+
+// Pair each recipient with one assigned band of the matching design + size,
+// each band used once. Returns the dedication to stamp on each band.
+export function matchRecipientsToBands(
+  recipients: Recipient[],
+  bands: { band_id: string; theme: string | null; color: string | null; size: string | null }[],
+): { band_id: string; recipient: string; note: string }[] {
+  const used = new Set<string>()
+  const out: { band_id: string; recipient: string; note: string }[] = []
+  for (const r of recipients) {
+    const v = variantForSlug(r.slug)
+    const band = bands.find(b => !used.has(b.band_id) && matchesDesign(b, v) && (!r.size || !b.size || b.size === r.size))
+    if (band) { used.add(band.band_id); out.push({ band_id: band.band_id, recipient: r.name, note: r.note }) }
+  }
+  return out
+}
+
 export type PackBand = { band_id: string; theme: string | null; color: string | null; size: string | null }
 
 export type PackReconciliation = {

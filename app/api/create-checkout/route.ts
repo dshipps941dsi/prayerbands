@@ -221,6 +221,23 @@ export async function POST(req: NextRequest) {
     // discount, but if Stripe rejects it, retry once without it: the buyer still
     // checks out (and can still type a promo code), and the referrer is still
     // credited via the metadata. Same "never block a purchase" rule as credit.
+    // Per-band recipients (only the named ones) → one compact metadata key each,
+    // so the webhook stores them on the order and fulfillment can pre-dedicate
+    // each band to the person it's for. Capped so we never exceed Stripe's
+    // metadata limits (50 keys / 500 chars per value).
+    const rcpList = (Array.isArray(body.recipients) ? body.recipients : [])
+      .filter((r: any) => r && String(r.recipientName || '').trim())
+      .slice(0, 24)
+      .map((r: any) => ({
+        slug: String(r.slug || ''),
+        size: r.size ? String(r.size).toUpperCase().slice(0, 2) : null,
+        name: String(r.recipientName).trim().slice(0, 60),
+        note: String(r.note || '').trim().slice(0, 280),
+      }))
+    const recipientMeta: Record<string, string> = rcpList.length
+      ? { ...Object.fromEntries(rcpList.map((r: any, i: number) => [`rcp_${i}`, JSON.stringify(r)])), rcp_n: String(rcpList.length) }
+      : {}
+
     const buildSession = (useReferralDiscount: boolean) =>
       stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -254,6 +271,7 @@ export async function POST(req: NextRequest) {
           referral_code: referrerUserId ? referralCode : '',
           ga_client_id: gaClientId,
           ga_session_id: gaSessionId,
+          ...recipientMeta,
           // Explicit gift recipient from our own cart — the reliable source for
           // who the band ships to, rather than hoping the buyer typed the
           // recipient into Stripe's shipping name field.

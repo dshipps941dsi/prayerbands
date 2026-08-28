@@ -38,6 +38,9 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
   const [error, setError] = useState('')
   const [zoom, setZoom] = useState<string | null>(null)
   const [failed, setFailed] = useState<Set<string>>(new Set())
+  // Per-band recipient + message, keyed by an individual band slot (cart key + index).
+  const [pers, setPers] = useState<Record<string, { name: string; note: string }>>({})
+  const [showPers, setShowPers] = useState(false)
 
   const imgOf = (p: Product) => (p.images || []).find(u => /^https?:\/\//.test(u)) || p.images?.[0] || ''
 
@@ -68,6 +71,9 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
   const cartCents = Math.round(cartTotal * 100)
   const freeShip = cartCents >= FREE_SHIPPING_MIN_CENTS
   const toFreeShip = amountToFreeShipping(cartCents) / 100
+  // Expand the cart into individual bands so each can be named for its recipient.
+  const bandSlots = cart.flatMap(c => Array.from({ length: c.qty }, (_, i) => ({ slot: `${c.key}#${i}`, slug: c.slug, size: c.size, design: c.name })))
+  const namedCount = bandSlots.filter(s => (pers[s.slot]?.name || '').trim()).length
 
   function addToCart() {
     if (!selected) return
@@ -91,6 +97,8 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: cart.map(c => ({ id: c.slug, qty: c.qty, size: c.size || undefined })),
+          // One entry per physical band, in cart order, so each can be pre-dedicated.
+          recipients: bandSlots.map(s => ({ slug: s.slug, size: s.size || null, recipientName: (pers[s.slot]?.name || '').trim(), note: (pers[s.slot]?.note || '').trim() })),
           returnTo: `/band/${bandId}`,
         }),
       })
@@ -239,6 +247,44 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
               <button onClick={() => removeItem(c.key)} aria-label="Remove" style={{ background: 'none', border: 'none', color: GRAY, fontSize: 16, cursor: 'pointer', padding: 2 }}>✕</button>
             </div>
           ))}
+          {/* Personalize each band — name the recipient + a message so each band
+              greets the right person on its first tap. Ideal when buying several
+              to give to different people. */}
+          <div style={{ marginTop: 12, borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
+            <button onClick={() => setShowPers(v => !v)} style={{ background: 'none', border: 'none', color: '#9A7A35', cursor: 'pointer', fontFamily: serif, fontWeight: 700, fontSize: 14, padding: 0, display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+              ✍️ Personalize each band
+              <span style={{ fontSize: 12, color: GRAY, fontWeight: 400 }}>{namedCount > 0 ? `${namedCount} of ${cartCount} named` : 'optional'}</span>
+              <span style={{ color: GRAY }}>{showPers ? '▴' : '▾'}</span>
+            </button>
+            {showPers && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+                <div style={{ fontSize: 12.5, color: GRAY, fontStyle: 'italic', fontFamily: 'Georgia, serif', lineHeight: 1.5 }}>
+                  Giving these to different people? Name who each band is for and add a short message — it greets them on their first tap.
+                </div>
+                {bandSlots.map((s, i) => (
+                  <div key={s.slot} style={{ background: '#FFFBF2', border: `1px solid ${BORDER}`, borderRadius: 10, padding: 12 }}>
+                    <div style={{ fontFamily: serif, fontWeight: 700, fontSize: 13, color: DARK, marginBottom: 8 }}>Band {i + 1} · {s.design}{s.size ? ` · ${s.size}` : ''}</div>
+                    <input
+                      value={pers[s.slot]?.name || ''}
+                      onChange={e => setPers(p => ({ ...p, [s.slot]: { name: e.target.value, note: p[s.slot]?.note || '' } }))}
+                      placeholder="Who is this for? (name)"
+                      maxLength={60}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 14, fontFamily: 'Georgia, serif', color: DARK, background: '#fff', outline: 'none' }}
+                    />
+                    <textarea
+                      value={pers[s.slot]?.note || ''}
+                      onChange={e => setPers(p => ({ ...p, [s.slot]: { name: p[s.slot]?.name || '', note: e.target.value } }))}
+                      placeholder="A short message or blessing (optional)"
+                      rows={2}
+                      maxLength={280}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '9px 11px', marginTop: 8, borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 14, fontFamily: 'Georgia, serif', color: DARK, background: '#fff', outline: 'none', resize: 'vertical' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 12, paddingTop: 10, borderTop: `1px solid ${BORDER}` }}>
             <span style={{ fontSize: 13, color: GRAY }}>{cartCount} {cartCount === 1 ? 'band' : 'bands'}</span>
             <span style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: DARK }}>${cartTotal.toFixed(2)}</span>
