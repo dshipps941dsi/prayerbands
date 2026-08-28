@@ -250,17 +250,6 @@ function CirclePageInner() {
     setTimeout(() => setCodeCopied(false), 2000)
   }
 
-  function shareCircle() {
-    if (!circle) return
-    const text = `Join my Prayer Circle — ${circle.name}\nCode: ${circle.join_code}\nprayerbands.com/circles`
-    if (navigator.share) {
-      navigator.share({ text })
-    } else {
-      navigator.clipboard.writeText(text)
-      setCodeCopied(true)
-      setTimeout(() => setCodeCopied(false), 2000)
-    }
-  }
 
   if (loading) {
     return (
@@ -691,7 +680,7 @@ function CirclePageInner() {
                 </p>
               )}
               <p style={{ fontSize: '13px', color: '#5C6573', margin: '0 0 8px 0', fontFamily: "'Inter', sans-serif" }}>
-                Share this code to invite people
+                Invite people to your circle
               </p>
               <div style={{
                 fontSize: '34px',
@@ -703,38 +692,22 @@ function CirclePageInner() {
               }}>
                 {circle.join_code}
               </div>
-              <button
-                onClick={shareCircle}
-                style={{
-                  width: '100%',
-                  backgroundColor: '#C8A96E',
-                  color: '#0A1628',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  fontSize: '12px',
-                  fontFamily: "'Cinzel', serif",
-                  fontWeight: '600',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  marginBottom: '8px'
-                }}
-              >
-                {codeCopied ? 'Copied!' : '📤 Share Join Code'}
+              {/* Primary: share the invite page — a tap-to-join link with a
+                  preview, so people join without typing the code. */}
+              <ShareSheet
+                block
+                url={`https://prayerbands.com/circle/${circle.id}`}
+                title={circle.name}
+                text={`Join our Prayer Circle "${circle.name}" on Prayer Bands 🙏`}
+                label="Invite people"
+                variant="gold"
+              />
+              {/* Secondary: the raw code, for reading aloud, a flyer, or manual entry. */}
+              <button onClick={copyCode} style={{ background: 'none', border: 'none', color: '#5C6573', fontSize: '12px', fontFamily: 'Georgia, serif', cursor: 'pointer', marginTop: '12px', textDecoration: 'underline', padding: 0 }}>
+                {codeCopied ? 'Code copied!' : 'Or copy the join code'}
               </button>
-              <div style={{ marginBottom: '8px' }}>
-                <ShareSheet
-                  block
-                  url={`https://prayerbands.com/circle/${circle.id}`}
-                  title={circle.name}
-                  text={`Join our Prayer Circle "${circle.name}" on Prayer Bands 🙏`}
-                  label="Share invite page"
-                  variant="navy"
-                />
-              </div>
-              <p style={{ fontSize: '12px', color: '#5C6573', margin: 0, fontFamily: "'Inter', sans-serif" }}>
-                The invite page shows the circle publicly (no prayer details) and brings people back to join.
+              <p style={{ fontSize: '12px', color: '#5C6573', margin: '12px 0 0', fontFamily: "'Inter', sans-serif", lineHeight: 1.5 }}>
+                They land on a private invite page (no prayer details) and join in one tap. The code is handy for reading aloud or a flyer.
               </p>
             </div>
 
