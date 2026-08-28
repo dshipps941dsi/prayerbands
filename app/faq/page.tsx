@@ -7,8 +7,8 @@ import SiteFooter from "@/components/SiteFooter";
 
 const FAQS = [
   {
-    q: "What is a PrayerBand and how does it work?",
-    a: "A PrayerBand is a wristband with a tiny NFC chip and a unique ID. Tap it with your phone (or visit its link) to read the prayers attached to it and add your own. Each band builds a living chain of prayer as it passes from person to person.",
+    q: "What is a Prayer Band and how does it work?",
+    a: "A Prayer Band is a wristband with a tiny NFC chip and a unique ID. Tap it with your phone (or visit its link) to read the prayers attached to it and add your own. Each band builds a living chain of prayer as it passes from person to person.",
   },
   {
     q: "Do I need an app to use my band?",

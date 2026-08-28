@@ -8,8 +8,8 @@ import { FREE_SHIPPING_MIN_CENTS } from '@/lib/shipping'
 // Fallback definitions (used only if the products table hasn't been seeded yet),
 // so checkout keeps working before db/products.sql is run.
 const FALLBACK: Record<string, { key: string; name: string; bands: number; multi: boolean }> = {
-  standard: { key: 'band_price_single', name: 'PrayerBand', bands: 1, multi: true },
-  custom: { key: 'band_price_custom', name: 'Custom PrayerBand', bands: 1, multi: false },
+  standard: { key: 'band_price_single', name: 'Prayer Band', bands: 1, multi: true },
+  custom: { key: 'band_price_custom', name: 'Custom Prayer Band', bands: 1, multi: false },
   'pack-50': { key: 'pack_price_50', name: 'Starter Pack — 50 Bands', bands: 50, multi: false },
   'pack-100': { key: 'pack_price_100', name: 'Community Pack — 100 Bands', bands: 100, multi: false },
   'pack-200': { key: 'pack_price_200', name: 'Mission Pack — 200 Bands', bands: 200, multi: false },

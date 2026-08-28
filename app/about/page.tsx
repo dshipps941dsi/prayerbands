@@ -79,7 +79,7 @@ export default function AboutPage() {
           hand it to someone else — a friend, a stranger, someone in the middle of a hard season — and let it keep going?
         </p>
         <p className="ab-p">
-          A PrayerBand is a wristband with a tiny chip and a unique ID. You wear it, you pray over it, and then you pass
+          A Prayer Band is a wristband with a tiny chip and a unique ID. You wear it, you pray over it, and then you pass
           it on. Whoever receives it can tap it, read the prayers already attached, and add their own. Band by band,
           hand by hand, a chain of intercession forms — and you can watch it travel across the map as it goes.
         </p>

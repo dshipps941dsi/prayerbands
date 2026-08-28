@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
               </div>
               <div style="padding:32px">
                 <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 20px">
-                  Your ${qty} ${type} PrayerBand${parseInt(qty)>1?'s':''} 
+                  Your ${qty} ${type} Prayer Band${parseInt(qty)>1?'s':''} 
                   ($${amount}) will ship within 3-5 business days. Each band comes 
                   pre-programmed with a unique NFC chip — ready to give away. ✝
                 </p>
