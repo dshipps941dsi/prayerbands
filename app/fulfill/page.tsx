@@ -67,6 +67,8 @@ export default function FulfillPage() {
   const [busy, setBusy] = useState(false)
   const [problems, setProblems] = useState<{ unavailable?: any[]; mismatches?: any[]; shortfalls?: any[] } | null>(null)
   const [done, setDone] = useState<string[] | null>(null)
+  const [tracking, setTracking] = useState<Record<number, string>>({})
+  const [shipping, setShipping] = useState<number | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
   const nfcSupported = typeof window !== 'undefined' && 'NDEFReader' in window
@@ -96,6 +98,28 @@ export default function FulfillPage() {
 
   const active = orders.find(o => o.id === activeId) || null
   const toPack = orders.filter(o => !(o.assigned_band_ids || []).length && o.status !== 'shipped' && o.status !== 'cancelled')
+  // Packed but not yet shipped — the fulfiller adds tracking here and ships.
+  const toShip = orders.filter(o => (o.assigned_band_ids || []).length > 0 && o.status !== 'shipped' && o.status !== 'cancelled')
+
+  async function shipOrder(o: Order) {
+    const t = (tracking[o.id] || '').trim()
+    if (!t) { setNote('Enter a tracking number first.'); return }
+    setShipping(o.id)
+    try {
+      const res = await fetch('/api/admin/ship-order', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: o.id, trackingNumber: t }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setNote(d.error || 'Could not ship this order.'); return }
+      setNote(d.email_sent ? `Order #${o.id} shipped — confirmation email sent.` : `Order #${o.id} shipped (the email had an issue — check later).`)
+      setTracking(prev => ({ ...prev, [o.id]: '' }))
+      if (activeId === o.id) { setActiveId(null); reset() }
+      await loadOrders()
+    } finally {
+      setShipping(null)
+    }
+  }
 
   function itemsFor(o: Order): OrderItem[] {
     const items = parseOrderItems(o.order_metadata)
@@ -280,6 +304,30 @@ export default function FulfillPage() {
               </button>
             )
           })}
+
+          {toShip.length > 0 && (
+            <>
+              <div style={{ ...panelHead, marginTop: 4 }}>Ready to ship ({toShip.length})</div>
+              {toShip.map(o => (
+                <div key={o.id} style={{ padding: '14px 16px', borderBottom: '1px solid ' + C.borderSilver }}>
+                  <div style={{ fontWeight: 600, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 16 }}>{o.customer_name || o.customer_email || 'Unnamed'}</div>
+                  <div style={{ fontSize: 12, color: C.secondary, marginTop: 2 }}>Order #{o.id} · {(o.assigned_band_ids || []).length} band{(o.assigned_band_ids || []).length === 1 ? '' : 's'} packed</div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                    <input
+                      value={tracking[o.id] || ''}
+                      onChange={e => setTracking(prev => ({ ...prev, [o.id]: e.target.value }))}
+                      placeholder="Tracking number"
+                      autoCapitalize="characters"
+                      style={{ flex: 1, minWidth: 140, padding: '9px 12px', border: '1px solid ' + C.borderSilver, borderRadius: 8, fontSize: 14 }}
+                    />
+                    <button onClick={() => shipOrder(o)} disabled={shipping === o.id || !(tracking[o.id] || '').trim()} style={btn(C.gold, C.navy)}>
+                      {shipping === o.id ? 'Shipping…' : 'Mark shipped'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
         </div>
 
         <div style={panel}>
@@ -294,7 +342,7 @@ export default function FulfillPage() {
               <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 20, color: C.green, marginBottom: 8 }}>Packed ✓</div>
               <p style={{ fontSize: 14, color: C.secondary, lineHeight: 1.6, marginBottom: 14 }}>
                 {done.length} band{done.length === 1 ? '' : 's'} recorded against this order and linked to {active.customer_email}. It is now
-                {' '}<strong style={{ color: C.heading }}>processing</strong> — add a tracking number in the admin Orders view to send the shipping email.
+                {' '}<strong style={{ color: C.heading }}>ready to ship</strong> — add a tracking number under &ldquo;Ready to ship&rdquo; in the queue to mark it shipped and send the email.
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
                 {done.map(id => (
