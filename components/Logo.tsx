@@ -14,9 +14,11 @@ const VB_H = 242.82
 export default function Logo({
   size = 30,
   color = LOGO_SLATE,
+  markColor,
   withName = false,
   name = 'Prayer Bands',
   nameColor,
+  nameColorAlt,
   nameSize,
   nameClassName,
   gap = 9,
@@ -26,11 +28,15 @@ export default function Logo({
   size?: number
   /** Fill color of the mark. Slate-blue on light, white on dark. */
   color?: string
+  /** Overrides `color` for the mark only (so the words can be coloured apart). */
+  markColor?: string
   /** Render the wordmark next to the mark. */
   withName?: boolean
   name?: string
-  /** Wordmark color (defaults to `color`). */
+  /** Colour of the first word ("Prayer"). Defaults to `color`. */
   nameColor?: string
+  /** Colour of the second word ("Bands"). Defaults to `nameColor`. */
+  nameColorAlt?: string
   nameSize?: number
   /** If set, the wordmark uses this class instead of the built-in serif. */
   nameClassName?: string
@@ -38,13 +44,17 @@ export default function Logo({
   style?: CSSProperties
 }) {
   const width = Math.round((size * VB_W) / VB_H)
+  // Split the wordmark into its two words so each can carry its own colour.
+  const parts = name.trim().split(/\s+/)
+  const word1 = parts[0] || ''
+  const word2 = parts.slice(1).join(' ')
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap, lineHeight: 1, ...style }}>
       <svg
         width={width}
         height={size}
         viewBox={`0 0 ${VB_W} ${VB_H}`}
-        fill={color}
+        fill={markColor ?? color}
         role="img"
         aria-label={name}
         style={{ display: 'block', flexShrink: 0 }}
@@ -59,11 +69,11 @@ export default function Logo({
             fontFamily: nameClassName ? undefined : "'Playfair Display', Georgia, serif",
             fontWeight: 700,
             fontSize: nameSize ?? Math.round(size * 0.62),
-            color: nameColor ?? color,
             whiteSpace: 'nowrap',
           }}
         >
-          {name}
+          <span style={{ color: nameColor ?? color }}>{word1}</span>
+          {word2 && <span style={{ color: nameColorAlt ?? nameColor ?? color }}>{' ' + word2}</span>}
         </span>
       )}
     </span>

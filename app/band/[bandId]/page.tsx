@@ -72,6 +72,11 @@ const INK   = 'var(--pb-text-on-primary, #0f0d09)'
 const TAB_BG       = 'var(--pb-tab-bar, #1a2a4a)'
 const TAB_ACTIVE   = 'var(--pb-tab-active, var(--pb-primary, #C8A96E))'
 const TAB_INACTIVE = 'color-mix(in srgb, var(--pb-tab-active, #C8A96E) 46%, transparent)'
+// Logo colors — the mark and the two words ("Prayer" / "bands") are themeable
+// independently, falling back to sensible defaults from the core palette.
+const LOGO_MARK   = 'var(--pb-logo-mark, #3D5A73)'
+const LOGO_PRAYER = 'var(--pb-logo-prayer, var(--pb-text, #2C1810))'
+const LOGO_BANDS  = 'var(--pb-logo-bands, var(--pb-primary, #9A7A35))'
 const serif = "'Playfair Display', Georgia, serif"
 // Body/UI text uses a sans stack — serif (above) is reserved for large
 // headings/verses; small serif body text was hard to read.
@@ -537,9 +542,13 @@ export default function BandPage() {
     const currentHolder = status.registrations?.[status.registrations.length - 1]
     return (
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 'calc(16px + env(safe-area-inset-top, 0px))', paddingRight: 24, paddingBottom: 16, paddingLeft: 24, borderBottom: '1px solid rgba(44,24,16,0.1)', background: 'rgba(250,246,239,0.97)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', position: 'sticky', top: 0, zIndex: 100, transform: headerHidden ? 'translateY(-100%)' : 'translateY(0)', transition: 'transform 0.3s ease' }}>
-        <a href="/" aria-label="Prayer Bands home" style={{ display: 'inline-flex', textDecoration: 'none' }}>
-          <Logo size={28} withName nameColor={DARK} nameSize={18} />
-        </a>
+        <button
+          onClick={() => { setActiveTab('home'); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+          aria-label="Go to home"
+          style={{ display: 'inline-flex', textDecoration: 'none', background: 'none', border: 'none', padding: 0, cursor: 'pointer', alignItems: 'center' }}
+        >
+          <Logo size={28} withName nameColor={LOGO_PRAYER} nameColorAlt={LOGO_BANDS} markColor={LOGO_MARK} nameSize={18} />
+        </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           {/* Band switcher. Only appears once someone holds more than one —
               matching a band to an outfit means carrying several — so a single
@@ -792,6 +801,17 @@ export default function BandPage() {
             )}
           </button>
         ))}
+        {/* Link out to the full marketing website (the logo now stays in-app). */}
+        <a
+          href="/"
+          aria-label="Full Prayer Bands website"
+          style={{ flex: 1, padding: '10px 4px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={TAB_INACTIVE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+          <span style={{ fontFamily: body, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: TAB_INACTIVE, fontWeight: 400 }}>Website</span>
+        </a>
       </div>
     )
   }

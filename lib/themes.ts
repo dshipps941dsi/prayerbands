@@ -478,6 +478,11 @@ export function themeToVars(theme: BandTheme): Record<string, string> {
     '--pb-tab-active':       theme.tabActive,
     '--pb-border':           theme.border,
     '--pb-card-accent':      theme.cardAccent ?? theme.primary,
+    // Logo: mark + the two words, each themeable. Fall back so existing themes
+    // (which have none of these) still render a sensible lockup.
+    '--pb-logo-mark':        (theme as any).logoMark   ?? theme.tabBar,
+    '--pb-logo-prayer':      (theme as any).logoPrayer ?? theme.text,
+    '--pb-logo-bands':       (theme as any).logoBands  ?? theme.primary,
   };
 }
 

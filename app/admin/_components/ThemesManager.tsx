@@ -18,6 +18,7 @@ type T = {
   text: string; textMuted: string; textOnPrimary: string
   accent: string; accentAlt: string; tabBar: string; tabActive: string
   border: string; cardAccent: string
+  logoMark: string; logoPrayer: string; logoBands: string
   backgroundImage: string; backgroundImageWash: number
   verseText: string; verseReference: string
 }
@@ -31,6 +32,9 @@ function fromApi(a: any): T {
     textOnPrimary: a.textOnPrimary || '#FFFFFF', accent: a.accent || '#D4A84B', accentAlt: a.accentAlt || '#2D4A2D',
     tabBar: a.tabBar || '#0D1F3C', tabActive: a.tabActive || '#D4A84B', border: a.border || '#C0D0E8',
     cardAccent: a.cardAccent || a.primary || '#2A5298',
+    logoMark: a.logoMark || a.tabBar || '#3D5A73',
+    logoPrayer: a.logoPrayer || a.text || '#2C1810',
+    logoBands: a.logoBands || a.primary || '#9A7A35',
     backgroundImage: a.backgroundImage || '', backgroundImageWash: a.backgroundImageWash ?? 0.82,
     verseText: a.defaultVerse?.text || '', verseReference: a.defaultVerse?.reference || '',
   }
@@ -43,6 +47,7 @@ function toPayload(t: T) {
     text: t.text, textMuted: t.textMuted, textOnPrimary: t.textOnPrimary,
     accent: t.accent, accentAlt: t.accentAlt, tabBar: t.tabBar, tabActive: t.tabActive,
     border: t.border, cardAccent: t.cardAccent,
+    logoMark: t.logoMark, logoPrayer: t.logoPrayer, logoBands: t.logoBands,
   }
   if (t.backgroundImage) theme.backgroundImage = t.backgroundImage
   if (t.backgroundImageWash !== undefined) theme.backgroundImageWash = Number(t.backgroundImageWash)
@@ -326,6 +331,13 @@ export default function ThemesManager() {
                   <div style={{ gridColumn: '1 / -1', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.secondary, fontFamily: 'Cinzel, serif', margin: '2px 0 6px' }}>Bottom nav (footer)</div>
                   {colorField(t, 'tabBar', 'Footer background')}
                   {colorField(t, 'tabActive', 'Active tab / icon')}
+                </div>
+                {/* Logo — the mark and the two words are coloured independently. */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 18px', marginTop: 6 }}>
+                  <div style={{ gridColumn: '1 / -1', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.secondary, fontFamily: 'Cinzel, serif', margin: '2px 0 6px' }}>Logo</div>
+                  {colorField(t, 'logoMark', 'Logo mark')}
+                  {colorField(t, 'logoPrayer', '“Prayer” word')}
+                  {colorField(t, 'logoBands', '“Bands” word')}
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
                   <button onClick={() => reDerive(t)} style={{ background: 'transparent', border: `1px solid ${C.borderNavy}`, color: C.body, borderRadius: 8, padding: '8px 14px', fontSize: 11, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>↻ Re-derive palette from key colors</button>
