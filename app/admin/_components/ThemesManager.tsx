@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { deriveTheme } from '@/lib/themes'
+import ColorPicker from './ColorPicker'
 
 // Band theme editor. Built-in themes (from lib/themes.ts) are editable here as
 // DB overrides; admins can also create brand-new themes. Self-contained; the
@@ -174,7 +175,7 @@ export default function ThemesManager() {
       <div style={{ marginBottom: 10 }}>
         <label style={label}>{lbl}</label>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(val) ? val : '#000000'} onChange={e => write(e.target.value.toUpperCase())} style={{ width: 38, height: 34, border: `1px solid ${C.borderNavy}`, borderRadius: 6, background: 'none', cursor: 'pointer', flexShrink: 0 }} />
+          <ColorPicker value={val} onChange={write} />
           <input style={{ ...input, fontFamily: 'monospace' }} value={val} onChange={e => write(e.target.value)} />
         </div>
       </div>
