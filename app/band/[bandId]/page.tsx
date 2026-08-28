@@ -1151,7 +1151,16 @@ export default function BandPage() {
   }
 
   return (
-    <div style={{ background: DARK, minHeight: '100vh', fontFamily: body, color: 'white' }}>
+    // This first-tap entry screen is designed for a dark ground with white text
+    // + gold. Pin it to the DEFAULT palette (not the band's theme) so a light
+    // colour band — e.g. Light Grey — can't wash it out to unreadable low
+    // contrast. Overriding the tokens also fixes GOLD/INK used by its children.
+    <div style={{
+      background: '#12100B', minHeight: '100vh', fontFamily: body, color: 'white',
+      ['--pb-primary' as string]: '#C8A96E',
+      ['--pb-text' as string]: '#12100B',
+      ['--pb-text-on-primary' as string]: '#0f0d09',
+    } as React.CSSProperties}>
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <Logo size={28} color="#fff" withName nameColor="#fff" nameSize={18} />
         <span style={{ fontFamily: body, fontSize: 11, color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>{bandId}</span>
@@ -1160,8 +1169,11 @@ export default function BandPage() {
       {claimStep === 'prompt' && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '20px 28px 140px', textAlign: 'center' }}>
 
-          {/* Cross */}
-          <div style={{ fontSize: 56, marginBottom: 24, color: GOLD }}>✝</div>
+          {/* Cross — an SVG, not the ✝ emoji (which renders as Apple's coloured
+              glyph on iOS). Inherits the gold accent. */}
+          <svg width="40" height="53" viewBox="0 0 24 32" style={{ marginBottom: 24 }} aria-hidden="true">
+            <path d="M10.5 2 h3 v7 h5.5 v3 h-5.5 v18 h-3 v-18 h-5.5 v-3 h5.5 z" fill={GOLD} />
+          </svg>
 
           {/* Main message */}
           <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, marginBottom: 16, lineHeight: 1.3, maxWidth: 320 }}>
