@@ -29,8 +29,8 @@ const TOP_COUNTRIES_SAMPLE = [
 const STEPS = [
   { num: "1", img: "/home/step-1.png", title: "Wear Your Band", desc: "A daily reminder of your faith on your wrist." },
   { num: "2", img: "/home/step-2.png", title: "Tap Your Phone", desc: "NFC technology makes it simple. Just tap & go." },
-  { num: "3", img: "/home/step-3.png", title: "Connect", desc: "Join prayer circles and encourage others." },
-  { num: "4", img: "/home/step-4.png", title: "Receive Daily Verses", desc: "Get a new, personalized verse every day." },
+  { num: "3", img: "/home/step-4.png", title: "Receive Daily Verses", desc: "Get a new, personalized verse every day." },
+  { num: "4", img: "/home/step-3.png", title: "Connect", desc: "Join prayer circles and encourage others." },
   { num: "5", img: "/home/step-5.png", title: "See Your Impact", desc: "Track where your band has traveled and the lives it's touched." },
 ];
 
