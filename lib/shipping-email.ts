@@ -176,11 +176,11 @@ export async function sendShippingConfirmation(input: ShippingConfirmationInput)
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                       <tr>
                         <td width="38" valign="top"><div style="width:28px;height:28px;border-radius:50%;background:#C89A3D;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:28px;font-weight:bold;text-align:center;">1</div></td>
-                        <td style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:25px;color:#E8EEF8;padding-bottom:16px;">Visit <a href="https://prayerbands.com/register" style="color:#E4C475;font-weight:bold;">prayerbands.com/register</a></td>
+                        <td style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:25px;color:#E8EEF8;padding-bottom:16px;"><strong style="color:#ffffff;">Tap the band with your phone.</strong> iPhone: hold the <strong style="color:#E4C475;">top</strong> of your phone to the band. Android: hold the <strong style="color:#E4C475;">middle</strong> of the back. Its page opens automatically &mdash; no app to download.</td>
                       </tr>
                       <tr>
                         <td width="38" valign="top"><div style="width:28px;height:28px;border-radius:50%;background:#C89A3D;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:28px;font-weight:bold;text-align:center;">2</div></td>
-                        <td style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:25px;color:#E8EEF8;padding-bottom:16px;">Enter the unique band ID.</td>
+                        <td style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:25px;color:#E8EEF8;padding-bottom:16px;"><strong style="color:#ffffff;">Make it yours</strong> &mdash; add your name to save your daily verse and follow the band&rsquo;s journey.</td>
                       </tr>
                       <tr>
                         <td width="38" valign="top"><div style="width:28px;height:28px;border-radius:50%;background:#C89A3D;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:28px;font-weight:bold;text-align:center;">3</div></td>
@@ -188,9 +188,10 @@ export async function sendShippingConfirmation(input: ShippingConfirmationInput)
                       </tr>
                       <tr>
                         <td width="38" valign="top"><div style="width:28px;height:28px;border-radius:50%;background:#C89A3D;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:28px;font-weight:bold;text-align:center;">4</div></td>
-                        <td style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:25px;color:#E8EEF8;">Pass the band to someone who needs prayer.</td>
+                        <td style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:25px;color:#E8EEF8;">Tap it any day for a fresh verse &mdash; and pass it on whenever you feel led to bless someone else.</td>
                       </tr>
                     </table>
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;color:#AEBBD0;margin-top:16px;">Can&rsquo;t tap? Enter the band ID shown above at <a href="https://prayerbands.com/register" style="color:#E4C475;font-weight:bold;">prayerbands.com/register</a>.</div>
                   </td>
                 </tr>
               </table>
