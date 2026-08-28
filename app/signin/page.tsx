@@ -70,7 +70,7 @@ export default function SignInChooser() {
               background: BRAND.cardBg, borderRadius: 14, padding: '28px 28px',
               border: `1px solid ${BRAND.goldBorder}`,
               boxShadow: '0 2px 16px rgba(10,22,40,0.07)',
-              cursor: 'pointer', transition: 'box-shadow 0.15s',
+              cursor: 'pointer', transition: 'box-shadow 0.15s', textAlign: 'center',
             }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div>
               <div style={{ fontSize: 18, fontWeight: 600, color: BRAND.navyMid, marginBottom: 6, fontFamily: "'Cormorant Garamond', serif" }}>
@@ -91,7 +91,7 @@ export default function SignInChooser() {
               background: BRAND.cardBg, borderRadius: 14, padding: '28px 28px',
               border: `1px solid ${BRAND.silverBorder}`,
               boxShadow: '0 2px 16px rgba(10,22,40,0.07)',
-              cursor: 'pointer', transition: 'box-shadow 0.15s',
+              cursor: 'pointer', transition: 'box-shadow 0.15s', textAlign: 'center',
             }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>⛪</div>
               <div style={{ fontSize: 18, fontWeight: 600, color: BRAND.navyMid, marginBottom: 6, fontFamily: "'Cormorant Garamond', serif" }}>
