@@ -319,6 +319,13 @@ export default function ThemesManager() {
                   {colorField(t, 'accent', 'Accent / highlight', true)}
                   {colorField(t, 'text', 'Text', true)}
                 </div>
+                {/* Bottom nav (footer) — its own controls, since these drive the
+                    always-visible tab bar and its active icon independently. */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 18px', marginTop: 6 }}>
+                  <div style={{ gridColumn: '1 / -1', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.secondary, fontFamily: 'Cinzel, serif', margin: '2px 0 6px' }}>Bottom nav (footer)</div>
+                  {colorField(t, 'tabBar', 'Footer background')}
+                  {colorField(t, 'tabActive', 'Active tab / icon')}
+                </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
                   <button onClick={() => reDerive(t)} style={{ background: 'transparent', border: `1px solid ${C.borderNavy}`, color: C.body, borderRadius: 8, padding: '8px 14px', fontSize: 11, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>↻ Re-derive palette from key colors</button>
                   <span style={{ fontSize: 12, color: C.secondary }}>
@@ -350,7 +357,7 @@ export default function ThemesManager() {
                 <div style={{ marginBottom: 16 }}>{field2('Image wash (0 = bold image, 1 = subtle)', <input type="range" min={0} max={1} step={0.02} value={t.backgroundImageWash} onChange={e => setField(t.key, { backgroundImageWash: Number(e.target.value) })} style={{ width: '100%' }} />, label)}<div style={{ fontSize: 12, color: C.secondary }}>{t.backgroundImageWash.toFixed(2)}</div></div>
 
                 {/* Advanced */}
-                <button onClick={() => setAdvanced(prev => { const n = new Set(prev); n.has(t.key) ? n.delete(t.key) : n.add(t.key); return n })} style={{ background: 'transparent', border: 'none', color: C.goldText, fontSize: 12, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0, marginBottom: 12 }}>{isAdv ? '▾ Hide advanced colors' : '▸ Advanced colors (all 13)'}</button>
+                <button onClick={() => setAdvanced(prev => { const n = new Set(prev); n.has(t.key) ? n.delete(t.key) : n.add(t.key); return n })} style={{ background: 'transparent', border: 'none', color: C.goldText, fontSize: 12, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em', padding: 0, marginBottom: 12 }}>{isAdv ? '▾ Hide advanced colors' : '▸ Advanced colors (surfaces, borders…)'}</button>
                 {isAdv && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 18px', marginBottom: 12 }}>
                     {colorField(t, 'surface', 'Surface (cards)')}
@@ -358,8 +365,6 @@ export default function ThemesManager() {
                     {colorField(t, 'textMuted', 'Text muted')}
                     {colorField(t, 'textOnPrimary', 'Text on primary')}
                     {colorField(t, 'accentAlt', 'Accent alt')}
-                    {colorField(t, 'tabBar', 'Tab bar')}
-                    {colorField(t, 'tabActive', 'Tab active')}
                     {colorField(t, 'border', 'Border')}
                     {colorField(t, 'cardAccent', 'Card accent')}
                   </div>

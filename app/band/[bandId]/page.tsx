@@ -66,6 +66,12 @@ const GRAY  = 'var(--pb-text-muted, #7A6A5A)'
 // Text on primary/gold buttons — dark on the gold default theme, white on the
 // dark-primary themes (beach/mountain/military), via the theme token.
 const INK   = 'var(--pb-text-on-primary, #0f0d09)'
+// Bottom-nav colors come from dedicated tab-bar tokens so a theme controls the
+// footer background and its active icon independently — otherwise the black
+// theme's near-black text color became the footer bg and the primary vanished.
+const TAB_BG       = 'var(--pb-tab-bar, #1a2a4a)'
+const TAB_ACTIVE   = 'var(--pb-tab-active, var(--pb-primary, #C8A96E))'
+const TAB_INACTIVE = 'color-mix(in srgb, var(--pb-tab-active, #C8A96E) 46%, transparent)'
 const serif = "'Playfair Display', Georgia, serif"
 // Body/UI text uses a sans stack — serif (above) is reserved for large
 // headings/verses; small serif body text was hard to read.
@@ -755,7 +761,7 @@ export default function BandPage() {
     return (
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 200,
-        background: DARK, borderTop: '1px solid rgba(255,255,255,0.1)',
+        background: TAB_BG, borderTop: '1px solid color-mix(in srgb, var(--pb-tab-active, #C8A96E) 22%, transparent)',
         display: 'flex', paddingBottom: 'env(safe-area-inset-bottom)',
         transform: 'translateY(0)', // bottom nav is always visible — it's the main navigation
         transition: 'transform 0.25s ease',
@@ -773,16 +779,16 @@ export default function BandPage() {
             {tab.id === 'account' && myProfile?.avatar_icon ? (
               <span style={{ fontSize: 20, lineHeight: '22px', height: 22, display: 'flex', alignItems: 'center', opacity: activeTab === tab.id ? 1 : 0.5 }}>{myProfile.avatar_icon}</span>
             ) : (
-              <Icon name={tab.icon} size={22} color={activeTab === tab.id ? GOLD : 'rgba(255,255,255,0.4)'} bg={DARK} />
+              <Icon name={tab.icon} size={22} color={activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE} bg={TAB_BG} />
             )}
             <span style={{
               fontFamily: body, fontSize: 9, letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: activeTab === tab.id ? GOLD : 'rgba(255,255,255,0.4)',
+              color: activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE,
               fontWeight: activeTab === tab.id ? 700 : 400,
             }}>{tab.label}</span>
             {activeTab === tab.id && (
-              <div style={{ width: 20, height: 2, background: GOLD, borderRadius: 1 }} />
+              <div style={{ width: 20, height: 2, background: TAB_ACTIVE, borderRadius: 1 }} />
             )}
           </button>
         ))}
