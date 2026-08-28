@@ -81,9 +81,17 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Exclude specific partners from a network/group share — for a request that's
+    // personal to leave out someone in your network. Only meaningful when sharing
+    // with people, so it's dropped for private journal entries and the wall.
+    const excludedIds: string[] = Array.isArray(body.excluded_user_ids)
+      ? [...new Set(body.excluded_user_ids.map((x: any) => String(x)).filter((s: string) => /^[0-9a-fA-F-]{36}$/.test(s)))] as string[]
+      : []
+    const excluded_user_ids = (audience === 'private' || audience === 'wall') ? [] : excludedIds
+
     const { data: request, error } = await supabase
       .from('prayer_network_requests')
-      .insert({ user_id: user.id, request_text: request_text.trim(), visibility: vis, audience, public_name, list_id, allow_comments: body.allow_comments === true && audience !== 'private' })
+      .insert({ user_id: user.id, request_text: request_text.trim(), visibility: vis, audience, public_name, list_id, excluded_user_ids, allow_comments: body.allow_comments === true && audience !== 'private' })
       .select()
       .single()
 

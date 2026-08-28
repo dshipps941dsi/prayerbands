@@ -168,6 +168,11 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [audience, setAudience] = useState<string>('private')
+  const [excluded, setExcluded] = useState<string[]>([])   // partners left out of a "My Partners" share
+  const [showExclude, setShowExclude] = useState(false)
+  function toggleExclude(id: string) {
+    setExcluded(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
   const [anonymity, setAnonymity] = useState<'anonymous' | 'first_initial'>('first_initial')
   // Opt-in private replies to a shared prayer, and the per-request reply UI.
   const [allowReplies, setAllowReplies] = useState(false)
@@ -344,7 +349,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       const res = await fetch('/api/network/prayer-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_text: text.trim(), audience, anonymity, list_id: entryList, allow_comments: allowReplies && audience !== 'private' }),
+        body: JSON.stringify({ request_text: text.trim(), audience, anonymity, list_id: entryList, allow_comments: allowReplies && audience !== 'private', excluded_user_ids: audience === 'network' ? excluded : [] }),
       })
       if (res.ok) {
         const d = await res.json()
@@ -352,6 +357,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         setText('')
         setShowForm(false)
         setAudience('private')
+        setExcluded([]); setShowExclude(false)
         setAllowReplies(false)
         setEntryList(activeList)  // default the next entry to the list you're viewing
       }
@@ -797,6 +803,34 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
               })()}
             </div>
             <p style={{ fontSize: 11, color: GRAY, margin: '6px 2px 0', fontStyle: 'italic' }}>{audienceHint(audience)}</p>
+
+            {/* Leave someone out — for a request that's personal to a partner. */}
+            {audience === 'network' && (() => {
+              const seen = new Set<string>()
+              const partners = connections.filter(c => c.user_id && !seen.has(c.user_id) && seen.add(c.user_id))
+              if (partners.length === 0) return null
+              return (
+                <div style={{ marginTop: 8 }}>
+                  <button onClick={() => setShowExclude(v => !v)} style={{ background: 'none', border: 'none', color: excluded.length ? CIRCLE : GRAY, fontSize: 12, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                    {excluded.length ? `Everyone except ${excluded.length} ${excluded.length === 1 ? 'person' : 'people'}` : 'Everyone — or leave someone out'} {showExclude ? '▴' : '▾'}
+                  </button>
+                  {showExclude && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6, maxHeight: 190, overflowY: 'auto' }}>
+                      {partners.map(c => {
+                        const isExcl = excluded.includes(c.user_id)
+                        return (
+                          <button key={c.user_id} onClick={() => toggleExclude(c.user_id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px', borderRadius: 8, border: `1px solid ${isExcl ? BORDER : GOLD}`, background: isExcl ? '#F5F0E6' : '#FFF8E7', opacity: isExcl ? 0.6 : 1, cursor: 'pointer', textAlign: 'left' }}>
+                            <span style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${isExcl ? BORDER : GOLD}`, background: isExcl ? 'transparent' : GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fff', fontSize: 11, lineHeight: 1 }}>{isExcl ? '' : '✓'}</span>
+                            <span style={{ fontSize: 13, fontFamily: 'Georgia, serif', color: DARK }}>{c.name}</span>
+                            {isExcl && <span style={{ marginLeft: 'auto', fontSize: 10, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em' }}>left out</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
 
             {lists.length > 0 && (
               <>

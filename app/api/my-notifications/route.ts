@@ -210,6 +210,7 @@ export async function GET(req: NextRequest) {
         .in('user_id', partnerIds)
         .eq('is_answered', false)
         .neq('visibility', 'public')
+        .not('excluded_user_ids', 'cs', `{${effectiveId}}`) // don't notify excluded partners
         .gte('created_at', since)
         .order('created_at', { ascending: false })
         .limit(40)

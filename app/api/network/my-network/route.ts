@@ -112,6 +112,9 @@ export async function GET(_req: NextRequest) {
           .select('id, user_id, request_text, is_answered, created_at, visibility, audience, allow_comments')
           .in('user_id', authorIds)
           .eq('is_answered', false)
+          // Honor per-request exclusions — never surface a request to someone the
+          // author deliberately left out.
+          .not('excluded_user_ids', 'cs', `{${user.id}}`)
           .order('created_at', { ascending: false })
       : { data: [] as any[] }
 
