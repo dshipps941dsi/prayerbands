@@ -108,10 +108,13 @@ export async function POST(req: NextRequest) {
   if (order.customer_email) {
     const { data: prof } = await admin.from('profiles').select('id').ilike('email', order.customer_email).maybeSingle()
     if (prof?.id) {
-      // Same rule as the picker: the buyer is owner AND upline, so bands they
-      // hand on are credited to them and the downline tree keeps compounding.
+      // The buyer is the UPLINE, not the owner. Credit/reach flows through
+      // upline_user_id (set on the claimer when they claim), so leaving owner
+      // unset lets the gift recipient tap and claim the band as their own while
+      // still hanging below the buyer. Owner=buyer used to lock recipients out
+      // ("already linked to another account"). Matches hand-out-bands.
       await admin.from('bands')
-        .update({ owner_id: prof.id, upline_user_id: prof.id, upline_email: order.customer_email ?? null })
+        .update({ owner_id: null, upline_user_id: prof.id, upline_email: order.customer_email ?? null })
         .in('band_id', bandIds)
       ownerLinked = true
     }

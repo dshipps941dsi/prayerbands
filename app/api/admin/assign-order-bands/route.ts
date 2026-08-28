@@ -79,12 +79,12 @@ export async function POST(req: NextRequest) {
   if (order.customer_email) {
     const { data: prof } = await admin.from('profiles').select('id').ilike('email', order.customer_email).maybeSingle()
     if (prof?.id) {
-      // The buyer becomes both owner and upline: bands they hand out are
-      // credited to them, so whoever receives one hangs below them in the tree.
-      // This is what makes reach compound — without it the network stops at
-      // whoever gave out the first band and a downline's purchases go nowhere.
+      // The buyer is the UPLINE, not the owner. Reach compounds through
+      // upline_user_id (claim-band sets the claimer's sponsor from it), so
+      // leaving owner unset lets the gift recipient claim the band as their own
+      // while still hanging below the buyer. Owner=buyer locked recipients out.
       await admin.from('bands')
-        .update({ owner_id: prof.id, upline_user_id: prof.id, upline_email: order.customer_email ?? null })
+        .update({ owner_id: null, upline_user_id: prof.id, upline_email: order.customer_email ?? null })
         .in('band_id', assigned)
       ownerLinked = true
     }
