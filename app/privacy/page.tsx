@@ -95,7 +95,7 @@ export default function PrivacyPolicy() {
 
         <div style={{marginTop:48,padding:'24px 28px',background:'#FFFDF8',borderRadius:12,borderLeft:'4px solid #C8A96E',boxShadow:'0 2px 12px rgba(10,22,40,0.06)'}}>
           <p className="cormorant" style={{fontSize:15,color:'#2A3344',fontStyle:'italic',margin:0,lineHeight:1.7}}>
-            ✝ Prayer Bands is a ministry platform, not a data company. We collect only what is necessary to make the prayer journey work. Your privacy and your faith are both sacred to us.
+            ✝︎ Prayer Bands is a ministry platform, not a data company. We collect only what is necessary to make the prayer journey work. Your privacy and your faith are both sacred to us.
           </p>
         </div>
       </div>

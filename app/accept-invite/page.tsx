@@ -143,7 +143,7 @@ function AcceptInviteInner() {
       <style>{FONTS}</style>
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BRAND.splash, fontFamily: "'Inter', sans-serif", textAlign: 'center' }}>
         <div>
-          <div style={{ fontSize: 48, color: BRAND.gold, marginBottom: 16 }}>✝</div>
+          <div style={{ fontSize: 48, color: BRAND.gold, marginBottom: 16 }}>✝︎</div>
           <div style={{ fontSize: 16, color: BRAND.splashText }}>{text}</div>
           {error && <div style={{ color: '#e88', marginTop: 12, fontSize: 13 }}>{error}</div>}
         </div>
@@ -190,7 +190,7 @@ function AcceptInviteInner() {
       {error && <div style={{ background: '#fef0f0', border: '1px solid #f5c6c6', borderRadius: 7, padding: '10px 14px', color: '#c0392b', fontSize: 13, marginBottom: 12 }}>{error}</div>}
 
       <button onClick={submit} disabled={submitting || password.length < minPwLen} style={{ width: '100%', padding: '13px', borderRadius: 8, background: (!submitting && password.length >= minPwLen) ? BRAND.gold : '#C9CFD6', color: (!submitting && password.length >= minPwLen) ? BRAND.navy : '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: (!submitting && password.length >= minPwLen) ? 'pointer' : 'default', fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-        {submitting ? (invite?.account_exists ? 'Signing in...' : 'Joining...') : (invite?.account_exists ? 'Sign in & Join ✝' : 'Join the Team ✝')}
+        {submitting ? (invite?.account_exists ? 'Signing in...' : 'Joining...') : (invite?.account_exists ? 'Sign in & Join ✝︎' : 'Join the Team ✝︎')}
       </button>
 
       {invite?.account_exists && (
@@ -208,7 +208,7 @@ function AcceptInviteInner() {
 
 export default function AcceptInvitePage() {
   return (
-    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', fontFamily: "'Cinzel', serif", color: '#5C6573' }}>Loading... ✝</div>}>
+    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', fontFamily: "'Cinzel', serif", color: '#5C6573' }}>Loading... ✝︎</div>}>
       <AcceptInviteInner />
     </Suspense>
   )

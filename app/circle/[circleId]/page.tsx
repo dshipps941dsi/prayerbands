@@ -78,7 +78,7 @@ export default async function PublicCirclePage({ params }: { params: Promise<{ c
       <>
         <SiteHeader />
         <main style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '60px 24px', background: '#F6F1E4' }}>
-          <div style={{ fontSize: 40, color: GOLD }}>✝</div>
+          <div style={{ fontSize: 40, color: GOLD }}>✝︎</div>
           <h1 style={{ fontFamily: 'Cinzel, serif', color: NAVY, fontSize: 24, margin: '12px 0' }}>This circle isn&apos;t available</h1>
           <p style={{ fontFamily: 'Inter, sans-serif', color: '#5C6573', maxWidth: 460, marginBottom: 24 }}>The link may be incorrect. You can still start or find a circle of your own.</p>
           <Link href="/circles" style={{ background: GOLD, color: NAVY, padding: '12px 26px', borderRadius: 10, fontFamily: 'Cinzel, serif', fontWeight: 700, textDecoration: 'none', letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: 13 }}>Explore Circles</Link>

@@ -63,7 +63,7 @@ export default function BlessingPage() {
   if (loading) return (
     <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#fdf8f0',fontFamily:'sans-serif'}}>
       <div style={{textAlign:'center'}}>
-        <div style={{fontSize:'48px',color:'#C8A96E',marginBottom:'16px'}}>✝</div>
+        <div style={{fontSize:'48px',color:'#C8A96E',marginBottom:'16px'}}>✝︎</div>
         <div style={{fontSize:'16px',color:'#9B7B62'}}>Loading your blessing...</div>
       </div>
     </div>
@@ -145,7 +145,7 @@ export default function BlessingPage() {
             boxShadow: '0 4px 24px rgba(44,26,14,0.08)',
           }}
         >
-          <div style={{fontSize:'32px',marginBottom:'20px'}}>✝</div>
+          <div style={{fontSize:'32px',marginBottom:'20px'}}>✝︎</div>
           <p className="playfair" style={{fontSize:'clamp(18px,3vw,24px)',fontStyle:'italic',lineHeight:1.8,color:'#2C1A0E',marginBottom:'20px',maxWidth:'560px',margin:'0 auto 20px'}}>
             "{verse.text}"
           </p>
@@ -167,7 +167,7 @@ export default function BlessingPage() {
             </div>
             {firstReg && (
               <div style={{textAlign:'center'}}>
-                <div className="playfair" style={{fontSize:'28px',fontWeight:'700',color:'#C8A96E'}}>{firstReg.city || '✝'}</div>
+                <div className="playfair" style={{fontSize:'28px',fontWeight:'700',color:'#C8A96E'}}>{firstReg.city || '✝︎'}</div>
                 <div className="lato" style={{fontSize:'11px',letterSpacing:'0.12em',textTransform:'uppercase',color:'#9B7B62',marginTop:'2px'}}>Started In</div>
               </div>
             )}
@@ -192,7 +192,7 @@ export default function BlessingPage() {
         {/* Actions */}
         <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
           <a href={`/register?id=${bandId}`} style={{display:'block',textAlign:'center',background:'#2C1A0E',color:'#FDFAF5',padding:'15px 24px',borderRadius:'8px',textDecoration:'none',fontFamily:'Lato,sans-serif',fontSize:'13px',fontWeight:'700',letterSpacing:'0.1em',textTransform:'uppercase'}}>
-            Pass This Band On ✝
+            Pass This Band On ✝︎
           </a>
           <a href={`/band/${bandId}`} style={{display:'block',textAlign:'center',border:'1.5px solid #E8DFD0',color:'#9B7B62',padding:'13px 24px',borderRadius:'8px',textDecoration:'none',fontFamily:'Lato,sans-serif',fontSize:'13px',fontWeight:'700',letterSpacing:'0.1em',textTransform:'uppercase'}}>
             View Full Journey

@@ -203,11 +203,11 @@ function StorePageInner() {
 
   // Fallback catalog (used only until db/products.sql is run) so the store never breaks.
   const fallback: Product[] = [
-    { slug: "standard", name: "Standard Band", description: "A wristband laser-engraved with a unique PB-XXXXX ID and NFC chip. Ready to carry a prayer.", category: "band", theme: "default", color: "#C8A96E", icon: "✝", tag: "Most Popular", price: (pricing["band_price_single"] ?? 1499) / 100, bandsPerUnit: 1, features: ["Unique PB-XXXXX ID", "NFC chip enabled", "Laser-engraved", "Full journey tracking"], sizes: ["S", "M", "L"], hasSizes: true, multiDiscount: true, images: [], variants: [] },
+    { slug: "standard", name: "Standard Band", description: "A wristband laser-engraved with a unique PB-XXXXX ID and NFC chip. Ready to carry a prayer.", category: "band", theme: "default", color: "#C8A96E", icon: "✝︎", tag: "Most Popular", price: (pricing["band_price_single"] ?? 1499) / 100, bandsPerUnit: 1, features: ["Unique PB-XXXXX ID", "NFC chip enabled", "Laser-engraved", "Full journey tracking"], sizes: ["S", "M", "L"], hasSizes: true, multiDiscount: true, images: [], variants: [] },
     { slug: "custom", name: "Custom Band", description: "Everything in Standard, plus your choice of color, a custom scripture verse, and a personal message engraved.", category: "band", theme: "default", color: "#7BAE8E", icon: "✦", tag: "Personalized", price: (pricing["band_price_custom"] ?? 1000) / 100, bandsPerUnit: 1, features: ["Everything in Standard", "Choose band color", "Custom scripture verse", "Personal message", "Gift-ready packaging"], sizes: ["S", "M", "L"], hasSizes: true, multiDiscount: false, images: [], variants: [] },
-    { slug: "pack-50", name: "Starter Pack", description: "Perfect for small groups, house churches, or personal outreach.", category: "pack", theme: "default", color: "#7BAE8E", icon: "✝", tag: null, price: (pricing["pack_price_50"] ?? 22500) / 100, bandsPerUnit: 50, features: ["Custom ministry prefix", "Ministry dashboard", "NFC + laser-engraved", "Journey tracking", "Bulk reorder pricing"], sizes: [], hasSizes: false, multiDiscount: false, images: [], variants: [] },
-    { slug: "pack-100", name: "Community Pack", description: "Ideal for congregation-wide initiatives and mission trips.", category: "pack", theme: "default", color: "#C8A96E", icon: "✝", tag: "Most Popular", price: (pricing["pack_price_100"] ?? 42500) / 100, bandsPerUnit: 100, features: ["Custom ministry prefix", "Ministry dashboard", "NFC + laser-engraved", "Journey tracking", "Bulk reorder pricing"], sizes: [], hasSizes: false, multiDiscount: false, images: [], variants: [] },
-    { slug: "pack-200", name: "Mission Pack", description: "For conferences, large outreaches, and denominational orders.", category: "pack", theme: "default", color: "#7B8FAE", icon: "✝", tag: null, price: (pricing["pack_price_200"] ?? 80000) / 100, bandsPerUnit: 200, features: ["Custom ministry prefix", "Ministry dashboard", "NFC + laser-engraved", "Journey tracking", "Bulk reorder pricing"], sizes: [], hasSizes: false, multiDiscount: false, images: [], variants: [] },
+    { slug: "pack-50", name: "Starter Pack", description: "Perfect for small groups, house churches, or personal outreach.", category: "pack", theme: "default", color: "#7BAE8E", icon: "✝︎", tag: null, price: (pricing["pack_price_50"] ?? 22500) / 100, bandsPerUnit: 50, features: ["Custom ministry prefix", "Ministry dashboard", "NFC + laser-engraved", "Journey tracking", "Bulk reorder pricing"], sizes: [], hasSizes: false, multiDiscount: false, images: [], variants: [] },
+    { slug: "pack-100", name: "Community Pack", description: "Ideal for congregation-wide initiatives and mission trips.", category: "pack", theme: "default", color: "#C8A96E", icon: "✝︎", tag: "Most Popular", price: (pricing["pack_price_100"] ?? 42500) / 100, bandsPerUnit: 100, features: ["Custom ministry prefix", "Ministry dashboard", "NFC + laser-engraved", "Journey tracking", "Bulk reorder pricing"], sizes: [], hasSizes: false, multiDiscount: false, images: [], variants: [] },
+    { slug: "pack-200", name: "Mission Pack", description: "For conferences, large outreaches, and denominational orders.", category: "pack", theme: "default", color: "#7B8FAE", icon: "✝︎", tag: null, price: (pricing["pack_price_200"] ?? 80000) / 100, bandsPerUnit: 200, features: ["Custom ministry prefix", "Ministry dashboard", "NFC + laser-engraved", "Journey tracking", "Bulk reorder pricing"], sizes: [], hasSizes: false, multiDiscount: false, images: [], variants: [] },
   ];
 
   const products = catalog.length ? catalog : fallback;
@@ -363,11 +363,11 @@ function StorePageInner() {
         .pb-lightbox-close { position: absolute; top: 18px; right: 22px; background: none; border: none; color: #fff; font-size: 30px; cursor: pointer; line-height: 1; }
       `}</style>
 
-      {toast && <div className="toast">✝ {toast}</div>}
+      {toast && <div className="toast">✝︎ {toast}</div>}
 
       {replaces && (
         <div style={{ background: "#0E1E38", color: "#F6F1E4", textAlign: "center", padding: "10px 20px", fontFamily: "'Inter', sans-serif", fontSize: 13, letterSpacing: "0.03em" }}>
-          ✝ Replacing band <strong style={{ color: "#E2C98A" }}>{replaces}</strong> — its prayer journey will move to your new band once it ships.
+          ✝︎ Replacing band <strong style={{ color: "#E2C98A" }}>{replaces}</strong> — its prayer journey will move to your new band once it ships.
         </div>
       )}
 
@@ -548,7 +548,7 @@ function StorePageInner() {
                       <img src={bulkImg(p)} alt="" onError={() => setBulkImgBroken(b => ({ ...b, [p.slug]: true }))}
                         style={{ width: 46, height: 46, borderRadius: 8, objectFit: "contain", background: "#fff", border: "1px solid rgba(200,169,110,0.25)", flexShrink: 0, padding: 3, boxSizing: "border-box" }} />
                     ) : (
-                      <div style={{ width: 46, height: 46, borderRadius: 8, background: p.color || "#C8A96E", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20, flexShrink: 0 }}>{p.icon || "✝"}</div>
+                      <div style={{ width: 46, height: 46, borderRadius: 8, background: p.color || "#C8A96E", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20, flexShrink: 0 }}>{p.icon || "✝︎"}</div>
                     )}
                     <div style={{ minWidth: 0 }}>
                       <div className="playfair" style={{ fontSize: 15.5, fontWeight: 600, color: "#15223B" }}>{p.name}</div>

@@ -80,7 +80,7 @@ function DedicateInner() {
       <SiteHeader />
 
       <section className="ded-hero">
-        <div className="ded-eyebrow">✝ Add a Dedication</div>
+        <div className="ded-eyebrow">✝︎ Add a Dedication</div>
         <h1 className="ded-title">Send a Personal Message</h1>
         <p className="ded-sub">Leave a note that the recipient will see the very first time they tap their band.</p>
       </section>
@@ -118,7 +118,7 @@ function DedicateInner() {
 
         {state === 'saved' && (
           <div className="ded-card" style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 44, marginBottom: 12, color: '#C8A96E' }}>✝</div>
+            <div style={{ fontSize: 44, marginBottom: 12, color: '#C8A96E' }}>✝︎</div>
             <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 24, fontWeight: 700, color: '#15223B', marginBottom: 8 }}>Your message is saved</div>
             <p style={{ fontSize: 15, color: '#5C6573', lineHeight: 1.7 }}>
               When {recipient ? recipient : 'they'} taps this band for the first time, your dedication will be waiting. 🙏

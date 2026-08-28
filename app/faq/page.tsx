@@ -103,7 +103,7 @@ export default function FAQPage() {
       <SiteHeader />
 
       <section className="faq-hero">
-        <div className="faq-eyebrow">✝ Help Center</div>
+        <div className="faq-eyebrow">✝︎ Help Center</div>
         <h1 className="faq-title">Frequently Asked<br /><em>Questions</em></h1>
         <p className="faq-sub">Everything you need to know about bands, prayers, shipping, and subscriptions.</p>
       </section>

@@ -118,7 +118,7 @@ export default function AdminOrgs() {
   }
 
   if (!authorized || loading) return (
-    <div style={{ padding: 40, fontFamily: 'Inter, sans-serif', color: C.secondary }}>Loading... ✝</div>
+    <div style={{ padding: 40, fontFamily: 'Inter, sans-serif', color: C.secondary }}>Loading... ✝︎</div>
   )
 
   return (
@@ -248,7 +248,7 @@ export default function AdminOrgs() {
                         fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em', width: '100%',
                       }}
                     >
-                      {generating ? 'Generating...' : `Generate ${generateQty} Bands ✝`}
+                      {generating ? 'Generating...' : `Generate ${generateQty} Bands ✝︎`}
                     </button>
                   </div>
 
@@ -334,7 +334,7 @@ export default function AdminOrgs() {
                 background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 10,
                 padding: 60, textAlign: 'center', color: C.secondary, boxShadow: '0 2px 10px rgba(10,22,40,0.06)',
               }}>
-                <div style={{ fontSize: 32, marginBottom: 12, color: C.borderGold }}>✝</div>
+                <div style={{ fontSize: 32, marginBottom: 12, color: C.borderGold }}>✝︎</div>
                 <div style={{ fontSize: 14, fontStyle: 'italic' }}>Select a church to manage their bands.</div>
               </div>
             )}

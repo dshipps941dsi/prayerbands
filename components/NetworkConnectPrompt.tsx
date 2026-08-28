@@ -66,7 +66,7 @@ export default function NetworkConnectPrompt({ bandId }: { bandId: string }) {
       <div style={cardStyle}>
         {title('Connect in prayer')}
         {sub('Create an account to connect with this person in prayer.')}
-        {goldButton('Create Account ✝', () => router.push(`/signin?redirect=/band/${bandId}`))}
+        {goldButton('Create Account ✝︎', () => router.push(`/signin?redirect=/band/${bandId}`))}
       </div>
     )
   }

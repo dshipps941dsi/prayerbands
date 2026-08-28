@@ -66,7 +66,7 @@ export default function AboutPage() {
       <SiteNav />
 
       <section className="ab-hero">
-        <div className="ab-eyebrow">✝ Our Story</div>
+        <div className="ab-eyebrow">✝︎ Our Story</div>
         <h1 className="ab-title">A Living Chain<br /><em>of Prayer</em></h1>
         <p className="ab-sub">Prayer Bands began with a simple conviction: that prayer is meant to be shared, and that a small act of faith can travel further than we imagine.</p>
       </section>

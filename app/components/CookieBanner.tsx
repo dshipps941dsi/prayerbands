@@ -29,7 +29,7 @@ export default function CookieBanner() {
         color: 'rgba(253,250,245,0.7)', margin: 0, lineHeight: 1.6,
         flex: 1, minWidth: '200px',
       }}>
-        ✝ Prayer Bands uses browser storage to remember your band registrations and show you daily verses.
+        ✝︎ Prayer Bands uses browser storage to remember your band registrations and show you daily verses.
         We never sell your data.{' '}
         <a href="/privacy" style={{ color: '#C8A96E', textDecoration: 'underline' }}>
           Privacy Policy
@@ -46,7 +46,7 @@ export default function CookieBanner() {
           whiteSpace: 'nowrap',
         }}
       >
-        Got It ✝
+        Got It ✝︎
       </button>
     </div>
   )

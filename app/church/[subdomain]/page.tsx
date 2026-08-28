@@ -53,7 +53,7 @@ export default function ChurchPage({ params }: { params: { subdomain: string } }
       fontFamily: 'Cinzel, serif', color: SECONDARY_TEXT, fontSize: 16,
     }}>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 40, marginBottom: 12, color: GOLD }}>✝</div>
+        <div style={{ fontSize: 40, marginBottom: 12, color: GOLD }}>✝︎</div>
         <div style={{ letterSpacing: '0.05em' }}>Loading...</div>
       </div>
     </div>
@@ -66,7 +66,7 @@ export default function ChurchPage({ params }: { params: { subdomain: string } }
       fontFamily: 'Inter, sans-serif', textAlign: 'center',
     }}>
       <div>
-        <div style={{ fontSize: 40, marginBottom: 12, color: GOLD }}>✝</div>
+        <div style={{ fontSize: 40, marginBottom: 12, color: GOLD }}>✝︎</div>
         <h1 style={{ fontSize: 22, color: NAVY_HEADING, marginBottom: 8, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 700 }}>Church not found</h1>
         <p style={{ color: SECONDARY_TEXT, fontSize: 14 }}>This ministry page doesn't exist yet.</p>
         <a href="https://prayerbands.com/onboard" style={{ color: GOLD_TEXT, fontSize: 14, fontWeight: 600 }}>
@@ -192,7 +192,7 @@ export default function ChurchPage({ params }: { params: { subdomain: string } }
           padding: '32px', textAlign: 'center', color: '#fff',
           border: `1px solid ${GOLD}33`, boxShadow: '0 4px 20px rgba(10,22,40,0.2)',
         }}>
-          <div style={{ fontSize: 24, marginBottom: 8, color: GOLD }}>✝</div>
+          <div style={{ fontSize: 24, marginBottom: 8, color: GOLD }}>✝︎</div>
           <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
             Received a band from {org.name}?
           </h2>

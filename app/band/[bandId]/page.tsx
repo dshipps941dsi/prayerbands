@@ -603,7 +603,7 @@ export default function BandPage() {
   function PendingBanner() {
     return (
       <div style={{ background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
-        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>✝</div>
+        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>✝︎</div>
         <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Waiting for them to tap</div>
         <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.5, marginBottom: 20 }}>Hand the band to the other person and ask them to tap it with their phone.</div>
         <button onClick={handleCancelTransfer} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '10px 20px', fontFamily: body, fontSize: 13, cursor: 'pointer' }}>Cancel transfer</button>
@@ -717,7 +717,7 @@ export default function BandPage() {
             them would put something in the journey that never happened. */}
         {status.uplineName && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18, paddingBottom: 14, borderBottom: '1px dashed rgba(44,24,16,0.12)' }}>
-            <span style={{ fontSize: 18, color: GOLD }}>✝</span>
+            <span style={{ fontSize: 18, color: GOLD }}>✝︎</span>
             <div style={{ fontFamily: body, fontSize: 13, color: GRAY }}>
               Given by <strong style={{ color: DARK, fontFamily: serif, fontSize: 15 }}>{status.uplineName}</strong>
             </div>
@@ -825,7 +825,7 @@ export default function BandPage() {
       <div style={{ minHeight: '100vh' }}>
         <Nav />
         <div style={{ padding: '60px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>✝</div>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>✝︎</div>
           <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Band not found</div>
           <div style={{ fontFamily: body, fontSize: 14, color: GRAY, marginBottom: 24 }}>
             We couldn&apos;t find a band with the ID <strong>{bandId}</strong>. Double-check the ID printed on your wristband.
@@ -844,7 +844,7 @@ export default function BandPage() {
       <div style={{ minHeight: '100vh' }}>
         <Nav />
         <div style={{ padding: '60px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>✝</div>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>✝︎</div>
           <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Something went wrong</div>
           <div style={{ fontFamily: body, fontSize: 14, color: GRAY, marginBottom: 24 }}>
             We had trouble loading your band. This is usually temporary.
@@ -859,7 +859,9 @@ export default function BandPage() {
 
   if (status.screen === 'personal_space') {
     return (
-      <div style={{ minHeight: '100vh', fontFamily: body, color: DARK }}>
+      // Bottom padding clears the always-visible fixed BottomNav so the last
+      // content on any tab (e.g. the Purchase cart / checkout) isn't hidden behind it.
+      <div style={{ minHeight: '100vh', fontFamily: body, color: DARK, paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
         <Nav />
 
         {activeTab === 'home' && (
@@ -869,7 +871,7 @@ export default function BandPage() {
               <div style={{ margin: '20px 20px 0', background: `linear-gradient(135deg, ${GREEN}, #2E7D6B)`, borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>🙏</div>
                 <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Band transferred</div>
-                <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20 }}>Your band is now in new hands. The prayer chain continues. ✝</div>
+                <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20 }}>Your band is now in new hands. The prayer chain continues. ✝︎</div>
                 <a href="/my-band" style={{ display: 'inline-block', background: GOLD, color: INK, padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Follow its journey</a>
               </div>
             )}
@@ -894,7 +896,7 @@ export default function BandPage() {
                   <div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div>
                   <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Sign in to keep your prayer journal</div>
                   <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 16, lineHeight: 1.5 }}>Your journal, prayer partners, and circles — all in one place.</div>
-                  <a href={`/signin?redirect=${encodeURIComponent(`/band/${bandId}`)}`} style={{ display: 'inline-block', background: GOLD, color: INK, padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Sign In ✝</a>
+                  <a href={`/signin?redirect=${encodeURIComponent(`/band/${bandId}`)}`} style={{ display: 'inline-block', background: GOLD, color: INK, padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Sign In ✝︎</a>
                 </div>
               )}
             </div>
@@ -986,7 +988,7 @@ export default function BandPage() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 8, lineHeight: 1.5 }}>Sign in to access your full account, prayer network, and all your bands.</div>
-                <a href="/signin" style={{ display: 'block', textAlign: 'center', background: GOLD, color: INK, borderRadius: 12, padding: '16px 20px', fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Sign In ✝</a>
+                <a href="/signin" style={{ display: 'block', textAlign: 'center', background: GOLD, color: INK, borderRadius: 12, padding: '16px 20px', fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Sign In ✝︎</a>
                 <a href="/store" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}><Icon name="shop-bag" size={18} color={DARK} bg="white" /> Purchase Bands</a>
               </div>
             )}
@@ -1006,7 +1008,7 @@ export default function BandPage() {
           <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
             <div onClick={e => e.stopPropagation()} style={{ background: '#FDFAF5', borderRadius: '20px 20px 0 0', padding: '28px 24px 40px', width: '100%', boxSizing: 'border-box' }}>
               <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
-              <div style={{ fontSize: 40, textAlign: 'center', marginBottom: 12, color: GOLD }}>✝</div>
+              <div style={{ fontSize: 40, textAlign: 'center', marginBottom: 12, color: GOLD }}>✝︎</div>
               <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, color: '#2C1A0E', textAlign: 'center', marginBottom: 10, lineHeight: 1.3 }}>Your place in this story matters</div>
               <div style={{ fontFamily: body, fontSize: 14, color: GRAY, textAlign: 'center', lineHeight: 1.6, marginBottom: 24 }}>You&rsquo;ve been part of this band&rsquo;s journey. Create a free account to preserve your prayer, your name in the chain, and follow where it goes next.</div>
               <button onClick={() => {
@@ -1083,7 +1085,7 @@ export default function BandPage() {
             <button onClick={() => setClaimStep('form')} style={{ display: 'inline-block', padding: '13px 28px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Accept this band →</button>
           </div>
         )}
-        {claimStep === 'form' && <ClaimForm title="You're joining the chain ✝" subtitle="Add your name and a prayer to complete the handoff." submitLabel="Accept & add my prayer ✝" onSubmit={handleAcceptTransfer} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
+        {claimStep === 'form' && <ClaimForm title="You're joining the chain ✝︎" subtitle="Add your name and a prayer to complete the handoff." submitLabel="Accept & add my prayer ✝︎" onSubmit={handleAcceptTransfer} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
         {claimStep === 'done' && <SuccessCard bandId={bandId} userId={userId} title="The band is yours now" subtitle="You've been added to the prayer chain. Every time you tap this band, you'll see the full journey — and when you're ready, you can pass it on too." />}
         <PrayerChain regs={regs} />
         <div style={{ height: 40 }} />
@@ -1097,7 +1099,7 @@ export default function BandPage() {
         <Nav />
         {claimStep === 'prompt' && (
           <div style={{ margin: '24px 20px', background: 'linear-gradient(135deg, #1a4a3a, #2E7D6B)', borderRadius: 16, padding: '28px 24px', color: 'white', textAlign: 'center' }}>
-            <div style={{ fontSize: 32, marginBottom: 10 }}>✝</div>
+            <div style={{ fontSize: 32, marginBottom: 10 }}>✝︎</div>
             <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, marginBottom: 6 }}>{status.dedicatorName ? `${status.dedicatorName} is praying for you` : 'Someone is praying for you'}</div>
             <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>This band was sent to you as an act of prayer. You are not forgotten.</div>
             {status.band?.dedication_note && <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '14px 16px', fontFamily: body, fontSize: 14, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20, textAlign: 'left' }}>"{status.band.dedication_note}"</div>}
@@ -1105,7 +1107,7 @@ export default function BandPage() {
           </div>
         )}
         <NetworkConnectPrompt bandId={bandId} />
-        {claimStep === 'form' && <ClaimForm title="Join the Journey" subtitle="Your prayer becomes part of this band's story forever." submitLabel="Add my prayer to this band ✝" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
+        {claimStep === 'form' && <ClaimForm title="Join the Journey" subtitle="Your prayer becomes part of this band's story forever." submitLabel="Add my prayer to this band ✝︎" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
         {claimStep === 'done' && <SuccessCard bandId={bandId} userId={userId} title="You're part of this story" subtitle="Your prayer has been woven into this band's journey. When you pass it on, they'll see every prayer that came before — including yours." />}
         <div style={{ height: 40 }} />
       </div>
@@ -1118,7 +1120,7 @@ export default function BandPage() {
         <Nav />
         <StatsStrip regs={regs} />
         <div style={{ padding: '24px 20px 0', textAlign: 'center' }}>
-          <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, marginBottom: 8 }}>✝ Prayer Band Journey</div>
+          <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, marginBottom: 8 }}>✝︎ Prayer Band Journey</div>
           <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{bandId}</div>
           <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic' }}>Currently held by {status.currentHolder?.user_name ?? 'someone'} in {status.currentHolder?.city ?? 'the world'}</div>
         </div>
@@ -1131,7 +1133,7 @@ export default function BandPage() {
           <div style={{ margin: '18px 20px 0', background: 'rgba(200,169,110,0.10)', border: `1px solid ${GOLD}`, borderRadius: 14, padding: '16px 20px', textAlign: 'center' }}>
             <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Is this your band?</div>
             <div style={{ fontFamily: body, fontSize: 13, color: GRAY, marginBottom: 12, lineHeight: 1.5 }}>If you registered it, sign in to open your band, your journal, and your prayer partners.</div>
-            <a href={`/signin?redirect=${encodeURIComponent(`/band/${bandId}`)}`} style={{ display: 'inline-block', padding: '11px 30px', background: GOLD, color: INK, borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Sign in ✝</a>
+            <a href={`/signin?redirect=${encodeURIComponent(`/band/${bandId}`)}`} style={{ display: 'inline-block', padding: '11px 30px', background: GOLD, color: INK, borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Sign in ✝︎</a>
           </div>
         )}
         <NetworkConnectPrompt bandId={bandId} />
@@ -1142,7 +1144,7 @@ export default function BandPage() {
             <button onClick={() => setClaimStep('form')} style={{ padding: '10px 24px', background: GOLD, color: INK, border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>I now have this band →</button>
           </div>
         )}
-        {claimStep === 'form' && <ClaimForm title="Join the Chain" subtitle="Add your name and prayer to continue this band's journey." submitLabel="Join the chain ✝" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
+        {claimStep === 'form' && <ClaimForm title="Join the Chain" subtitle="Add your name and prayer to continue this band's journey." submitLabel="Join the chain ✝︎" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
         {claimStep === 'done' && <SuccessCard bandId={bandId} userId={userId} title="Welcome to the chain" subtitle="Your prayer has been added. Tap your band any time to see the full journey." />}
         <PrayerChain regs={regs} />
         <div style={{ height: 40 }} />
@@ -1169,7 +1171,7 @@ export default function BandPage() {
       {claimStep === 'prompt' && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '20px 28px 140px', textAlign: 'center' }}>
 
-          {/* Cross — an SVG, not the ✝ emoji (which renders as Apple's coloured
+          {/* Cross — an SVG, not the ✝︎ emoji (which renders as Apple's coloured
               glyph on iOS). Inherits the gold accent. */}
           <svg width="40" height="53" viewBox="0 0 24 32" style={{ marginBottom: 24 }} aria-hidden="true">
             <path d="M10.5 2 h3 v7 h5.5 v3 h-5.5 v18 h-3 v-18 h-5.5 v-3 h5.5 z" fill={GOLD} />
@@ -1247,7 +1249,7 @@ export default function BandPage() {
           <ClaimForm
             title="Start the Journey"
             subtitle="Your prayer is the first link in this band's chain."
-            submitLabel="Begin the journey ✝"
+            submitLabel="Begin the journey ✝︎"
             onSubmit={handleClaim}
             onBack={() => setClaimStep('prompt')}
             claimName={claimName}

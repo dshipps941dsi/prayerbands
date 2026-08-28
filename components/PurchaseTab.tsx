@@ -191,7 +191,7 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={img} alt={p.name} onError={() => setFailed(prev => new Set(prev).add(img))} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 6, boxSizing: 'border-box' }} />
                     ) : (
-                      <div style={{ fontSize: 28, color: GRAY }}>✝</div>
+                      <div style={{ fontSize: 28, color: GRAY }}>✝︎</div>
                     )}
                     {!broken && (
                       <button onClick={e => { e.stopPropagation(); setZoom(img) }} aria-label="View larger"

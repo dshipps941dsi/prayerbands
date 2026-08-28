@@ -464,8 +464,8 @@ function PrayerRequestModal({ userId, onClose }: { userId: string; onClose: () =
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 500, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ background: CARD_BG, borderRadius: '16px 16px 0 0', padding: '28px 24px', width: '100%', maxWidth: 480, fontFamily: 'Inter, sans-serif', maxHeight: '90vh', overflowY: 'auto' }}>
         {step === 'loading' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 32, marginBottom: 12, color: GOLD }}>🙏</div><div style={{ color: SECONDARY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>Loading your prayer network...</div></div>}
-        {step === 'sending' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 32, marginBottom: 12, color: GOLD }}>✝</div><div style={{ color: SECONDARY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>Sending your prayer request...</div></div>}
-        {step === 'sent' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 48, marginBottom: 16, color: GOLD }}>🙏</div><div style={{ fontSize: 20, fontWeight: 700, color: NAVY_HEADING, marginBottom: 8, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Prayer Request Sent</div><div style={{ fontSize: 14, color: SECONDARY_TEXT }}>{sentCount} {sentCount === 1 ? 'person is' : 'people are'} standing with you in prayer. ✝</div></div>}
+        {step === 'sending' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 32, marginBottom: 12, color: GOLD }}>✝︎</div><div style={{ color: SECONDARY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>Sending your prayer request...</div></div>}
+        {step === 'sent' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ fontSize: 48, marginBottom: 16, color: GOLD }}>🙏</div><div style={{ fontSize: 20, fontWeight: 700, color: NAVY_HEADING, marginBottom: 8, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Prayer Request Sent</div><div style={{ fontSize: 14, color: SECONDARY_TEXT }}>{sentCount} {sentCount === 1 ? 'person is' : 'people are'} standing with you in prayer. ✝︎</div></div>}
         {step === 'error' && <div style={{ textAlign: 'center', padding: '40px 0' }}><div style={{ color: '#c0392b', marginBottom: 16 }}>{errorMsg}</div><button onClick={onClose} style={{ padding: '10px 24px', borderRadius: 8, border: `1px solid ${SILVER_BORDER}`, background: CARD_BG, cursor: 'pointer', fontFamily: 'Inter, sans-serif', color: BODY_TEXT }}>Close</button></div>}
         {step === 'compose' && (
           <>
@@ -506,7 +506,7 @@ function PrayerRequestModal({ userId, onClose }: { userId: string; onClose: () =
             )}
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 8, border: `1px solid ${SILVER_BORDER}`, background: CARD_BG, color: BODY_TEXT, fontSize: 13, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Cancel</button>
-              <button onClick={send} disabled={!message.trim()} style={{ flex: 2, padding: '12px', borderRadius: 8, border: 'none', background: message.trim() ? GOLD : '#C9CFD6', color: message.trim() ? NAVY : SECONDARY_TEXT, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Send Prayer Request ✝</button>
+              <button onClick={send} disabled={!message.trim()} style={{ flex: 2, padding: '12px', borderRadius: 8, border: 'none', background: message.trim() ? GOLD : '#C9CFD6', color: message.trim() ? NAVY : SECONDARY_TEXT, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Send Prayer Request ✝︎</button>
             </div>
           </>
         )}
@@ -826,7 +826,7 @@ export default function Dashboard() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: CREAM_BG, fontFamily: 'Inter, sans-serif', textAlign: 'center' }}>
-      <div><div style={{ fontSize: 36, marginBottom: 12, color: GOLD }}>✝</div><div style={{ fontSize: 15, color: SECONDARY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Loading your ministry...</div></div>
+      <div><div style={{ fontSize: 36, marginBottom: 12, color: GOLD }}>✝︎</div><div style={{ fontSize: 15, color: SECONDARY_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Loading your ministry...</div></div>
     </div>
   )
 
@@ -893,7 +893,7 @@ export default function Dashboard() {
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, gap: 12, flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: NAVY_HEADING, margin: '0 0 4px', fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Welcome, {displayName} ✝</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: NAVY_HEADING, margin: '0 0 4px', fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Welcome, {displayName} ✝︎</h1>
             <p style={{ fontSize: 14, color: SECONDARY_TEXT, margin: 0, fontFamily: 'Inter, sans-serif' }}>Here's how far your prayers have traveled.</p>
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>

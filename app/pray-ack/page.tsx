@@ -33,7 +33,7 @@ const email = searchParams?.get('email')
         <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={40} color="#C8A96E" /></div>
         {status === 'loading' && (
           <div>
-            <div style={{ fontSize: 48, marginBottom: 16, color: '#C8A96E' }}>✝</div>
+            <div style={{ fontSize: 48, marginBottom: 16, color: '#C8A96E' }}>✝︎</div>
             <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 16, color: '#5C6573' }}>Recording your prayer...</div>
           </div>
         )}
@@ -42,7 +42,7 @@ const email = searchParams?.get('email')
             <div style={{ fontSize: 64, marginBottom: 16 }}>🙏</div>
             <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 30, fontWeight: 600, color: '#15223B', marginBottom: 12 }}>Thank you for praying!</h1>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, color: '#2A3344', lineHeight: 1.7, marginBottom: 24 }}>
-              <strong>{requesterName}</strong> has been notified that you're standing with them in prayer. ✝
+              <strong>{requesterName}</strong> has been notified that you're standing with them in prayer. ✝︎
             </p>
             <div style={{ background: '#ECEEF1', borderRadius: 10, padding: '16px 20px', marginBottom: 24, border: '1px solid rgba(92,101,115,0.20)' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 15, color: '#2A3344', fontStyle: 'italic', margin: 0, lineHeight: 1.7 }}>
@@ -50,13 +50,13 @@ const email = searchParams?.get('email')
               </p>
             </div>
             <a href="https://prayerbands.com" style={{ display: 'inline-block', background: '#C8A96E', color: '#0A1628', padding: '13px 32px', borderRadius: 4, textDecoration: 'none', fontFamily: 'Cinzel, serif', fontSize: 12, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-              Visit Prayer Bands ✝
+              Visit Prayer Bands ✝︎
             </a>
           </div>
         )}
         {status === 'error' && (
           <div>
-            <div style={{ fontSize: 48, marginBottom: 16, color: '#C8A96E' }}>✝</div>
+            <div style={{ fontSize: 48, marginBottom: 16, color: '#C8A96E' }}>✝︎</div>
             <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 24, fontWeight: 600, color: '#15223B', marginBottom: 12 }}>Something went wrong</h1>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#5C6573' }}>This prayer acknowledgment link may have expired.</p>
           </div>
@@ -68,7 +68,7 @@ const email = searchParams?.get('email')
 
 export default function PrayAckPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Cormorant Garamond, Georgia, serif', background: '#F6F1E4', color: '#C8A96E', fontSize: 48 }}>✝</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Cormorant Garamond, Georgia, serif', background: '#F6F1E4', color: '#C8A96E', fontSize: 48 }}>✝︎</div>}>
       <PrayAckInner />
     </Suspense>
   )

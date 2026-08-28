@@ -84,7 +84,7 @@ export default async function TestimonyPage({ params }: { params: Promise<{ id: 
       <>
         <SiteHeader />
         <main style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '60px 24px', background: '#F6F1E4' }}>
-          <div style={{ fontSize: 40, color: GOLD }}>✝</div>
+          <div style={{ fontSize: 40, color: GOLD }}>✝︎</div>
           <h1 style={{ fontFamily: 'Cinzel, serif', color: NAVY, fontSize: 24, margin: '12px 0' }}>This testimony isn&apos;t available</h1>
           <p style={{ fontFamily: 'Inter, sans-serif', color: '#5C6573', maxWidth: 460, marginBottom: 24 }}>
             It may have been kept private or the link is incorrect. There&apos;s still a whole movement of prayer to be part of.

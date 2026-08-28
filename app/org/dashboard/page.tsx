@@ -367,7 +367,7 @@ function OrgDashboardInner() {
 
   if (loading) return (
     <div style={{ color: SECONDARY_TEXT, fontSize: 15, paddingTop: 80, textAlign: 'center', fontFamily: 'Cinzel, serif', background: CREAM_BG, minHeight: '100vh' }}>
-      <div style={{ fontSize: 32, marginBottom: 12, color: GOLD }}>✝</div>
+      <div style={{ fontSize: 32, marginBottom: 12, color: GOLD }}>✝︎</div>
       Loading your ministry...
     </div>
   )
@@ -443,7 +443,7 @@ function OrgDashboardInner() {
               </div>
             )
           })}
-          {bands.length === 0 && <div style={{ padding: '40px 16px', color: SECONDARY_TEXT, fontSize: 14, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>No bands yet. ✝</div>}
+          {bands.length === 0 && <div style={{ padding: '40px 16px', color: SECONDARY_TEXT, fontSize: 14, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>No bands yet. ✝︎</div>}
         </div>
       </div>
     )
@@ -463,7 +463,7 @@ function OrgDashboardInner() {
               <div style={{ fontSize: 11, color: GOLD_TEXT, fontFamily: 'monospace' }}>{p.band_id} · {[p.city, p.country].filter(Boolean).join(', ')}</div>
             </div>
           ))}
-          {prayers.length === 0 && <div style={{ padding: '40px 16px', color: SECONDARY_TEXT, fontSize: 14, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>Prayers will appear here as bands are registered. ✝</div>}
+          {prayers.length === 0 && <div style={{ padding: '40px 16px', color: SECONDARY_TEXT, fontSize: 14, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>Prayers will appear here as bands are registered. ✝︎</div>}
         </div>
       </div>
     )
@@ -472,10 +472,10 @@ function OrgDashboardInner() {
       <div style={{ padding: isMobile ? '16px 14px' : '32px' }}>
         <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, marginBottom: 4, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Band Lineage</h1>
         <p style={{ color: SECONDARY_TEXT, marginBottom: 20, fontSize: 14, fontFamily: 'Inter, sans-serif' }}>Track how far each {org?.prefix} band has traveled.</p>
-        {lineageLoading && <div style={{ color: SECONDARY_TEXT, textAlign: 'center', padding: 40, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Loading lineage... ✝</div>}
+        {lineageLoading && <div style={{ color: SECONDARY_TEXT, textAlign: 'center', padding: 40, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Loading lineage... ✝︎</div>}
         {!lineageLoading && lineage.length === 0 && (
           <div style={{ background: CARD_BG, border: `1px solid ${SILVER_BORDER}`, borderRadius: 10, padding: 40, textAlign: 'center', color: SECONDARY_TEXT, boxShadow: '0 1px 4px rgba(10,22,40,0.05)' }}>
-            <div style={{ fontSize: 32, marginBottom: 12, color: GOLD }}>✝</div>
+            <div style={{ fontSize: 32, marginBottom: 12, color: GOLD }}>✝︎</div>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>No registered bands yet</div>
             <div style={{ fontSize: 14, fontFamily: 'Inter, sans-serif' }}>Lineage data will appear once bands are registered.</div>
           </div>
@@ -589,7 +589,7 @@ function OrgDashboardInner() {
               {org?.logo_url ? (
                 <img src={org.logo_url} alt="Ministry logo" style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'contain', border: `1px solid ${SILVER_BORDER}`, background: '#fff', padding: 4 }} />
               ) : (
-                <div style={{ width: 56, height: 56, borderRadius: 8, border: `1px dashed ${SILVER_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: SECONDARY_TEXT, fontSize: 22 }}>✝</div>
+                <div style={{ width: 56, height: 56, borderRadius: 8, border: `1px dashed ${SILVER_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: SECONDARY_TEXT, fontSize: 22 }}>✝︎</div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const }}>
                 <label style={{ display: 'inline-block', background: GOLD, color: NAVY, border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 11, fontWeight: 700, cursor: logoUploading ? 'wait' : 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
@@ -744,7 +744,7 @@ function LineageJourney({ bandId, green }: { bandId: string, green: string }) {
 
 export default function OrgDashboardPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', fontFamily: 'Cinzel, serif', color: SECONDARY_TEXT, background: CREAM_BG, minHeight: '100vh' }}>Loading... ✝</div>}>
+    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', fontFamily: 'Cinzel, serif', color: SECONDARY_TEXT, background: CREAM_BG, minHeight: '100vh' }}>Loading... ✝︎</div>}>
       <OrgDashboardInner />
     </Suspense>
   )

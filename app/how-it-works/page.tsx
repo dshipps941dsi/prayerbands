@@ -27,7 +27,7 @@ type Section = {
 const SECTIONS: Section[] = [
   {
     id: "start",
-    icon: "✝",
+    icon: "✝︎",
     nav: "What is a band?",
     title: "What a Prayer Band is",
     blurb: "A wristband with a tiny chip and a unique ID that carries a living chain of prayer.",
@@ -377,7 +377,7 @@ export default function HowItWorksPage() {
       <SiteHeader />
 
       <section className="hc-hero">
-        <div className="hc-eyebrow">✝ Help Center</div>
+        <div className="hc-eyebrow">✝︎ Help Center</div>
         <h1 className="hc-title">How Prayer<br /><em>Bands Work</em></h1>
         <p className="hc-sub">Everything your band can do — from your very first tap to passing it around the world. Pick a topic to begin.</p>
       </section>

@@ -415,7 +415,7 @@ export default function ContactPage() {
                   body="We reply within 1–2 business days. For urgent band delivery issues, mention 'URGENT' in your subject."
                 />
                 <InfoCard
-                  icon="✝"
+                  icon="✝︎"
                   title="Ministry Support"
                   body="Questions about band journeys, prayer chains, and ministry partnerships are handled with special care."
                 />
@@ -489,7 +489,7 @@ function SuccessPage({ name }: { name: string }) {
   return (
     <div className="success-page">
       <div className="success-inner">
-        <div className="success-cross">✝</div>
+        <div className="success-cross">✝︎</div>
         <h1>Message Received</h1>
         <p className="success-name">Thank you, {name}.</p>
         <p className="success-body">

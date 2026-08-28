@@ -178,7 +178,7 @@ export default function NotificationsPanel({
                 const isPromo = n.type === 'promo'
                 return (
                   <div key={n.id} style={{ background: isPromo ? 'linear-gradient(135deg, #FCF4E0, #F7E9C9)' : CARD, border: `1px solid ${isPromo || isNew ? GOLD_BORDER : BORDER}`, borderLeft: `3px solid ${isPromo || isNew ? GOLD : BORDER}`, borderRadius: 10, padding: '11px 13px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                    <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, background: isPromo ? GOLD : `${GOLD}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>{n.icon || '✝'}</div>
+                    <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, background: isPromo ? GOLD : `${GOLD}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>{n.icon || '✝︎'}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: TEXT, fontFamily: sans }}>
                         {n.title}

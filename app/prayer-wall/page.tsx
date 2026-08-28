@@ -140,7 +140,7 @@ export default function PrayerWallPage() {
     if (res.ok) {
       setFiltered(prev => prev.filter(p => p.id !== id))
       setPrayers(prev => prev.filter(p => p.id !== id))
-      showToast('Prayer reported — thank you for keeping the wall sacred ✝')
+      showToast('Prayer reported — thank you for keeping the wall sacred ✝︎')
     } else {
       showToast('That report did not go through. Please try again.')
     }
@@ -197,7 +197,7 @@ export default function PrayerWallPage() {
         @media (max-width: 600px) { .prayers-masonry { columns: 1; } .stats-row { flex-wrap: wrap !important; } }
       `}</style>
 
-      {toast && <div className="toast">✝ {toast}</div>}
+      {toast && <div className="toast">✝︎ {toast}</div>}
 
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(246,241,228,0.97)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(10,22,40,0.12)', padding: '0 32px' }}>
         <div style={{ maxWidth: 1160, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
@@ -258,7 +258,7 @@ export default function PrayerWallPage() {
       <div style={{ maxWidth: 1160, margin: '0 auto', padding: '48px 32px' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
-            <div style={{ fontSize: 48, color: '#C8A96E', marginBottom: 16 }}>✝</div>
+            <div style={{ fontSize: 48, color: '#C8A96E', marginBottom: 16 }}>✝︎</div>
             <div className="inter" style={{ fontSize: 13, fontWeight: 600, color: '#5C6573', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Loading prayers...</div>
           </div>
         ) : filtered.length === 0 ? (

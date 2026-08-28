@@ -188,7 +188,7 @@ export default function SuccessCard({
           )}
           {authMode === 'password' && (
             <div>
-              <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK, marginBottom: 6 }}>You&apos;re in ✝</div>
+              <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK, marginBottom: 6 }}>You&apos;re in ✝︎</div>
               <div style={{ fontFamily: body, fontSize: 13, color: GRAY, lineHeight: 1.55, marginBottom: 16 }}>
                 Your account is ready. Want a password so you can sign in without waiting for a code next time? You can
                 always skip this &mdash; we&apos;ll email you a code whenever you need one.
@@ -219,7 +219,7 @@ export default function SuccessCard({
               <input type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} placeholder="123456" onKeyDown={e => { if (e.key === 'Enter' && code.trim().length >= 6) handleVerifyCode() }} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: serif, fontSize: 22, letterSpacing: '0.3em', textAlign: 'center', color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }} />
               {authError && <div style={{ fontFamily: body, fontSize: 13, color: '#C0392B', marginBottom: 12 }}>{authError}</div>}
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={handleVerifyCode} disabled={authSubmitting || code.trim().length < 6} style={{ flex: 1, padding: '13px', background: code.trim().length >= 6 ? GOLD : '#ccc', color: code.trim().length >= 6 ? INK : 'white', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: code.trim().length >= 6 ? 'pointer' : 'not-allowed' }}>{authSubmitting ? 'Verifying...' : 'Verify & save ✝'}</button>
+                <button onClick={handleVerifyCode} disabled={authSubmitting || code.trim().length < 6} style={{ flex: 1, padding: '13px', background: code.trim().length >= 6 ? GOLD : '#ccc', color: code.trim().length >= 6 ? INK : 'white', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: code.trim().length >= 6 ? 'pointer' : 'not-allowed' }}>{authSubmitting ? 'Verifying...' : 'Verify & save ✝︎'}</button>
                 <button onClick={() => { setAuthMode('email'); setAuthError(''); setCode('') }} style={{ padding: '13px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Back</button>
               </div>
               <button onClick={handleSendCode} disabled={authSubmitting} style={{ display: 'block', width: '100%', marginTop: 12, background: 'none', border: 'none', color: GOLD, fontFamily: body, fontSize: 13, cursor: 'pointer' }}>Didn&apos;t get it? Resend code</button>

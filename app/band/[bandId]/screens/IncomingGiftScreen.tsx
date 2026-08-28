@@ -41,7 +41,7 @@ export default function IncomingGiftScreen({
       <div style={{ maxWidth: 460, width: '100%', textAlign: 'center', animation: 'giftIn 0.6s ease' }}>
         <style>{`@keyframes giftIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }`}</style>
 
-        <div style={{ fontSize: 52, marginBottom: 18, color: GOLD }}>✝</div>
+        <div style={{ fontSize: 52, marginBottom: 18, color: GOLD }}>✝︎</div>
 
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: '0.28em', textTransform: 'uppercase', color: GOLD, marginBottom: 18 }}>
           A Gift of Prayer

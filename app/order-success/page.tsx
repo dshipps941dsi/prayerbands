@@ -81,7 +81,7 @@ function OrderSuccessInner() {
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F1E4', fontFamily: body }}>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 48, color: GOLD, marginBottom: 16 }}>✝</div>
+        <div style={{ fontSize: 48, color: GOLD, marginBottom: 16 }}>✝︎</div>
         <div style={{ fontSize: 16, color: GRAY, fontStyle: 'italic' }}>Confirming your order...</div>
       </div>
     </div>
@@ -99,7 +99,7 @@ function OrderSuccessInner() {
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>✝</div>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>✝︎</div>
           <div style={{ fontFamily: serif, fontSize: 26, fontWeight: 700, marginBottom: 8, color: DARK }}>Order Confirmed</div>
           <div style={{ fontFamily: body, fontSize: 15, color: GRAY, lineHeight: 1.6 }}>
             Your bands are on their way. Before they ship, dedicate each one to the person you're giving it to.
@@ -154,7 +154,7 @@ function OrderSuccessInner() {
                   disabled={saving}
                   style={{ display: 'block', width: '100%', padding: 16, background: GOLD, color: NAVY, border: 'none', borderRadius: 12, fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, cursor: 'pointer', marginBottom: 12, boxShadow: '0 4px 16px rgba(200,169,110,0.35)' }}
                 >
-                  {saving ? 'Saving dedications...' : 'Save & dedicate these bands ✝'}
+                  {saving ? 'Saving dedications...' : 'Save & dedicate these bands ✝︎'}
                 </button>
                 <button
                   onClick={() => setAllSaved(true)}
@@ -191,7 +191,7 @@ function OrderSuccessInner() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <a href="/my-band" style={{ display: 'block', textAlign: 'center', background: GOLD, color: NAVY, padding: '14px 24px', borderRadius: 10, textDecoration: 'none', fontFamily: "'Cinzel', serif", fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, boxShadow: '0 4px 16px rgba(200,169,110,0.35)' }}>Go to Dashboard ✝</a>
+          <a href="/my-band" style={{ display: 'block', textAlign: 'center', background: GOLD, color: NAVY, padding: '14px 24px', borderRadius: 10, textDecoration: 'none', fontFamily: "'Cinzel', serif", fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, boxShadow: '0 4px 16px rgba(200,169,110,0.35)' }}>Go to Dashboard ✝︎</a>
           <a href="/store" style={{ display: 'block', textAlign: 'center', background: 'transparent', color: GRAY, padding: '12px 24px', borderRadius: 10, textDecoration: 'none', fontFamily: body, fontSize: 14, border: '1px solid rgba(92,101,115,0.30)' }}>Order More Bands</a>
         </div>
 
@@ -202,7 +202,7 @@ function OrderSuccessInner() {
 
 export default function OrderSuccess() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F1E4' }}><div style={{ fontSize: 48, textAlign: 'center', color: '#C8A96E' }}>✝</div></div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F1E4' }}><div style={{ fontSize: 48, textAlign: 'center', color: '#C8A96E' }}>✝︎</div></div>}>
       <OrderSuccessInner />
     </Suspense>
   )

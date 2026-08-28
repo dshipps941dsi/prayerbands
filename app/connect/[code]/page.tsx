@@ -69,10 +69,10 @@ export default function ConnectPage({ params }: { params: Promise<{ code: string
         </div>
       ) : result === 'sent' ? (
         <div style={card}>
-          <div style={{ fontSize: 40, marginBottom: 10 }}>✝</div>
+          <div style={{ fontSize: 40, marginBottom: 10 }}>✝︎</div>
           <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Request sent to {name}</div>
           <div style={{ fontSize: 14, color: GRAY, lineHeight: 1.6, marginBottom: 20 }}>They&rsquo;ll see your request and can accept it to become prayer partners.</div>
-          <a href="/my-band" style={gold}>Go to my band ✝</a>
+          <a href="/my-band" style={gold}>Go to my band ✝︎</a>
         </div>
       ) : result === 'already' ? (
         <div style={card}>
@@ -112,12 +112,12 @@ export default function ConnectPage({ params }: { params: Promise<{ code: string
           ) : userId ? (
             <>
               <div style={{ fontSize: 14, color: GRAY, lineHeight: 1.6, marginBottom: 22 }}>Become prayer partners so you can lift each other up.</div>
-              <button onClick={connect} disabled={working} style={{ ...gold, opacity: working ? 0.6 : 1 }}>{working ? 'Sending…' : 'Add to Prayer Partners ✝'}</button>
+              <button onClick={connect} disabled={working} style={{ ...gold, opacity: working ? 0.6 : 1 }}>{working ? 'Sending…' : 'Add to Prayer Partners ✝︎'}</button>
             </>
           ) : (
             <>
               <div style={{ fontSize: 14, color: GRAY, lineHeight: 1.6, marginBottom: 22 }}>Sign in to connect with {name} in prayer.</div>
-              <a href={`/signin?redirect=${encodeURIComponent(`/connect/${code}`)}`} style={gold}>Sign in ✝</a>
+              <a href={`/signin?redirect=${encodeURIComponent(`/connect/${code}`)}`} style={gold}>Sign in ✝︎</a>
             </>
           )}
         </div>

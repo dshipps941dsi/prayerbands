@@ -106,7 +106,7 @@ export default function ResetPasswordConfirm() {
           ) : !ready ? (
             <div style={{ textAlign: 'center', color: BRAND.secondaryText, fontSize: 14 }}>
               Verifying reset link...{' '}
-              <span style={{ color: BRAND.gold }}>✝</span>
+              <span style={{ color: BRAND.gold }}>✝︎</span>
             </div>
           ) : (
             <div>

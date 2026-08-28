@@ -159,7 +159,7 @@ export default function SettingsPage() {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
           Back
         </button>
-        <div className="set-eyebrow">✝ Your Account</div>
+        <div className="set-eyebrow">✝︎ Your Account</div>
         <h1 className="set-title">Settings</h1>
       </section>
 

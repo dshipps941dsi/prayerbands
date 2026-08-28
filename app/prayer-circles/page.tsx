@@ -10,7 +10,7 @@ export const metadata = {
 const VALUES = [
   { icon: "🙏", title: "Gather Around a Need", body: "A person healing, a family in crisis, a season of seeking — a circle focuses a group's prayer on one specific need, together." },
   { icon: "🔒", title: "Private & Invite-Only", body: "Circles aren't public. The person who starts one shares a short join code, so only the people they invite can see and pray." },
-  { icon: "✝", title: "Pray as One", body: "Members add requests, mark when they've interceded, and watch encouragement build — a quiet record that someone is always praying." },
+  { icon: "✝︎", title: "Pray as One", body: "Members add requests, mark when they've interceded, and watch encouragement build — a quiet record that someone is always praying." },
 ];
 
 const STEPS = [
@@ -85,7 +85,7 @@ export default function PrayerCirclesPage() {
       <SiteNav />
 
       <section className="pc-hero">
-        <div className="pc-eyebrow">✝ Prayer Circles</div>
+        <div className="pc-eyebrow">✝︎ Prayer Circles</div>
         <h1 className="pc-title">Pray Together,<br /><em>in One Accord</em></h1>
         <p className="pc-sub">A Prayer Circle is a small, private group that gathers around a single prayer need — and keeps praying until the season passes.</p>
         <div className="pc-hero-cta">

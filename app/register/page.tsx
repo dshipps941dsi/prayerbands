@@ -78,7 +78,7 @@ function RegisterInner() {
 
 export default function Register() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: PAGE }}><div style={{ fontSize: 40, color: GOLD }}>✝</div></div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: PAGE }}><div style={{ fontSize: 40, color: GOLD }}>✝︎</div></div>}>
       <RegisterInner />
     </Suspense>
   )
