@@ -340,13 +340,13 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
         </div>
       )}
 
-      {/* Sticky cart footer — flows in as bands are added. Sits below the band
-          nav's z-index, so it shows while you shop and tucks under the nav when
-          you scroll up to navigate. A spacer keeps content clear of it. */}
+      {/* Sticky cart bar — always visible while you shop, so the cart is never
+          buried at the bottom of the grid. Sits directly ABOVE the always-on
+          bottom nav (which owns the very bottom + the safe-area inset). */}
       {cart.length > 0 && (
         <>
-          <div style={{ height: 78 }} />
-          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 150, padding: '10px 16px calc(10px + env(safe-area-inset-bottom, 0px))', background: 'var(--pb-tab-bar, #0E1E38)', borderTop: '1px solid rgba(200,169,110,0.35)', boxShadow: '0 -6px 24px rgba(10,22,40,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ height: 70 }} />
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'calc(56px + env(safe-area-inset-bottom, 0px))', zIndex: 190, padding: '10px 16px', background: 'var(--pb-tab-bar, #0E1E38)', borderTop: '1px solid rgba(200,169,110,0.35)', boxShadow: '0 -6px 24px rgba(10,22,40,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ color: '#F5EDD8', lineHeight: 1.2 }}>
               <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700 }}>🛒 {cartCount} {cartCount === 1 ? 'band' : 'bands'}</div>
               <div style={{ fontSize: 12.5, opacity: 0.8 }}>${cartTotal.toFixed(2)}</div>
