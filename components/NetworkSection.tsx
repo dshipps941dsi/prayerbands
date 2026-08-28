@@ -118,14 +118,16 @@ const CIRCLE = '#2E7D8A'
 const KIND_COLOR: Record<OtherKind, string> = { direct: '#9A7A35', lineage: LINEAGE, circles: CIRCLE }
 const KIND_LABEL: Record<OtherKind, string> = { direct: 'Direct', lineage: 'Lineage', circles: 'Circle' }
 
+// Posting audiences, kept to the three people actually think in: their own
+// private journal, everyone they're connected with, or a specific group (via
+// the dropdown). Direct/Lineage stay as feed FILTERS for browsing, not as
+// posting choices; the public wall is fed by band taps, not the journal.
 const AUDIENCES: { id: Audience; label: string; hint: string }[] = [
-  { id: 'private', label: '🔒 Just me', hint: 'A private journal entry — only you can see it, and no one is notified.' },
-  { id: 'network', label: '🙏 My Network', hint: 'Everyone you’re connected to' },
-  { id: 'direct', label: '👥 Direct', hint: 'Direct partners only' },
-  { id: 'lineage', label: '🔗 Lineage', hint: 'People a band passed between' },
-  { id: 'wall', label: '🌍 Public Wall', hint: 'Shared on the public wall' },
+  { id: 'private', label: '📔 My Journal', hint: 'Private — only you can see this, and no one is notified.' },
+  { id: 'network', label: '🙏 My Partners', hint: 'Everyone you’re connected with.' },
 ]
-const AUD_LABEL: Record<Audience, string> = { private: 'Just me', network: 'Network', direct: 'Direct', lineage: 'Lineage', wall: 'Wall' }
+// Full label map is kept so older posts (direct / lineage / wall) still render.
+const AUD_LABEL: Record<Audience, string> = { private: 'My Journal', network: 'My Partners', direct: 'Direct', lineage: 'Lineage', wall: 'Wall' }
 
 export default function NetworkSection({ userId, section = 'all' }: { userId: string; section?: 'all' | 'partners' | 'requests' }) {
   const router = useRouter()
@@ -767,26 +769,32 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
           <div style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, marginBottom: 10 }}>
             <textarea value={text} onChange={e => setText(e.target.value)} placeholder="What would you like prayer for?" rows={3} maxLength={400} autoFocus style={{ width: '100%', padding: '10px 14px', fontSize: 14, fontFamily: 'Georgia, serif', color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', resize: 'none', boxSizing: 'border-box', lineHeight: 1.6 }} />
 
-            <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Keep private, or share it?</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Who is this for?</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {AUDIENCES.map(a => {
                 const active = audience === a.id
                 return (
-                  <button key={a.id} onClick={() => setAudience(a.id)} title={a.hint} style={{ padding: '9px 8px', borderRadius: 8, border: `1px solid ${active ? GOLD : BORDER}`, background: active ? '#FFF8E7' : '#fff', color: active ? GOLD : GRAY, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left' }}>
+                  <button key={a.id} onClick={() => setAudience(a.id)} title={a.hint} style={{ flex: '1 1 30%', minWidth: 96, padding: '9px 8px', borderRadius: 8, border: `1px solid ${active ? GOLD : BORDER}`, background: active ? '#FFF8E7' : '#fff', color: active ? GOLD : GRAY, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'center' }}>
                     {a.label}
                   </button>
                 )
               })}
-              {/* Your partner groups as one-tap share targets. */}
-              {groups.map(g => {
-                const id = `group:${g.id}`
-                const active = audience === id
+              {/* Partner groups collapse into a single dropdown so the picker
+                  stays three simple choices no matter how many groups exist. */}
+              {groups.length > 0 && (() => {
+                const active = audience.startsWith('group:')
                 return (
-                  <button key={id} onClick={() => setAudience(id)} title={`Only people in ${g.name}`} style={{ padding: '9px 8px', borderRadius: 8, border: `1px solid ${active ? CIRCLE : BORDER}`, background: active ? 'rgba(46,125,138,0.10)' : '#fff', color: active ? CIRCLE : GRAY, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left' }}>
-                    🏷️ {g.name}
-                  </button>
+                  <select
+                    value={active ? audience : ''}
+                    onChange={e => { if (e.target.value) setAudience(e.target.value) }}
+                    title="Share with a specific group"
+                    style={{ flex: '1 1 30%', minWidth: 110, padding: '9px 8px', borderRadius: 8, border: `1px solid ${active ? CIRCLE : BORDER}`, background: active ? 'rgba(46,125,138,0.10)' : '#fff', color: active ? CIRCLE : GRAY, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'center', appearance: 'none', WebkitAppearance: 'none' }}
+                  >
+                    <option value="">🏷️ My Groups…</option>
+                    {groups.map(g => <option key={g.id} value={`group:${g.id}`}>{g.name}</option>)}
+                  </select>
                 )
-              })}
+              })()}
             </div>
             <p style={{ fontSize: 11, color: GRAY, margin: '6px 2px 0', fontStyle: 'italic' }}>{audienceHint(audience)}</p>
 
@@ -799,16 +807,6 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                     const active = entryList === l.id
                     return <button key={l.id} onClick={() => setEntryList(l.id)} style={{ padding: '6px 12px', borderRadius: 16, border: `1px solid ${active ? CIRCLE : BORDER}`, background: active ? 'rgba(46,125,138,0.10)' : '#fff', color: active ? CIRCLE : GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: active ? 700 : 400, cursor: 'pointer' }}>{l.name}</button>
                   })}
-                </div>
-              </>
-            )}
-
-            {audience === 'wall' && (
-              <>
-                <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Show on the wall as</div>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button onClick={() => setAnonymity('first_initial')} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: `1px solid ${anonymity === 'first_initial' ? GOLD : BORDER}`, background: anonymity === 'first_initial' ? '#FFF8E7' : '#fff', color: anonymity === 'first_initial' ? GOLD : GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: anonymity === 'first_initial' ? 600 : 400, cursor: 'pointer' }}>First name, last initial</button>
-                  <button onClick={() => setAnonymity('anonymous')} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: `1px solid ${anonymity === 'anonymous' ? GOLD : BORDER}`, background: anonymity === 'anonymous' ? '#FFF8E7' : '#fff', color: anonymity === 'anonymous' ? GOLD : GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: anonymity === 'anonymous' ? 600 : 400, cursor: 'pointer' }}>Anonymous</button>
                 </div>
               </>
             )}
