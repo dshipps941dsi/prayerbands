@@ -24,11 +24,28 @@ export default function ReachMap({ bandId }: { bandId: string }) {
   const timer = useRef<any>(null)
   const [data, setData] = useState<Data | null>(null)
   const [loading, setLoading] = useState(true)
+  // Which top-level branches (depth-0 givers) show on the map — null = all.
+  const [selected, setSelected] = useState<Set<string> | null>(null)
+  // Which people in the lineage list are expanded (collapsed by default so a
+  // long downline stays tidy).
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     setLoading(true)
     fetch(`/api/band-reach?bandId=${encodeURIComponent(bandId)}`).then(r => r.json()).then(d => setData(d)).catch(() => {}).finally(() => setLoading(false))
   }, [bandId])
+
+  // Top-level branches = depth-0 people who gave at least one band.
+  const topRoots = data
+    ? data.nodes.filter(n => n.depth === 0 && data.edges.some(e => e.kind === 'gift' && e.from === n.id)).map(n => n.id)
+    : []
+  // Default every branch to selected once the data arrives.
+  useEffect(() => { setSelected(topRoots.length ? new Set(topRoots) : null); setExpanded(new Set()) /* eslint-disable-next-line */ }, [data])
+  const isSel = (id: string) => !selected || selected.has(id)
+  const toggleExpand = (id: string) => setExpanded(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const toggleRoot = (id: string) => setSelected(prev => { const base = new Set(prev ?? topRoots); base.has(id) ? base.delete(id) : base.add(id); return base })
+  const allSelected = topRoots.length > 0 && topRoots.every(id => isSel(id))
+  const toggleAll = () => setSelected(allSelected ? new Set<string>() : new Set(topRoots))
 
   useEffect(() => {
     if (!data || !mapRef.current || typeof window === 'undefined') return
@@ -68,6 +85,13 @@ export default function ReachMap({ bandId }: { bandId: string }) {
       while (parentOf.has(cur) && (depthOf.get(cur) ?? 0) > 1) cur = parentOf.get(cur)!
       return cur
     }
+    // Walk up to the depth-0 top-level giver — used to filter the map by which
+    // top-level branches the viewer has selected.
+    const rootOf = (id: string): string => {
+      let cur = id
+      while (parentOf.has(cur) && (depthOf.get(cur) ?? 0) > 0) cur = parentOf.get(cur)!
+      return cur
+    }
     const branchColorByRoot = new Map<string, string>()
     const colorForBranch = (id: string): string => {
       const root = branchRoot(id)
@@ -93,6 +117,7 @@ export default function ReachMap({ bandId }: { bandId: string }) {
 
       const drawMarker = (id: string) => {
         const p = pos.get(id); if (!p) return
+        if (p.depth > 0 && !isSel(rootOf(id))) return // hide unselected branches
         const isRoot = id === rootId
         const sz = isRoot ? 15 : p.depth === 0 ? 12 : 10
         // Depth-0 (this band's own holders) stay gold; branch recipients take
@@ -107,6 +132,7 @@ export default function ReachMap({ bandId }: { bandId: string }) {
       const drawEdge = (e: Edge) => {
         const a = pos.get(e.from), b = pos.get(e.to)
         if (!a || !b) return
+        if (e.kind === 'gift' && !isSel(rootOf(e.to))) return // hide unselected branches
         L.polyline([[a.lat, a.lng], [b.lat, b.lng]], e.kind === 'chain'
           ? { color: gold, weight: 2, opacity: 0.7, dashArray: '4 6' }
           : { color: colorForBranch(e.to), weight: 2, opacity: 0.75 }).addTo(map)
@@ -143,7 +169,8 @@ export default function ReachMap({ bandId }: { bandId: string }) {
       if (timer.current) { clearInterval(timer.current); timer.current = null }
       if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null }
     }
-  }, [data])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, selected])
 
   if (loading) return <div style={{ padding: '30px 0', textAlign: 'center', color: GRAY, fontSize: 14 }}>Loading the reach…</div>
 
@@ -190,18 +217,28 @@ export default function ReachMap({ bandId }: { bandId: string }) {
           const kids = (childrenMap.get(id) || []).filter(k => !visited.has(k))
           const label = id === rootId ? 'You' : n.name
           const gaveCount = (childrenMap.get(id) || []).length
+          const hasKids = kids.length > 0
+          const open = expanded.has(id)
+          const dimmed = isRoot && !isSel(id) // deselected branch: shown but muted
           return (
-            <div key={id}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: isRoot ? '10px 0 4px' : '5px 0' }}>
-                <span style={{ width: isRoot ? 11 : 8, height: isRoot ? 11 : 8, borderRadius: '50%', background: isRoot ? GOLD : '#fff', border: `2px solid ${GOLD}`, flexShrink: 0, marginTop: isRoot ? 5 : 4 }} />
-                <div style={{ minWidth: 0, lineHeight: 1.4 }}>
+            <div key={id} style={{ opacity: dimmed ? 0.5 : 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: isRoot ? '9px 0 3px' : '4px 0' }}>
+                {isRoot && (
+                  <input type="checkbox" checked={isSel(id)} onChange={() => toggleRoot(id)} title="Show this branch on the map" style={{ width: 16, height: 16, accentColor: GOLD, cursor: 'pointer', flexShrink: 0 }} />
+                )}
+                {hasKids ? (
+                  <button onClick={() => toggleExpand(id)} aria-label={open ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: 16, height: 16, flexShrink: 0, color: GRAY, fontSize: 12, lineHeight: 1 }}>{open ? '▾' : '▸'}</button>
+                ) : (
+                  <span style={{ width: isRoot ? 11 : 8, height: isRoot ? 11 : 8, borderRadius: '50%', background: isRoot ? GOLD : '#fff', border: `2px solid ${GOLD}`, flexShrink: 0, marginLeft: isRoot ? 0 : 4 }} />
+                )}
+                <button onClick={hasKids ? () => toggleExpand(id) : undefined} style={{ background: 'none', border: 'none', textAlign: 'left', padding: 0, cursor: hasKids ? 'pointer' : 'default', minWidth: 0, lineHeight: 1.4, flex: 1 }}>
                   <span style={{ fontFamily: serif, fontWeight: 700, fontSize: isRoot ? 15 : 13.5, color: NAVY }}>{label}</span>
                   {place(n) && <span style={{ fontSize: 12.5, color: GRAY }}> · {place(n)}</span>}
                   {gaveCount > 0 && <span style={{ fontSize: 12, color: GRAY }}> — gave {gaveCount}</span>}
-                </div>
+                </button>
               </div>
-              {kids.length > 0 && (
-                <div style={{ marginLeft: isRoot ? 5 : 3, borderLeft: '2px solid rgba(200,169,110,0.45)', paddingLeft: 16 }}>
+              {hasKids && open && (
+                <div style={{ marginLeft: isRoot ? 8 : 3, borderLeft: '2px solid rgba(200,169,110,0.45)', paddingLeft: 16 }}>
                   {kids.map(k => renderNode(k, false))}
                 </div>
               )}
@@ -213,10 +250,21 @@ export default function ReachMap({ bandId }: { bandId: string }) {
           .filter(n => n.depth === 0 && childrenMap.has(n.id))
           .sort((a, b) => (a.id === rootId ? -1 : b.id === rootId ? 1 : 0))
         if (!roots.length) return null
+        const selCount = roots.filter(r => isSel(r.id)).length
         return (
           <div style={{ marginTop: 18 }}>
+            {/* Select which branches show on the map, and collapse to keep it tidy. */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingBottom: 8, borderBottom: `1px solid ${BORDER}`, flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12.5, color: NAVY, fontWeight: 600 }}>
+                <input type="checkbox" checked={allSelected} onChange={toggleAll} style={{ width: 16, height: 16, accentColor: GOLD, cursor: 'pointer' }} />
+                {allSelected ? 'All branches' : `${selCount} of ${roots.length} branches`} on the map
+              </label>
+              <button onClick={() => setExpanded(prev => prev.size ? new Set<string>() : new Set(roots.map(r => r.id)))} style={{ background: 'none', border: 'none', color: GRAY, fontSize: 12, cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
+                {expanded.size ? 'Collapse all' : 'Expand all'}
+              </button>
+            </div>
             {roots.map((g, i) => (
-              <div key={g.id} style={{ paddingTop: i > 0 ? 12 : 6, marginTop: i > 0 ? 12 : 0, borderTop: i > 0 ? `1px solid ${BORDER}` : 'none' }}>
+              <div key={g.id} style={{ paddingTop: i > 0 ? 10 : 8, marginTop: i > 0 ? 10 : 0, borderTop: i > 0 ? `1px solid ${BORDER}` : 'none' }}>
                 {renderNode(g.id, true)}
               </div>
             ))}
