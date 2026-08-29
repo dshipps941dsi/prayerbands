@@ -152,6 +152,20 @@ export default function SuccessCard({
               <button onClick={async () => {
                 if (!ageConsent) return
                 const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+                await supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: `${window.location.origin}/band/${bandId}` } })
+              }} disabled={!ageConsent} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                width: '100%', padding: '13px', marginBottom: 10,
+                background: ageConsent ? '#000' : '#ccc', color: 'white',
+                border: 'none', borderRadius: 10, fontFamily: body, fontSize: 15,
+                fontWeight: 600, cursor: ageConsent ? 'pointer' : 'not-allowed',
+                boxSizing: 'border-box',
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.74-1.517.03-2.01-.9-3.71-.9-1.717 0-2.26.87-3.71.93-1.44.05-2.53-1.51-3.6-2.84-1.877-2.35-3.32-6.64-1.39-9.53.96-1.42 2.68-2.32 4.55-2.35 1.45-.03 2.83.98 3.71.98.87 0 2.53-1.21 4.26-1.03.72.03 2.75.29 4.06 2.18-.11.07-2.42 1.42-2.39 4.24.03 3.37 2.95 4.49 2.98 4.5z"/></svg> Continue with Apple
+              </button>
+              <button onClick={async () => {
+                if (!ageConsent) return
+                const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
                 await supabase.auth.signInWithOAuth({ provider: 'facebook', options: { redirectTo: `${window.location.origin}/band/${bandId}` } })
               }} disabled={!ageConsent} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,

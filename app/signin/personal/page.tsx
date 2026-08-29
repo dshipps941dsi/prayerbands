@@ -65,6 +65,15 @@ export default function SignInPersonal() {
     })
   }
 
+  async function signInWithApple() {
+    setLoading(true)
+    const supabase = getSupabase()
+    await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: { redirectTo: oauthCallback() }
+    })
+  }
+
   async function signInWithFacebook() {
     setLoading(true)
     const supabase = getSupabase()
@@ -201,6 +210,10 @@ export default function SignInPersonal() {
                   <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
                 </svg>
                 {loading ? 'Signing in...' : 'Continue with Google'}
+              </button>
+              <button onClick={signInWithApple} disabled={loading} style={{ width: '100%', padding: '12px', borderRadius: 8, background: '#000', color: '#fff', border: 'none', fontSize: 15, cursor: 'pointer', fontFamily: "'Inter', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 10 }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.74-1.517.03-2.01-.9-3.71-.9-1.717 0-2.26.87-3.71.93-1.44.05-2.53-1.51-3.6-2.84-1.877-2.35-3.32-6.64-1.39-9.53.96-1.42 2.68-2.32 4.55-2.35 1.45-.03 2.83.98 3.71.98.87 0 2.53-1.21 4.26-1.03.72.03 2.75.29 4.06 2.18-.11.07-2.42 1.42-2.39 4.24.03 3.37 2.95 4.49 2.98 4.5z"/></svg>
+                {loading ? 'Signing in...' : 'Continue with Apple'}
               </button>
               <button onClick={signInWithFacebook} disabled={loading} style={{ width: '100%', padding: '12px', borderRadius: 8, background: '#1877F2', color: '#fff', border: 'none', fontSize: 15, cursor: 'pointer', fontFamily: "'Inter', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>
