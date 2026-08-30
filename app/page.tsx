@@ -324,7 +324,7 @@ export default function HomePage() {
       <section id="daily" className="daily">
         <div className="daily-inner">
           <Reveal className="daily-phone">
-            <img className="daily-phone-img" src="/home/phone-1.png" alt="Prayer Bands daily verse app screen with topics to browse" />
+            <img className="daily-phone-img" src="/home/phone.png" alt="Prayer Bands daily verse app screen with topics to browse" />
           </Reveal>
           <Reveal delay={120} className="daily-copy">
             <div className="eyebrow gold">Daily Encouragement</div>
