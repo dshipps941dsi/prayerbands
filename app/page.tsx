@@ -206,6 +206,11 @@ function GlobalPrayerMap({ points }: { points: MapPoint[] }) {
 // ─── Page ────────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [live, setLive] = useState<any>(null);
+  // The daily phone slides up out of the bottom of its container when scrolled into view.
+  // We clip the container only during the slide, then restore overflow so the
+  // phone's drop-shadow isn't cut off once it has settled.
+  const phone = useReveal();
+  const [phoneSettled, setPhoneSettled] = useState(false);
 
   useEffect(() => {
     const load = () => fetch("/api/home-stats").then(r => r.json()).then(setLive).catch(() => {});
@@ -323,9 +328,9 @@ export default function HomePage() {
       {/* ── Daily encouragement ── */}
       <section id="daily" className="daily">
         <div className="daily-inner">
-          <Reveal className="daily-phone">
-            <img className="daily-phone-img" src="/home/phone.png" alt="Prayer Bands daily verse app screen with topics to browse" />
-          </Reveal>
+          <div ref={phone.ref} className={`daily-phone${phoneSettled ? " settled" : ""}`}>
+            <img className={`daily-phone-img${phone.visible ? " in" : ""}`} src="/home/phone.png" alt="Prayer Bands daily verse app screen with topics to browse" onTransitionEnd={e => { if (e.propertyName === "transform") setPhoneSettled(true); }} />
+          </div>
           <Reveal delay={120} className="daily-copy">
             <div className="eyebrow gold">Daily Encouragement</div>
             <h2 className="h2 light">A New Verse Every Day. <em>Right When You Need It.</em></h2>
@@ -658,8 +663,11 @@ const styles = `
   /* Daily — phone bottom-left, copy right, full-width over the mountain bg */
   .daily { background:linear-gradient(180deg,rgba(0,0,0,0.9) 0%,rgba(0,0,0,0.48) 30%,rgba(0,0,0,0.48) 70%,rgba(0,0,0,0.94) 100%),url('/home/daily-topic-bg.jpg') center/cover no-repeat,#101114; }
   .daily-inner { display:grid; grid-template-columns:0.82fr 1.18fr; gap:56px; align-items:end; padding:92px clamp(24px,5vw,80px) 0; }
-  .daily-phone { display:flex; justify-content:center; align-items:flex-end; }
-  .daily-phone-img { display:block; width:330px; max-width:34vw; height:auto; filter:drop-shadow(0 30px 60px rgba(0,0,0,0.55)); }
+  .daily-phone { display:flex; justify-content:center; align-items:flex-end; overflow:hidden; }
+  .daily-phone.settled { overflow:visible; }
+  .daily-phone-img { display:block; width:330px; max-width:34vw; height:auto; filter:drop-shadow(0 30px 60px rgba(0,0,0,0.55)); transform:translateY(105%); opacity:0; transition:transform 1s cubic-bezier(0.16,0.84,0.44,1), opacity 0.7s ease; will-change:transform; }
+  .daily-phone-img.in { transform:translateY(0); opacity:1; }
+  @media (prefers-reduced-motion: reduce){ .daily-phone { overflow:visible; } .daily-phone-img { transform:none; opacity:1; transition:none; } }
   .daily-copy { max-width:900px; padding-bottom:92px; }
   .topic-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:28px 0 0; }
   .topic-card { background:rgba(200,169,110,0.06); border:1px solid var(--lineG); border-radius:10px; padding:18px 20px; }
