@@ -103,6 +103,32 @@ function useReveal() {
   }, []);
   return { ref, visible };
 }
+// Scroll-linked parallax: the element rests lower and drifts upward as the
+// section scrolls up through the viewport. Writes transform directly (rAF-
+// throttled) to avoid re-rendering on every scroll event.
+function useParallax(factor = 0.1, upMax = 120, downMax = 70) {
+  const ref = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const delta = (rect.top + rect.height / 2) - vh / 2; // + when below center
+      const t = Math.max(-upMax, Math.min(downMax, delta * factor));
+      el.style.transform = `translateY(${t.toFixed(1)}px)`;
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); if (raf) cancelAnimationFrame(raf); };
+  }, [factor, upMax, downMax]);
+  return ref;
+}
 function Reveal({ children, delay = 0, className = "", style }: { children: React.ReactNode; delay?: number; className?: string; style?: React.CSSProperties }) {
   const { ref, visible } = useReveal();
   return (
@@ -206,11 +232,8 @@ function GlobalPrayerMap({ points }: { points: MapPoint[] }) {
 // ─── Page ────────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [live, setLive] = useState<any>(null);
-  // The daily phone slides up out of the bottom of its container when scrolled into view.
-  // We clip the container only during the slide, then restore overflow so the
-  // phone's drop-shadow isn't cut off once it has settled.
-  const phone = useReveal();
-  const [phoneSettled, setPhoneSettled] = useState(false);
+  // The daily phone rests lower and parallaxes upward as you scroll the section.
+  const phoneRef = useParallax();
 
   useEffect(() => {
     const load = () => fetch("/api/home-stats").then(r => r.json()).then(setLive).catch(() => {});
@@ -328,8 +351,8 @@ export default function HomePage() {
       {/* ── Daily encouragement ── */}
       <section id="daily" className="daily">
         <div className="daily-inner">
-          <div ref={phone.ref} className={`daily-phone${phoneSettled ? " settled" : ""}`}>
-            <img className={`daily-phone-img${phone.visible ? " in" : ""}`} src="/home/phone.png" alt="Prayer Bands daily verse app screen with topics to browse" onTransitionEnd={e => { if (e.propertyName === "transform") setPhoneSettled(true); }} />
+          <div className="daily-phone">
+            <img ref={phoneRef} className="daily-phone-img" src="/home/phone.png" alt="Prayer Bands daily verse app screen with topics to browse" />
           </div>
           <Reveal delay={120} className="daily-copy">
             <div className="eyebrow gold">Daily Encouragement</div>
@@ -663,11 +686,9 @@ const styles = `
   /* Daily — phone bottom-left, copy right, full-width over the mountain bg */
   .daily { background:linear-gradient(180deg,rgba(0,0,0,0.9) 0%,rgba(0,0,0,0.48) 30%,rgba(0,0,0,0.48) 70%,rgba(0,0,0,0.94) 100%),url('/home/daily-topic-bg.jpg') center/cover no-repeat,#101114; }
   .daily-inner { display:grid; grid-template-columns:0.82fr 1.18fr; gap:56px; align-items:end; padding:92px clamp(24px,5vw,80px) 0; }
-  .daily-phone { display:flex; justify-content:center; align-items:flex-end; overflow:hidden; }
-  .daily-phone.settled { overflow:visible; }
-  .daily-phone-img { display:block; width:330px; max-width:34vw; height:auto; filter:drop-shadow(0 30px 60px rgba(0,0,0,0.55)); transform:translateY(105%); opacity:0; transition:transform 1s cubic-bezier(0.16,0.84,0.44,1), opacity 0.7s ease; will-change:transform; }
-  .daily-phone-img.in { transform:translateY(0); opacity:1; }
-  @media (prefers-reduced-motion: reduce){ .daily-phone { overflow:visible; } .daily-phone-img { transform:none; opacity:1; transition:none; } }
+  .daily-phone { display:flex; justify-content:center; align-items:flex-end; }
+  .daily-phone-img { display:block; width:330px; max-width:34vw; height:auto; filter:drop-shadow(0 30px 60px rgba(0,0,0,0.55)); transform:translateY(70px); will-change:transform; }
+  @media (prefers-reduced-motion: reduce){ .daily-phone-img { transform:none; } }
   .daily-copy { max-width:900px; padding-bottom:92px; }
   .topic-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:28px 0 0; }
   .topic-card { background:rgba(200,169,110,0.06); border:1px solid var(--lineG); border-radius:10px; padding:18px 20px; }
