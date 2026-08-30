@@ -387,7 +387,7 @@ function StorePageInner() {
       <section style={{ padding: "30px 32px 26px", textAlign: "center", background: "radial-gradient(ellipse 70% 80% at 50% 0%, rgba(200,169,110,0.16) 0%, transparent 60%), linear-gradient(180deg, #0A1628 0%, #0E1E38 55%, #0A1628 100%)", borderBottom: "1px solid rgba(200,169,110,0.34)" }}>
         <span className="section-label" style={{ color: "#C8A96E", marginBottom: "6px" }}>The Store</span>
         <h1 className="playfair" style={{ fontSize: "clamp(26px, 4vw, 42px)", fontWeight: 700, lineHeight: 1.1, marginBottom: 8, color: "#F5EDD8" }}>Send a Prayer Into <em style={{ color: "#C8A96E" }}>the World</em></h1>
-        <p className="lato" style={{ fontSize: 14, color: "rgba(245,237,216,0.72)", maxWidth: 440, margin: "0 auto", lineHeight: 1.55, fontWeight: 300 }}>Every band ships NFC-enabled and laser-engraved with a unique ID — one tap opens its digital journey.</p>
+        <p className="lato" style={{ fontSize: 14, color: "rgba(245,237,216,0.72)", maxWidth: 440, margin: "0 auto", lineHeight: 1.55, fontWeight: 300 }}>Every band ships NFC-enabled and laser-engraved with a unique ID — one tap opens its digital journey. Fully waterproof, with no battery to ever charge.</p>
       </section>
 
       <div style={{ maxWidth: 1160, margin: "0 auto", padding: "24px 32px 64px" }}>
@@ -459,6 +459,9 @@ function StorePageInner() {
                         <span style={{ color: "#C8A96E", fontSize: 10 }}>✦</span> {f}
                       </div>
                     ))}
+                    <div className="lato" style={{ fontSize: 13, color: "#2A3344", padding: "5px 0", display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ color: "#7BAE8E", fontSize: 11 }}>💧</span> Waterproof — no battery, never needs charging
+                    </div>
                   </div>
 
                   {product.hasSizes && (
@@ -616,6 +619,7 @@ function StorePageInner() {
                 </div>
                 <div style={{ marginBottom: 24 }}>
                   {pack.features.map(f => <div key={f} className="lato" style={{ fontSize: 13, color: "#2A3344", padding: "5px 0", borderBottom: "1px solid rgba(92,101,115,0.15)", display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: "#C8A96E", fontSize: 10 }}>✦</span> {f}</div>)}
+                  <div className="lato" style={{ fontSize: 13, color: "#2A3344", padding: "5px 0", display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: "#7BAE8E", fontSize: 11 }}>💧</span> Waterproof — no battery, never needs charging</div>
                 </div>
                 {avail === "backorder" && <div className="lato" style={{ fontSize: 12, color: "#9A7A35", marginBottom: 10, fontWeight: 700 }}>On backorder — ships when restocked.</div>}
                 {avail === "out" && <div className="lato" style={{ fontSize: 12, color: "#5C6573", marginBottom: 10, fontWeight: 700 }}>Out of stock</div>}

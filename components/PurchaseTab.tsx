@@ -158,8 +158,11 @@ export default function PurchaseTab({ bandId }: { bandId: string }) {
   return (
     <div style={{ padding: '24px 20px 40px' }}>
       <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: DARK, marginBottom: 4 }}>Send a Prayer Band</div>
-      <div style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 18, lineHeight: 1.5 }}>
+      <div style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 12, lineHeight: 1.5 }}>
         Keep the chain going — build a little order and send it to those on your heart.
+      </div>
+      <div style={{ fontSize: 12.5, color: DARK, marginBottom: 18, display: 'flex', alignItems: 'center', gap: 7, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '8px 12px' }}>
+        <span style={{ fontSize: 13 }}>💧</span> Waterproof — no battery, never needs charging
       </div>
 
       {/* Theme vs Colour — no filter by default (all bands show). */}

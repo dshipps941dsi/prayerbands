@@ -15,6 +15,10 @@ const FAQS = [
     a: "No app required. Most modern phones read NFC tags automatically — just tap the band to the back of your phone and a link opens. You can also visit the band's page directly in any web browser.",
   },
   {
+    q: "Is the band waterproof? Does it need charging?",
+    a: "Yes, it's fully waterproof — wear it in the shower, the pool, the ocean, or the sink without a second thought. There's no battery and no electronics to charge or wear out: the NFC chip inside is passive and draws its tiny bit of power from your phone only in the moment you tap it. So there's nothing to plug in, nothing to replace, and nothing that water can hurt. It's built to be worn every day for years.",
+  },
+  {
     q: "Does the band track my location?",
     a: "No. The chip inside the band is passive — no battery, no GPS, and no way to send anything on its own. It holds one short web link and nothing else. It only does anything when someone deliberately holds a phone within an inch or two of it, so it cannot be read across a room and does nothing at all sitting in a drawer. It does not know who is wearing it, and nothing is ever written back to it. The pins on our map come from the city a person types in when they register a band — not from the band. If that box is left blank, we make one rough, city-level guess from the internet connection at that moment so the pin is not empty. There is no ongoing location, no movement history, and never a street address. Take the band off or pass it on, and nothing follows you.",
   },
