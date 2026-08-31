@@ -147,6 +147,8 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [muted, setMuted] = useState<{ id: string; name: string; avatar?: AvatarSpec }[]>([])
   const [circleRequests, setCircleRequests] = useState<CircleRequest[]>([])
   const [partnerFilter, setPartnerFilter] = useState<'all' | Relation>('all')
+  const [partnerSearch, setPartnerSearch] = useState('')       // filter a long list by name
+  const [partnerLimit, setPartnerLimit] = useState(15)         // "show more" paging for big reach
   const [othersFilter, setOthersFilter] = useState<'all' | OtherKind>('all')
   // Partner groups (private labels) + which one is filtering the list + which
   // partner's "add to group" menu is open + the inline new-group name.
@@ -450,11 +452,14 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const lineageCount = connections.filter(c => relationOf(c) === 'lineage').length
   // A group filter, when active, wins over the Direct/Lineage filter.
   const activeGroupObj = groups.find(g => g.id === activeGroup) || null
-  const visiblePartners = connections.filter(c =>
+  const filteredPartners = connections.filter(c =>
     activeGroupObj
       ? activeGroupObj.member_ids.includes(c.user_id)
       : (partnerFilter === 'all' || relationOf(c) === partnerFilter)
   )
+  const q = partnerSearch.trim().toLowerCase()
+  const visiblePartners = q ? filteredPartners.filter(c => c.name.toLowerCase().includes(q)) : filteredPartners
+  const pagedPartners = visiblePartners.slice(0, partnerLimit)
   const groupsForMember = (uid: string) => groups.filter(g => g.member_ids.includes(uid))
   const canGroup = (c: Connection) => !!c.connection_id  // formal (accepted) connections only
   // Labels for audiences, including group:<id> share targets.
@@ -629,56 +634,65 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         </div>
       )}
 
-      {/* Partner people */}
-      {visiblePartners.map(c => {
+      {/* Search — appears once the list is long enough to be worth filtering. */}
+      {connections.length > 8 && (
+        <input
+          value={partnerSearch}
+          onChange={e => { setPartnerSearch(e.target.value); setPartnerLimit(15) }}
+          placeholder={`Search ${filteredPartners.length} partners by name…`}
+          style={{ width: '100%', boxSizing: 'border-box', marginBottom: 12, padding: '9px 12px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, fontFamily: 'Georgia, serif', color: DARK, background: '#fff', outline: 'none' }}
+        />
+      )}
+
+      {/* Partner people — one compact row each; the message box and group tools
+          expand inline only when opened, so a big list stays scannable. */}
+      {pagedPartners.map(c => {
         const inGroups = groupsForMember(c.user_id)
         const menuOpen = groupMenuFor === c.user_id
+        const composing = composeFor === c.user_id
         return (
-        <div key={c.connection_id ?? `lin-${c.user_id}`} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <AvatarBadge {...(c.avatar || {})} name={c.name} size={36} />
-            <p style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0, flex: 1 }}>{c.name}</p>
+        <div key={c.connection_id ?? `lin-${c.user_id}`} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '9px 12px', marginBottom: 7 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <AvatarBadge {...(c.avatar || {})} name={c.name} size={30} />
+            <p style={{ fontFamily: serif, fontSize: 14.5, fontWeight: 700, color: DARK, margin: 0, flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
             {relationBadge(relationOf(c))}
-          </div>
-
-          {/* Send this person a prayer/message straight to their inbox. Shown
-              for everyone here — accepted partners and lineage (people you gave
-              a band to); the server authorizes both. */}
-          <div style={{ marginTop: 10 }}>
             {prayedFor.has(c.user_id) ? (
-              <span style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: GRAY }}>✓ Sent — it&rsquo;s in {c.name.split(' ')[0]}&rsquo;s inbox</span>
-            ) : composeFor === c.user_id ? (
-              <div>
-                <textarea
-                  autoFocus
-                  value={composeText}
-                  onChange={e => setComposeText(e.target.value)}
-                  maxLength={600}
-                  placeholder={`Write ${c.name.split(' ')[0]} a prayer or note — e.g. "Praying for you and your mom this week."`}
-                  style={{ width: '100%', boxSizing: 'border-box', minHeight: 68, resize: 'vertical', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '9px 11px', fontSize: 13.5, fontFamily: 'Georgia, serif', color: DARK, background: '#fff', outline: 'none' }}
-                />
-                <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
-                  <button onClick={() => prayForPartner(c.user_id, composeText)} disabled={sendingTo === c.user_id}
-                    style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: '#fff', background: GOLD, border: 'none', borderRadius: 20, padding: '6px 16px', cursor: 'pointer' }}>
-                    {sendingTo === c.user_id ? 'Sending…' : 'Send 🙏'}
-                  </button>
-                  <button onClick={() => { setComposeFor(null); setComposeText('') }}
-                    style={{ fontSize: 12, fontFamily: 'Georgia, serif', color: GRAY, background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
-                  <span style={{ fontSize: 11.5, color: GRAY, marginLeft: 'auto', fontFamily: 'Georgia, serif' }}>Message optional</span>
-                </div>
-              </div>
+              <span title={`Sent to ${c.name.split(' ')[0]}`} style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: GRAY, whiteSpace: 'nowrap' }}>✓ Sent</span>
             ) : (
-              <button onClick={() => { setComposeFor(c.user_id); setComposeText('') }}
-                style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: GOLD, background: '#FFF8E7', border: `1px solid ${GOLD}`, borderRadius: 20, padding: '5px 12px', cursor: 'pointer' }}>
-                🙏 Send a prayer / message
+              <button onClick={() => { setComposeFor(composing ? null : c.user_id); setComposeText('') }} title="Send a prayer / message"
+                style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: composing ? '#fff' : GOLD, background: composing ? GOLD : '#FFF8E7', border: `1px solid ${GOLD}`, borderRadius: 16, padding: '4px 11px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                🙏 Pray
               </button>
             )}
           </div>
 
+          {/* Compose — send this person a prayer/message straight to their inbox. */}
+          {composing && !prayedFor.has(c.user_id) && (
+            <div style={{ marginTop: 9 }}>
+              <textarea
+                autoFocus
+                value={composeText}
+                onChange={e => setComposeText(e.target.value)}
+                maxLength={600}
+                placeholder={`Write ${c.name.split(' ')[0]} a prayer or note — e.g. "Praying for you and your mom this week."`}
+                style={{ width: '100%', boxSizing: 'border-box', minHeight: 64, resize: 'vertical', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '9px 11px', fontSize: 13.5, fontFamily: 'Georgia, serif', color: DARK, background: '#fff', outline: 'none' }}
+              />
+              <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
+                <button onClick={() => prayForPartner(c.user_id, composeText)} disabled={sendingTo === c.user_id}
+                  style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: '#fff', background: GOLD, border: 'none', borderRadius: 20, padding: '6px 16px', cursor: 'pointer' }}>
+                  {sendingTo === c.user_id ? 'Sending…' : 'Send 🙏'}
+                </button>
+                <button onClick={() => { setComposeFor(null); setComposeText('') }}
+                  style={{ fontSize: 12, fontFamily: 'Georgia, serif', color: GRAY, background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
+                <span style={{ fontSize: 11.5, color: GRAY, marginLeft: 'auto', fontFamily: 'Georgia, serif' }}>Message optional</span>
+              </div>
+            </div>
+          )}
+
           {/* Groups this partner is in, plus a menu to add/remove. Only for
               formal (accepted) connections — see canGroup. */}
           {canGroup(c) && (
-            <div style={{ marginTop: 10, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ marginTop: 9, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
               {inGroups.map(g => (
                 <span key={g.id} onClick={() => toggleMember(g.id, c.user_id, true)} title="Remove from group"
                   style={{ fontSize: 11, fontWeight: 600, color: CIRCLE, background: 'rgba(46,125,138,0.10)', border: `1px solid ${CIRCLE}`, borderRadius: 20, padding: '2px 9px', fontFamily: 'Georgia, serif', cursor: 'pointer' }}>
@@ -711,13 +725,24 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         )
       })}
 
+      {/* Show more — keep long lists short by default. */}
+      {visiblePartners.length > partnerLimit && (
+        <button onClick={() => setPartnerLimit(l => l + 25)}
+          style={{ width: '100%', marginTop: 2, marginBottom: 6, padding: '9px', borderRadius: 10, border: `1px solid ${BORDER}`, background: '#fff', color: GRAY, fontSize: 12.5, fontFamily: 'Georgia, serif', cursor: 'pointer' }}>
+          Show more ({visiblePartners.length - partnerLimit} more)
+        </button>
+      )}
+      {q && visiblePartners.length === 0 && filteredPartners.length > 0 && (
+        <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: '2px 0 12px' }}>No partners match “{partnerSearch}”.</p>
+      )}
+
       {/* Empty states */}
       {connections.length === 0 && pending.length === 0 ? (
         <div style={{ backgroundColor: '#fff', border: `1px dashed var(--pb-border, #D4C5B0)`, borderRadius: 12, padding: '20px', textAlign: 'center', marginBottom: 16 }}>
           <p style={{ fontSize: 24, margin: '0 0 8px 0' }}>🙏</p>
           <p style={{ fontSize: 14, color: GRAY, margin: 0, lineHeight: 1.5 }}>Tap your band to someone else&rsquo;s phone to connect in prayer.</p>
         </div>
-      ) : visiblePartners.length === 0 && (
+      ) : !q && visiblePartners.length === 0 && (
         <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: '2px 0 12px' }}>
           {partnerFilter === 'lineage' ? 'No lineage partners yet — pass a band to someone (or receive one) and they’ll appear here.' : 'No direct partners yet — connect with someone by tapping bands.'}
         </p>
