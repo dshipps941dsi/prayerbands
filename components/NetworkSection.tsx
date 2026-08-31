@@ -149,6 +149,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [partnerFilter, setPartnerFilter] = useState<'all' | Relation>('all')
   const [partnerSearch, setPartnerSearch] = useState('')       // filter a long list by name
   const [partnerLimit, setPartnerLimit] = useState(15)         // "show more" paging for big reach
+  const [partnerSort, setPartnerSort] = useState<'az' | 'recent'>('az')
   const [othersFilter, setOthersFilter] = useState<'all' | OtherKind>('all')
   // Partner groups (private labels) + which one is filtering the list + which
   // partner's "add to group" menu is open + the inline new-group name.
@@ -458,7 +459,13 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       : (partnerFilter === 'all' || relationOf(c) === partnerFilter)
   )
   const q = partnerSearch.trim().toLowerCase()
-  const visiblePartners = q ? filteredPartners.filter(c => c.name.toLowerCase().includes(q)) : filteredPartners
+  const searchedPartners = q ? filteredPartners.filter(c => c.name.toLowerCase().includes(q)) : filteredPartners
+  const visiblePartners = [...searchedPartners].sort((a, b) =>
+    partnerSort === 'az'
+      ? a.name.localeCompare(b.name)
+      // Most recent connection first; lineage/downline (no date) fall to the end, then A–Z.
+      : (b.since ? Date.parse(b.since) : 0) - (a.since ? Date.parse(a.since) : 0) || a.name.localeCompare(b.name)
+  )
   const pagedPartners = visiblePartners.slice(0, partnerLimit)
   const groupsForMember = (uid: string) => groups.filter(g => g.member_ids.includes(uid))
   const canGroup = (c: Connection) => !!c.connection_id  // formal (accepted) connections only
@@ -634,14 +641,24 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         </div>
       )}
 
-      {/* Search — appears once the list is long enough to be worth filtering. */}
+      {/* Search + sort — appear once the list is long enough to be worth it. */}
       {connections.length > 8 && (
-        <input
-          value={partnerSearch}
-          onChange={e => { setPartnerSearch(e.target.value); setPartnerLimit(15) }}
-          placeholder={`Search ${filteredPartners.length} partners by name…`}
-          style={{ width: '100%', boxSizing: 'border-box', marginBottom: 12, padding: '9px 12px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, fontFamily: 'Georgia, serif', color: DARK, background: '#fff', outline: 'none' }}
-        />
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            value={partnerSearch}
+            onChange={e => { setPartnerSearch(e.target.value); setPartnerLimit(15) }}
+            placeholder={`Search ${filteredPartners.length} partners by name…`}
+            style={{ flex: 1, minWidth: 160, boxSizing: 'border-box', padding: '9px 12px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, fontFamily: 'Georgia, serif', color: DARK, background: '#fff', outline: 'none' }}
+          />
+          <div style={{ display: 'flex', gap: 4, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3 }}>
+            {([['az', 'A–Z'], ['recent', 'Recent']] as const).map(([id, lbl]) => (
+              <button key={id} onClick={() => setPartnerSort(id)}
+                style={{ padding: '6px 12px', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: partnerSort === id ? 700 : 400, background: partnerSort === id ? '#fff' : 'transparent', color: partnerSort === id ? DARK : GRAY, boxShadow: partnerSort === id ? '0 1px 3px rgba(0,0,0,0.08)' : 'none' }}>
+                {lbl}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Partner people — one compact row each; the message box and group tools
