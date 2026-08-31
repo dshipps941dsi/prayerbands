@@ -170,6 +170,9 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [audience, setAudience] = useState<string>('private')
   const [excluded, setExcluded] = useState<string[]>([])   // partners left out of a "My Partners" share
   const [prayedFor, setPrayedFor] = useState<Set<string>>(new Set())  // partners you've told "I prayed for you"
+  const [composeFor, setComposeFor] = useState<string | null>(null)   // partner whose message box is open
+  const [composeText, setComposeText] = useState('')
+  const [sendingTo, setSendingTo] = useState<string | null>(null)
   const [showExclude, setShowExclude] = useState(false)
   function toggleExclude(id: string) {
     setExcluded(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
@@ -404,15 +407,20 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
 
   // Mute a person's shared prayers (private to you; they're not told), or bring
   // them back. Muting hides their requests from the feed immediately.
-  // Tell a partner you prayed for them — lands in their inbox as
-  // "‹you› prayed for you 🙏". Reach is enforced server-side (partners only).
-  async function prayForPartner(uid: string) {
-    if (prayedFor.has(uid)) return
-    setPrayedFor(prev => new Set([...prev, uid]))
+  // Send a partner (or someone you gave a band to) a note — lands in their
+  // inbox as "‹you› prayed for you 🙏", with your message. Reach is enforced
+  // server-side (accepted partner or band lineage).
+  async function prayForPartner(uid: string, note?: string) {
+    if (sendingTo) return
+    setSendingTo(uid)
     await fetch('/api/network/prayed-for', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ toUserId: uid }),
+      body: JSON.stringify({ toUserId: uid, note: (note || '').trim() || undefined }),
     }).catch(() => {})
+    setSendingTo(null)
+    setPrayedFor(prev => new Set([...prev, uid]))
+    setComposeFor(null)
+    setComposeText('')
   }
 
   async function mute(authorId: string, name: string) {
@@ -633,15 +641,39 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             {relationBadge(relationOf(c))}
           </div>
 
-          {/* Let a partner know you prayed for them (accepted connections only). */}
-          {canGroup(c) && (
-            <div style={{ marginTop: 10 }}>
-              <button onClick={() => prayForPartner(c.user_id)} disabled={prayedFor.has(c.user_id)}
-                style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: prayedFor.has(c.user_id) ? GRAY : GOLD, background: prayedFor.has(c.user_id) ? 'transparent' : '#FFF8E7', border: `1px solid ${prayedFor.has(c.user_id) ? BORDER : GOLD}`, borderRadius: 20, padding: '5px 12px', cursor: prayedFor.has(c.user_id) ? 'default' : 'pointer' }}>
-                {prayedFor.has(c.user_id) ? '✓ They know you prayed' : '🙏 Let them know I prayed'}
+          {/* Send this person a prayer/message straight to their inbox. Shown
+              for everyone here — accepted partners and lineage (people you gave
+              a band to); the server authorizes both. */}
+          <div style={{ marginTop: 10 }}>
+            {prayedFor.has(c.user_id) ? (
+              <span style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: GRAY }}>✓ Sent — it&rsquo;s in {c.name.split(' ')[0]}&rsquo;s inbox</span>
+            ) : composeFor === c.user_id ? (
+              <div>
+                <textarea
+                  autoFocus
+                  value={composeText}
+                  onChange={e => setComposeText(e.target.value)}
+                  maxLength={600}
+                  placeholder={`Write ${c.name.split(' ')[0]} a prayer or note — e.g. "Praying for you and your mom this week."`}
+                  style={{ width: '100%', boxSizing: 'border-box', minHeight: 68, resize: 'vertical', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '9px 11px', fontSize: 13.5, fontFamily: 'Georgia, serif', color: DARK, background: '#fff', outline: 'none' }}
+                />
+                <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
+                  <button onClick={() => prayForPartner(c.user_id, composeText)} disabled={sendingTo === c.user_id}
+                    style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: '#fff', background: GOLD, border: 'none', borderRadius: 20, padding: '6px 16px', cursor: 'pointer' }}>
+                    {sendingTo === c.user_id ? 'Sending…' : 'Send 🙏'}
+                  </button>
+                  <button onClick={() => { setComposeFor(null); setComposeText('') }}
+                    style={{ fontSize: 12, fontFamily: 'Georgia, serif', color: GRAY, background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
+                  <span style={{ fontSize: 11.5, color: GRAY, marginLeft: 'auto', fontFamily: 'Georgia, serif' }}>Message optional</span>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => { setComposeFor(c.user_id); setComposeText('') }}
+                style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: GOLD, background: '#FFF8E7', border: `1px solid ${GOLD}`, borderRadius: 20, padding: '5px 12px', cursor: 'pointer' }}>
+                🙏 Send a prayer / message
               </button>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Groups this partner is in, plus a menu to add/remove. Only for
               formal (accepted) connections — see canGroup. */}

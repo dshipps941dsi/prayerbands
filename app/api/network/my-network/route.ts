@@ -87,6 +87,20 @@ export async function GET(_req: NextRequest) {
         .in('id', Array.from(otherIds))
       ;(profs ?? []).forEach((p: any) => { profilesById[p.id] = p })
     }
+
+    // People you gave a band to (your downline): their profile upline points at
+    // you. They may never have shared a band registration with you, so the
+    // lineage-chain logic above misses them — add them explicitly so they show
+    // on your Partners list and can receive a prayer/message.
+    const downlineIds = new Set<string>()
+    {
+      const { data: downProfs } = await admin
+        .from('profiles')
+        .select('id, full_name, email, avatar_icon, avatar_initials, avatar_font')
+        .eq('upline_user_id', user.id)
+      for (const p of (downProfs ?? []) as any[]) { profilesById[p.id] = p; downlineIds.add(p.id) }
+    }
+
     const nameOf = (id: string) => nameFromProfile(profilesById[id])
     const avatarOf = (id: string) => {
       const p = profilesById[id]
@@ -227,8 +241,8 @@ export async function GET(_req: NextRequest) {
 
     // Lineage people you haven't formally connected with still belong on your
     // Partners list (the band tied you together).
-    const lineage_partners = Array.from(lineageIds)
-      .filter(id => !connectedIds.has(id))
+    const lineage_partners = Array.from(new Set([...lineageIds, ...downlineIds]))
+      .filter(id => !connectedIds.has(id) && id !== user.id)
       .map(id => ({
         connection_id: null,
         user_id: id,

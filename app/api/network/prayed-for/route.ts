@@ -1,6 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
+// "People you gave a band to" (and who gave you one): immediate neighbors in a
+// band's registration chain — the same rule my-network uses to list lineage
+// partners, so the recipients the UI offers match what the server authorizes.
+async function isBandLineageNeighbor(svc: ReturnType<typeof createServiceClient>, userId: string, otherId: string): Promise<boolean> {
+  const { data: myRegs } = await svc.from('registrations').select('band_id').eq('user_id', userId).not('band_id', 'is', null)
+  const myBandIds = [...new Set((myRegs || []).map((r: any) => r.band_id))]
+  if (!myBandIds.length) return false
+  const { data: chainRegs } = await svc
+    .from('registrations')
+    .select('band_id, user_id, registered_at')
+    .in('band_id', myBandIds)
+    .not('user_id', 'is', null)
+    .order('registered_at', { ascending: true })
+  const byBand: Record<string, string[]> = {}
+  for (const r of chainRegs || []) {
+    const chain = (byBand[(r as any).band_id] ??= [])
+    if (chain[chain.length - 1] !== (r as any).user_id) chain.push((r as any).user_id)
+  }
+  for (const chain of Object.values(byBand)) {
+    for (let i = 0; i < chain.length; i++) {
+      if (chain[i] !== userId) continue
+      if (chain[i - 1] === otherId || chain[i + 1] === otherId) return true
+    }
+  }
+  return false
+}
+
 // POST /api/network/prayed-for
 //   { toUserId }   — tell a prayer partner you prayed for them
 //   { requestId }  — tell the author of a request you just prayed for
@@ -39,7 +66,21 @@ export async function POST(req: NextRequest) {
       .eq('status', 'accepted')
       .or(`and(requester_id.eq.${user.id},recipient_id.eq.${toUserId}),and(requester_id.eq.${toUserId},recipient_id.eq.${user.id})`)
       .limit(1)
-    if (!conns || !conns.length) return NextResponse.json({ error: 'You can only send this to a prayer partner.' }, { status: 403 })
+    // Allowed if: an accepted prayer partner; OR your downline / your upline
+    // (the profile upline link — "you gave them a band" or they gave you one);
+    // OR an immediate band-registration-chain neighbor (hand-off).
+    let allowed = !!(conns && conns.length > 0)
+    if (!allowed) {
+      const { data: pair } = await svc
+        .from('profiles')
+        .select('id, upline_user_id')
+        .in('id', [user.id, toUserId])
+      const me = (pair || []).find((p: any) => p.id === user.id)
+      const them = (pair || []).find((p: any) => p.id === toUserId)
+      if (them?.upline_user_id === user.id || me?.upline_user_id === toUserId) allowed = true
+    }
+    if (!allowed) allowed = await isBandLineageNeighbor(svc, user.id, toUserId)
+    if (!allowed) return NextResponse.json({ error: 'You can only send this to a prayer partner or someone you gave a band to.' }, { status: 403 })
   }
 
   if (!toUserId) return NextResponse.json({ error: 'No recipient.' }, { status: 400 })
