@@ -103,30 +103,39 @@ function useReveal() {
   }, []);
   return { ref, visible };
 }
-// Scroll-linked parallax: the element rests lower and drifts upward as the
-// section scrolls up through the viewport. Writes transform directly (rAF-
-// throttled) to avoid re-rendering on every scroll event.
-function useParallax(factor = 0.1, upMax = 120, downMax = 70) {
-  const ref = useRef<HTMLImageElement>(null);
+// Rise-from-base: the child image starts fully below the container's base
+// (clipped, off-screen) and rises into full view as the section scrolls up —
+// mapped to a short scroll span so it lands quickly, like rising out of the
+// base of the div. Reversible (scroll back down and it sinks again).
+// `span` = fraction of the viewport over which the rise completes (smaller =
+// quicker); `hidden` = how far below to park it (>100% of its height).
+function useRiseFromBase(span = 0.5, hidden = 112) {
+  const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const img = el?.querySelector<HTMLImageElement>("img");
+    if (!el || !img) return;
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      img.style.transform = "none";
+      return;
+    }
     let raf = 0;
     const update = () => {
       raf = 0;
-      const rect = el.getBoundingClientRect();
+      const rect = el.getBoundingClientRect(); // container isn't transformed, so no feedback
       const vh = window.innerHeight || document.documentElement.clientHeight;
-      const delta = (rect.top + rect.height / 2) - vh / 2; // + when below center
-      const t = Math.max(-upMax, Math.min(downMax, delta * factor));
-      el.style.transform = `translateY(${t.toFixed(1)}px)`;
+      // 0 when the base first touches the viewport bottom, 1 after scrolling `span` of a viewport.
+      let p = (vh - rect.bottom) / (vh * span);
+      p = Math.max(0, Math.min(1, p));
+      const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic — snaps up, settles gently
+      img.style.transform = `translateY(${((1 - eased) * hidden).toFixed(1)}%)`;
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); if (raf) cancelAnimationFrame(raf); };
-  }, [factor, upMax, downMax]);
+  }, [span, hidden]);
   return ref;
 }
 function Reveal({ children, delay = 0, className = "", style }: { children: React.ReactNode; delay?: number; className?: string; style?: React.CSSProperties }) {
@@ -232,8 +241,8 @@ function GlobalPrayerMap({ points }: { points: MapPoint[] }) {
 // ─── Page ────────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [live, setLive] = useState<any>(null);
-  // The daily phone rests lower and parallaxes upward as you scroll the section.
-  const phoneRef = useParallax();
+  // The daily phone starts hidden below the container's base and rises into view on scroll.
+  const phoneRef = useRiseFromBase();
 
   useEffect(() => {
     const load = () => fetch("/api/home-stats").then(r => r.json()).then(setLive).catch(() => {});
@@ -351,8 +360,8 @@ export default function HomePage() {
       {/* ── Daily encouragement ── */}
       <section id="daily" className="daily">
         <div className="daily-inner">
-          <div className="daily-phone">
-            <img ref={phoneRef} className="daily-phone-img" src="/home/phone.png" alt="Prayer Bands daily verse app screen with topics to browse" />
+          <div ref={phoneRef} className="daily-phone">
+            <img className="daily-phone-img" src="/home/phone.png" alt="Prayer Bands daily verse app screen with topics to browse" />
           </div>
           <Reveal delay={120} className="daily-copy">
             <div className="eyebrow gold">Daily Encouragement</div>
@@ -686,8 +695,8 @@ const styles = `
   /* Daily — phone bottom-left, copy right, full-width over the mountain bg */
   .daily { background:linear-gradient(180deg,rgba(0,0,0,0.9) 0%,rgba(0,0,0,0.48) 30%,rgba(0,0,0,0.48) 70%,rgba(0,0,0,0.94) 100%),url('/home/daily-topic-bg.jpg') center/cover no-repeat,#101114; }
   .daily-inner { display:grid; grid-template-columns:0.82fr 1.18fr; gap:56px; align-items:end; padding:92px clamp(24px,5vw,80px) 0; }
-  .daily-phone { display:flex; justify-content:center; align-items:flex-end; }
-  .daily-phone-img { display:block; width:330px; max-width:34vw; height:auto; filter:drop-shadow(0 30px 60px rgba(0,0,0,0.55)); transform:translateY(70px); will-change:transform; }
+  .daily-phone { display:flex; justify-content:center; align-items:flex-end; overflow:hidden; }
+  .daily-phone-img { display:block; width:330px; max-width:34vw; height:auto; filter:drop-shadow(0 30px 60px rgba(0,0,0,0.55)); transform:translateY(112%); will-change:transform; }
   @media (prefers-reduced-motion: reduce){ .daily-phone-img { transform:none; } }
   .daily-copy { max-width:900px; padding-bottom:92px; }
   .topic-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:28px 0 0; }
