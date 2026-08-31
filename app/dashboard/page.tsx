@@ -8,6 +8,7 @@ import Icon, { type IconName } from '@/components/Icon'
 import PrayerTabs from '@/components/PrayerTabs'
 import ShareSheet from '@/components/ShareSheet'
 import GiftDedications from '@/components/GiftDedications'
+import ConnectGoogleNudge from '@/components/ConnectGoogleNudge'
 
 // Brand font import (injected once client-side)
 if (typeof document !== 'undefined' && !document.getElementById('pb-brand-fonts')) {
@@ -891,6 +892,7 @@ export default function Dashboard() {
 
     if (activeTab === 'Overview') return (
       <div>
+        {!isViewingAs && <ConnectGoogleNudge />}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, gap: 12, flexWrap: 'wrap' }}>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 700, color: NAVY_HEADING, margin: '0 0 4px', fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Welcome, {displayName} ✝︎</h1>
