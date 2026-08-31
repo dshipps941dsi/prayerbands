@@ -71,6 +71,7 @@ export default function NotificationsPanel({
   // correct after dismissing or widening the window — unlike an index cutoff.
   const [seenTs, setSeenTs] = useState(0)
   const [prayed, setPrayed] = useState<Set<string>>(new Set())
+  const [told, setTold] = useState<Set<string>>(new Set())
   const [loadingMore, setLoadingMore] = useState(false)
   const [shared, setShared] = useState(false)
 
@@ -133,6 +134,16 @@ export default function NotificationsPanel({
     }).catch(() => {})
   }
 
+  // After praying, let the requester see it in their inbox too (not just email).
+  function letThemKnow(requestId?: string) {
+    if (!requestId || told.has(requestId)) return
+    setTold(prev => new Set([...prev, requestId]))
+    fetch('/api/network/prayed-for', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestId }),
+    }).catch(() => {})
+  }
+
   async function loadMore() {
     const idx = NOTIF_TIERS.indexOf(days)
     const next = NOTIF_TIERS[Math.min(idx + 1, NOTIF_TIERS.length - 1)]
@@ -175,7 +186,7 @@ export default function NotificationsPanel({
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {notifs.map((n) => {
-                const isPrayerLike = n.type === 'prayer' || n.type === 'prayer_request'
+                const isPrayerLike = n.type === 'prayer' || n.type === 'prayer_request' || n.type === 'encouragement'
                 const isNew = !!n.ts && new Date(n.ts).getTime() > seenTs
                 const isPromo = n.type === 'promo'
                 return (
@@ -192,6 +203,9 @@ export default function NotificationsPanel({
                         <div style={{ marginTop: 9, display: 'flex', gap: 8 }}>
                           {n.type === 'prayer_request' && (
                             <button onClick={() => pray(n.requestId)} disabled={!!n.requestId && prayed.has(n.requestId)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: n.requestId && prayed.has(n.requestId) ? `${GOLD}22` : GOLD, color: n.requestId && prayed.has(n.requestId) ? GOLD_TEXT : NAVY, fontSize: 11, fontWeight: 700, cursor: n.requestId && prayed.has(n.requestId) ? 'default' : 'pointer', fontFamily: cinzel, letterSpacing: '0.04em' }}>{n.requestId && prayed.has(n.requestId) ? '✓ Prayed' : '🙏 Pray'}</button>
+                          )}
+                          {n.type === 'prayer_request' && n.requestId && prayed.has(n.requestId) && (
+                            <button onClick={() => letThemKnow(n.requestId)} disabled={told.has(n.requestId)} style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${GOLD_BORDER}`, background: CARD, color: GOLD_TEXT, fontSize: 11, fontWeight: 700, cursor: told.has(n.requestId) ? 'default' : 'pointer', fontFamily: cinzel, letterSpacing: '0.04em' }}>{told.has(n.requestId) ? '✓ They know' : 'Let them know 🙏'}</button>
                           )}
                           {n.type === 'circle_request' && (
                             <a href={`/circles/${n.circleId}`} style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${GOLD_BORDER}`, background: CARD, color: GOLD_TEXT, fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: cinzel, letterSpacing: '0.04em' }}>Open circle →</a>

@@ -169,6 +169,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [submitting, setSubmitting] = useState(false)
   const [audience, setAudience] = useState<string>('private')
   const [excluded, setExcluded] = useState<string[]>([])   // partners left out of a "My Partners" share
+  const [prayedFor, setPrayedFor] = useState<Set<string>>(new Set())  // partners you've told "I prayed for you"
   const [showExclude, setShowExclude] = useState(false)
   function toggleExclude(id: string) {
     setExcluded(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
@@ -403,6 +404,17 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
 
   // Mute a person's shared prayers (private to you; they're not told), or bring
   // them back. Muting hides their requests from the feed immediately.
+  // Tell a partner you prayed for them — lands in their inbox as
+  // "‹you› prayed for you 🙏". Reach is enforced server-side (partners only).
+  async function prayForPartner(uid: string) {
+    if (prayedFor.has(uid)) return
+    setPrayedFor(prev => new Set([...prev, uid]))
+    await fetch('/api/network/prayed-for', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ toUserId: uid }),
+    }).catch(() => {})
+  }
+
   async function mute(authorId: string, name: string) {
     setOthersReqs(prev => prev.filter(r => r.author_id !== authorId))
     setMuted(prev => prev.some(m => m.id === authorId) ? prev : [...prev, { id: authorId, name }])
@@ -620,6 +632,16 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             <p style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0, flex: 1 }}>{c.name}</p>
             {relationBadge(relationOf(c))}
           </div>
+
+          {/* Let a partner know you prayed for them (accepted connections only). */}
+          {canGroup(c) && (
+            <div style={{ marginTop: 10 }}>
+              <button onClick={() => prayForPartner(c.user_id)} disabled={prayedFor.has(c.user_id)}
+                style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: prayedFor.has(c.user_id) ? GRAY : GOLD, background: prayedFor.has(c.user_id) ? 'transparent' : '#FFF8E7', border: `1px solid ${prayedFor.has(c.user_id) ? BORDER : GOLD}`, borderRadius: 20, padding: '5px 12px', cursor: prayedFor.has(c.user_id) ? 'default' : 'pointer' }}>
+                {prayedFor.has(c.user_id) ? '✓ They know you prayed' : '🙏 Let them know I prayed'}
+              </button>
+            </div>
+          )}
 
           {/* Groups this partner is in, plus a menu to add/remove. Only for
               formal (accepted) connections — see canGroup. */}

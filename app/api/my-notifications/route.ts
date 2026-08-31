@@ -250,7 +250,26 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // 9. Announcements — team messages sent through the app. A broadcast
+  // 9. "Someone prayed for you" — peer encouragements sent by a partner, or by
+  // someone who prayed for one of your requests.
+  {
+    const { data: encs } = await admin
+      .from('prayer_encouragements')
+      .select('id, from_user_id, note, created_at')
+      .eq('to_user_id', effectiveId)
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(20)
+    if (encs && encs.length) {
+      const names = await namesFor(encs.map((e: any) => e.from_user_id))
+      for (const e of encs) {
+        items.push({ id: `enc-${e.id}`, type: 'encouragement', icon: '🙏', ts: e.created_at,
+          title: `${names[e.from_user_id] || 'Someone'} prayed for you`, detail: e.note || '' })
+      }
+    }
+  }
+
+  // 10. Announcements — team messages sent through the app. A broadcast
   // (target_user_id null) reaches everyone; a targeted one only its recipient.
   {
     const { data: anns } = await admin
