@@ -33,6 +33,8 @@ type Notif = {
   circleId?: string
   shareUrl?: string
   shareText?: string
+  ctaHref?: string
+  ctaLabel?: string
 }
 
 function timeAgo(ts: string): string {
@@ -186,7 +188,7 @@ export default function NotificationsPanel({
                       </div>
                       {n.detail && <div style={{ fontSize: 13, color: isPrayerLike ? BODY : GRAY, fontStyle: isPrayerLike ? 'italic' : 'normal', marginTop: 2, fontFamily: isPrayerLike ? serif : sans }}>{isPrayerLike ? `“${n.detail}”` : n.detail}</div>}
                       {n.band_id && <div style={{ fontSize: 11, color: GOLD_TEXT, fontFamily: 'monospace', marginTop: 3 }}>{n.band_id}</div>}
-                      {(n.type === 'prayer_request' || n.type === 'circle_request' || n.type === 'promo') && (
+                      {(n.type === 'prayer_request' || n.type === 'circle_request' || n.type === 'promo' || (n.type === 'announcement' && n.ctaHref)) && (
                         <div style={{ marginTop: 9, display: 'flex', gap: 8 }}>
                           {n.type === 'prayer_request' && (
                             <button onClick={() => pray(n.requestId)} disabled={!!n.requestId && prayed.has(n.requestId)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: n.requestId && prayed.has(n.requestId) ? `${GOLD}22` : GOLD, color: n.requestId && prayed.has(n.requestId) ? GOLD_TEXT : NAVY, fontSize: 11, fontWeight: 700, cursor: n.requestId && prayed.has(n.requestId) ? 'default' : 'pointer', fontFamily: cinzel, letterSpacing: '0.04em' }}>{n.requestId && prayed.has(n.requestId) ? '✓ Prayed' : '🙏 Pray'}</button>
@@ -196,6 +198,9 @@ export default function NotificationsPanel({
                           )}
                           {n.type === 'promo' && (
                             <button onClick={() => sharePromo(n)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: GOLD, color: NAVY, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: cinzel, letterSpacing: '0.04em' }}>{shared ? '✓ Copied' : 'Share your link'}</button>
+                          )}
+                          {n.type === 'announcement' && n.ctaHref && (
+                            <a href={n.ctaHref} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: GOLD, color: NAVY, fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: cinzel, letterSpacing: '0.04em' }}>{n.ctaLabel || 'Open'} →</a>
                           )}
                         </div>
                       )}

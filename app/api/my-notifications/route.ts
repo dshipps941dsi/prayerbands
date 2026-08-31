@@ -250,6 +250,24 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // 9. Announcements — team messages sent through the app. A broadcast
+  // (target_user_id null) reaches everyone; a targeted one only its recipient.
+  {
+    const { data: anns } = await admin
+      .from('announcements')
+      .select('id, title, body, cta_label, cta_href, created_at')
+      .eq('active', true)
+      .or(`target_user_id.is.null,target_user_id.eq.${effectiveId}`)
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(10)
+    for (const a of anns || []) {
+      items.push({ id: `ann-${a.id}`, type: 'announcement', icon: '📣', ts: a.created_at,
+        title: a.title, detail: a.body || '',
+        ...(a.cta_href ? { ctaHref: a.cta_href, ctaLabel: a.cta_label || 'Open' } : {}) })
+    }
+  }
+
   const { data: profile } = await admin.from('profiles').select('notifications_last_seen, dismissed_notifications, referral_code').eq('id', effectiveId).maybeSingle()
   const dismissed = new Set(Array.isArray(profile?.dismissed_notifications) ? profile.dismissed_notifications : [])
 
