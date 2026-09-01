@@ -25,6 +25,21 @@ export async function GET(req: Request) {
 
   const admin = createServiceClient()
 
+  // A band the user pinned as their default (Settings/star on the band header).
+  // Honor it only while they still hold or own it, so a passed-on band doesn't
+  // strand the app on a band they no longer have.
+  const { data: prof } = await admin.from('profiles').select('default_band_id').eq('id', user.id).maybeSingle()
+  const pinned = prof?.default_band_id
+  if (pinned) {
+    const [{ data: heldReg }, { data: ownedPin }] = await Promise.all([
+      admin.from('registrations').select('band_id').eq('user_id', user.id).eq('band_id', pinned).limit(1).maybeSingle(),
+      admin.from('bands').select('band_id').eq('owner_id', user.id).eq('band_id', pinned).limit(1).maybeSingle(),
+    ])
+    if (heldReg?.band_id || ownedPin?.band_id) {
+      return NextResponse.redirect(`${origin}/band/${pinned}`, { status: 307 })
+    }
+  }
+
   const { data: latestReg } = await admin
     .from('registrations')
     .select('band_id')

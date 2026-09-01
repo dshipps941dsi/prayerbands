@@ -39,6 +39,8 @@ export async function GET() {
   const { data: themeRows } = await admin.from('band_themes').select('key, label')
   const themeLabels = themeLabelMap(themeRows as { key: string; label: string }[] | null)
 
+  const { data: prof } = await admin.from('profiles').select('default_band_id').eq('id', user.id).maybeSingle()
+
   const meta = new Map((styleRows ?? []).map(b => [b.band_id as string, b]))
   const bands = ordered.map(id => {
     const b = meta.get(id)
@@ -56,5 +58,5 @@ export async function GET() {
     }
   })
 
-  return NextResponse.json({ bands })
+  return NextResponse.json({ bands, default_band_id: prof?.default_band_id ?? null })
 }

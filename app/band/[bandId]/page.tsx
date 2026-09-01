@@ -213,6 +213,7 @@ export default function BandPage() {
   const [unread, setUnread] = useState(0)
   // Bands this person owns or holds, for the header switcher.
   const [myBands, setMyBands] = useState<{ band_id: string; label: string | null }[]>([])
+  const [defaultBandId, setDefaultBandId] = useState<string | null>(null)
   const [notifOpen, setNotifOpen] = useState(false)
   const [walk, setWalk] = useState<VerseWalk>({ total: 0, run: 0, returning: false })
 
@@ -299,9 +300,19 @@ export default function BandPage() {
     if (!userId) { setMyBands([]); return }
     fetch('/api/my-bands')
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.bands) setMyBands(d.bands) })
+      .then(d => { if (d?.bands) { setMyBands(d.bands); setDefaultBandId(d.default_band_id ?? null) } })
       .catch(() => {})
   }, [userId])
+
+  // Pin (or unpin) this band as the one the installed app opens to.
+  function toggleDefaultBand() {
+    const next = defaultBandId === bandId ? null : bandId
+    setDefaultBandId(next) // optimistic
+    fetch('/api/set-default-band', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bandId }),
+    }).then(r => r.ok ? r.json() : null).then(d => { if (d) setDefaultBandId(d.default_band_id ?? null) }).catch(() => {})
+  }
 
   // "Your walk": record today's verse view and load the day count. Cross-device
   // for signed-in users (Supabase); localStorage fallback for accountless holders
@@ -567,6 +578,14 @@ export default function BandPage() {
                 </option>
               ))}
             </select>
+          )}
+          {myBands.length > 1 && (
+            <button onClick={toggleDefaultBand}
+              aria-label={defaultBandId === bandId ? 'This is your default band — tap to unset' : 'Set as your default band'}
+              title={defaultBandId === bandId ? 'The app opens to this band — tap to unset' : 'Make this the band the app opens to'}
+              style={{ display: 'inline-flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill={defaultBandId === bandId ? GOLD : 'none'} stroke={defaultBandId === bandId ? GOLD : GRAY} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.9 6.26L21.5 9.2l-4.75 4.64L17.9 21 12 17.6 6.1 21l1.15-7.16L2.5 9.2l6.6-.94z"/></svg>
+            </button>
           )}
           {myBands.length <= 1 && (
             <span style={{ fontFamily: 'monospace', fontSize: 12, color: GRAY, letterSpacing: '0.06em' }}>{bandId}</span>
