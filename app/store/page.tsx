@@ -127,6 +127,7 @@ function StorePageInner() {
   const [bulkQty, setBulkQty] = useState<Record<string, number>>({});
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkImgBroken, setBulkImgBroken] = useState<Record<string, boolean>>({});
+  const [zoomSrc, setZoomSrc] = useState<string | null>(null);   // bulk thumbnail lightbox
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [customColor, setCustomColor] = useState(COLORS[0].name);
@@ -548,8 +549,9 @@ function StorePageInner() {
                   <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
                     {bulkImg(p) && !bulkImgBroken[p.slug] ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={bulkImg(p)} alt="" onError={() => setBulkImgBroken(b => ({ ...b, [p.slug]: true }))}
-                        style={{ width: 46, height: 46, borderRadius: 8, objectFit: "contain", background: "#fff", border: "1px solid rgba(200,169,110,0.25)", flexShrink: 0, padding: 3, boxSizing: "border-box" }} />
+                      <img src={bulkImg(p)} alt={p.name} onError={() => setBulkImgBroken(b => ({ ...b, [p.slug]: true }))}
+                        onClick={() => setZoomSrc(bulkImg(p))} title="Tap to enlarge"
+                        style={{ width: 46, height: 46, borderRadius: 8, objectFit: "contain", background: "#fff", border: "1px solid rgba(200,169,110,0.25)", flexShrink: 0, padding: 3, boxSizing: "border-box", cursor: "zoom-in" }} />
                     ) : (
                       <div style={{ width: 46, height: 46, borderRadius: 8, background: p.color || "#C8A96E", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20, flexShrink: 0 }}>{p.icon || "✝︎"}</div>
                     )}
@@ -584,6 +586,14 @@ function StorePageInner() {
               {bulkLoading ? "Redirecting…" : bulkBands === 0 ? "Add quantities above" : `Checkout ${bulkBands} band${bulkBands === 1 ? "" : "s"} — $${bulkTotal.toFixed(2)} →`}
             </button>
             <p className="lato" style={{ fontSize: 11, textAlign: "center", color: "#5C6573", marginTop: 12, letterSpacing: "0.05em" }}>Ships to you to hand out · Secure checkout via Stripe</p>
+
+            {zoomSrc && typeof document !== "undefined" && createPortal(
+              <div className="pb-lightbox" onClick={() => setZoomSrc(null)} role="dialog" aria-modal="true">
+                <button className="pb-lightbox-close" onClick={() => setZoomSrc(null)} aria-label="Close">×</button>
+                <img src={zoomSrc} alt="" onClick={e => e.stopPropagation()} />
+              </div>,
+              document.body
+            )}
           </div>
         )}
 
