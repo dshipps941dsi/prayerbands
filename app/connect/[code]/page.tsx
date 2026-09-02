@@ -20,7 +20,7 @@ export default function ConnectPage({ params }: { params: Promise<{ code: string
   const [userId, setUserId] = useState<string | null>(null)
   const [authReady, setAuthReady] = useState(false)
   const [working, setWorking] = useState(false)
-  const [result, setResult] = useState<'sent' | 'already' | 'self' | 'not_holder' | 'error' | null>(null)
+  const [result, setResult] = useState<'sent' | 'already' | 'self' | 'not_holder' | 'slow_down' | 'error' | null>(null)
 
   useEffect(() => {
     fetch(`/api/connect/info?code=${encodeURIComponent(code)}`)
@@ -45,6 +45,7 @@ export default function ConnectPage({ params }: { params: Promise<{ code: string
       if (res.ok) { setResult('sent'); return }
       if (res.status === 409) { setResult('already'); return }
       if (res.status === 403) { setResult('not_holder'); return }
+      if (res.status === 429) { setResult('slow_down'); return }
       const d = await res.json().catch(() => ({}))
       setResult(d.error === "You can't connect with yourself" ? 'self' : 'error')
     } finally {
@@ -94,6 +95,13 @@ export default function ConnectPage({ params }: { params: Promise<{ code: string
           <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Register a band first</div>
           <div style={{ fontSize: 14, color: GRAY, lineHeight: 1.6, marginBottom: 20 }}>Connecting in prayer is for band holders. Register a band, then connect with {name}.</div>
           <a href="/my-band" style={gold}>Go to my account</a>
+        </div>
+      ) : result === 'slow_down' ? (
+        <div style={card}>
+          <div style={{ fontSize: 40, marginBottom: 10 }}>🙏</div>
+          <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>You already reached out</div>
+          <div style={{ fontSize: 14, color: GRAY, lineHeight: 1.6, marginBottom: 20 }}>A request to {name} is already on its way — no need to send another. They&rsquo;ll see it and can accept.</div>
+          <a href="/my-band" style={gold}>Go to my band</a>
         </div>
       ) : result === 'error' ? (
         <div style={card}>
