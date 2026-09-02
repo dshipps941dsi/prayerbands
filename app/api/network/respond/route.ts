@@ -13,7 +13,12 @@ export async function POST(req: NextRequest) {
     }
 
     const { connection_id, action } = await req.json()
-    if (!connection_id || (action !== 'accept' && action !== 'decline')) {
+    // Accept both present- and past-tense forms — the Partners UI sends
+    // 'accepted'/'declined', older callers send 'accept'/'decline'.
+    const norm = String(action || '').toLowerCase()
+    const isAccept = norm === 'accept' || norm === 'accepted'
+    const isDecline = norm === 'decline' || norm === 'declined'
+    if (!connection_id || (!isAccept && !isDecline)) {
       return NextResponse.json({ error: 'connection_id and a valid action are required' }, { status: 400 })
     }
 
@@ -31,7 +36,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Only the recipient can respond to this request' }, { status: 403 })
     }
 
-    if (action === 'accept') {
+    if (isAccept) {
       const { error } = await supabase
         .from('prayer_network_connections')
         .update({ status: 'accepted' })
