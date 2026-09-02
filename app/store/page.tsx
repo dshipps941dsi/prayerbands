@@ -359,6 +359,8 @@ function StorePageInner() {
         @media (max-width: 768px) { .pb-band-img { object-fit: contain !important; padding: 14px; } }
         .pb-zoom-btn { position: absolute; bottom: 10px; right: 12px; z-index: 4; width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer; background: rgba(10,22,40,0.55); color: #fff; font-size: 14px; display: flex; align-items: center; justify-content: center; line-height: 1; }
         .pb-zoom-btn:hover { background: rgba(10,22,40,0.78); }
+        .bulk-thumb { width: 52px; height: 52px; }
+        @media (min-width: 768px) { .bulk-thumb { width: 96px; height: 96px; } }
         .pb-lightbox { position: fixed; inset: 0; z-index: 1000; background: rgba(8,12,22,0.92); display: flex; align-items: center; justify-content: center; padding: 24px; cursor: zoom-out; }
         .pb-lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
         .pb-lightbox-close { position: absolute; top: 18px; right: 22px; background: none; border: none; color: #fff; font-size: 30px; cursor: pointer; line-height: 1; }
@@ -549,11 +551,11 @@ function StorePageInner() {
                   <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
                     {bulkImg(p) && !bulkImgBroken[p.slug] ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={bulkImg(p)} alt={p.name} onError={() => setBulkImgBroken(b => ({ ...b, [p.slug]: true }))}
+                      <img className="bulk-thumb" src={bulkImg(p)} alt={p.name} onError={() => setBulkImgBroken(b => ({ ...b, [p.slug]: true }))}
                         onClick={() => setZoomSrc(bulkImg(p))} title="Tap to enlarge"
-                        style={{ width: 46, height: 46, borderRadius: 8, objectFit: "contain", background: "#fff", border: "1px solid rgba(200,169,110,0.25)", flexShrink: 0, padding: 3, boxSizing: "border-box", cursor: "zoom-in" }} />
+                        style={{ borderRadius: 8, objectFit: "contain", background: "#fff", border: "1px solid rgba(200,169,110,0.25)", flexShrink: 0, padding: 3, boxSizing: "border-box", cursor: "zoom-in" }} />
                     ) : (
-                      <div style={{ width: 46, height: 46, borderRadius: 8, background: p.color || "#C8A96E", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20, flexShrink: 0 }}>{p.icon || "✝︎"}</div>
+                      <div className="bulk-thumb" style={{ borderRadius: 8, background: p.color || "#C8A96E", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20, flexShrink: 0 }}>{p.icon || "✝︎"}</div>
                     )}
                     <div style={{ minWidth: 0 }}>
                       <div className="playfair" style={{ fontSize: 15.5, fontWeight: 600, color: "#15223B" }}>{p.name}</div>
