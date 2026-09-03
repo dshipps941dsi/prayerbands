@@ -592,7 +592,7 @@ export default function BandPage() {
           )}
           {userId ? (
             <button onClick={() => setNotifOpen(true)} aria-label="Notifications" title="Notifications" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-              <Icon name="bible" size={22} color="var(--pb-primary, #C8A96E)" bg="#FAF6EF" />
+              <Icon name="mail" size={22} color="var(--pb-primary, #C8A96E)" bg="#FAF6EF" />
               {unread > 0 && <span style={{ position: 'absolute', top: -7, right: -9, background: '#E5484D', color: '#fff', border: '1.5px solid #fff', borderRadius: 10, minWidth: 17, height: 17, fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>{unread}</span>}
             </button>
           ) : (
