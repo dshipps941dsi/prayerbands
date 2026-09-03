@@ -130,6 +130,8 @@ function StorePageInner() {
   const [zoomSrc, setZoomSrc] = useState<string | null>(null);   // bulk thumbnail lightbox
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [backorderOk, setBackorderOk] = useState(false);       // cart backorder consent
+  const [bulkBackorderOk, setBulkBackorderOk] = useState(false); // bulk backorder consent
   const [customColor, setCustomColor] = useState(COLORS[0].name);
   const [customVerse, setCustomVerse] = useState("");
   const [customMsg, setCustomMsg] = useState("");
@@ -250,6 +252,23 @@ function StorePageInner() {
     return v.stock > 0 ? "in" : v.backorder ? "backorder" : "out";
   };
 
+  // Which lines have MORE requested than we have in stock — the units that would
+  // ship on backorder. Compares quantity to variant stock (a big order of an
+  // in-stock item can still exceed it), so the buyer consents before paying.
+  const prodBySlugAll: Record<string, Product> = Object.fromEntries(products.map(p => [p.slug, p]));
+  const backorderFor = (items: { slug: string; size?: string; qty: number }[]) => {
+    const lines: { name: string; size: string; backordered: number }[] = [];
+    for (const it of items) {
+      const p = prodBySlugAll[it.slug];
+      if (!p) continue;
+      const v = variantFor(p, it.size || "");
+      const avail = Math.max(0, v.stock ?? 0);
+      const bo = Math.max(0, it.qty - avail);
+      if (bo > 0) lines.push({ name: p.name, size: p.hasSizes && it.size ? it.size : "", backordered: bo });
+    }
+    return lines;
+  };
+
   const addToCart = (item: Omit<CartItem, "qty">) => {
     setCart(prev => {
       const i = prev.findIndex(c => c.id === item.id && c.size === item.size);
@@ -278,6 +297,7 @@ function StorePageInner() {
   const toFreeShip = amountToFreeShipping(subtotalCents) / 100;
   const shipping = qualifiesFreeShip ? 0 : (pricing["shipping_cost_standard"] ?? 299) / 100;
   const total = subtotal + shipping;
+  const cartBackorder = backorderFor(cart.map(c => ({ slug: c.id, size: c.size, qty: c.qty })));
 
   // ── Bulk order builder ──────────────────────────────────────────────────
   // Giftable band styles with sizes (skip the personalized "custom" band and
@@ -291,6 +311,7 @@ function StorePageInner() {
   const bulkItems = Object.entries(bulkQty)
     .filter(([, q]) => q > 0)
     .map(([k, q]) => { const [slug, size] = k.split("|"); return { slug, size, qty: q }; });
+  const bulkBackorder = backorderFor(bulkItems);
   const bulkDiscountQty = bulkItems.reduce((s, i) => s + (bulkProdBySlug[i.slug]?.multiDiscount ? i.qty : 0), 0);
   const bulkTierPct = (tiers?: { min_qty: number; percent: number }[]) =>
     (tiers ?? []).filter(t => bulkDiscountQty >= t.min_qty).reduce((m, t) => Math.max(m, t.percent), 0);
@@ -584,7 +605,24 @@ function StorePageInner() {
               <div style={{ borderTop: "1px solid rgba(92,101,115,0.20)", paddingTop: 12, marginTop: 8, display: "flex", justifyContent: "space-between" }}><span className="playfair" style={{ fontSize: 18, fontWeight: 600, color: "#15223B" }}>Total due</span><span className="playfair" style={{ fontSize: 22, fontWeight: 700, color: "#9A7A35" }}>${bulkTotal.toFixed(2)}</span></div>
             </div>
 
-            <button className="checkout-btn" disabled={bulkLoading || bulkBands === 0} onClick={bulkCheckout} style={{ marginTop: 14 }}>
+            {bulkBackorder.length > 0 && (
+              <div style={{ background: "#FBF3E0", border: "1px solid rgba(200,169,110,0.55)", borderRadius: 8, padding: "13px 15px", marginTop: 14 }}>
+                <div className="lato" style={{ fontSize: 13.5, fontWeight: 700, color: "#9A7A35", marginBottom: 6 }}>⏳ Some items ship on backorder</div>
+                <div className="lato" style={{ fontSize: 12.5, color: "#5C6573", lineHeight: 1.6, marginBottom: 10 }}>
+                  This order exceeds what we have in stock for:
+                  <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                    {bulkBackorder.map((l, i) => <li key={i}><strong>{l.backordered}</strong> × {l.name}{l.size ? ` (${l.size})` : ""}</li>)}
+                  </ul>
+                  Those will ship as we restock; anything in stock ships right away.
+                </div>
+                <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: "#15223B", cursor: "pointer", fontWeight: 600 }}>
+                  <input type="checkbox" checked={bulkBackorderOk} onChange={e => setBulkBackorderOk(e.target.checked)} style={{ width: 16, height: 16, marginTop: 1, flexShrink: 0 }} />
+                  I understand part of this order is on backorder and may arrive later.
+                </label>
+              </div>
+            )}
+
+            <button className="checkout-btn" disabled={bulkLoading || bulkBands === 0 || (bulkBackorder.length > 0 && !bulkBackorderOk)} onClick={bulkCheckout} style={{ marginTop: 14 }}>
               {bulkLoading ? "Redirecting…" : bulkBands === 0 ? "Add quantities above" : `Checkout ${bulkBands} band${bulkBands === 1 ? "" : "s"} — $${bulkTotal.toFixed(2)} →`}
             </button>
             <p className="lato" style={{ fontSize: 11, textAlign: "center", color: "#5C6573", marginTop: 12, letterSpacing: "0.05em" }}>Ships to you to hand out · Secure checkout via Stripe</p>
@@ -753,7 +791,24 @@ function StorePageInner() {
                   )}
                 </div>
 
-                <button className="checkout-btn" disabled={checkoutLoading || cart.length === 0 || (isGift && !giftName.trim())} onClick={async () => {
+                {cartBackorder.length > 0 && (
+                  <div style={{ background: "#FBF3E0", border: "1px solid rgba(200,169,110,0.55)", borderRadius: 8, padding: "13px 15px", marginBottom: 12 }}>
+                    <div className="lato" style={{ fontSize: 13.5, fontWeight: 700, color: "#9A7A35", marginBottom: 6 }}>⏳ Some items ship on backorder</div>
+                    <div className="lato" style={{ fontSize: 12.5, color: "#5C6573", lineHeight: 1.6, marginBottom: 10 }}>
+                      We&rsquo;re short on stock for:
+                      <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                        {cartBackorder.map((l, i) => <li key={i}><strong>{l.backordered}</strong> × {l.name}{l.size ? ` (${l.size})` : ""}</li>)}
+                      </ul>
+                      These will ship as soon as we restock — the rest of your order ships right away.
+                    </div>
+                    <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: "#15223B", cursor: "pointer", fontWeight: 600 }}>
+                      <input type="checkbox" checked={backorderOk} onChange={e => setBackorderOk(e.target.checked)} style={{ width: 16, height: 16, marginTop: 1, flexShrink: 0 }} />
+                      I understand these items are on backorder and may arrive later.
+                    </label>
+                  </div>
+                )}
+
+                <button className="checkout-btn" disabled={checkoutLoading || cart.length === 0 || (isGift && !giftName.trim()) || (cartBackorder.length > 0 && !backorderOk)} onClick={async () => {
                   setCheckoutLoading(true)
                   track('begin_checkout', { currency: 'USD', value: subtotal, items: cart.map(c => ({ item_id: c.id, item_name: c.name, quantity: c.qty, price: lineUnit(c) })) })
                   const res = await fetch('/api/create-checkout', {
