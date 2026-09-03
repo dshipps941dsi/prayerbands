@@ -1234,18 +1234,28 @@ export default function BandPage() {
             <div style={{ fontFamily: body, fontSize: 12, color: GOLD, letterSpacing: '0.1em' }}>EPHESIANS 2:10</div>
           </div>
 
-          {/* CTA */}
+          {/* CTA — the main "what do I do now" action. Pulses gently so a
+              first-time tapper's eye lands on it. */}
+          <style>{`
+            @keyframes pbCtaPulse { 0%,100% { box-shadow: 0 8px 30px rgba(184,134,11,0.30); transform: translateY(0); } 50% { box-shadow: 0 14px 46px rgba(184,134,11,0.60); transform: translateY(-3px); } }
+            .pb-cta-pulse { animation: pbCtaPulse 1.7s ease-in-out infinite; }
+            @media (prefers-reduced-motion: reduce) { .pb-cta-pulse { animation: none; } }
+          `}</style>
           <button
+            className="pb-cta-pulse"
             onClick={() => setClaimStep('form')}
             style={{
-              padding: '16px 40px', background: GOLD, color: INK,
+              padding: '18px 46px', background: GOLD, color: INK,
               border: 'none', borderRadius: 12, fontFamily: serif,
-              fontSize: 17, fontWeight: 700, cursor: 'pointer',
-              boxShadow: '0 8px 32px rgba(184,134,11,0.3)',
+              fontSize: 18, fontWeight: 700, cursor: 'pointer',
+              boxShadow: '0 8px 30px rgba(184,134,11,0.30)',
             }}
           >
-            Begin your journey →
+            Take your next step →
           </button>
+          <div style={{ marginTop: 12, fontFamily: body, fontSize: 13, color: 'rgba(255,255,255,0.62)' }}>
+            Save your band and follow where it travels.
+          </div>
 
           {userId && status.band && !status.band.owner_id && (
             <button

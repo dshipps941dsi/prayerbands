@@ -74,25 +74,31 @@ export default function IncomingGiftScreen({
           </div>
         )}
 
+        <style>{`
+          @keyframes pbGiftCtaPulse { 0%,100% { box-shadow: 0 10px 30px rgba(200,169,110,0.25); transform: translateY(0); } 50% { box-shadow: 0 14px 44px rgba(200,169,110,0.55); transform: translateY(-3px); } }
+          .pb-gift-cta { animation: pbGiftCtaPulse 1.7s ease-in-out infinite; }
+          @media (prefers-reduced-motion: reduce) { .pb-gift-cta { animation: none; } }
+        `}</style>
         <button
+          className="pb-gift-cta"
           onClick={begin}
           style={{
             display: 'block',
             width: '100%',
-            padding: '16px',
+            padding: '17px',
             background: GOLD,
             color: INK,
             border: 'none',
             borderRadius: 12,
             fontFamily: "'Cinzel', serif",
-            fontSize: 15,
+            fontSize: 16,
             fontWeight: 700,
             letterSpacing: '0.04em',
             cursor: 'pointer',
             boxShadow: '0 10px 30px rgba(200,169,110,0.25)',
           }}
         >
-          Begin Your Journey →
+          Take Your Next Step →
         </button>
 
         <div style={{ marginTop: 18, fontSize: 12, color: 'rgba(245,237,216,0.4)', fontFamily: 'monospace' }}>{bandId}</div>
