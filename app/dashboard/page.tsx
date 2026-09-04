@@ -1357,8 +1357,14 @@ export default function Dashboard() {
         <div style={{ flex: 1 }} />
         {/* Way back to the everyday band view. The dashboard is the account
             overview people visit occasionally; the band page is where they read
-            the daily verse. /my-band resolves whichever band they last held. */}
-        <a href="/my-band" style={{ background: GOLD, color: NAVY, padding: '6px 12px', borderRadius: 6, textDecoration: 'none', fontSize: 12, fontWeight: 700, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>← My Band</a>
+            the daily verse. /my-band resolves whichever band they last held —
+            but for someone with no band yet it would just bounce back here, so
+            show a "Get a band" link instead of a dead one. */}
+        {bands.length > 0 ? (
+          <a href="/my-band" style={{ background: GOLD, color: NAVY, padding: '6px 12px', borderRadius: 6, textDecoration: 'none', fontSize: 12, fontWeight: 700, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>← My Band</a>
+        ) : (
+          <a href="/store" style={{ background: GOLD, color: NAVY, padding: '6px 12px', borderRadius: 6, textDecoration: 'none', fontSize: 12, fontWeight: 700, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>Get a band →</a>
+        )}
         <button onClick={async () => { const s = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!); await s.auth.signOut(); window.location.href = '/signin' }} style={{ background: 'rgba(200,169,110,0.15)', border: `1px solid ${GOLD_BORDER}`, color: GOLD, padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>Sign out</button>
       </div>
 
