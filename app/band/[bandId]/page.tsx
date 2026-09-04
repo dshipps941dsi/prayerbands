@@ -804,11 +804,16 @@ export default function BandPage() {
               cursor: 'pointer',
             }}
           >
-            {tab.id === 'account' && myProfile?.avatar_icon ? (
-              <span style={{ fontSize: 20, lineHeight: '22px', height: 22, display: 'flex', alignItems: 'center', opacity: activeTab === tab.id ? 1 : 0.5 }}>{myProfile.avatar_icon}</span>
-            ) : (
-              <Icon name={tab.icon} size={22} color={activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE} bg={TAB_BG} />
-            )}
+            <div style={{ position: 'relative', display: 'inline-flex' }}>
+              {tab.id === 'account' && myProfile?.avatar_icon ? (
+                <span style={{ fontSize: 20, lineHeight: '22px', height: 22, display: 'flex', alignItems: 'center', opacity: activeTab === tab.id ? 1 : 0.5 }}>{myProfile.avatar_icon}</span>
+              ) : (
+                <Icon name={tab.icon} size={22} color={activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE} bg={TAB_BG} />
+              )}
+              {tab.id === 'account' && unread > 0 && (
+                <span style={{ position: 'absolute', top: -6, right: -9, background: '#E5484D', color: '#fff', border: `1.5px solid ${TAB_BG}`, borderRadius: 10, minWidth: 16, height: 16, fontSize: 9.5, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}>{unread}</span>
+              )}
+            </div>
             <span style={{
               fontFamily: body, fontSize: 9, letterSpacing: '0.08em',
               textTransform: 'uppercase',
@@ -985,6 +990,17 @@ export default function BandPage() {
                     )}
                   </div>
                 )}
+                {/* Inbox — the same feed as the top mailbox, shown inline so
+                    the Account tab surfaces messages too. Opening this tab marks
+                    them seen (clears the tab + mailbox badge). */}
+                <div style={{ background: 'white', borderRadius: 12, padding: '16px 18px', border: '1px solid rgba(44,24,16,0.1)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <Icon name="mail" size={18} color={DARK} bg="white" />
+                    <span style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, color: DARK }}>Inbox</span>
+                    {unread > 0 && <span style={{ background: '#E5484D', color: '#fff', borderRadius: 10, minWidth: 18, height: 18, fontSize: 11, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{unread}</span>}
+                  </div>
+                  <NotificationsPanel inline open={false} onClose={() => {}} userId={userId} onSeen={() => setUnread(0)} />
+                </div>
                 <a href="/dashboard" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
                   📊 My Dashboard
                 </a>

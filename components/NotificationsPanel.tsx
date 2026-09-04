@@ -57,11 +57,15 @@ export default function NotificationsPanel({
   onClose,
   userId,
   onSeen,
+  inline = false,
 }: {
   open: boolean
   onClose: () => void
   userId?: string | null
   onSeen?: () => void
+  // Render the list in place (no overlay/dialog) — used by the Account tab's
+  // "Inbox" section, sharing the exact same feed as the top mailbox popup.
+  inline?: boolean
 }) {
   const [notifs, setNotifs] = useState<Notif[]>([])
   const [loading, setLoading] = useState(false)
@@ -99,7 +103,7 @@ export default function NotificationsPanel({
 
   // On open: load the feed, then mark everything seen (clears the badge).
   useEffect(() => {
-    if (!open) return
+    if (!open && !inline) return
     let cancelled = false
     setLoading(true)
     setDays(7)
@@ -115,7 +119,7 @@ export default function NotificationsPanel({
     })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
+  }, [open, inline])
 
   function dismiss(id: string) {
     setNotifs(prev => prev.filter(n => n.id !== id))
@@ -154,28 +158,10 @@ export default function NotificationsPanel({
     } finally { setLoadingMore(false) }
   }
 
-  if (!open) return null
+  if (!open && !inline) return null
 
-  return (
-    <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1099, background: 'rgba(10,22,40,0.15)' }} aria-hidden />
-      <div
-        role="dialog"
-        aria-label="Notifications"
-        style={{
-          position: 'fixed', zIndex: 1100, top: 60, right: 8,
-          width: 'min(380px, calc(100vw - 16px))', maxHeight: 'calc(100vh - 88px)',
-          background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14,
-          boxShadow: '0 16px 48px rgba(10,22,40,0.22)', overflow: 'hidden',
-          display: 'flex', flexDirection: 'column',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${BORDER}` }}>
-          <span style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: TEXT }}>Notifications</span>
-          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: 20, lineHeight: 1, color: GRAY, cursor: 'pointer', padding: 4 }}>✕</button>
-        </div>
-
-        <div style={{ overflowY: 'auto', padding: 12 }}>
+  const list = (
+    <div style={{ overflowY: 'auto', padding: inline ? 0 : 12, maxHeight: inline ? '55vh' : undefined }}>
           {loading ? (
             <div style={{ padding: '32px 16px', textAlign: 'center', color: GRAY, fontSize: 14, fontFamily: sans }}>Loading…</div>
           ) : notifs.length === 0 ? (
@@ -233,7 +219,30 @@ export default function NotificationsPanel({
               )}
             </div>
           )}
+    </div>
+  )
+
+  if (inline) return list
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1099, background: 'rgba(10,22,40,0.15)' }} aria-hidden />
+      <div
+        role="dialog"
+        aria-label="Notifications"
+        style={{
+          position: 'fixed', zIndex: 1100, top: 60, right: 8,
+          width: 'min(380px, calc(100vw - 16px))', maxHeight: 'calc(100vh - 88px)',
+          background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14,
+          boxShadow: '0 16px 48px rgba(10,22,40,0.22)', overflow: 'hidden',
+          display: 'flex', flexDirection: 'column',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${BORDER}` }}>
+          <span style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: TEXT }}>Notifications</span>
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: 20, lineHeight: 1, color: GRAY, cursor: 'pointer', padding: 4 }}>✕</button>
         </div>
+        {list}
       </div>
     </>
   )
