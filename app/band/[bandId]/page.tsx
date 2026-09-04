@@ -40,6 +40,9 @@ type BandStatus = {
   registrations?: Registration[]
   currentHolder?: Registration
   transfer?: any
+  // Viewer placed the order this band shipped on — entry screen may offer
+  // "Pass this band on" with no claim step (server-computed).
+  canHandOff?: boolean
   senderName?: string
   dedicatorName?: string
   // Sent top-level, NOT on `band` — /api/band-status strips the blessing from
@@ -1292,7 +1295,7 @@ export default function BandPage() {
           {/* Shortcut for a bulk/gift buyer: they're the band's upline but never
               claimed it, so let them hand it off straight from the tap —
               tap → name → give — without a claim step first. */}
-          {userId && status.band && !status.band.owner_id && status.band.upline_user_id === userId && (
+          {userId && status.band && !status.band.owner_id && status.canHandOff && (
             <button
               onClick={() => setTransferStep('sheet')}
               style={{ marginTop: 16, padding: '13px 30px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 22px rgba(184,134,11,0.3)' }}

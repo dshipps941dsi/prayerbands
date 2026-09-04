@@ -197,11 +197,31 @@ export async function GET(req: NextRequest) {
     })
   }
 
-  // 6. Band exists but was never purchased or touched
+  // 6. Band exists but was never purchased or touched.
+  // canHandOff: the viewer placed the order this band shipped on, so the entry
+  // screen can offer "Pass this band on" without a claim step. Matched exactly
+  // via orders.assigned_band_ids + customer_email (the buyer's email looked up
+  // from their profile, since userId here comes from the query string). This is
+  // a UI hint only — initiate-transfer re-checks the same rule from the session.
+  let canHandOff = false
+  if (userId && !band.owner_id) {
+    const { data: prof } = await supabase.from('profiles').select('email').eq('id', userId).maybeSingle()
+    if (prof?.email) {
+      const { data: myOrder } = await supabase
+        .from('orders')
+        .select('id')
+        .ilike('customer_email', prof.email)
+        .contains('assigned_band_ids', [bandId])
+        .limit(1)
+        .maybeSingle()
+      canHandOff = !!myOrder
+    }
+  }
   return NextResponse.json({
     screen: 'first_tap_blank',
     band,
     registrations: regs,
     uplineName,
+    canHandOff,
   })
 }

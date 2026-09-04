@@ -40,11 +40,23 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
   const isOwner = !!band.owner_id && band.owner_id === user.id
   const isHolder = !!latest?.user_id && latest.user_id === user.id
-  // A bulk/gift buyer is the band's upline but never claimed or registered it.
-  // Let them pass it on straight from the tap (no claim step) while the band is
-  // still unowned — the shortcut for handing out a 20-band order.
-  const isUpline = !band.owner_id && !!band.upline_user_id && band.upline_user_id === user.id
-  if (!isOwner && !isHolder && !isUpline) {
+  // A bulk/gift buyer never claimed or registered the band, so let them pass it
+  // on straight from the tap (no claim step) — but ONLY if the band is on an
+  // order THEY placed. Fulfillment records each packed band in
+  // orders.assigned_band_ids and the buyer in orders.customer_email, so this is
+  // the exact "matches an order that's been placed" check, not an upline proxy.
+  let isBuyer = false
+  if (!band.owner_id && user.email) {
+    const { data: myOrder } = await admin
+      .from('orders')
+      .select('id')
+      .ilike('customer_email', user.email)
+      .contains('assigned_band_ids', [bandId])
+      .limit(1)
+      .maybeSingle()
+    isBuyer = !!myOrder
+  }
+  if (!isOwner && !isHolder && !isBuyer) {
     return NextResponse.json({ error: 'You can only pass on a band you currently hold.' }, { status: 403 })
   }
 
