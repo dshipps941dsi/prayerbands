@@ -211,6 +211,7 @@ export default function BandPage() {
   const [myRole, setMyRole] = useState<string | null>(null)
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
+  const [msgsOpen, setMsgsOpen] = useState(false)  // "My Messages" accordion on the Account tab
   // Bands this person owns or holds, for the header switcher.
   const [myBands, setMyBands] = useState<{ band_id: string; label: string | null }[]>([])
   const [defaultBandId, setDefaultBandId] = useState<string | null>(null)
@@ -990,16 +991,21 @@ export default function BandPage() {
                     )}
                   </div>
                 )}
-                {/* Inbox — the same feed as the top mailbox, shown inline so
-                    the Account tab surfaces messages too. Opening this tab marks
-                    them seen (clears the tab + mailbox badge). */}
-                <div style={{ background: 'white', borderRadius: 12, padding: '16px 18px', border: '1px solid rgba(44,24,16,0.1)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                {/* My Messages — the same feed as the top mailbox, collapsed by
+                    default. Expanding mounts the feed, which marks messages seen
+                    (clears the tab + mailbox badge). */}
+                <div style={{ background: 'white', borderRadius: 12, padding: '4px 18px', border: '1px solid rgba(44,24,16,0.1)' }}>
+                  <button onClick={() => setMsgsOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '14px 0', cursor: 'pointer', textAlign: 'left' }}>
                     <Icon name="mail" size={18} color={DARK} bg="white" />
-                    <span style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, color: DARK }}>Inbox</span>
+                    <span style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, color: DARK }}>My Messages</span>
                     {unread > 0 && <span style={{ background: '#E5484D', color: '#fff', borderRadius: 10, minWidth: 18, height: 18, fontSize: 11, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{unread}</span>}
-                  </div>
-                  <NotificationsPanel inline open={false} onClose={() => {}} userId={userId} onSeen={() => setUnread(0)} />
+                    <span style={{ marginLeft: 'auto', color: GRAY, fontSize: 13, transform: msgsOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</span>
+                  </button>
+                  {msgsOpen && (
+                    <div style={{ paddingBottom: 12 }}>
+                      <NotificationsPanel inline open={false} onClose={() => {}} userId={userId} onSeen={() => setUnread(0)} />
+                    </div>
+                  )}
                 </div>
                 <a href="/dashboard" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
                   📊 My Dashboard
