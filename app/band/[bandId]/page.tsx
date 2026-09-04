@@ -188,6 +188,7 @@ export default function BandPage() {
   const [showSignup, setShowSignup] = useState(false)
   const [claimStep, setClaimStep] = useState<'prompt' | 'form' | 'done' | 'view'>('prompt')
   const [transferNote, setTransferNote] = useState('')
+  const [transferName, setTransferName] = useState('')  // who the band is being passed to
   const [transferStep, setTransferStep] = useState<'idle' | 'sheet' | 'pending' | 'save_prompt'>('idle')
   const [transferComplete, setTransferComplete] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -492,7 +493,7 @@ export default function BandPage() {
       const res = await fetch('/api/initiate-transfer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bandId, note: transferNote }),
+        body: JSON.stringify({ bandId, note: transferNote, recipientName: transferName }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
@@ -1068,6 +1069,8 @@ export default function BandPage() {
               <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
               <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Pass This Band On</div>
               <div style={{ fontFamily: body, fontSize: 14, color: GRAY, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>Write a prayer or note for the person you're giving this to.</div>
+              <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Who is this for? (optional)</label>
+              <input value={transferName} onChange={e => setTransferName(e.target.value)} placeholder="Their name — e.g. Sarah" maxLength={80} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: 'white', marginBottom: 14, outline: 'none', boxSizing: 'border-box' }} />
               <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your prayer for them (optional)</label>
               <textarea value={transferNote} onChange={e => setTransferNote(e.target.value)} placeholder="e.g. I'm giving you this band because I've been praying for you..." rows={3} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: 'white', resize: 'none', marginBottom: 16, outline: 'none', lineHeight: 1.5, boxSizing: 'border-box' }} />
               <button onClick={handleInitiateTransfer} disabled={submitting} style={{ display: 'block', width: '100%', padding: 15, background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>{submitting ? 'Setting up...' : 'Ready to hand it off →'}</button>
@@ -1115,15 +1118,16 @@ export default function BandPage() {
             <div style={{ fontSize: 48, marginBottom: 12 }}>🙏</div>
             <div style={{ fontFamily: serif, fontSize: 24, fontWeight: 700, marginBottom: 6 }}>{status.senderName ? `${status.senderName} is passing this band to you` : 'Someone is passing this band to you'}</div>
             <div style={{ fontFamily: body, fontSize: 14, opacity: 0.8, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>This band has traveled through {regs.length} {regs.length === 1 ? 'person' : 'people'}. Now it's being offered to you.</div>
+            {status.transfer?.recipient_name && <div style={{ display: 'inline-block', background: GOLD, color: INK, borderRadius: 20, padding: '6px 14px', fontFamily: serif, fontSize: 14, fontWeight: 700, marginBottom: 14 }}>For {status.transfer.recipient_name} ✝︎</div>}
             {status.transfer?.note && <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: '14px 16px', fontFamily: body, fontSize: 14, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20, textAlign: 'left' }}>"{status.transfer.note}"</div>}
-            <button onClick={() => setClaimStep('form')} style={{ display: 'block', width: '100%', padding: 16, background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>Accept this band →</button>
+            <button onClick={() => { if (status.transfer?.recipient_name && !claimName) setClaimName(status.transfer.recipient_name); setClaimStep('form') }} style={{ display: 'block', width: '100%', padding: 16, background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>Accept this band →</button>
             <button onClick={() => setClaimStep('view')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Just view the journey</button>
           </div>
         )}
         {claimStep === 'view' && (
           <div style={{ margin: '24px 20px 0', textAlign: 'center' }}>
             <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 12 }}>Take your time. When you&apos;re ready, you can accept the band.</div>
-            <button onClick={() => setClaimStep('form')} style={{ display: 'inline-block', padding: '13px 28px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Accept this band →</button>
+            <button onClick={() => { if (status.transfer?.recipient_name && !claimName) setClaimName(status.transfer.recipient_name); setClaimStep('form') }} style={{ display: 'inline-block', padding: '13px 28px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Accept this band →</button>
           </div>
         )}
         {claimStep === 'form' && <ClaimForm title="You're joining the chain ✝︎" subtitle="Add your name and a prayer to complete the handoff." submitLabel="Accept & add my prayer ✝︎" onSubmit={handleAcceptTransfer} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}

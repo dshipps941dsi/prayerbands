@@ -141,7 +141,7 @@ export async function GET(req: NextRequest) {
   if (band.status === 'pending_transfer') {
     const { data: transfer } = await supabase
       .from('band_transfers')
-      .select('id, note, created_at, from_user_id')
+      .select('id, note, recipient_name, created_at, from_user_id')
       .eq('band_id', bandId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })

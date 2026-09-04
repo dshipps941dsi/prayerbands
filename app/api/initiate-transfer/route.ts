@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Please sign in to pass on your band.' }, { status: 401 })
   }
 
-  const { bandId, note } = await req.json()
+  const { bandId, note, recipientName } = await req.json()
   if (!bandId) {
     return NextResponse.json({ error: 'Missing band ID' }, { status: 400 })
   }
@@ -46,7 +46,11 @@ export async function POST(req: NextRequest) {
 
   const { error: transferError } = await admin
     .from('band_transfers')
-    .insert({ band_id: bandId, from_user_id: user.id, note: (note || '').toString().slice(0, 500) || null, status: 'pending' })
+    .insert({
+      band_id: bandId, from_user_id: user.id, status: 'pending',
+      note: (note || '').toString().slice(0, 500) || null,
+      recipient_name: (recipientName || '').toString().trim().slice(0, 80) || null,
+    })
   if (transferError) {
     return NextResponse.json({ error: transferError.message }, { status: 500 })
   }
