@@ -1152,21 +1152,54 @@ export default function AdminPage() {
                 <div className="pb-admin-chartgrid" style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 20 }}>
                   <div style={panel}>
                     <div style={panelHead}>Revenue {salesDays === 'all' ? 'by month' : 'by day'}</div>
-                    <div style={{ padding: '18px 16px' }}>
-                      {sales.series.length === 0 ? (
-                        <div style={{ color: C.secondary, fontStyle: 'italic', fontSize: 13 }}>No sales in this period.</div>
-                      ) : (
-                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 160 }}>
-                          {(() => {
-                            const max = Math.max(...sales.series.map((s: any) => s.cents), 1)
-                            return sales.series.map((s: any) => (
-                              <div key={s.label} title={`${s.label}: ${money(s.cents)}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', minWidth: 0 }}>
-                                <div style={{ width: '100%', maxWidth: 22, height: Math.max(2, Math.round((s.cents / max) * 140)), background: `linear-gradient(180deg, ${C.gold}, ${C.goldText})`, borderRadius: '3px 3px 0 0' }} />
+                    <div style={{ padding: '16px 16px 14px' }}>
+                      {(() => {
+                        const fmt = (label: string) => label.length === 7
+                          ? new Date(label + '-01T00:00:00').toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
+                          : new Date(label + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                        const totalCents = sales.series.reduce((s: number, d: any) => s + d.cents, 0)
+                        if (totalCents === 0) {
+                          return <div style={{ color: C.secondary, fontStyle: 'italic', fontSize: 13, padding: '28px 0' }}>No sales in this period yet — bars will fill in here as orders come through.</div>
+                        }
+                        const max = Math.max(...sales.series.map((s: any) => s.cents), 1)
+                        const peak = sales.series.reduce((a: any, b: any) => (b.cents > a.cents ? b : a), sales.series[0])
+                        const PLOT = 150, ROOM = 20
+                        return (
+                          <>
+                            <div style={{ position: 'relative', height: PLOT + ROOM }}>
+                              {/* gridlines (bottom-anchored, aligned to the bars) + max label */}
+                              <div style={{ position: 'absolute', bottom: PLOT, left: 0, right: 0, borderTop: `1px dashed ${C.borderSilver}` }} />
+                              <div style={{ position: 'absolute', bottom: PLOT + 3, right: 0, fontSize: 10, color: C.secondary, fontFamily: 'ui-monospace, monospace' }}>{money(max)}</div>
+                              <div style={{ position: 'absolute', bottom: PLOT / 2, left: 0, right: 0, borderTop: `1px dashed ${C.borderSilver}`, opacity: 0.5 }} />
+                              {/* bars */}
+                              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: PLOT, display: 'flex', alignItems: 'flex-end', gap: 3 }}>
+                                {sales.series.map((s: any) => {
+                                  const h = s.cents > 0 ? Math.max(3, Math.round((s.cents / max) * PLOT)) : 0
+                                  const isPeak = s.cents === peak.cents && s.cents > 0
+                                  return (
+                                    <div key={s.label} title={`${fmt(s.label)}: ${money(s.cents)}`} style={{ flex: 1, minWidth: 0, position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', height: '100%' }}>
+                                      {isPeak && <div style={{ position: 'absolute', bottom: h + 3, fontSize: 10, fontWeight: 700, color: C.goldText, whiteSpace: 'nowrap', fontFamily: 'ui-monospace, monospace' }}>{money(s.cents)}</div>}
+                                      {h > 0 && <div style={{ width: '100%', maxWidth: 26, height: h, background: `linear-gradient(180deg, ${C.gold}, ${C.goldText})`, borderRadius: '4px 4px 0 0' }} />}
+                                    </div>
+                                  )
+                                })}
                               </div>
-                            ))
-                          })()}
-                        </div>
-                      )}
+                              {/* baseline */}
+                              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, borderTop: `1px solid ${C.borderNavy}` }} />
+                            </div>
+                            {/* x-axis: first · mid · last */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 7, fontSize: 10, color: C.secondary }}>
+                              <span>{fmt(sales.series[0].label)}</span>
+                              {sales.series.length > 4 && <span>{fmt(sales.series[Math.floor(sales.series.length / 2)].label)}</span>}
+                              <span>{fmt(sales.series[sales.series.length - 1].label)}</span>
+                            </div>
+                            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.borderSilver}`, display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: C.secondary }}>
+                              <span>Peak <strong style={{ color: C.heading }}>{money(peak.cents)}</strong> on {fmt(peak.label)}</span>
+                              <span>Total <strong style={{ color: C.heading }}>{money(totalCents)}</strong></span>
+                            </div>
+                          </>
+                        )
+                      })()}
                     </div>
                   </div>
 

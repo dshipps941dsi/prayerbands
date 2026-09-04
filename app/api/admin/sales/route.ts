@@ -64,7 +64,25 @@ export async function GET(req: NextRequest) {
       : d.toISOString().slice(0, 10)
     buckets[key] = (buckets[key] || 0) + (o.amount_total || 0)
   }
-  const series = Object.keys(buckets).sort().map(label => ({ label, cents: buckets[label] }))
+  // Fill the whole window with a continuous axis so no-sale days/months still
+  // appear — a series of only the days that had orders reads as sparse/broken.
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const keys: string[] = []
+  if (monthly) {
+    const first = all.length ? new Date(all[0].created_at) : new Date()
+    let y = first.getFullYear(), m = first.getMonth()
+    const now = new Date()
+    while (y < now.getFullYear() || (y === now.getFullYear() && m <= now.getMonth())) {
+      keys.push(`${y}-${pad(m + 1)}`)
+      m++; if (m > 11) { m = 0; y++ }
+    }
+  } else {
+    const today = new Date()
+    for (let i = days! - 1; i >= 0; i--) {
+      keys.push(new Date(today.getTime() - i * 86_400_000).toISOString().slice(0, 10))
+    }
+  }
+  const series = keys.map(label => ({ label, cents: buckets[label] || 0 }))
 
   // Subscriptions → active count + MRR (each plan normalised to monthly).
   const { data: subs } = await admin
