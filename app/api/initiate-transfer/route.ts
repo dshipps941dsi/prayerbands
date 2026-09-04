@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
   const { data: band } = await admin
     .from('bands')
-    .select('band_id, owner_id, status')
+    .select('band_id, owner_id, status, upline_user_id')
     .eq('band_id', bandId)
     .maybeSingle()
   if (!band) {
@@ -40,7 +40,11 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
   const isOwner = !!band.owner_id && band.owner_id === user.id
   const isHolder = !!latest?.user_id && latest.user_id === user.id
-  if (!isOwner && !isHolder) {
+  // A bulk/gift buyer is the band's upline but never claimed or registered it.
+  // Let them pass it on straight from the tap (no claim step) while the band is
+  // still unowned — the shortcut for handing out a 20-band order.
+  const isUpline = !band.owner_id && !!band.upline_user_id && band.upline_user_id === user.id
+  if (!isOwner && !isHolder && !isUpline) {
     return NextResponse.json({ error: 'You can only pass on a band you currently hold.' }, { status: 403 })
   }
 

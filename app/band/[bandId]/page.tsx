@@ -527,6 +527,26 @@ export default function BandPage() {
     }
   }
 
+  // The "Pass This Band On" sheet, built once as a plain element (not a nested
+  // component) so it can render on BOTH the personal-space screen and the
+  // entry screen without remounting — a nested component would recreate on
+  // every keystroke and drop focus from the inputs.
+  const transferSheet = transferStep === 'sheet' ? (
+    <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
+        <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Pass This Band On</div>
+        <div style={{ fontFamily: body, fontSize: 14, color: GRAY, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>Write a prayer or note for the person you're giving this to.</div>
+        <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Who is this for? (optional)</label>
+        <input value={transferName} onChange={e => setTransferName(e.target.value)} placeholder="Their name — e.g. Sarah" maxLength={80} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: 'white', marginBottom: 14, outline: 'none', boxSizing: 'border-box' }} />
+        <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your prayer for them (optional)</label>
+        <textarea value={transferNote} onChange={e => setTransferNote(e.target.value)} placeholder="e.g. I'm giving you this band because I've been praying for you..." rows={3} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: 'white', resize: 'none', marginBottom: 16, outline: 'none', lineHeight: 1.5, boxSizing: 'border-box' }} />
+        <button onClick={handleInitiateTransfer} disabled={submitting} style={{ display: 'block', width: '100%', padding: 15, background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>{submitting ? 'Setting up...' : 'Ready to hand it off →'}</button>
+        <button onClick={() => setTransferStep('idle')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
+      </div>
+    </div>
+  ) : null
+
   async function handleAcceptTransfer() {
     if (!claimName.trim()) return
     setSubmitting(true)
@@ -1063,21 +1083,7 @@ export default function BandPage() {
           </div>
         )}
 
-        {transferStep === 'sheet' && (
-          <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
-            <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
-              <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
-              <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Pass This Band On</div>
-              <div style={{ fontFamily: body, fontSize: 14, color: GRAY, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>Write a prayer or note for the person you're giving this to.</div>
-              <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Who is this for? (optional)</label>
-              <input value={transferName} onChange={e => setTransferName(e.target.value)} placeholder="Their name — e.g. Sarah" maxLength={80} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: 'white', marginBottom: 14, outline: 'none', boxSizing: 'border-box' }} />
-              <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your prayer for them (optional)</label>
-              <textarea value={transferNote} onChange={e => setTransferNote(e.target.value)} placeholder="e.g. I'm giving you this band because I've been praying for you..." rows={3} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: 'white', resize: 'none', marginBottom: 16, outline: 'none', lineHeight: 1.5, boxSizing: 'border-box' }} />
-              <button onClick={handleInitiateTransfer} disabled={submitting} style={{ display: 'block', width: '100%', padding: 15, background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}>{submitting ? 'Setting up...' : 'Ready to hand it off →'}</button>
-              <button onClick={() => setTransferStep('idle')} style={{ display: 'block', width: '100%', padding: 12, background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
-            </div>
-          </div>
-        )}
+        {transferSheet}
         <div style={{ height: 100 }} />
         <BottomNav />
 
@@ -1283,11 +1289,22 @@ export default function BandPage() {
             Save your band and follow where it travels.
           </div>
 
+          {/* Shortcut for a bulk/gift buyer: they're the band's upline but never
+              claimed it, so let them hand it off straight from the tap —
+              tap → name → give — without a claim step first. */}
+          {userId && status.band && !status.band.owner_id && status.band.upline_user_id === userId && (
+            <button
+              onClick={() => setTransferStep('sheet')}
+              style={{ marginTop: 16, padding: '13px 30px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 22px rgba(184,134,11,0.3)' }}
+            >
+              🎁 Pass this band on to someone →
+            </button>
+          )}
           {userId && status.band && !status.band.owner_id && (
             <button
               onClick={claimToAccount}
               disabled={claimingOwnership}
-              style={{ marginTop: 16, padding: '12px 28px', background: 'transparent', color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 10, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+              style={{ marginTop: 12, padding: '12px 28px', background: 'transparent', color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 10, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
             >
               {claimingOwnership ? 'Claiming…' : '+ Claim this band to my account'}
             </button>
@@ -1296,6 +1313,10 @@ export default function BandPage() {
           <div style={{ marginTop: 20, fontFamily: body, fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>
             {bandId}
           </div>
+          {/* Hand-off from the entry screen: the sheet + "waiting for them to
+              tap" state live here too, so a bulk buyer never has to claim first. */}
+          {transferStep === 'pending' && <div style={{ marginTop: 20, width: '100%', maxWidth: 420 }}><PendingBanner /></div>}
+          {transferSheet}
         </div>
       )}
 
