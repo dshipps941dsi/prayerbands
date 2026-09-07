@@ -131,11 +131,17 @@ export default function WelcomePage() {
                 <p className="wc-device">iPhone</p>
                 <Phone where="top" />
                 <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.5, color: INK_SOFT }}>Hold the <b style={{ color: INK }}>top</b> of your iPhone near the Prayer Bands pouch for a moment.</p>
+                <p style={{ margin: "12px 0 0", fontSize: 12.5, lineHeight: 1.5, color: INK_SOFT, opacity: 0.85 }}>
+                  Nothing to turn on &mdash; iPhone XS and newer read tags automatically. On iPhone 7&ndash;X, swipe down to Control Center and tap <b style={{ color: INK }}>NFC Tag Reader</b> first.
+                </p>
               </div>
               <div className="wc-tap">
                 <p className="wc-device">Android</p>
                 <Phone where="middle" />
                 <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.5, color: INK_SOFT }}>Place the <b style={{ color: INK }}>middle of the back</b> of your Android phone against the pouch.</p>
+                <p style={{ margin: "12px 0 0", fontSize: 12.5, lineHeight: 1.5, color: INK_SOFT, opacity: 0.85 }}>
+                  Nothing happening? Make sure NFC is on: <b style={{ color: INK }}>Settings &rarr; Connections</b> (or <b style={{ color: INK }}>Connected devices</b>) <b style={{ color: INK }}>&rarr; NFC</b>, then try again.
+                </p>
               </div>
             </div>
             <p style={{ textAlign: "center", fontSize: 13.5, color: INK_SOFT, margin: "16px 0 0", lineHeight: 1.5 }}>
