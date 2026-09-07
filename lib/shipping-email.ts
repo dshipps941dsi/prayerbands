@@ -192,6 +192,7 @@ export async function sendShippingConfirmation(input: ShippingConfirmationInput)
                       </tr>
                     </table>
                     <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;color:#AEBBD0;margin-top:16px;">Can&rsquo;t tap? Enter the band ID shown above at <a href="https://prayerbands.com/register" style="color:#E4C475;font-weight:bold;">prayerbands.com/register</a>.</div>
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;color:#AEBBD0;margin-top:10px;">New to Prayer Bands? Read the welcome guide at <a href="https://prayerbands.com/welcome" style="color:#E4C475;font-weight:bold;">prayerbands.com/welcome</a> &mdash; the same one on the card in your box.</div>
                   </td>
                 </tr>
               </table>
