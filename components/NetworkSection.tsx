@@ -616,9 +616,8 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       {/* Direct / Lineage / group filters */}
       {connections.length > 0 && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
-          {chip(partnerFilter === 'all' && !activeGroup, `All · ${connections.length}`, () => { setActiveGroup(null); setPartnerFilter('all') })}
-          {chip(partnerFilter === 'direct' && !activeGroup, `Direct · ${directCount}`, () => { setActiveGroup(null); setPartnerFilter('direct') })}
-          {chip(partnerFilter === 'lineage' && !activeGroup, `Lineage · ${lineageCount}`, () => { setActiveGroup(null); setPartnerFilter('lineage') }, LINEAGE)}
+          {/* All / Partners / Lineage moved into the controls row below (beside
+              A–Z / Recent) so filter + sort live in one place; groups stay here. */}
           {groups.map(g => chip(activeGroup === g.id, `${g.name} · ${g.member_ids.length}`, () => setActiveGroup(activeGroup === g.id ? null : g.id), CIRCLE))}
           {showNewGroup ? (
             <span style={{ display: 'inline-flex', gap: 4 }}>
@@ -641,15 +640,29 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         </div>
       )}
 
-      {/* Search + sort — appear once the list is long enough to be worth it. */}
-      {connections.length > 8 && (
+      {/* Controls row — filter (All / Partners / Lineage) + sort (A–Z / Recent)
+          always shown; the name search only once the list is long enough. */}
+      {connections.length > 0 && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <input
-            value={partnerSearch}
-            onChange={e => { setPartnerSearch(e.target.value); setPartnerLimit(15) }}
-            placeholder={`Search ${filteredPartners.length} partners by name…`}
-            style={{ flex: 1, minWidth: 160, boxSizing: 'border-box', padding: '9px 12px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, fontFamily: 'Georgia, serif', color: DARK, background: '#fff', outline: 'none' }}
-          />
+          {connections.length > 8 && (
+            <input
+              value={partnerSearch}
+              onChange={e => { setPartnerSearch(e.target.value); setPartnerLimit(15) }}
+              placeholder={`Search ${filteredPartners.length} partners by name…`}
+              style={{ flex: '1 1 160px', minWidth: 160, boxSizing: 'border-box', padding: '9px 12px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, fontFamily: 'Georgia, serif', color: DARK, background: '#fff', outline: 'none' }}
+            />
+          )}
+          <div style={{ display: 'flex', gap: 4, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3 }}>
+            {([['all', 'All'], ['direct', `Partners · ${directCount}`], ['lineage', `Lineage · ${lineageCount}`]] as const).map(([id, lbl]) => {
+              const on = partnerFilter === id && !activeGroup
+              return (
+                <button key={id} onClick={() => { setActiveGroup(null); setPartnerFilter(id); setPartnerLimit(15) }}
+                  style={{ padding: '6px 11px', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: on ? 700 : 400, background: on ? '#fff' : 'transparent', color: on ? (id === 'lineage' ? LINEAGE : DARK) : GRAY, boxShadow: on ? '0 1px 3px rgba(0,0,0,0.08)' : 'none', whiteSpace: 'nowrap' }}>
+                  {lbl}
+                </button>
+              )
+            })}
+          </div>
           <div style={{ display: 'flex', gap: 4, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3 }}>
             {([['az', 'A–Z'], ['recent', 'Recent']] as const).map(([id, lbl]) => (
               <button key={id} onClick={() => setPartnerSort(id)}
