@@ -119,6 +119,9 @@ export default function AdminPage() {
   const [userResults, setUserResults] = useState<any[]>([])
   const [searchingUsers, setSearchingUsers] = useState(false)
   const [activeTab, setActiveTab] = useState<View>('orders')
+  // Live backorder truth per order (computed from the real shelf), keyed by
+  // order id. The stored order_metadata.backordered flag is only a snapshot.
+  const [backorderLive, setBackorderLive] = useState<Record<number, { stillShort: boolean; short: { slug: string; size: string; need: number; available: number }[] }>>({})
   const [crmUserId, setCrmUserId] = useState<string | null>(null)
   const [sales, setSales] = useState<any>(null)
   const [salesDays, setSalesDays] = useState('30')
@@ -263,6 +266,12 @@ export default function AdminPage() {
       .select('*')
       .order('created_at', { ascending: false })
     if (data) setOrders(data)
+    // Live backorder status from the real shelf (see the route for why the
+    // stored flag alone is unreliable). Best effort — the list still renders.
+    fetch('/api/admin/order-backorder-status')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.status) setBackorderLive(d.status) })
+      .catch(() => {})
   }
 
   async function loadStats() {
@@ -685,7 +694,13 @@ export default function AdminPage() {
                             {new Date(order.created_at).toLocaleDateString()} &middot; Order #{order.id}
                           </div>
                           {order.order_metadata?.backordered && (
-                            <div style={{ display: 'inline-block', marginTop: 6, background: C.gold, color: C.navy, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: 10, fontFamily: 'Cinzel, serif' }}>⚑ Backorder</div>
+                            // Live truth from the real shelf beats the checkout snapshot:
+                            // once stock is freed (a cancel, a restock) the badge says so.
+                            backorderLive[order.id]?.stillShort === false ? (
+                              <div title="Was flagged at checkout, but stock now covers every line." style={{ display: 'inline-block', marginTop: 6, background: C.greenBg, color: C.green, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: 10, fontFamily: 'Cinzel, serif' }}>✓ Now in stock</div>
+                            ) : (
+                              <div title={(backorderLive[order.id]?.short ?? []).map(s => `${s.slug}${s.size ? ' ' + s.size : ''}: need ${s.need}, have ${s.available}`).join(' · ') || 'Flagged at checkout'} style={{ display: 'inline-block', marginTop: 6, background: C.gold, color: C.navy, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: 10, fontFamily: 'Cinzel, serif' }}>⚑ Backorder</div>
+                            )
                           )}
                         </div>
                         <div style={{ textAlign: 'right' }}>
