@@ -47,6 +47,10 @@ const FAQS = [
     a: "Subscriptions ship new bands to you on a schedule — monthly, quarterly, or a monthly bundle — at a discount off retail. You choose your band color and size, and can change them anytime from your dashboard. Cancel whenever you like, with no cancellation fee.",
   },
   {
+    q: "Can you ship each band to a different person?",
+    a: "Yes. Orders normally ship to one address (free over $35) and you hand the bands out. If you'd rather we mail each band directly to a different person, we can — for $4.99 per additional address, since every extra destination is its own package and postage. Place your order, then send us the names and addresses through the contact form; we'll invoice the shipping and send each band on its way. You can add a name and a personal note for every band at checkout, and we'll let you know as each person claims theirs.",
+  },
+  {
     q: "Do you offer bulk pricing for churches and ministries?",
     a: "We do. Bulk packs are available for congregations, youth groups, and mission organizations, with discounts on larger orders. Choose 'Partnership & Bulk Orders' on the contact form and tell us about your group.",
   },

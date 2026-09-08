@@ -562,6 +562,9 @@ function StorePageInner() {
               <p className="lato" style={{ fontSize: 14, color: "#5C6573", marginTop: 8, lineHeight: 1.6, fontWeight: 300 }}>
                 Enter quantities by style and size — perfect for handing out 20–30 at a group, church, or event. Ships to you; you distribute. The multi-band discount applies automatically (3+ ${tier3.toFixed(2)}/ea · 5+ ${tier5.toFixed(2)}/ea), and shipping is free over $35.
               </p>
+              <p className="lato" style={{ fontSize: 13, color: "#5C6573", marginTop: 10, lineHeight: 1.6, fontWeight: 300, background: "#FBF7EE", border: "1px solid rgba(200,169,110,0.4)", borderRadius: 8, padding: "10px 14px" }}>
+                <strong style={{ color: "#15223B", fontWeight: 600 }}>Need each band mailed to a different person?</strong> We can ship direct to multiple addresses for <strong style={{ color: "#9A7A35", fontWeight: 600 }}>$4.99 per additional address</strong> (your first address is included). Place the order, then <a href="/contact" style={{ color: "#9A7A35", fontWeight: 600 }}>send us the names and addresses</a> and we&rsquo;ll invoice the shipping and handle the rest.
+              </p>
             </div>
 
             {bulkStyles.length === 0 && <p className="lato" style={{ color: "#5C6573", fontStyle: "italic" }}>Loading styles…</p>}
