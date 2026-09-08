@@ -76,6 +76,36 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // 1b. Gifts received — bands I BOUGHT for someone else. Those ship with no
+  // owner (so the recipient can claim them) and me as upline_user_id, so the
+  // owned-bands feed above never sees them. Surface the FIRST registration of
+  // each such band: "<name> received your gift band". Excludes bands I also
+  // own, which section 1 already covers.
+  {
+    const { data: giftBands } = await admin
+      .from('bands')
+      .select('band_id')
+      .eq('upline_user_id', effectiveId)
+      .neq('owner_id', effectiveId)
+    const giftIds = (giftBands || []).map((b: any) => b.band_id)
+    if (giftIds.length) {
+      const { data: giftRegs } = await admin
+        .from('registrations')
+        .select('id, band_id, user_name, city, country, registered_at')
+        .in('band_id', giftIds)
+        .order('registered_at', { ascending: true })
+      const firstByBand = new Map<string, any>()
+      for (const r of giftRegs || []) if (!firstByBand.has(r.band_id)) firstByBand.set(r.band_id, r)
+      for (const r of Array.from(firstByBand.values())) {
+        if (new Date(r.registered_at) < new Date(since)) continue
+        const who = r.user_name || 'Someone'
+        const where = [r.city, r.country].filter(Boolean).join(', ')
+        items.push({ id: `gift-${r.id}`, type: 'gift_received', icon: '🎁', ts: r.registered_at, band_id: r.band_id,
+          title: `${who} received your gift band`, detail: where ? `Claimed in ${where} — your prayer is traveling with them.` : 'They claimed it — your prayer is traveling with them.' })
+      }
+    }
+  }
+
   // 2. Orders — being fulfilled or shipped.
   if (email) {
     const { data: orders } = await admin

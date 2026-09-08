@@ -313,9 +313,60 @@ export async function POST(req: NextRequest) {
     try {
       const { data: bandData } = await supabase
         .from('bands')
-        .select('owner_id')
+        .select('owner_id, upline_user_id')
         .eq('band_id', bandId)
         .single()
+
+      // Gift received: a bought-as-a-gift band ships with no owner (so the
+      // recipient can claim it) and the buyer as upline_user_id. Nothing told
+      // the buyer when it was claimed — the owner alert below never fires for
+      // an unowned band. So on the FIRST registration of a band whose upline is
+      // someone other than the new holder, tell that giver their gift landed.
+      // Covers both a plain gift claim and a hand-off (upline is set in both).
+      const giverId = (bandData as any)?.upline_user_id as string | null | undefined
+      const isFirstClaim = (prevRegs || []).length === 0
+      if (giverId && giverId !== holderUserId && isFirstClaim) {
+        try {
+          const { data: giverProfile } = await supabase
+            .from('profiles')
+            .select('email, full_name, email_notifications')
+            .eq('id', giverId)
+            .maybeSingle()
+          if (giverProfile?.email && giverProfile.email_notifications !== false) {
+            const resend = new Resend(process.env.RESEND_API_KEY)
+            const eGiver = escapeHtml(giverProfile.full_name || 'friend')
+            const eHolder = escapeHtml(name || 'Someone')
+            const eBand = escapeHtml(bandId)
+            const where = [geoCity, geoCountry].filter(Boolean).join(', ')
+            await resend.emails.send({
+              from: 'Prayer Bands <bands@prayerbands.com>',
+              to: [giverProfile.email],
+              subject: `🎁 ${name || 'Someone'} received your Prayer Band`,
+              html: `
+                <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;background:#fdf8f0;border-radius:12px;overflow:hidden;border:1px solid #e2d5b8">
+                  <div style="background:#0d3d6e;padding:32px;text-align:center">
+                    <div style="font-size:36px;color:#f5a623;margin-bottom:8px">🎁</div>
+                    <h1 style="font-family:Georgia,serif;font-size:24px;color:#fff;margin:0;font-weight:400">Your gift arrived</h1>
+                    <p style="color:rgba(255,255,255,0.7);font-size:14px;margin:8px 0 0">${eHolder} just claimed the band you gave them</p>
+                  </div>
+                  <div style="padding:32px">
+                    <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 20px">
+                      Hi ${eGiver} &mdash; <strong style="color:#0d3d6e">${eHolder}</strong> tapped band <strong>${eBand}</strong>${where ? ` in ${escapeHtml(where)}` : ''} and added it to their account. Your prayer is now traveling with them.
+                    </p>
+                    <div style="text-align:center;margin:28px 0">
+                      <a href="https://prayerbands.com/band/${eBand}" style="display:inline-block;background:#2b7bc4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700">Follow its journey ✝</a>
+                    </div>
+                    <p style="font-size:13px;color:#8896a8;text-align:center;font-style:italic;margin:0">"Go into all the world and preach the gospel." — Mark 16:15</p>
+                    <p style="font-size:11px;color:#b3bccb;text-align:center;margin:18px 0 0">Don't want these emails? <a href="https://prayerbands.com/settings" style="color:#8896a8">Manage notifications</a>.</p>
+                  </div>
+                </div>
+              `,
+            })
+          }
+        } catch (e) {
+          console.error('Gift-received alert failed:', e)
+        }
+      }
 
       if (bandData?.owner_id) {
         const { data: ownerProfile } = await supabase
