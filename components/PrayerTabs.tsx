@@ -113,7 +113,9 @@ export default function PrayerTabs({ userId, onExpand }: { userId: string; onExp
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: showInfo ? 10 : 16 }}>
         <h3 style={{ margin: 0, fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 24, fontWeight: 700, color: NAVY, lineHeight: 1.05 }}>
           <span style={{ fontStyle: 'italic', fontWeight: 400, color: SLATE }}>My Prayer </span>
-          {SUBTABS.find(t => t.id === sub)?.label}
+          {/* Tabs now read "My Partners" etc.; drop that leading "My" here so the
+              heading is "My Prayer Partners", not "My Prayer My Partners". */}
+          {SUBTABS.find(t => t.id === sub)?.label.replace(/^My /, '')}
         </h3>
         <div style={{ flex: 1 }} />
         <button onClick={toggleInfo} aria-label={`About ${info.title}`} aria-expanded={showInfo} title={`About ${info.title}`}
