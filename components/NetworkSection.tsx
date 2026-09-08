@@ -136,6 +136,8 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   // The viewer's own band code, shown so a partner can enter it to connect.
   const [myCode, setMyCode] = useState<string | null>(null)
   const [partnerCode, setPartnerCode] = useState('')
+  // "Connect a prayer partner" chooser: tap bands, share/enter a code, or scan a QR.
+  const [connectMode, setConnectMode] = useState<'tap' | 'code' | 'scan'>('tap')
   const [codeShared, setCodeShared] = useState(false)
   // The viewer's permanent connect code + whether their QR is expanded.
   const [myConnectCode, setMyConnectCode] = useState<string | null>(null)
@@ -538,65 +540,86 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       {section === 'all' && <h3 style={{ fontFamily: serif, fontSize: 17, fontWeight: 700, color: DARK, margin: '0 0 14px 0' }}>Prayer Partners</h3>}
 
       {showPartners && (<>
-      {/* Connect a partner in person — enter the code printed on their band,
-          or read yours to them. Routes to their band page, where the existing
-          "Add to Prayer Partners" prompt does the rest. */}
-      <div style={{ backgroundColor: '#fff', border: `1px solid ${GOLD}`, borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
+      {/* Connect a prayer partner — three ways, one clean chooser:
+          Tap  — hold your band to their phone (the NFC path; their phone opens
+                 your band and shows "Add to Prayer Partners").
+          Code — share your code, or enter theirs to jump to their band page.
+          Scan — show a QR to your permanent connect link. */}
+      <div style={{ backgroundColor: '#fff', border: `1px solid ${GOLD}`, borderRadius: 12, padding: '14px 16px 16px', marginBottom: 16 }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GOLD, marginBottom: 10, fontFamily: serif }}>Connect a prayer partner</div>
 
-        {myCode && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '9px 12px', marginBottom: 10 }}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 10, color: GRAY, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Your code</div>
-              <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: DARK, fontFamily: 'monospace' }}>{myCode}</div>
-            </div>
-            <button
-              onClick={sharePartnerConnect}
-              style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6, background: GOLD, border: 'none', borderRadius: 16, padding: '6px 14px', fontSize: 12, fontWeight: 600, fontFamily: serif, color: '#fff', cursor: 'pointer' }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-              {codeShared ? 'Copied' : 'Share'}
-            </button>
+        <div style={{ display: 'flex', gap: 4, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3, marginBottom: 14 }}>
+          {([['tap', '📱', 'Tap'], ['code', '🔢', 'Code'], ['scan', '▦', 'Scan']] as const).map(([id, ic, lbl]) => {
+            const on = connectMode === id
+            return (
+              <button key={id} onClick={() => setConnectMode(id)}
+                style={{ flex: 1, padding: '8px 4px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12.5, fontFamily: serif, fontWeight: on ? 700 : 500, background: on ? '#fff' : 'transparent', color: on ? DARK : GRAY, boxShadow: on ? '0 1px 3px rgba(0,0,0,0.08)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <span aria-hidden="true" style={{ fontSize: 13 }}>{ic}</span>{lbl}
+              </button>
+            )
+          })}
+        </div>
+
+        {connectMode === 'tap' && (
+          <div style={{ textAlign: 'center', padding: '4px 4px 2px' }}>
+            <div style={{ fontFamily: serif, fontSize: 15.5, fontWeight: 700, color: DARK, marginBottom: 6 }}>Hold your band to their phone</div>
+            <p style={{ fontSize: 13.5, color: GRAY, lineHeight: 1.55, margin: '0 auto 12px', maxWidth: 360 }}>
+              Their phone opens your band. They tap <strong style={{ color: DARK }}>Add to Prayer Partners</strong>, you accept, and you&rsquo;re connected. Either of you can start it.
+            </p>
+            <p style={{ fontSize: 11.5, color: GRAY, margin: 0, fontStyle: 'italic' }}>iPhone: top of the phone &middot; Android: middle of the back</p>
           </div>
         )}
 
-        {myConnectCode && (
-          <div style={{ marginBottom: 12 }}>
-            <button onClick={() => setShowQR(v => !v)} style={{ background: 'none', border: 'none', color: GOLD, fontSize: 12, fontFamily: serif, fontWeight: 700, cursor: 'pointer', padding: 0 }}>
-              {showQR ? '▴ Hide my QR code' : '▾ Show my QR code'}
-            </button>
-            {showQR && (
-              <div style={{ marginTop: 10, background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 10, padding: 16, textAlign: 'center' }}>
-                <div style={{ display: 'inline-block', background: '#fff', padding: 6, borderRadius: 6 }}>
-                  <QRCodeSVG value={`${typeof window !== 'undefined' ? window.location.origin : 'https://prayerbands.com'}/connect/${myConnectCode}`} size={168} bgColor="#ffffff" fgColor="#15223B" level="M" />
+        {connectMode === 'code' && (
+          <div>
+            {myCode && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '9px 12px', marginBottom: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 10, color: GRAY, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Your code</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: DARK, fontFamily: 'monospace' }}>{myCode}</div>
                 </div>
-                <p style={{ fontSize: 12, color: GRAY, margin: '10px 6px 0', lineHeight: 1.5 }}>
-                  Point a phone camera here to connect with you in prayer. It always reaches your account, even after you hand out bands — great for a group, a screen, or a printed card.
-                </p>
+                <button onClick={sharePartnerConnect}
+                  style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6, background: GOLD, border: 'none', borderRadius: 16, padding: '6px 14px', fontSize: 12, fontWeight: 600, fontFamily: serif, color: '#fff', cursor: 'pointer' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                  {codeShared ? 'Copied' : 'Share'}
+                </button>
               </div>
             )}
+            <div style={{ fontSize: 12, color: GRAY, marginBottom: 6 }}>Or enter their band code:</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                value={partnerCode}
+                onChange={e => setPartnerCode(e.target.value.toUpperCase())}
+                onKeyDown={e => { if (e.key === 'Enter') { const c = normalizeBandCode(partnerCode); if (c.length >= 5) router.push(`/band/${c}`) } }}
+                placeholder="PB-XXXXX"
+                maxLength={12}
+                style={{ flex: 1, minWidth: 0, padding: '10px 12px', borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 15, fontFamily: 'monospace', letterSpacing: '0.08em', textTransform: 'uppercase', color: DARK, background: '#fff', outline: 'none' }}
+              />
+              <button
+                onClick={() => { const c = normalizeBandCode(partnerCode); if (c.length >= 5) router.push(`/band/${c}`) }}
+                disabled={normalizeBandCode(partnerCode).length < 5}
+                style={{ flexShrink: 0, backgroundColor: normalizeBandCode(partnerCode).length >= 5 ? GOLD : BORDER, color: '#fff', border: 'none', borderRadius: 8, padding: '0 18px', fontSize: 13, fontFamily: serif, fontWeight: 600, cursor: normalizeBandCode(partnerCode).length >= 5 ? 'pointer' : 'default' }}>
+                Connect
+              </button>
+            </div>
+            <p style={{ fontSize: 11, color: GRAY, margin: '8px 2px 0', fontStyle: 'italic' }}>The code is printed on every band. You&rsquo;ll land on their page, then tap &ldquo;Add to Prayer Partners.&rdquo;</p>
           </div>
         )}
 
-        <div style={{ fontSize: 12, color: GRAY, marginBottom: 6 }}>Enter their band code to connect:</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input
-            value={partnerCode}
-            onChange={e => setPartnerCode(e.target.value.toUpperCase())}
-            onKeyDown={e => { if (e.key === 'Enter') { const c = normalizeBandCode(partnerCode); if (c.length >= 5) router.push(`/band/${c}`) } }}
-            placeholder="PB-XXXXX"
-            maxLength={12}
-            style={{ flex: 1, minWidth: 0, padding: '10px 12px', borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 15, fontFamily: 'monospace', letterSpacing: '0.08em', textTransform: 'uppercase', color: DARK, background: '#fff', outline: 'none' }}
-          />
-          <button
-            onClick={() => { const c = normalizeBandCode(partnerCode); if (c.length >= 5) router.push(`/band/${c}`) }}
-            disabled={normalizeBandCode(partnerCode).length < 5}
-            style={{ flexShrink: 0, backgroundColor: normalizeBandCode(partnerCode).length >= 5 ? GOLD : BORDER, color: '#fff', border: 'none', borderRadius: 8, padding: '0 18px', fontSize: 13, fontFamily: serif, fontWeight: 600, cursor: normalizeBandCode(partnerCode).length >= 5 ? 'pointer' : 'default' }}
-          >
-            Connect
-          </button>
-        </div>
-        <p style={{ fontSize: 11, color: GRAY, margin: '8px 2px 0', fontStyle: 'italic' }}>The code is printed on every band. You&rsquo;ll land on their page, then tap &ldquo;Add to Prayer Partners.&rdquo;</p>
+        {connectMode === 'scan' && (
+          myConnectCode ? (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ display: 'inline-block', background: '#fff', padding: 8, borderRadius: 8, border: `1px solid ${BORDER}` }}>
+                <QRCodeSVG value={`${typeof window !== 'undefined' ? window.location.origin : 'https://prayerbands.com'}/connect/${myConnectCode}`} size={168} bgColor="#ffffff" fgColor="#15223B" level="M" />
+              </div>
+              <p style={{ fontSize: 12.5, color: GRAY, margin: '10px 6px 0', lineHeight: 1.5, maxWidth: 340, marginLeft: 'auto', marginRight: 'auto' }}>
+                They point their camera here to connect with you. It always reaches your account &mdash; great for a group, a screen, or a printed card.
+              </p>
+            </div>
+          ) : (
+            <p style={{ fontSize: 13, color: GRAY, margin: 0, fontStyle: 'italic', textAlign: 'center' }}>Your connect code is loading&hellip;</p>
+          )
+        )}
       </div>
 
       {/* Pending incoming requests */}
