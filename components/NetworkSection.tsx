@@ -546,7 +546,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
           Code — share your code, or enter theirs to jump to their band page.
           Scan — show a QR to your permanent connect link. */}
       <div style={{ backgroundColor: '#fff', border: `1px solid ${GOLD}`, borderRadius: 12, padding: '14px 16px 16px', marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GOLD, marginBottom: 10, fontFamily: serif }}>Connect a prayer partner</div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GOLD, marginBottom: 10, fontFamily: serif, textAlign: 'center' }}>Connect a prayer partner via</div>
 
         <div style={{ display: 'flex', gap: 4, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3, marginBottom: 14 }}>
           {([['tap', '📱', 'Tap'], ['code', '🔢', 'Code'], ['scan', '▦', 'Scan']] as const).map(([id, ic, lbl]) => {
