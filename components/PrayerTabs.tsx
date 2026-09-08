@@ -15,9 +15,9 @@ const INK_ON_PRIMARY = 'var(--pb-text-on-primary, #0A1628)'
 
 type Sub = 'requests' | 'partners' | 'circles'
 const SUBTABS: { id: Sub; label: string }[] = [
-  { id: 'requests', label: 'Journal' },
-  { id: 'partners', label: 'Partners' },
-  { id: 'circles', label: 'Circles' },
+  { id: 'requests', label: 'My Journal' },
+  { id: 'partners', label: 'My Partners' },
+  { id: 'circles', label: 'My Circles' },
 ]
 
 // Short explainers shown when the ⓘ next to the titles is tapped — what each
@@ -101,7 +101,7 @@ export default function PrayerTabs({ userId, onExpand }: { userId: string; onExp
           const active = sub === t.id
           return (
             <button key={t.id} onClick={() => setSub(t.id)}
-              style={{ flex: 1, padding: '9px 4px', border: 'none', borderRadius: 9, background: active ? GOLD : 'transparent', color: active ? INK_ON_PRIMARY : SLATE, fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "'Cinzel', Georgia, serif", letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.15s' }}>
+              style={{ flex: 1, padding: '9px 2px', border: 'none', borderRadius: 9, background: active ? GOLD : 'transparent', color: active ? INK_ON_PRIMARY : SLATE, fontSize: 11.5, fontWeight: active ? 700 : 500, fontFamily: "'Cinzel', Georgia, serif", letterSpacing: '0.05em', textTransform: 'uppercase', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.15s' }}>
               {t.label}
             </button>
           )
