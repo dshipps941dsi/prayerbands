@@ -19,19 +19,19 @@ export async function GET(req: NextRequest) {
 
   const admin = createServiceClient()
 
-  type Node = { id: string; name: string; lat: number | null; lng: number | null; city: string | null; country: string | null; depth: number }
+  type Node = { id: string; name: string; lat: number | null; lng: number | null; city: string | null; state: string | null; country: string | null; depth: number }
   type Edge = { from: string; to: string; kind: 'chain' | 'gift'; depth: number }
   const nodes = new Map<string, Node>()
   const edges: Edge[] = []
   const keyOf = (r: any) => r.user_id ? `u:${r.user_id}` : `r:${r.id}`
   const addNode = (key: string, r: any, depth: number) => {
-    if (!nodes.has(key)) nodes.set(key, { id: key, name: first(r.user_name), lat: r.latitude ?? null, lng: r.longitude ?? null, city: r.city ?? null, country: r.country ?? null, depth })
+    if (!nodes.has(key)) nodes.set(key, { id: key, name: first(r.user_name), lat: r.latitude ?? null, lng: r.longitude ?? null, city: r.city ?? null, state: r.state ?? null, country: r.country ?? null, depth })
   }
 
   // 1. This band's own chain of stops.
   const { data: stops } = await admin
     .from('registrations')
-    .select('id, user_id, user_name, latitude, longitude, city, country, registered_at')
+    .select('id, user_id, user_name, latitude, longitude, city, state, country, registered_at')
     .eq('band_id', bandId)
     .order('registered_at', { ascending: true })
 
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
     const bandIds = given.map((b: any) => b.band_id)
     const { data: regs } = await admin
       .from('registrations')
-      .select('id, band_id, user_id, user_name, latitude, longitude, city, country, registered_at')
+      .select('id, band_id, user_id, user_name, latitude, longitude, city, state, country, registered_at')
       .in('band_id', bandIds)
       .order('registered_at', { ascending: false })
     const latestByBand = new Map<string, any>()

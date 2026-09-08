@@ -14,7 +14,7 @@ const GRAY = 'var(--pb-text-muted, #5C6573)'
 const BORDER = 'var(--pb-border, #E8DCC8)'
 const serif = 'Playfair Display, Georgia, serif'
 
-type Node = { id: string; name: string; lat: number | null; lng: number | null; city: string | null; country: string | null; depth: number }
+type Node = { id: string; name: string; lat: number | null; lng: number | null; city: string | null; state: string | null; country: string | null; depth: number }
 type Edge = { from: string; to: string; kind: 'chain' | 'gift'; depth: number }
 type Data = { root: { id: string; name: string } | null; nodes: Node[]; edges: Edge[]; total: number; located: number; generations: number }
 
@@ -52,8 +52,8 @@ export default function ReachMap({ bandId }: { bandId: string }) {
 
     const gold = (getComputedStyle(document.documentElement).getPropertyValue('--pb-primary') || '').trim() || '#C8A96E'
     const rootId = data.root?.id
-    const pos = new Map<string, { lat: number; lng: number; name: string; city: string | null; country: string | null; depth: number }>()
-    data.nodes.forEach(n => { if (n.lat != null && n.lng != null) pos.set(n.id, { lat: n.lat, lng: n.lng, name: n.name, city: n.city, country: n.country, depth: n.depth }) })
+    const pos = new Map<string, { lat: number; lng: number; name: string; city: string | null; state: string | null; country: string | null; depth: number }>()
+    data.nodes.forEach(n => { if (n.lat != null && n.lng != null) pos.set(n.id, { lat: n.lat, lng: n.lng, name: n.name, city: n.city, state: n.state, country: n.country, depth: n.depth }) })
 
     // Fan out people who share a spot so a town of bands is legible.
     const cell = (lat: number, lng: number) => `${lat.toFixed(1)}|${lng.toFixed(1)}`
@@ -126,7 +126,7 @@ export default function ReachMap({ bandId }: { bandId: string }) {
         const fill = isRoot || p.depth === 0 ? gold : '#fff'
         const dot = L.divIcon({ className: '', html: `<div style="width:${sz}px;height:${sz}px;background:${fill};border-radius:50%;border:${isRoot ? 0 : 2}px solid ${branchC};box-shadow:0 0 6px rgba(0,0,0,0.35)"></div>`, iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] })
         const m = L.marker([p.lat, p.lng], { icon: dot }).addTo(map)
-        const place = [p.city, p.country].filter(Boolean).join(', ')
+        const place = [p.city, p.state, p.country].filter(Boolean).join(', ')
         m.bindPopup(`<div style="font-family:Georgia,serif;font-size:13px"><strong>${isRoot ? 'You' : escapeHtml(p.name)}</strong>${place ? `<br/><span style="color:#5C6573">${escapeHtml(place)}</span>` : ''}</div>`)
       }
       const drawEdge = (e: Edge) => {
@@ -205,7 +205,7 @@ export default function ReachMap({ bandId }: { bandId: string }) {
       {(() => {
         const nodeById = new Map(data.nodes.map(n => [n.id, n]))
         const rootId = data.root?.id
-        const place = (n?: Node) => [n?.city, n?.country].filter(Boolean).join(', ')
+        const place = (n?: Node) => [n?.city, n?.state, n?.country].filter(Boolean).join(', ')
         const childrenMap = new Map<string, string[]>()
         data.edges.filter(e => e.kind === 'gift').forEach(e => { (childrenMap.get(e.from) ?? childrenMap.set(e.from, []).get(e.from)!).push(e.to) })
 
