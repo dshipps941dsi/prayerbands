@@ -270,6 +270,7 @@ export default function FulfillPage() {
         <div style={{ display: 'flex', gap: 16 }}>
           <a href="/fulfill/handout" style={{ color: C.gold, fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>Give away</a>
           <a href="/fulfill/labels" style={{ color: C.gold, fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>Labels</a>
+          <a href="/fulfill/welcome-qr" style={{ color: C.gold, fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>Welcome cards</a>
           <a href="/admin" style={{ color: C.gold, fontSize: 12, fontFamily: 'Cinzel, serif', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>Admin →</a>
         </div>
       </div>
@@ -311,7 +312,11 @@ export default function FulfillPage() {
               {toShip.map(o => (
                 <div key={o.id} style={{ padding: '14px 16px', borderBottom: '1px solid ' + C.borderSilver }}>
                   <div style={{ fontWeight: 600, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 16 }}>{o.customer_name || o.customer_email || 'Unnamed'}</div>
-                  <div style={{ fontSize: 12, color: C.secondary, marginTop: 2 }}>Order #{o.id} · {(o.assigned_band_ids || []).length} band{(o.assigned_band_ids || []).length === 1 ? '' : 's'} packed</div>
+                  <div style={{ fontSize: 12, color: C.secondary, marginTop: 2 }}>
+                    Order #{o.id} · {(o.assigned_band_ids || []).length} band{(o.assigned_band_ids || []).length === 1 ? '' : 's'} packed
+                    {/* One welcome card per band in the box — opens the print sheet prefilled. */}
+                    {' · '}<a href={`/fulfill/welcome-qr?n=${(o.assigned_band_ids || []).length || 1}`} target="_blank" rel="noopener" style={{ color: C.goldText, fontWeight: 600, textDecoration: 'none' }}>Print {(o.assigned_band_ids || []).length || 1} welcome card{(o.assigned_band_ids || []).length === 1 ? '' : 's'} ↗</a>
+                  </div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
                     <input
                       value={tracking[o.id] || ''}
