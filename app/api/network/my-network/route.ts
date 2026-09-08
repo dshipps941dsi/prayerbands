@@ -40,6 +40,10 @@ export async function GET(_req: NextRequest) {
     // are "lineage" partners; everyone else you've connected with is "direct".
     const lineageIds = new Set<string>()
     const lineageBandByUser: Record<string, string> = {}
+    // When each lineage/downline person joined you — lets the Partners list
+    // sort by "Recent". Without this they carried no date, so Recent collapsed
+    // into A–Z for anyone whose reach is mostly lineage.
+    const lineageSinceByUser: Record<string, string> = {}
     const { data: myRegs } = await admin
       .from('registrations')
       .select('band_id')
@@ -54,11 +58,16 @@ export async function GET(_req: NextRequest) {
         .not('user_id', 'is', null)
         .order('registered_at', { ascending: true })
       const byBand: Record<string, string[]> = {}
+      // Each person's registration time on each band, so a lineage neighbor
+      // can carry the date they joined the chain.
+      const regAt: Record<string, string> = {}
       ;(chainRegs ?? []).forEach((r: any) => {
         const chain = (byBand[r.band_id] ??= [])
         // Collapse consecutive same-user rows (re-registrations) so neighbors are
         // genuinely different people.
         if (chain[chain.length - 1] !== r.user_id) chain.push(r.user_id)
+        const k = `${r.band_id}|${r.user_id}`
+        if (!regAt[k]) regAt[k] = r.registered_at
       })
       for (const [bandId, chain] of Object.entries(byBand)) {
         for (let i = 0; i < chain.length; i++) {
@@ -67,6 +76,8 @@ export async function GET(_req: NextRequest) {
             if (nb && nb !== user.id) {
               lineageIds.add(nb)
               if (!lineageBandByUser[nb]) lineageBandByUser[nb] = bandId
+              const at = regAt[`${bandId}|${nb}`]
+              if (at && (!lineageSinceByUser[nb] || at > lineageSinceByUser[nb])) lineageSinceByUser[nb] = at
             }
           }
         }
@@ -96,9 +107,14 @@ export async function GET(_req: NextRequest) {
     {
       const { data: downProfs } = await admin
         .from('profiles')
-        .select('id, full_name, email, avatar_icon, avatar_initials, avatar_font')
+        .select('id, full_name, email, avatar_icon, avatar_initials, avatar_font, created_at')
         .eq('upline_user_id', user.id)
-      for (const p of (downProfs ?? []) as any[]) { profilesById[p.id] = p; downlineIds.add(p.id) }
+      for (const p of (downProfs ?? []) as any[]) {
+        profilesById[p.id] = p
+        downlineIds.add(p.id)
+        // "Since" for a downline person = when their account joined under you.
+        if (p.created_at && !lineageSinceByUser[p.id]) lineageSinceByUser[p.id] = p.created_at
+      }
     }
 
     const nameOf = (id: string) => nameFromProfile(profilesById[id])
@@ -249,7 +265,7 @@ export async function GET(_req: NextRequest) {
         name: nameOf(id),
         avatar: avatarOf(id),
         band_id: lineageBandByUser[id] ?? null,
-        since: null,
+        since: lineageSinceByUser[id] ?? null,
         relation: 'lineage' as const,
       }))
 

@@ -554,7 +554,15 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             return (
               <button key={id} onClick={() => setConnectMode(id)}
                 style={{ flex: 1, padding: '8px 4px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12.5, fontFamily: serif, fontWeight: on ? 700 : 500, background: on ? '#fff' : 'transparent', color: on ? DARK : GRAY, boxShadow: on ? '0 1px 3px rgba(0,0,0,0.08)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                <span aria-hidden="true" style={{ fontSize: 13 }}>{ic}</span>{lbl}
+                {id === 'scan' ? (
+                  // A real QR glyph — three finder squares + modules — reads as
+                  // "scan" at a glance where the old grid tile just looked like a grid.
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                    <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm1 1h2v2H6V6zM13 3h8v8h-8V3zm2 2v4h4V5h-4zm1 1h2v2h-2V6zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm1 1h2v2H6v-2zM13 13h2v2h-2v-2zm4 0h2v2h-2v-2zm2 2h2v2h-2v-2zm-4 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm4 0h2v2h-2v-2zm2-2h2v4h-2v-4z" />
+                  </svg>
+                ) : (
+                  <span aria-hidden="true" style={{ fontSize: 13 }}>{ic}</span>
+                )}{lbl}
               </button>
             )
           })}
