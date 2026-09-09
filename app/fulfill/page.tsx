@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { variantForSlug, parseOrderItems, reconcilePack, orderItemLabel, type OrderItem } from '@/lib/fulfillment'
 import ScanTrackingButton from '@/components/ScanTrackingButton'
+import { addressBlock, hasAddress, pirateShipCsv } from '@/lib/pirateship'
 
 const C = {
   pageBg: '#F6F1E4',
@@ -70,7 +71,31 @@ export default function FulfillPage() {
   const [done, setDone] = useState<string[] | null>(null)
   const [tracking, setTracking] = useState<Record<number, string>>({})
   const [shipping, setShipping] = useState<number | null>(null)
+  const [copied, setCopied] = useState<number | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+
+  // Pirate Ship has no way to receive an order, but its label screen parses a
+  // pasted address and its spreadsheet upload reads the CSV below, so this is
+  // one tap per order or one file per batch instead of retyping addresses.
+  async function copyAddress(o: Order) {
+    try {
+      await navigator.clipboard.writeText(addressBlock(o))
+      setCopied(o.id)
+      setTimeout(() => setCopied(c => (c === o.id ? null : c)), 1800)
+    } catch { setNote('Could not copy — long-press the address to select it instead.') }
+  }
+  function downloadPirateShip(list: Order[]) {
+    const withAddr = list.filter(hasAddress)
+    if (!withAddr.length) { setNote('None of these orders has a shipping address on file.'); return }
+    const blob = new Blob([pirateShipCsv(withAddr)], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `pirateship-${new Date().toISOString().slice(0, 10)}-${withAddr.length}-orders.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    if (withAddr.length < list.length) setNote(`${list.length - withAddr.length} order${list.length - withAddr.length === 1 ? ' has' : 's have'} no address on file and ${list.length - withAddr.length === 1 ? 'was' : 'were'} left out.`)
+  }
 
   const nfcSupported = typeof window !== 'undefined' && 'NDEFReader' in window
 
@@ -309,10 +334,29 @@ export default function FulfillPage() {
 
           {toShip.length > 0 && (
             <>
-              <div style={{ ...panelHead, marginTop: 4 }}>Ready to ship ({toShip.length})</div>
+              <div style={{ ...panelHead, marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                <span>Ready to ship ({toShip.length})</span>
+                <button onClick={() => downloadPirateShip(toShip)} title="Spreadsheet for Pirate Ship → Ship → Upload a Spreadsheet" style={{ background: 'transparent', border: '1px solid ' + C.borderSilver, color: C.goldText, borderRadius: 8, padding: '5px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  ↓ Pirate Ship CSV
+                </button>
+              </div>
               {toShip.map(o => (
                 <div key={o.id} style={{ padding: '14px 16px', borderBottom: '1px solid ' + C.borderSilver }}>
-                  <div style={{ fontWeight: 600, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 16 }}>{o.customer_name || o.customer_email || 'Unnamed'}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 16 }}>{o.customer_name || o.customer_email || 'Unnamed'}</div>
+                      {hasAddress(o) ? (
+                        <div style={{ fontSize: 12.5, color: C.body, whiteSpace: 'pre-line', lineHeight: 1.45, marginTop: 2 }}>{addressBlock(o)}</div>
+                      ) : (
+                        <div style={{ fontSize: 12, color: '#B4441F', marginTop: 2 }}>No shipping address on file</div>
+                      )}
+                    </div>
+                    {hasAddress(o) && (
+                      <button onClick={() => copyAddress(o)} title="Copy the address to paste into Pirate Ship" style={{ flexShrink: 0, background: copied === o.id ? C.greenBg : 'transparent', border: '1px solid ' + (copied === o.id ? C.green : C.borderSilver), color: copied === o.id ? C.green : C.goldText, borderRadius: 8, padding: '6px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        {copied === o.id ? '✓ Copied' : 'Copy address'}
+                      </button>
+                    )}
+                  </div>
                   <div style={{ fontSize: 12, color: C.secondary, marginTop: 2 }}>
                     Order #{o.id} · {(o.assigned_band_ids || []).length} band{(o.assigned_band_ids || []).length === 1 ? '' : 's'} packed
                     {/* One welcome card per band in the box — opens the print sheet prefilled. */}
