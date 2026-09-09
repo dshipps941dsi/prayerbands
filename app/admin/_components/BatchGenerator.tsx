@@ -20,6 +20,8 @@ type Row = { kind: 'theme' | 'color'; theme: string; color: string; qty: Record<
 type PastBatch = { batch: string; total: number; created: string; themes: string[]; colors: string[]; sizes: Record<string, number> }
 // A reorder suggestion rolled up to one design, ready to become a Row.
 type Suggestion = { slug: string; name: string; total: number; qty: Record<Size, number>; urgency: string }
+// One design on the shelf, with its size split and how many are held for paid orders.
+type ShelfGroup = { key: string; name: string; total: number; sizes: Record<string, number>; held: number }
 
 function csvField(v: string) {
   return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
@@ -59,6 +61,8 @@ export default function BatchGenerator() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [suggestThin, setSuggestThin] = useState(false)
   const [suggestLoaded, setSuggestLoaded] = useState(false)
+  const [shelf, setShelf] = useState<ShelfGroup[]>([])
+  const [shelfTotal, setShelfTotal] = useState<number | null>(null)
   // Until the operator touches the rows, the starter row is just a placeholder
   // and the first suggestion replaces it instead of stacking under it.
   const [pristine, setPristine] = useState(true)
@@ -82,6 +86,8 @@ export default function BatchGenerator() {
         }
         setSuggestions([...by.values()].sort((a, b) => (rank[a.urgency] ?? 9) - (rank[b.urgency] ?? 9) || b.total - a.total))
         setSuggestThin(!!d.historyThin)
+        setShelf(Array.isArray(d.shelf) ? d.shelf : [])
+        setShelfTotal(typeof d.shelfTotal === 'number' ? d.shelfTotal : null)
       })
       .catch(() => {})
       .finally(() => setSuggestLoaded(true))
@@ -173,8 +179,43 @@ export default function BatchGenerator() {
   const label: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: C.goldText, display: 'block', marginBottom: 5, letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: 'Cinzel, serif' }
   const input: React.CSSProperties = { width: '100%', padding: '8px 10px', borderRadius: 6, border: `1px solid ${C.borderNavy}`, fontSize: 14, fontFamily: 'Inter, sans-serif', background: C.pageBg, color: C.body, boxSizing: 'border-box', outline: 'none' }
 
+  const shelfPanel = (
+    <div style={{ position: 'sticky', top: 16 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 4px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>On the Shelf</h2>
+      <p style={{ color: C.secondary, fontSize: 14, margin: '0 0 20px', lineHeight: 1.5 }}>
+        Unclaimed bands by design, fewest first{shelfTotal !== null && <> &mdash; <strong style={{ color: C.heading }}>{shelfTotal}</strong> in all</>}.
+      </p>
+      <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 12, boxShadow: '0 2px 10px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
+        {!suggestLoaded ? (
+          <div style={{ padding: 18, fontSize: 13, color: C.secondary }}>Counting…</div>
+        ) : shelf.length === 0 ? (
+          <div style={{ padding: 18, fontSize: 13, color: C.secondary, fontStyle: 'italic' }}>Nothing on the shelf.</div>
+        ) : shelf.map((g, i) => {
+          const sizeKeys = [...SIZES.filter(sz => g.sizes[sz] > 0), ...Object.keys(g.sizes).filter(k => !(SIZES as readonly string[]).includes(k))]
+          const net = g.total - g.held
+          const thin = net <= 5
+          return (
+            <div key={g.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderTop: i ? `1px solid ${C.borderNavy}` : 'none', background: thin ? 'rgba(180,68,31,0.05)' : 'transparent' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.heading, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</div>
+                <div style={{ fontSize: 11.5, color: C.secondary, fontVariantNumeric: 'tabular-nums' }}>
+                  {sizeKeys.map(sz => `${sz} ${g.sizes[sz]}`).join(' · ')}
+                  {g.held > 0 && <span> &middot; {g.held} held for orders</span>}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: thin ? '#B4441F' : C.heading, fontFamily: 'Cormorant Garamond, serif', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{g.total}</div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+
   return (
-    <div style={{ maxWidth: 680 }}>
+    <div className="pb-admin-chartgrid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 680px) minmax(240px, 320px)', gap: 28, alignItems: 'start' }}>
+    <div style={{ minWidth: 0 }}>
       <h2 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 4px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Generate IDs for Production</h2>
       <p style={{ color: C.secondary, fontSize: 14, margin: '0 0 20px', lineHeight: 1.5 }}>Create unique <strong>PB-XXXXX</strong> IDs for a manufacturing run. Each row is a <strong>theme</strong> (artwork) or a <strong>solid color</strong>; split the quantity across sizes <strong>S / M / L</strong>, then download one CSV to send your supplier. Bands are seeded as unclaimed general inventory.</p>
 
@@ -284,6 +325,8 @@ export default function BatchGenerator() {
           </div>
         )}
       </div>
+    </div>
+    {shelfPanel}
     </div>
   )
 }

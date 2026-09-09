@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { isTeamAdmin } from '@/lib/team'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { availableFor, type OpenOrder, type StockBand } from '@/lib/inventory'
-import { parseOrderItems, variantForSlug } from '@/lib/fulfillment'
+import { availableFor, reservedFor, type OpenOrder, type StockBand } from '@/lib/inventory'
+import { parseOrderItems, variantForSlug, PRODUCT_VARIANTS } from '@/lib/fulfillment'
 
 // Reorder suggestions: for every style and size, how fast it sells, how long
 // the shelf lasts at that pace, and how many to order so a shipment placed
@@ -169,6 +169,32 @@ export async function GET(req: Request) {
       }
     }
 
+    // The whole shelf grouped by design (theme, or color for plain bands),
+    // including designs no active product sells — those still exist and still
+    // need to be seen when deciding what to make next.
+    const nameOf = new Map<string, string>()
+    const slugOf = new Map<string, string>()
+    for (const [slug, v] of Object.entries(PRODUCT_VARIANTS)) {
+      if (v.assorted || v.unmapped) continue
+      const key = v.color ? `color:${v.color}` : `theme:${v.theme}`
+      nameOf.set(key, v.name); slugOf.set(key, slug)
+    }
+    const shelfBy = new Map<string, { key: string; name: string; total: number; sizes: Record<string, number>; held: number }>()
+    for (const b of shelf) {
+      const isTheme = b.theme && b.theme !== 'default'
+      const key = isTheme ? `theme:${b.theme}` : `color:${b.color || '—'}`
+      const cur = shelfBy.get(key) || { key, name: nameOf.get(key) || (isTheme ? String(b.theme) : String(b.color || 'Unmarked')), total: 0, sizes: {}, held: 0 }
+      const sz = b.size || '—'
+      cur.sizes[sz] = (cur.sizes[sz] || 0) + 1
+      cur.total++
+      shelfBy.set(key, cur)
+    }
+    for (const g of shelfBy.values()) {
+      const slug = slugOf.get(g.key)
+      if (slug) g.held = reservedFor(orders, slug)
+    }
+    const shelfSummary = [...shelfBy.values()].sort((a, b) => a.total - b.total || a.name.localeCompare(b.name))
+
     const rank: Record<ReorderRow['urgency'], number> = { now: 0, low: 1, soon: 2, ok: 3, none: 4 }
     rows.sort((x, y) =>
       rank[x.urgency] - rank[y.urgency]
@@ -182,6 +208,8 @@ export async function GET(req: Request) {
       assortedUnits,
       historyThin: ordersInWindow < 10,
       rows,
+      shelf: shelfSummary,
+      shelfTotal: shelf.length,
     })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
