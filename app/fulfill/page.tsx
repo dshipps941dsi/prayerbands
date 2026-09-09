@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { variantForSlug, parseOrderItems, reconcilePack, orderItemLabel, type OrderItem } from '@/lib/fulfillment'
+import ScanTrackingButton from '@/components/ScanTrackingButton'
 
 const C = {
   pageBg: '#F6F1E4',
@@ -325,6 +326,7 @@ export default function FulfillPage() {
                       autoCapitalize="characters"
                       style={{ flex: 1, minWidth: 140, padding: '9px 12px', border: '1px solid ' + C.borderSilver, borderRadius: 8, fontSize: 14 }}
                     />
+                    <ScanTrackingButton onScan={code => setTracking(prev => ({ ...prev, [o.id]: code }))} />
                     <button onClick={() => shipOrder(o)} disabled={shipping === o.id || !(tracking[o.id] || '').trim()} style={btn(C.gold, C.navy)}>
                       {shipping === o.id ? 'Shipping…' : 'Mark shipped'}
                     </button>

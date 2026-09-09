@@ -15,6 +15,7 @@ import DedicationsManager from './_components/DedicationsManager'
 import TeamManager from './_components/TeamManager'
 import MessagesManager from './_components/MessagesManager'
 import { parseOrderItems, orderItemLabel } from '@/lib/fulfillment'
+import ScanTrackingButton from '@/components/ScanTrackingButton'
 
 // Prayer Bands brand palette
 const C = {
@@ -824,6 +825,9 @@ export default function AdminPage() {
                                     boxSizing: 'border-box',
                                   }}
                                 />
+                                <div style={{ marginTop: 6 }}>
+                                  <ScanTrackingButton onScan={code => setTrackingInputs(prev => ({ ...prev, [order.id]: code }))} label="Scan label" style={{ padding: '6px 10px', fontSize: 12 }} />
+                                </div>
                               </div>
                               <button
                                 onClick={() => markAsShipped(order)}
@@ -1113,6 +1117,7 @@ export default function AdminPage() {
                           {bands.length > 0 && (
                             <>
                               <input value={shipTracking[s.id] || ''} onChange={e => setShipTracking(p => ({ ...p, [s.id]: e.target.value }))} placeholder="Tracking #" style={{ ...dedInput, width: 180 }} />
+                              <ScanTrackingButton onScan={code => setShipTracking(p => ({ ...p, [s.id]: code }))} style={{ padding: '7px 10px', fontSize: 12 }} />
                               <button onClick={() => shipShipment(s)} disabled={shipBusy === s.id} style={{ padding: '8px 18px', background: C.navy, color: C.gold, border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Cinzel, serif', textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontWeight: '600' }}>
                                 {shipBusy === s.id ? '…' : 'Mark Shipped'}
                               </button>
