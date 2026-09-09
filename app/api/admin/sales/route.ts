@@ -21,19 +21,34 @@ export async function GET(req: NextRequest) {
   const days = daysParam && daysParam !== 'all' ? Math.max(1, parseInt(daysParam) || 30) : null
   const since = days ? new Date(Date.now() - days * 86_400_000) : null
 
-  const { data: orders } = await admin
+  const { data: orderRows } = await admin
     .from('orders')
-    .select('amount_total, created_at, order_metadata')
+    .select('id, status, payment_status, amount_total, created_at, order_metadata')
     .order('created_at', { ascending: true })
 
   const { data: products } = await admin.from('products').select('slug, name, price_cents')
   const nameBySlug = new Map((products ?? []).map((p: any) => [p.slug, p.name]))
   const priceBySlug = new Map((products ?? []).map((p: any) => [p.slug, p.price_cents]))
 
-  const all = orders ?? []
-  const periodOrders = since ? all.filter(o => new Date(o.created_at) >= since) : all
+  // Only money that actually arrived counts, and refunds come back off.
+  // An order keeps its amount_total after a refund (that is what Stripe
+  // charged); the refunds themselves are logged on order_metadata.refunds by
+  // the refund endpoint. A cancelled order therefore nets to zero here and
+  // its bands are not "sold" — which is what the dashboard was getting wrong.
+  const refundedOf = (o: any): number => {
+    const r = o.order_metadata?.refunds
+    return Array.isArray(r) ? r.reduce((s: number, x: any) => s + (Number(x?.amount) || 0), 0) : 0
+  }
+  const netOf = (o: any): number => Math.max(0, (o.amount_total || 0) - refundedOf(o))
 
-  const sum = (arr: any[]) => arr.reduce((s, o) => s + (o.amount_total || 0), 0)
+  const paid = (orderRows ?? []).filter(o => o.payment_status === 'paid')
+  const all = paid.filter(o => o.status !== 'cancelled')
+  const inWindow = (o: any) => !since || new Date(o.created_at) >= since
+  const periodOrders = all.filter(inWindow)
+  const periodRefunded = paid.filter(inWindow).reduce((s, o) => s + refundedOf(o), 0)
+  const allRefunded = paid.reduce((s, o) => s + refundedOf(o), 0)
+
+  const sum = (arr: any[]) => arr.reduce((s, o) => s + netOf(o), 0)
   const bandsOf = (arr: any[]) => arr.reduce((s, o) => s + (parseInt(o.order_metadata?.quantity) || 0), 0)
 
   // Top sellers (units) within the window — parse each order's saved cart.
@@ -51,8 +66,28 @@ export async function GET(req: NextRequest) {
     .sort((a, b) => b.units - a.units)
     .slice(0, 10)
 
-  // Referral-attributed orders within the window.
+  // Referral-attributed orders within the window, and who sent them.
   const refOrders = periodOrders.filter(o => o.order_metadata?.referrer_user_id)
+  const byRef = new Map<string, { orders: number; revenueCents: number; bands: number }>()
+  for (const o of refOrders) {
+    const id = String(o.order_metadata.referrer_user_id)
+    const cur = byRef.get(id) || { orders: 0, revenueCents: 0, bands: 0 }
+    cur.orders++; cur.revenueCents += netOf(o); cur.bands += parseInt(o.order_metadata?.quantity) || 0
+    byRef.set(id, cur)
+  }
+  let topReferrers: any[] = []
+  if (byRef.size) {
+    const { data: profs } = await admin
+      .from('profiles').select('id, full_name, email, referral_code').in('id', [...byRef.keys()])
+    const profById = new Map((profs ?? []).map((p: any) => [p.id, p]))
+    topReferrers = [...byRef.entries()]
+      .map(([id, r]) => {
+        const p = profById.get(id)
+        return { id, name: p?.full_name || p?.email || 'Unknown', email: p?.email || '', code: p?.referral_code || '', ...r }
+      })
+      .sort((a, b) => b.revenueCents - a.revenueCents || b.orders - a.orders)
+      .slice(0, 10)
+  }
 
   // Revenue series — daily buckets for a window, monthly for all-time.
   const monthly = !days
@@ -62,7 +97,7 @@ export async function GET(req: NextRequest) {
     const key = monthly
       ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
       : d.toISOString().slice(0, 10)
-    buckets[key] = (buckets[key] || 0) + (o.amount_total || 0)
+    buckets[key] = (buckets[key] || 0) + netOf(o)
   }
   // Fill the whole window with a continuous axis so no-sale days/months still
   // appear — a series of only the days that had orders reads as sparse/broken.
@@ -100,15 +135,17 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     days: days || 'all',
-    allTime: { revenueCents: sum(all), orders: all.length, bands: bandsOf(all) },
+    allTime: { revenueCents: sum(all), orders: all.length, bands: bandsOf(all), refundedCents: allRefunded },
     period: {
       revenueCents: sum(periodOrders),
       orders: periodOrders.length,
       bands: bandsOf(periodOrders),
       aovCents: periodOrders.length ? Math.round(sum(periodOrders) / periodOrders.length) : 0,
+      refundedCents: periodRefunded,
     },
     topSellers,
     referrals: { orders: refOrders.length, revenueCents: sum(refOrders) },
+    topReferrers,
     subscriptions: { active: activeSubs, mrrCents: Math.round(mrr * 100) },
     series,
   })

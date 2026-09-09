@@ -1164,6 +1164,13 @@ export default function AdminPage() {
                     <div key={c.label} style={kpiCard}><div style={kpiValue}>{c.value}</div><div style={kpiLabel}>{c.label}</div></div>
                   ))}
                 </div>
+                {(sales.period.refundedCents > 0 || sales.allTime.refundedCents > 0) && (
+                  <div style={{ fontSize: 12, color: C.secondary, marginTop: -12, marginBottom: 24 }}>
+                    Figures are net of refunds and exclude cancelled orders
+                    {sales.period.refundedCents > 0 && <> &mdash; <strong style={{ color: C.heading }}>{money(sales.period.refundedCents)}</strong> refunded in this period</>}
+                    {sales.allTime.refundedCents > 0 && sales.allTime.refundedCents !== sales.period.refundedCents && <>, {money(sales.allTime.refundedCents)} all time</>}.
+                  </div>
+                )}
 
                 <div className="pb-admin-chartgrid" style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 20 }}>
                   <div style={panel}>
@@ -1239,6 +1246,43 @@ export default function AdminPage() {
                       ))}
                     </div>
                   </div>
+                </div>
+
+                <div style={{ ...panel, marginTop: 20 }}>
+                  <div style={panelHead}>Top Referrers ({salesDays === 'all' ? 'all time' : salesDays + 'd'})</div>
+                  {!sales.topReferrers || sales.topReferrers.length === 0 ? (
+                    <div style={{ padding: 18, color: C.secondary, fontStyle: 'italic', fontSize: 13 }}>No referred orders in this period. Orders count here when a buyer arrives through someone&rsquo;s referral link or code.</div>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, fontFamily: 'Inter, sans-serif' }}>
+                        <thead>
+                          <tr style={{ color: C.secondary, fontSize: 11 }}>
+                            <th style={{ padding: '8px 16px', textAlign: 'left', width: 22 }}></th>
+                            <th style={{ padding: '8px 8px', textAlign: 'left' }}>Referrer</th>
+                            <th style={{ padding: '8px 8px', textAlign: 'left' }}>Code</th>
+                            <th style={{ padding: '8px 8px', textAlign: 'right' }}>Orders</th>
+                            <th style={{ padding: '8px 8px', textAlign: 'right' }}>Bands</th>
+                            <th style={{ padding: '8px 16px 8px 8px', textAlign: 'right' }}>Revenue</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sales.topReferrers.map((r: any, i: number) => (
+                            <tr key={r.id} style={{ borderTop: `1px solid ${C.borderSilver}` }}>
+                              <td style={{ padding: '10px 16px', color: C.goldText, fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 16, textAlign: 'center' }}>{i + 1}</td>
+                              <td style={{ padding: '10px 8px' }}>
+                                <div style={{ fontSize: 14, color: C.heading, fontWeight: 600 }}>{r.name}</div>
+                                {r.email && r.email !== r.name && <div style={{ fontSize: 11, color: C.secondary }}>{r.email}</div>}
+                              </td>
+                              <td style={{ padding: '10px 8px', fontFamily: 'monospace', fontSize: 12, color: C.secondary }}>{r.code || '—'}</td>
+                              <td style={{ padding: '10px 8px', textAlign: 'right', color: C.body, fontVariantNumeric: 'tabular-nums' }}>{r.orders}</td>
+                              <td style={{ padding: '10px 8px', textAlign: 'right', color: C.body, fontVariantNumeric: 'tabular-nums' }}>{r.bands}</td>
+                              <td style={{ padding: '10px 16px 10px 8px', textAlign: 'right', color: C.heading, fontWeight: 700, fontFamily: 'Cormorant Garamond, serif', fontSize: 15, fontVariantNumeric: 'tabular-nums' }}>{money(r.revenueCents)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </>
             )}
