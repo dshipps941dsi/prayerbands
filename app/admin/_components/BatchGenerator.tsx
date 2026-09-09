@@ -40,7 +40,8 @@ function downloadCsv(bands: any[], filename: string) {
 }
 
 export default function BatchGenerator() {
-  const [themeOptions, setThemeOptions] = useState<{ id: string; label: string }[]>(THEME_OPTIONS)
+  const byLabel = (a: { label: string }, b: { label: string }) => a.label.localeCompare(b.label)
+  const [themeOptions, setThemeOptions] = useState<{ id: string; label: string }[]>([...THEME_OPTIONS].sort(byLabel))
   const [rows, setRows] = useState<Row[]>([{ kind: 'theme', theme: 'mountain', color: '', qty: { S: 10, M: 20, L: 20 } }])
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
@@ -48,7 +49,7 @@ export default function BatchGenerator() {
   const [pastLoading, setPastLoading] = useState(true)
   const [downloading, setDownloading] = useState('')
 
-  useEffect(() => { loadThemes().then(() => setThemeOptions(getThemeOptions())) }, [])
+  useEffect(() => { loadThemes().then(() => setThemeOptions([...getThemeOptions()].sort(byLabel))) }, [])
 
   async function loadPast() {
     setPastLoading(true)
