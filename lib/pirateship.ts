@@ -21,11 +21,12 @@ export type ShippableOrder = {
   assigned_band_ids?: string[] | null
 }
 
-// Rough parcel weight for the rate quote: a padded mailer plus the bands.
+// Parcel weight for the rate quote, from a real package: 20 bands in a 6x9
+// mailer weighed under 4 oz (2026-09), so ~0.15 oz a band plus the envelope.
 // Pirate Ship prices by the ounce so being a little over never causes a
 // problem; being under can get the label surcharged in transit.
-const MAILER_OZ = 1
-const BAND_OZ = 0.6
+const MAILER_OZ = 0.75
+const BAND_OZ = 0.15
 export function estimateOunces(bands: number): number {
   return Math.max(1, Math.ceil(MAILER_OZ + BAND_OZ * Math.max(1, bands)))
 }
