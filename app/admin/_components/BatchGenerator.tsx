@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { THEME_OPTIONS, loadThemes, getThemeOptions } from '@/lib/themes'
+import { variantForSlug } from '@/lib/fulfillment'
 
 // Production batch generator: each row is a THEME (artwork) or a SOLID COLOR,
 // with a per-size quantity split (S/M/L). Generates unique PB-XXXXX IDs (general
@@ -17,6 +18,8 @@ type Size = typeof SIZES[number]
 // mountain → S:10 M:20 L:20.
 type Row = { kind: 'theme' | 'color'; theme: string; color: string; qty: Record<Size, number> }
 type PastBatch = { batch: string; total: number; created: string; themes: string[]; colors: string[]; sizes: Record<string, number> }
+// A reorder suggestion rolled up to one design, ready to become a Row.
+type Suggestion = { slug: string; name: string; total: number; qty: Record<Size, number>; urgency: string }
 
 function csvField(v: string) {
   return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
@@ -51,6 +54,52 @@ export default function BatchGenerator() {
 
   useEffect(() => { loadThemes().then(() => setThemeOptions([...getThemeOptions()].sort(byLabel))) }, [])
 
+  // Reorder suggestions (same arithmetic as the Inventory card, same saved
+  // inputs) so a flagged style can be dropped straight into this batch.
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  const [suggestThin, setSuggestThin] = useState(false)
+  const [suggestLoaded, setSuggestLoaded] = useState(false)
+  // Until the operator touches the rows, the starter row is just a placeholder
+  // and the first suggestion replaces it instead of stacking under it.
+  const [pristine, setPristine] = useState(true)
+  useEffect(() => {
+    let params: Record<string, unknown> = {}
+    try { params = JSON.parse(localStorage.getItem('pb-admin-reorder-params') || '{}') || {} } catch {}
+    const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]))
+    fetch(`/api/admin/reorder-suggestions?${qs}`)
+      .then(r => r.json())
+      .then(d => {
+        const by = new Map<string, Suggestion>()
+        const rank: Record<string, number> = { now: 0, low: 1, soon: 2 }
+        for (const r of (d.rows || []) as any[]) {
+          if (!(r.suggested > 0)) continue
+          const cur = by.get(r.slug) || { slug: r.slug, name: r.name, total: 0, qty: { S: 0, M: 0, L: 0 }, urgency: r.urgency }
+          const sz = (SIZES as readonly string[]).includes(r.size) ? (r.size as Size) : 'M'
+          cur.qty[sz] += r.suggested
+          cur.total += r.suggested
+          if ((rank[r.urgency] ?? 9) < (rank[cur.urgency] ?? 9)) cur.urgency = r.urgency
+          by.set(r.slug, cur)
+        }
+        setSuggestions([...by.values()].sort((a, b) => (rank[a.urgency] ?? 9) - (rank[b.urgency] ?? 9) || b.total - a.total))
+        setSuggestThin(!!d.historyThin)
+      })
+      .catch(() => {})
+      .finally(() => setSuggestLoaded(true))
+  }, [])
+
+  function rowFor(s: Suggestion): Row {
+    const v = variantForSlug(s.slug)
+    return v.color
+      ? { kind: 'color', theme: '', color: v.color, qty: { ...s.qty } }
+      : { kind: 'theme', theme: v.theme || 'default', color: '', qty: { ...s.qty } }
+  }
+  function addSuggested(list: Suggestion[]) {
+    const fresh = list.map(rowFor)
+    setRows(prev => (pristine ? fresh : [...prev, ...fresh]))
+    setPristine(false)
+    setMsg('')
+  }
+
   async function loadPast() {
     setPastLoading(true)
     try {
@@ -80,14 +129,16 @@ export default function BatchGenerator() {
   const total = rows.reduce((s, r) => s + rowTotal(r), 0)
   const sizeTotals = SIZES.map(sz => ({ sz, n: rows.reduce((s, r) => s + (Number(r.qty[sz]) || 0), 0) }))
 
-  function setRow(i: number, patch: Partial<Row>) { setRows(prev => prev.map((r, idx) => idx === i ? { ...r, ...patch } : r)) }
+  function setRow(i: number, patch: Partial<Row>) { setPristine(false); setRows(prev => prev.map((r, idx) => idx === i ? { ...r, ...patch } : r)) }
   function setQty(i: number, sz: Size, val: number) {
+    setPristine(false)
     setRows(prev => prev.map((r, idx) => idx === i ? { ...r, qty: { ...r.qty, [sz]: Math.max(0, Math.round(Number(val) || 0)) } } : r))
   }
   function addRow(kind: 'theme' | 'color') {
+    setPristine(false)
     setRows(prev => [...prev, { kind, theme: themeOptions[0]?.id || 'default', color: '', qty: { S: 0, M: 0, L: 0 } }])
   }
-  function removeRow(i: number) { setRows(prev => prev.filter((_, idx) => idx !== i)) }
+  function removeRow(i: number) { setPristine(false); setRows(prev => prev.filter((_, idx) => idx !== i)) }
 
   async function generate() {
     const active = rows.filter(r => rowTotal(r) > 0)
@@ -128,6 +179,35 @@ export default function BatchGenerator() {
       <p style={{ color: C.secondary, fontSize: 14, margin: '0 0 20px', lineHeight: 1.5 }}>Create unique <strong>PB-XXXXX</strong> IDs for a manufacturing run. Each row is a <strong>theme</strong> (artwork) or a <strong>solid color</strong>; split the quantity across sizes <strong>S / M / L</strong>, then download one CSV to send your supplier. Bands are seeded as unclaimed general inventory.</p>
 
       {msg && <div style={{ marginBottom: 16, fontSize: 14, color: msg.startsWith('❌') ? C.red : C.green }}>{msg}</div>}
+
+      {suggestLoaded && (
+        <div style={{ background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.34)', borderRadius: 12, padding: '14px 18px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: suggestions.length ? 8 : 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
+              {suggestions.length
+                ? <>Reorder suggestions &mdash; {suggestions.reduce((n, s) => n + s.total, 0)} bands</>
+                : <>Nothing needs reordering at the current pace</>}
+            </div>
+            {suggestions.length > 1 && (
+              <button onClick={() => addSuggested(suggestions)} style={{ background: C.gold, color: C.navy, border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Add all to batch</button>
+            )}
+          </div>
+          {suggestions.map(s => (
+            <div key={s.slug} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderTop: '1px solid rgba(200,169,110,0.25)' }}>
+              <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 4, flexShrink: 0, background: s.urgency === 'soon' ? C.gold : C.red }} title={s.urgency === 'now' ? 'Will run out before a new order arrives' : s.urgency === 'low' ? 'Running low' : 'Order soon'} />
+              <div style={{ flex: 1, minWidth: 0, fontSize: 14, color: C.body }}>
+                <strong style={{ color: C.heading }}>{s.total}× {s.name}</strong>
+                <span style={{ color: C.secondary, fontSize: 12.5 }}>{'  '}{SIZES.filter(sz => s.qty[sz] > 0).map(sz => `${sz} ${s.qty[sz]}`).join(' · ')}</span>
+              </div>
+              <button onClick={() => addSuggested([s])} style={{ flexShrink: 0, background: 'transparent', color: C.goldText, border: `1px solid ${C.gold}`, borderRadius: 8, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Add to batch</button>
+            </div>
+          ))}
+          <div style={{ fontSize: 12, color: C.secondary, marginTop: suggestions.length ? 8 : 4, lineHeight: 1.5 }}>
+            {suggestThin ? 'Based on a small number of orders so far, so treat the quantities as a starting point. ' : ''}
+            Quantities restock to the target cover set under Inventory; adjust any row after adding.
+          </div>
+        </div>
+      )}
 
       <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 12, padding: '18px 20px', boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
