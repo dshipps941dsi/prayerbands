@@ -551,17 +551,37 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       {(() => {
         const isOpen = connectOpen ?? connections.length === 0
         return (
-      <div style={{ backgroundColor: '#fff', border: `1px solid ${GOLD}`, borderRadius: 12, padding: isOpen ? '14px 16px 16px' : '14px 16px 0', marginBottom: 16 }}>
-        {/* The gold band is the toggle. Folded, it reads as an invitation with
-            the three ways listed so people know what opening it gets them. */}
-        <button type="button" onClick={() => setConnectOpen(!isOpen)} aria-expanded={isOpen}
-          style={{ display: 'block', width: 'calc(100% + 32px)', margin: isOpen ? '-14px -16px 14px' : '-14px -16px 0', padding: '11px 16px', background: GOLD, color: 'var(--pb-text-on-primary, #0f0d09)', border: 'none', borderRadius: isOpen ? '11px 11px 0 0' : 11, cursor: 'pointer', fontFamily: serif, textAlign: 'center' }}>
-          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-            <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{isOpen ? 'Connect a prayer partner via' : '+ Add a prayer partner'}</span>
-            <span aria-hidden="true" style={{ fontSize: 11, display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
-          </span>
-          {!isOpen && <span style={{ display: 'block', fontSize: 12, fontWeight: 500, opacity: 0.85, marginTop: 3, letterSpacing: '0.02em' }}>Tap phones &middot; share a code &middot; scan a QR</span>}
-        </button>
+      <div style={{ backgroundColor: '#fff', border: `1px solid ${GOLD}`, borderRadius: 12, padding: isOpen ? '14px 16px 16px' : 8, marginBottom: 16 }}>
+        <style>{`
+          .pb-connect-cta { transition: background-color 0.15s, transform 0.1s; }
+          .pb-connect-cta:hover { background-color: #d4b77c !important; }
+          .pb-connect-cta:active { transform: scale(0.985); }
+          .pb-connect-cta:focus-visible { outline: 2px solid #15223B; outline-offset: 2px; }
+        `}</style>
+        {isOpen ? (
+          /* Open: the gold band is a section header that also closes the card. */
+          <button type="button" onClick={() => setConnectOpen(false)} aria-expanded
+            style={{ display: 'block', width: 'calc(100% + 32px)', margin: '-14px -16px 14px', padding: '11px 16px', background: GOLD, color: 'var(--pb-text-on-primary, #0f0d09)', border: 'none', borderRadius: '11px 11px 0 0', cursor: 'pointer', fontFamily: serif, textAlign: 'center' }}>
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+              <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Connect a prayer partner via</span>
+              <span aria-hidden="true" style={{ fontSize: 11, display: 'inline-block', transform: 'rotate(180deg)' }}>▼</span>
+            </span>
+          </button>
+        ) : (
+          /* Closed: a pill inset inside the card, with a plus badge on the left
+             and a chevron badge on the right. Shape and the badges do the work
+             a bevel would — a full-width band reads as a heading, this reads as
+             something to press. */
+          <button type="button" className="pb-connect-cta" onClick={() => setConnectOpen(true)} aria-expanded={false}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '9px 10px 9px 9px', background: GOLD, color: 'var(--pb-text-on-primary, #0f0d09)', border: 'none', borderRadius: 999, cursor: 'pointer', fontFamily: serif, textAlign: 'left' }}>
+            <span aria-hidden="true" style={{ flexShrink: 0, width: 34, height: 34, borderRadius: 17, background: 'rgba(255,255,255,0.92)', color: '#15223B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, lineHeight: 1 }}>+</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Add a prayer partner</span>
+              <span style={{ display: 'block', fontSize: 12, fontWeight: 500, opacity: 0.85, marginTop: 2, letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Tap phones &middot; share a code &middot; scan a QR</span>
+            </span>
+            <span aria-hidden="true" style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 14, border: '1.5px solid rgba(15,13,9,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>▼</span>
+          </button>
+        )}
 
         {isOpen && <>
         <div style={{ display: 'flex', gap: 4, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3, marginBottom: 14 }}>
