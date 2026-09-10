@@ -335,13 +335,15 @@ export async function POST(req: NextRequest) {
           if (giverProfile?.email && giverProfile.email_notifications !== false) {
             const resend = new Resend(process.env.RESEND_API_KEY)
             const eGiver = escapeHtml(giverProfile.full_name || 'friend')
-            const eHolder = escapeHtml(name || 'Someone')
+            const eHolder = escapeHtml(cleanName || 'Someone')
             const eBand = escapeHtml(bandId)
-            const where = [geoCity, geoCountry].filter(Boolean).join(', ')
+            // "Venice, FL" at home; the country only when it is not the US.
+            const isUS = /^(us|usa|united states)$/i.test(String(geoCountry || ''))
+            const where = [geoCity, geoState, isUS ? null : geoCountry].filter(Boolean).join(', ')
             await resend.emails.send({
               from: 'Prayer Bands <bands@prayerbands.com>',
               to: [giverProfile.email],
-              subject: `🎁 ${name || 'Someone'} received your Prayer Band`,
+              subject: `🎁 ${cleanName || 'Someone'} received your Prayer Band`,
               html: `
                 <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;background:#fdf8f0;border-radius:12px;overflow:hidden;border:1px solid #e2d5b8">
                   <div style="background:#0d3d6e;padding:32px;text-align:center">
@@ -351,7 +353,7 @@ export async function POST(req: NextRequest) {
                   </div>
                   <div style="padding:32px">
                     <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 20px">
-                      Hi ${eGiver} &mdash; <strong style="color:#0d3d6e">${eHolder}</strong> tapped band <strong>${eBand}</strong>${where ? ` in ${escapeHtml(where)}` : ''} and added it to their account. Your prayer is now traveling with them.
+                      Hi ${eGiver} &mdash; <strong style="color:#0d3d6e">${eHolder}</strong> tapped band <strong>${eBand}</strong>${where ? ` in ${escapeHtml(where)}` : ''} and added it to their account. Your Prayer Band is now traveling with them.
                     </p>
                     <div style="text-align:center;margin:28px 0">
                       <a href="https://prayerbands.com/band/${eBand}" style="display:inline-block;background:#2b7bc4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700">Follow its journey ✝</a>

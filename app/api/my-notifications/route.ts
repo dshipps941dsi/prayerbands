@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
     if (giftIds.length) {
       const { data: giftRegs } = await admin
         .from('registrations')
-        .select('id, band_id, user_name, city, country, registered_at')
+        .select('id, band_id, user_name, city, state, country, registered_at')
         .in('band_id', giftIds)
         .order('registered_at', { ascending: true })
       const firstByBand = new Map<string, any>()
@@ -99,9 +99,10 @@ export async function GET(req: NextRequest) {
       for (const r of Array.from(firstByBand.values())) {
         if (new Date(r.registered_at) < new Date(since)) continue
         const who = r.user_name || 'Someone'
-        const where = [r.city, r.country].filter(Boolean).join(', ')
+        const isUS = /^(us|usa|united states)$/i.test(String(r.country || ''))
+        const where = [r.city, r.state, isUS ? null : r.country].filter(Boolean).join(', ')
         items.push({ id: `gift-${r.id}`, type: 'gift_received', icon: '🎁', ts: r.registered_at, band_id: r.band_id,
-          title: `${who} received your gift band`, detail: where ? `Claimed in ${where} — your prayer is traveling with them.` : 'They claimed it — your prayer is traveling with them.' })
+          title: `${who} received your gift band`, detail: where ? `Claimed in ${where} — your Prayer Band is traveling with them.` : 'They claimed it — your Prayer Band is traveling with them.' })
       }
     }
   }
