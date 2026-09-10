@@ -1,0 +1,35 @@
+<!--
+  Supabase Auth email template for the 6-digit sign-in code.
+
+  Where it goes: Supabase Dashboard → Authentication → Email Templates.
+  Paste this body into BOTH "Magic Link" and "Confirm signup" — the first
+  covers returning people, the second covers a brand-new address, and the
+  app uses the same code flow for both.
+
+  Subject line for both:  Your Prayer Bands code: {{ .Token }}
+
+  Variables: {{ .Token }} is the 6-digit code, {{ .Email }} the address.
+  Kept to the same look as the gift and shipping emails (navy header, cream
+  card, Georgia) so a person recognises it in a crowded inbox.
+-->
+<div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;background:#fdf8f0;border-radius:12px;overflow:hidden;border:1px solid #e2d5b8">
+  <div style="background:#0d3d6e;padding:28px 32px;text-align:center">
+    <div style="font-size:30px;color:#f5a623;margin-bottom:6px">&#10013;&#xFE0E;</div>
+    <h1 style="font-family:Georgia,serif;font-size:22px;color:#fff;margin:0;font-weight:400">Your sign-in code</h1>
+    <p style="color:rgba(255,255,255,0.7);font-size:14px;margin:8px 0 0">Enter it on the page you just left</p>
+  </div>
+  <div style="padding:32px">
+    <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 20px">
+      Here is the code to finish signing in to <strong style="color:#0d3d6e">Prayer Bands</strong>. It works for the next hour.
+    </p>
+    <div style="text-align:center;margin:24px 0">
+      <div style="display:inline-block;background:#fff;border:1px solid #e2d5b8;border-radius:10px;padding:16px 28px;font-size:34px;letter-spacing:0.3em;color:#0d3d6e;font-weight:700;font-family:Georgia,serif">{{ .Token }}</div>
+    </div>
+    <p style="font-size:14px;color:#4a5568;line-height:1.7;margin:0 0 8px">
+      If you didn&rsquo;t ask for this, you can ignore it &mdash; nothing happens without the code.
+    </p>
+    <p style="font-size:13px;color:#8a8f98;line-height:1.6;margin:20px 0 0;text-align:center">
+      Sent to {{ .Email }} &middot; Prayer Bands, prayerbands.com
+    </p>
+  </div>
+</div>
