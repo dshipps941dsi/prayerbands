@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { sendPush } from '@/lib/push'
 
 // "People you gave a band to" (and who gave you one): immediate neighbors in a
 // band's registration chain — the same rule my-network uses to list lineage
@@ -99,5 +100,16 @@ export async function POST(req: NextRequest) {
 
   const { error } = await svc.from('prayer_encouragements').insert({ from_user_id: user.id, to_user_id: toUserId, note })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Nudge their phone. The inbox item above is the record; this just makes
+  // sure they hear about it without having to open the app first.
+  const { data: me } = await svc.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
+  const fromName = me?.full_name || 'A prayer partner'
+  await sendPush(toUserId, {
+    title: `${fromName} prayed for you`,
+    body: note || 'Open to see it and pray for them back.',
+    url: '/my-band',
+    tag: `prayed-for-${user.id}`,
+  })
   return NextResponse.json({ ok: true })
 }

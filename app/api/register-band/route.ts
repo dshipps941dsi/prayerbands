@@ -8,6 +8,7 @@ import { subdivisionCentroid } from '@/lib/locations'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { titleCase, formatState, formatCountry } from '@/lib/text-format'
+import { sendPush } from '@/lib/push'
 
 export async function POST(req: NextRequest) {
   const supabase = createClient(
@@ -332,6 +333,17 @@ export async function POST(req: NextRequest) {
             .select('email, full_name, email_notifications')
             .eq('id', giverId)
             .maybeSingle()
+          {
+            // Push first: it is its own opt-in (per device), separate from email.
+            const isUSp = /^(us|usa|united states)$/i.test(String(geoCountry || ''))
+            const wherep = [geoCity, geoState, isUSp ? null : geoCountry].filter(Boolean).join(', ')
+            await sendPush(giverId, {
+              title: `${cleanName || 'Someone'} received your Prayer Band`,
+              body: wherep ? `Claimed in ${wherep}. Your Prayer Band is traveling with them.` : 'Your Prayer Band is traveling with them.',
+              url: '/my-band',
+              tag: `gift-${bandId}`,
+            })
+          }
           if (giverProfile?.email && giverProfile.email_notifications !== false) {
             const resend = new Resend(process.env.RESEND_API_KEY)
             const eGiver = escapeHtml(giverProfile.full_name || 'friend')

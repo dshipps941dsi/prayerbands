@@ -4,6 +4,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { resolveBandRecipient, isBandHolder, nameFromProfile } from '@/lib/network'
 import { escapeHtml } from '@/lib/escape-html'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { sendPush } from '@/lib/push'
 
 // POST /api/network/request  { band_id }
 // Sends a connection request from the viewer to the band's holder.
@@ -79,6 +80,12 @@ export async function POST(req: NextRequest) {
       ])
       const requesterName = nameFromProfile(sprofile)
       const eRequesterName = escapeHtml(requesterName)
+      await sendPush(recipientId, {
+        title: `${requesterName} wants to be your prayer partner`,
+        body: 'Open to accept the request.',
+        url: '/my-band',
+        tag: `partner-request-${user.id}`,
+      })
       if (rprofile?.email) {
         const resend = new Resend(process.env.RESEND_API_KEY!)
         await resend.emails.send({

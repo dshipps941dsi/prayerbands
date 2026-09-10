@@ -7,6 +7,7 @@ import { escapeHtml } from '@/lib/escape-html'
 import Icon, { type IconName } from '@/components/Icon'
 import AvatarBadge from '@/components/AvatarBadge'
 import NotificationsPanel from '@/components/NotificationsPanel'
+import PushToggle from '@/components/PushToggle'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
 import PrayerTabs from '@/components/PrayerTabs'
 import FocusOverlay from '@/components/FocusOverlay'
@@ -1015,6 +1016,11 @@ export default function BandPage() {
                     )}
                   </div>
                 )}
+                {/* Push notifications for this phone — the thing that makes a
+                    "prayed for you" actually reach someone who isn't in the app. */}
+                <div style={{ background: 'white', borderRadius: 12, padding: '14px 18px', border: '1px solid rgba(44,24,16,0.1)' }}>
+                  <PushToggle compact />
+                </div>
                 {/* My Messages — the same feed as the top mailbox, collapsed by
                     default. Expanding mounts the feed, which marks messages seen
                     (clears the tab + mailbox badge). */}

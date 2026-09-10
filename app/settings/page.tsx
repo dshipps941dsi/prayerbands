@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { AVATAR_ICONS, AVATAR_FONTS, initialsFor, fontStack } from "@/lib/avatars";
+import PushToggle from "@/components/PushToggle";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -321,6 +322,9 @@ export default function SettingsPage() {
                 >
                   <span className="set-knob" />
                 </button>
+              </div>
+              <div style={{ borderTop: "1px solid rgba(10,22,40,0.10)", marginTop: 14, paddingTop: 14 }}>
+                <PushToggle />
               </div>
             </div>
 

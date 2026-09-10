@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { sendPush } from '@/lib/push'
 
 // POST /api/network/respond  { connection_id, action: 'accept' | 'decline' }
 // Only the recipient of a pending request may respond. Decline deletes the row
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
     // RLS only returns connections the viewer is part of.
     const { data: conn } = await supabase
       .from('prayer_network_connections')
-      .select('id, recipient_id, status')
+      .select('id, recipient_id, requester_id, status')
       .eq('id', connection_id)
       .maybeSingle()
 
@@ -43,6 +44,17 @@ export async function POST(req: NextRequest) {
         .eq('id', connection_id)
       if (error) {
         return NextResponse.json({ error: 'Failed to accept request' }, { status: 500 })
+      }
+      // Tell the person who asked. Best effort; the acceptance is already saved.
+      if (conn.requester_id) {
+        const svc = createServiceClient()
+        const { data: me } = await svc.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
+        await sendPush(conn.requester_id, {
+          title: `${me?.full_name || 'Your partner'} accepted your request`,
+          body: "You're prayer partners now. Open to send them a prayer.",
+          url: '/my-band',
+          tag: `partner-accepted-${user.id}`,
+        })
       }
       return NextResponse.json({ success: true, status: 'accepted' })
     }

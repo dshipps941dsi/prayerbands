@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isTeamAdmin } from '@/lib/team'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { sendPush } from '@/lib/push'
 
 // Team messaging: a note that drops into a person's inbox (or everyone's).
 // The classic use is "I prayed for you" to one member who registered.
@@ -72,7 +73,15 @@ export async function POST(req: NextRequest) {
     cta_label: ctaLabel, cta_href: ctaHref, created_by: user.id,
   }).select('id').single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true, id: data.id })
+
+  // Push it to whoever has notifications on; the inbox item is the record.
+  const { sent } = await sendPush(targetUserId || 'everyone', {
+    title,
+    body: message.length > 140 ? message.slice(0, 137) + '…' : message,
+    url: ctaHref || '/my-band',
+    tag: `announcement-${data.id}`,
+  })
+  return NextResponse.json({ ok: true, id: data.id, pushed: sent })
 }
 
 export async function PATCH(req: NextRequest) {
