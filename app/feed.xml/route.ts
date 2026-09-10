@@ -3,6 +3,7 @@ import { getAllPosts } from '@/lib/blog'
 // RSS for the blog: feeds Pinterest, email tools and readers, and is one more
 // signal to crawlers that the section is alive.
 const SITE = 'https://prayerbands.com'
+export const revalidate = 3600
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 export function GET() {

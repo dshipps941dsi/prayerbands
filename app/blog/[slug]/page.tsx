@@ -8,6 +8,11 @@ import { blogStyles } from '../styles'
 
 const SITE = 'https://prayerbands.com'
 
+// Scheduled posts: a slug not built at deploy time renders on first request
+// once its date arrives, and every post page refreshes hourly.
+export const revalidate = 3600
+export const dynamicParams = true
+
 export function generateStaticParams() {
   return getAllPosts().map(p => ({ slug: p.slug }))
 }
@@ -34,7 +39,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const post = getPost(slug)
-  if (!post) notFound()
+  // Future-dated posts stay hidden until their day, matching the index.
+  if (!post || post.date > new Date().toISOString().slice(0, 10)) notFound()
 
   const html = renderMarkdown(post.body)
   const related = getAllPosts()

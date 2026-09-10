@@ -5,6 +5,9 @@ import SiteFooter from '@/components/SiteFooter'
 import { getAllPosts, formatDate } from '@/lib/blog'
 import { blogStyles } from './styles'
 
+// Re-render hourly so a post whose date has arrived appears without a deploy.
+export const revalidate = 3600
+
 export const metadata: Metadata = {
   title: 'Blog — Prayer Bands',
   description: 'Practical help for praying for the people in your life: by name, with a partner, as a family, and through the seasons of the year.',

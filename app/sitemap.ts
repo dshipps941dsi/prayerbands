@@ -6,6 +6,8 @@ import { getAllPosts } from '@/lib/blog'
 // or both — and robots.ts keeps crawlers off them.
 const SITE = 'https://prayerbands.com'
 
+export const revalidate = 3600
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const pages: MetadataRoute.Sitemap = [
     { url: `${SITE}/`, changeFrequency: 'weekly', priority: 1 },
