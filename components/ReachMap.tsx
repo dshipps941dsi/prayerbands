@@ -80,18 +80,24 @@ export default function ReachMap({ bandId }: { bandId: string }) {
     data.edges.filter(e => e.kind === 'gift').forEach(e => parentOf.set(e.to, e.from))
     const depthOf = new Map(data.nodes.map(n => [n.id, n.depth]))
     // Walk up to the depth-1 ancestor (the direct recipient that starts the branch).
-    const branchRoot = (id: string): string => {
+    // Both walks are bounded: a self-edge or a cycle in the data (the server
+    // now filters these, but the page must never hang on what it is handed)
+    // would otherwise loop forever and freeze the whole band page.
+    const climb = (id: string, stopDepth: number): string => {
       let cur = id
-      while (parentOf.has(cur) && (depthOf.get(cur) ?? 0) > 1) cur = parentOf.get(cur)!
+      const seen = new Set<string>()
+      while (parentOf.has(cur) && (depthOf.get(cur) ?? 0) > stopDepth && !seen.has(cur)) {
+        seen.add(cur)
+        const next = parentOf.get(cur)!
+        if (next === cur) break
+        cur = next
+      }
       return cur
     }
+    const branchRoot = (id: string): string => climb(id, 1)
     // Walk up to the depth-0 top-level giver — used to filter the map by which
     // top-level branches the viewer has selected.
-    const rootOf = (id: string): string => {
-      let cur = id
-      while (parentOf.has(cur) && (depthOf.get(cur) ?? 0) > 0) cur = parentOf.get(cur)!
-      return cur
-    }
+    const rootOf = (id: string): string => climb(id, 0)
     const branchColorByRoot = new Map<string, string>()
     const colorForBranch = (id: string): string => {
       const root = branchRoot(id)

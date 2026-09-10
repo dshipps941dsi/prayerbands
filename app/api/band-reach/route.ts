@@ -88,13 +88,22 @@ export async function GET(req: NextRequest) {
     for (const b of given as any[]) {
       const r = latestByBand.get(b.band_id)
       if (!r) continue // never registered — no recipient/place to show
-      const recipientKey = keyOf(r)
       const giverKey = `u:${b.upline_user_id}`
       if (!nodes.has(giverKey)) continue // giver isn't in the tree (shouldn't happen)
+      // A band registered on the giver's own signed-in phone (a kid's band set
+      // up by a parent, say) has the giver as its "recipient". Keyed by account
+      // that is an edge from a person to themself, and the map's ancestor walk
+      // never terminates on it. Show it as a named leaf under the giver instead.
+      const selfRegistered = !!r.user_id && r.user_id === b.upline_user_id
+      const recipientKey = selfRegistered ? `r:${r.id}` : keyOf(r)
+      if (recipientKey === giverKey) continue
+      // One place in the tree per person: a second gift to someone already
+      // shown would draw a cycle (A→B→A), which is the other way to hang.
+      if (nodes.has(recipientKey)) continue
       addNode(recipientKey, r, depth)
       edges.push({ from: giverKey, to: recipientKey, kind: 'gift', depth })
       addedThisRound = true
-      if (r.user_id && !expanded.has(r.user_id)) next.push(r.user_id)
+      if (!selfRegistered && r.user_id && !expanded.has(r.user_id)) next.push(r.user_id)
       if (nodes.size >= MAX_NODES) break
     }
     if (addedThisRound) generations = depth
