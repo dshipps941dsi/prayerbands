@@ -91,6 +91,7 @@ export default function BandsManager() {
       msg += data.linked
         ? ' Linked to their account.'
         : ' No account yet — it will attach automatically when they sign up.'
+      if (data.placed?.length) msg += ` Placed under them: ${data.placed.join(', ')}.`
       if (data.missing?.length) msg += ` Not found: ${data.missing.join(', ')}.`
       setUplineMsg(msg)
       setUplineIds('')
@@ -174,7 +175,7 @@ export default function BandsManager() {
       {/* Attribute bands to whoever hands them out */}
       <div style={card}>
         <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 6, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Credit Bands to a Giver</h2>
-        <p style={{ fontSize: 13, color: C.secondary, marginBottom: 18, lineHeight: 1.5 }}>Records who put these bands into circulation. Their name shows as &ldquo;Given by&rdquo; at the top of each band&rsquo;s journey. The person does <strong>not</strong> need an account yet — the credit attaches automatically the moment they sign up with this address.</p>
+        <p style={{ fontSize: 13, color: C.secondary, marginBottom: 18, lineHeight: 1.5 }}>Records who put these bands into circulation. Their name shows as &ldquo;Given by&rdquo; at the top of each band&rsquo;s journey, and anyone who has already claimed one of these bands is placed under the giver (unless they already have someone above them). Use it to fix bands that were handed out without going through the Hand out tool. The giver does <strong>not</strong> need an account yet — the credit attaches automatically the moment they sign up with this address.</p>
         <label style={label}>Giver&rsquo;s email</label>
         <input value={uplineEmail} onChange={e => setUplineEmail(e.target.value)} placeholder="taylor@example.com" style={input} />
         <label style={label}>Band IDs (one per line, or comma/space separated)</label>

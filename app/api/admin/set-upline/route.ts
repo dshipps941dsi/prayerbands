@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     .from('bands')
     .update({ upline_email: address, upline_user_id: authUser?.id ?? null })
     .in('band_id', ids)
-    .select('band_id')
+    .select('band_id, owner_id')
 
   if (error) {
     console.error('[set-upline] error:', error)
@@ -57,6 +57,30 @@ export async function POST(req: NextRequest) {
   const assigned = (updated ?? []).map((b: { band_id: string }) => b.band_id)
   const missing = ids.filter(id => !assigned.includes(id))
 
+  // A band credited after it was already claimed: the holder should sit under
+  // the giver the same way they would have if the credit had been there when
+  // they tapped (claim-band does this at claim time). First-wins, like there —
+  // someone who already has an upline keeps it. Only when the giver has an
+  // account; an email-only credit resolves later and there is no id to point at.
+  let placed: string[] = []
+  if (authUser?.id) {
+    const holders = (updated ?? [])
+      .filter((b: any) => b.owner_id && b.owner_id !== authUser.id)
+      .map((b: any) => ({ owner_id: b.owner_id as string, band_id: b.band_id as string }))
+    const seen = new Set<string>()
+    for (const h of holders) {
+      if (seen.has(h.owner_id)) continue
+      seen.add(h.owner_id)
+      const { data: p } = await admin
+        .from('profiles')
+        .update({ upline_user_id: authUser.id, upline_band_id: h.band_id })
+        .eq('id', h.owner_id)
+        .is('upline_user_id', null)
+        .select('full_name')
+      if (p && p.length) placed.push(p[0].full_name || h.owner_id)
+    }
+  }
+
   return NextResponse.json({
     success: true,
     email: address,
@@ -64,5 +88,6 @@ export async function POST(req: NextRequest) {
     count: assigned.length,
     assigned,
     missing,
+    placed,
   })
 }
