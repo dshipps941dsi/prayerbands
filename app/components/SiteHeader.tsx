@@ -8,6 +8,7 @@ const LINKS = [
   { label: "Shop", href: "/store", primary: true },
   { label: "How It Works", href: "/how-it-works", primary: false },
   { label: "Prayer Wall", href: "/prayer-wall", primary: false },
+  { label: "Blog", href: "/blog", primary: false },
   { label: "Circles", href: "/prayer-circles", primary: false },
   { label: "Contact", href: "/contact", primary: true },
   { label: "Sign In", href: "/signin", primary: false },

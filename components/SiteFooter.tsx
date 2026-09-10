@@ -105,6 +105,7 @@ export default function SiteFooter() {
             <Link href="/how-it-works" className="pbf-link">How It Works</Link>
             <Link href="/contact" className="pbf-link">Contact</Link>
             <Link href="/faq" className="pbf-link">FAQ</Link>
+            <Link href="/blog" className="pbf-link">Blog</Link>
           </div>
           <div>
             <div className="pbf-col-title">Account</div>
