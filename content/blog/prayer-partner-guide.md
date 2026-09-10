@@ -1,7 +1,7 @@
 ---
 title: The Prayer Partner Guide: Two People, One Week at a Time
 description: How to find a prayer partner, what to actually do together each week, and how to keep it going when life gets busy.
-date: 2026-09-10
+date: 2026-09-12
 tags: [prayer-partners, how-to, church]
 ---
 
