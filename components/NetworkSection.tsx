@@ -138,6 +138,9 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [partnerCode, setPartnerCode] = useState('')
   // "Connect a prayer partner" chooser: tap bands, share/enter a code, or scan a QR.
   const [connectMode, setConnectMode] = useState<'tap' | 'code' | 'scan'>('tap')
+  // The chooser is folded away once someone already has partners; a first-timer
+  // sees it open because it is the only thing on the page to do.
+  const [connectOpen, setConnectOpen] = useState<boolean | null>(null)
   const [codeShared, setCodeShared] = useState(false)
   // The viewer's permanent connect code + whether their QR is expanded.
   const [myConnectCode, setMyConnectCode] = useState<string | null>(null)
@@ -545,11 +548,22 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                  your band and shows "Add to Prayer Partners").
           Code — share your code, or enter theirs to jump to their band page.
           Scan — show a QR to your permanent connect link. */}
-      <div style={{ backgroundColor: '#fff', border: `1px solid ${GOLD}`, borderRadius: 12, padding: '14px 16px 16px', marginBottom: 16 }}>
-        {/* Header as a full-width gold band across the top of the card (bleeds
-            past the card padding) — a real section header, not a small label. */}
-        <div style={{ margin: '-14px -16px 14px', padding: '11px 16px', background: GOLD, color: 'var(--pb-text-on-primary, #0f0d09)', borderRadius: '11px 11px 0 0', fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: serif, textAlign: 'center' }}>Connect a prayer partner via</div>
+      {(() => {
+        const isOpen = connectOpen ?? connections.length === 0
+        return (
+      <div style={{ backgroundColor: '#fff', border: `1px solid ${GOLD}`, borderRadius: 12, padding: isOpen ? '14px 16px 16px' : '14px 16px 0', marginBottom: 16 }}>
+        {/* The gold band is the toggle. Folded, it reads as an invitation with
+            the three ways listed so people know what opening it gets them. */}
+        <button type="button" onClick={() => setConnectOpen(!isOpen)} aria-expanded={isOpen}
+          style={{ display: 'block', width: 'calc(100% + 32px)', margin: isOpen ? '-14px -16px 14px' : '-14px -16px 0', padding: '11px 16px', background: GOLD, color: 'var(--pb-text-on-primary, #0f0d09)', border: 'none', borderRadius: isOpen ? '11px 11px 0 0' : 11, cursor: 'pointer', fontFamily: serif, textAlign: 'center' }}>
+          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{isOpen ? 'Connect a prayer partner via' : '+ Add a prayer partner'}</span>
+            <span aria-hidden="true" style={{ fontSize: 11, display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+          </span>
+          {!isOpen && <span style={{ display: 'block', fontSize: 12, fontWeight: 500, opacity: 0.85, marginTop: 3, letterSpacing: '0.02em' }}>Tap phones &middot; share a code &middot; scan a QR</span>}
+        </button>
 
+        {isOpen && <>
         <div style={{ display: 'flex', gap: 4, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3, marginBottom: 14 }}>
           {([['tap', '📱', 'Tap'], ['code', '🔢', 'Code'], ['scan', '▦', 'Scan']] as const).map(([id, ic, lbl]) => {
             const on = connectMode === id
@@ -630,7 +644,10 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             <p style={{ fontSize: 13, color: GRAY, margin: 0, fontStyle: 'italic', textAlign: 'center' }}>Your connect code is loading&hellip;</p>
           )
         )}
+        </>}
       </div>
+        )
+      })()}
 
       {/* Pending incoming requests */}
       {pending.map(p => (
