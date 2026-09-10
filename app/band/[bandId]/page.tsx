@@ -8,6 +8,7 @@ import Icon, { type IconName } from '@/components/Icon'
 import AvatarBadge from '@/components/AvatarBadge'
 import NotificationsPanel from '@/components/NotificationsPanel'
 import PushToggle from '@/components/PushToggle'
+import { syncAppBadge } from '@/lib/app-badge'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
 import PrayerTabs from '@/components/PrayerTabs'
 import FocusOverlay from '@/components/FocusOverlay'
@@ -262,6 +263,9 @@ export default function BandPage() {
       .then(d => { if (d) setUnread(d.unread || 0) })
       .catch(() => {})
   }, [userId])
+
+  // Keep the number on the installed app's icon equal to the inbox count.
+  useEffect(() => { if (userId) syncAppBadge(unread) }, [unread, userId])
 
   // Claim an unowned band for whoever is signed in and holding it.
   //

@@ -6,6 +6,21 @@ self.addEventListener('install', () => self.skipWaiting())
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
 self.addEventListener('fetch', () => { /* pass through to the network */ })
 
+// Icon badge count, shared with the page (lib/app-badge.ts) through the Cache
+// API: the page writes the true unread count whenever it has one; each push
+// received while the app is closed adds one to it.
+const BADGE_CACHE = 'pb-badge'
+const BADGE_KEY = '/badge-count'
+async function bumpBadge() {
+  try {
+    const c = await caches.open(BADGE_CACHE)
+    const cur = await c.match(BADGE_KEY)
+    const n = (cur ? parseInt(await cur.text(), 10) || 0 : 0) + 1
+    await c.put(BADGE_KEY, new Response(String(n)))
+    if (typeof self.navigator.setAppBadge === 'function') await self.navigator.setAppBadge(n)
+  } catch { /* badge is a nicety */ }
+}
+
 // A push arrives as JSON { title, body, url, tag } from lib/push.ts.
 self.addEventListener('push', (event) => {
   let data = {}
@@ -19,7 +34,7 @@ self.addEventListener('push', (event) => {
     renotify: !!data.tag,
     data: { url: data.url || '/my-band' },
   }
-  event.waitUntil(self.registration.showNotification(title, options))
+  event.waitUntil(Promise.all([self.registration.showNotification(title, options), bumpBadge()]))
 })
 
 // Tapping the notification brings the app forward on the right page: reuse an
