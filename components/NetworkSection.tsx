@@ -178,6 +178,26 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [audience, setAudience] = useState<string>('private')
   const [excluded, setExcluded] = useState<string[]>([])   // partners left out of a "My Partners" share
   const [prayedFor, setPrayedFor] = useState<Set<string>>(new Set())  // partners you've told "I prayed for you"
+  // The prayer chain: everything you've sent and everything that came back,
+  // plus the last time you prayed for each partner (shown beside their name).
+  type ChainItem = { id: string; user_id: string; name: string; avatar?: AvatarSpec; note: string; at: string }
+  const [chain, setChain] = useState<{ sent: ChainItem[]; received: ChainItem[]; lastSentByUser: Record<string, string> }>({ sent: [], received: [], lastSentByUser: {} })
+  const [chainOpen, setChainOpen] = useState(false)
+  const [chainTab, setChainTab] = useState<'sent' | 'received'>('sent')
+  async function loadChain() {
+    try {
+      const r = await fetch('/api/network/prayer-chain')
+      if (r.ok) { const d = await r.json(); setChain({ sent: d.sent ?? [], received: d.received ?? [], lastSentByUser: d.lastSentByUser ?? {} }) }
+    } catch {}
+  }
+  const timeAgo = (iso: string) => {
+    const s = Math.max(0, (Date.now() - Date.parse(iso)) / 1000)
+    if (s < 60) return 'just now'
+    if (s < 3600) return `${Math.floor(s / 60)}m ago`
+    if (s < 86400) return `${Math.floor(s / 3600)}h ago`
+    if (s < 86400 * 14) return `${Math.floor(s / 86400)}d ago`
+    return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  }
   const [composeFor, setComposeFor] = useState<string | null>(null)   // partner whose message box is open
   const [composeText, setComposeText] = useState('')
   const [sendingTo, setSendingTo] = useState<string | null>(null)
@@ -200,6 +220,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       showPartners ? fetch('/api/my-bands') : Promise.resolve(null),
       (showPartners || showRequests) ? fetch('/api/network/groups') : Promise.resolve(null),
       showRequests ? fetch('/api/network/lists') : Promise.resolve(null),
+      showPartners ? loadChain() : Promise.resolve(null),
     ])
     if (netRes.ok) {
       const d = await netRes.json()
@@ -429,6 +450,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     setPrayedFor(prev => new Set([...prev, uid]))
     setComposeFor(null)
     setComposeText('')
+    loadChain()
   }
 
   async function mute(authorId: string, name: string) {
@@ -750,24 +772,29 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         const inGroups = groupsForMember(c.user_id)
         const menuOpen = groupMenuFor === c.user_id
         const composing = composeFor === c.user_id
+        // "Sent" holds for 12h (the server's dedupe window); after that the
+        // button comes back with the last time shown beside it.
+        const lastSent = chain.lastSentByUser[c.user_id]
+        const sentRecently = prayedFor.has(c.user_id) || (!!lastSent && Date.now() - Date.parse(lastSent) < 12 * 3600 * 1000)
         return (
         <div key={c.connection_id ?? `lin-${c.user_id}`} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '9px 12px', marginBottom: 7 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <AvatarBadge {...(c.avatar || {})} name={c.name} size={30} />
             <p style={{ fontFamily: serif, fontSize: 14.5, fontWeight: 700, color: DARK, margin: 0, flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
             {relationBadge(relationOf(c))}
-            {prayedFor.has(c.user_id) ? (
-              <span title={`Sent to ${c.name.split(' ')[0]}`} style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: GRAY, whiteSpace: 'nowrap' }}>✓ Sent</span>
-            ) : (
+            {sentRecently ? (
+              <span title={`Sent to ${c.name.split(' ')[0]}`} style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: GRAY, whiteSpace: 'nowrap' }}>✓ Sent{lastSent ? ` ${timeAgo(lastSent)}` : ''}</span>
+            ) : (<>
+              {lastSent && <span title="Last time you prayed for them" style={{ fontSize: 11, fontFamily: serif, color: GRAY, whiteSpace: 'nowrap' }}>🙏 {timeAgo(lastSent)}</span>}
               <button onClick={() => { setComposeFor(composing ? null : c.user_id); setComposeText('') }} title="Send a prayer / message"
                 style={{ fontSize: 12, fontWeight: 700, fontFamily: serif, color: composing ? '#fff' : GOLD, background: composing ? GOLD : '#FFF8E7', border: `1px solid ${GOLD}`, borderRadius: 16, padding: '4px 11px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 🙏 Pray
               </button>
-            )}
+            </>)}
           </div>
 
           {/* Compose — send this person a prayer/message straight to their inbox. */}
-          {composing && !prayedFor.has(c.user_id) && (
+          {composing && !sentRecently && (
             <div style={{ marginTop: 9 }}>
               <textarea
                 autoFocus
@@ -834,6 +861,60 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       )}
       {q && visiblePartners.length === 0 && filteredPartners.length > 0 && (
         <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: '2px 0 12px' }}>No partners match “{partnerSearch}”.</p>
+      )}
+
+      {/* Prayer chain — your side of "I prayed for you": what you've sent and
+          what has come back, newest first. Folded by default; the header
+          carries the counts so it earns a tap. */}
+      {(chain.sent.length > 0 || chain.received.length > 0) && (
+        <div style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, marginTop: 10, marginBottom: 12, overflow: 'hidden' }}>
+          <button type="button" onClick={() => setChainOpen(o => !o)} aria-expanded={chainOpen}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '11px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+            <span aria-hidden="true" style={{ fontSize: 16 }}>🙏</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontFamily: serif, fontSize: 14.5, fontWeight: 700, color: DARK }}>Prayer chain</span>
+              <span style={{ display: 'block', fontSize: 12, color: GRAY, fontFamily: 'Georgia, serif', marginTop: 1 }}>
+                {chain.sent.length} sent &middot; {chain.received.length} received
+                {chain.sent[0] && <> &middot; last sent {timeAgo(chain.sent[0].at)}</>}
+              </span>
+            </span>
+            <span aria-hidden="true" style={{ fontSize: 10, color: GRAY, display: 'inline-block', transform: chainOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+          </button>
+          {chainOpen && (
+            <div style={{ borderTop: `1px solid ${BORDER}`, padding: '10px 14px 12px' }}>
+              <div style={{ display: 'flex', gap: 4, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3, marginBottom: 10 }}>
+                {([['sent', `Sent · ${chain.sent.length}`], ['received', `Received · ${chain.received.length}`]] as const).map(([id, lbl]) => (
+                  <button key={id} onClick={() => setChainTab(id)}
+                    style={{ flex: 1, padding: '7px 4px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12.5, fontFamily: serif, fontWeight: chainTab === id ? 700 : 500, background: chainTab === id ? '#fff' : 'transparent', color: chainTab === id ? DARK : GRAY, boxShadow: chainTab === id ? '0 1px 3px rgba(0,0,0,0.08)' : 'none' }}>
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+              {(chainTab === 'sent' ? chain.sent : chain.received).length === 0 ? (
+                <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: '4px 0' }}>
+                  {chainTab === 'sent' ? 'Nothing sent yet — tap 🙏 Pray beside a partner.' : 'No one has sent you one yet.'}
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {(chainTab === 'sent' ? chain.sent : chain.received).slice(0, 30).map(it => (
+                    <div key={it.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <AvatarBadge {...(it.avatar || {})} name={it.name} size={26} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'baseline' }}>
+                          <span style={{ fontFamily: serif, fontSize: 13.5, fontWeight: 700, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {chainTab === 'sent' ? <>You prayed for {it.name}</> : <>{it.name} prayed for you</>}
+                          </span>
+                          <span style={{ fontSize: 11, color: GRAY, fontFamily: 'Georgia, serif', whiteSpace: 'nowrap', flexShrink: 0 }}>{timeAgo(it.at)}</span>
+                        </div>
+                        {it.note && <div style={{ fontSize: 12.5, color: DARK, fontStyle: 'italic', fontFamily: serif, marginTop: 1, lineHeight: 1.4 }}>&ldquo;{it.note}&rdquo;</div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Empty states */}
