@@ -228,7 +228,10 @@ export default function SuccessCard({
           )}
           {authMode === 'code' && (
             <div>
-              <div style={{ fontFamily: body, fontSize: 13, color: DARK, lineHeight: 1.5, marginBottom: 16 }}>We sent a 6-digit code to <strong>{email}</strong>. Enter it below — no password needed.</div>
+              <div style={{ fontFamily: body, fontSize: 13, color: DARK, lineHeight: 1.5, marginBottom: 6 }}>We sent a 6-digit code to <strong>{email}</strong>. Enter it below — no password needed.</div>
+              {/* Codes land in spam/Promotions often enough that saying so up
+                  front saves the resend. */}
+              <div style={{ fontFamily: body, fontSize: 12, color: GRAY, lineHeight: 1.5, marginBottom: 14 }}>Not in your inbox after a minute? Check <strong>Spam</strong> or <strong>Promotions</strong> — then mark it &ldquo;Not spam&rdquo; so the next one lands.</div>
               <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>6-digit code</label>
               <input type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} placeholder="123456" onKeyDown={e => { if (e.key === 'Enter' && code.trim().length >= 6) handleVerifyCode() }} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: serif, fontSize: 22, letterSpacing: '0.3em', textAlign: 'center', color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }} />
               {authError && <div style={{ fontFamily: body, fontSize: 13, color: '#C0392B', marginBottom: 12 }}>{authError}</div>}
