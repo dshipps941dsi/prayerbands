@@ -1348,16 +1348,16 @@ export default function BandPage() {
           {transferStep === 'pending' && <div style={{ marginTop: 20, width: '100%', maxWidth: 420 }}><PendingBanner /></div>}
           {transferSheet}
 
-          {/* Pinned bar: the same button, shown only while the main one is off
-              screen, so there is never a moment on this page without a way
-              forward in view. */}
-          {!entryCtaVisible && transferStep !== 'sheet' && (
+          {/* Pinned footer: always on screen, whatever is scrolled. The main
+              button says what the step is; this one says that there is one. */}
+          {transferStep !== 'sheet' && (
             <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50, padding: '12px 16px calc(12px + env(safe-area-inset-bottom))', background: 'linear-gradient(180deg, rgba(18,16,11,0) 0%, rgba(18,16,11,0.92) 30%, #12100B 100%)' }}>
               <button
                 onClick={() => setClaimStep('form')}
+                className={entryCtaVisible ? undefined : 'pb-cta-pulse'}
                 style={{ display: 'block', width: '100%', maxWidth: 420, margin: '0 auto', padding: '16px 24px', background: GOLD, color: INK, border: 'none', borderRadius: 12, fontFamily: serif, fontSize: 17, fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 30px rgba(184,134,11,0.35)' }}
               >
-                Add your name &amp; a prayer →
+                Take your next step →
               </button>
             </div>
           )}
