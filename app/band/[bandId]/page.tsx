@@ -218,6 +218,18 @@ export default function BandPage() {
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
   const [msgsOpen, setMsgsOpen] = useState(false)  // "My Messages" accordion on the Account tab
+  // First-tap entry screen: is the main call-to-action on screen? When it
+  // isn't (scrolled past, or pushed down by a long gift note), a bar pinned to
+  // the bottom carries the same button so it can never be missed.
+  const entryCtaRef = useRef<HTMLButtonElement | null>(null)
+  const [entryCtaVisible, setEntryCtaVisible] = useState(true)
+  useEffect(() => {
+    const el = entryCtaRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(([e]) => setEntryCtaVisible(e.isIntersecting), { threshold: 0.6 })
+    io.observe(el)
+    return () => io.disconnect()
+  })
   // Bands this person owns or holds, for the header switcher.
   const [myBands, setMyBands] = useState<{ band_id: string; label: string | null }[]>([])
   const [defaultBandId, setDefaultBandId] = useState<string | null>(null)
@@ -1245,8 +1257,36 @@ export default function BandPage() {
           <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, marginBottom: 16, lineHeight: 1.3, maxWidth: 320 }}>
             One band. A story still being written.
           </div>
-          <div style={{ fontFamily: body, fontSize: 15, color: 'rgba(255,255,255,0.7)', fontStyle: 'italic', lineHeight: 1.7, marginBottom: 32, maxWidth: 340 }}>
+          <div style={{ fontFamily: body, fontSize: 15, color: 'rgba(255,255,255,0.7)', fontStyle: 'italic', lineHeight: 1.7, marginBottom: 26, maxWidth: 340 }}>
             Follow its journey, share prayers, and discover Scripture each day.
+          </div>
+
+          {/* CTA — the main "what do I do now" action, placed right under the
+              message so it is on screen before anyone scrolls. It used to sit
+              below the verse card, which on a phone put it under the fold every
+              time; people read the verse and stopped. Pulses gently so a
+              first-time tapper's eye lands on it. */}
+          <style>{`
+            @keyframes pbCtaPulse { 0%,100% { box-shadow: 0 8px 30px rgba(184,134,11,0.30); transform: translateY(0); } 50% { box-shadow: 0 14px 46px rgba(184,134,11,0.60); transform: translateY(-3px); } }
+            .pb-cta-pulse { animation: pbCtaPulse 1.7s ease-in-out infinite; }
+            @media (prefers-reduced-motion: reduce) { .pb-cta-pulse { animation: none; } }
+          `}</style>
+          <button
+            ref={entryCtaRef}
+            className="pb-cta-pulse"
+            onClick={() => setClaimStep('form')}
+            style={{
+              padding: '18px 40px', background: GOLD, color: INK,
+              border: 'none', borderRadius: 12, fontFamily: serif,
+              fontSize: 18, fontWeight: 700, cursor: 'pointer',
+              boxShadow: '0 8px 30px rgba(184,134,11,0.30)',
+              width: '100%', maxWidth: 380,
+            }}
+          >
+            Add your name &amp; a prayer →
+          </button>
+          <div style={{ marginTop: 10, marginBottom: 34, fontFamily: body, fontSize: 13, color: 'rgba(255,255,255,0.62)' }}>
+            Takes about 30 seconds. No account needed.
           </div>
 
           {/* Pre-dedicated gift: the sender's blessing, shown inline on the entry
@@ -1272,34 +1312,11 @@ export default function BandPage() {
           )}
 
           {/* Verse */}
-          <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 24px', marginBottom: 40, maxWidth: 380, border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 24px', marginBottom: 8, maxWidth: 380, border: '1px solid rgba(255,255,255,0.1)' }}>
             <div style={{ fontFamily: serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.7, marginBottom: 8, color: 'rgba(255,255,255,0.9)' }}>
               "For we are God's handiwork, created in Christ Jesus to do good works, which God prepared in advance for us to do."
             </div>
             <div style={{ fontFamily: body, fontSize: 12, color: GOLD, letterSpacing: '0.1em' }}>EPHESIANS 2:10</div>
-          </div>
-
-          {/* CTA — the main "what do I do now" action. Pulses gently so a
-              first-time tapper's eye lands on it. */}
-          <style>{`
-            @keyframes pbCtaPulse { 0%,100% { box-shadow: 0 8px 30px rgba(184,134,11,0.30); transform: translateY(0); } 50% { box-shadow: 0 14px 46px rgba(184,134,11,0.60); transform: translateY(-3px); } }
-            .pb-cta-pulse { animation: pbCtaPulse 1.7s ease-in-out infinite; }
-            @media (prefers-reduced-motion: reduce) { .pb-cta-pulse { animation: none; } }
-          `}</style>
-          <button
-            className="pb-cta-pulse"
-            onClick={() => setClaimStep('form')}
-            style={{
-              padding: '18px 46px', background: GOLD, color: INK,
-              border: 'none', borderRadius: 12, fontFamily: serif,
-              fontSize: 18, fontWeight: 700, cursor: 'pointer',
-              boxShadow: '0 8px 30px rgba(184,134,11,0.30)',
-            }}
-          >
-            Take your next step →
-          </button>
-          <div style={{ marginTop: 12, fontFamily: body, fontSize: 13, color: 'rgba(255,255,255,0.62)' }}>
-            Save your band and follow where it travels.
           </div>
 
           {/* Shortcut for a bulk/gift buyer: they're the band's upline but never
@@ -1330,6 +1347,20 @@ export default function BandPage() {
               tap" state live here too, so a bulk buyer never has to claim first. */}
           {transferStep === 'pending' && <div style={{ marginTop: 20, width: '100%', maxWidth: 420 }}><PendingBanner /></div>}
           {transferSheet}
+
+          {/* Pinned bar: the same button, shown only while the main one is off
+              screen, so there is never a moment on this page without a way
+              forward in view. */}
+          {!entryCtaVisible && transferStep !== 'sheet' && (
+            <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50, padding: '12px 16px calc(12px + env(safe-area-inset-bottom))', background: 'linear-gradient(180deg, rgba(18,16,11,0) 0%, rgba(18,16,11,0.92) 30%, #12100B 100%)' }}>
+              <button
+                onClick={() => setClaimStep('form')}
+                style={{ display: 'block', width: '100%', maxWidth: 420, margin: '0 auto', padding: '16px 24px', background: GOLD, color: INK, border: 'none', borderRadius: 12, fontFamily: serif, fontSize: 17, fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 30px rgba(184,134,11,0.35)' }}
+              >
+                Add your name &amp; a prayer →
+              </button>
+            </div>
+          )}
         </div>
       )}
 
