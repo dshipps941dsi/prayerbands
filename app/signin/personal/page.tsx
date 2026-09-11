@@ -37,6 +37,10 @@ export default function SignInPersonal() {
   // Set when the address has no account, so we can offer to create one
   // instead of leaving the person at a dead end.
   const [noAccount, setNoAccount] = useState(false)
+  // The email door is one step at a time: address → code. A password is the
+  // quiet alternative for the few who set one, not a second field on the same
+  // screen as the code.
+  const [usePassword, setUsePassword] = useState(false)
 
   function getSupabase() {
     return createBrowserClient(
@@ -148,9 +152,9 @@ export default function SignInPersonal() {
     setCodeSent(true)
   }
 
-  async function verifyCode() {
-    const token = code.trim()
-    if (token.length < 6) return
+  async function verifyCode(typed?: string) {
+    const token = (typed ?? code).trim()
+    if (token.length < 6 || loading) return
     setLoading(true); setError(''); setStatus('Checking your code…')
     const supabase = getSupabase()
     const { error: verifyError } = await supabase.auth.verifyOtp({ email: email.trim(), token, type: 'email' })
@@ -230,15 +234,39 @@ export default function SignInPersonal() {
             </div>
           ) : (
             <div>
-              <input className="pb-input" style={inputStyle} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
-              <input className="pb-input" style={inputStyle} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && email && password) signInWithEmail() }} />
-              {error && <div style={{ background: '#fef0f0', border: '1px solid #f5c6c6', borderRadius: 7, padding: '10px 14px', color: '#c0392b', fontSize: 13, marginBottom: 12 }}>{error}</div>}
-              <button onClick={signInWithEmail} disabled={loading || !email || !password} style={{ width: '100%', padding: '13px', borderRadius: 8, background: (!loading && email && password) ? BRAND.gold : BRAND.silver, color: (!loading && email && password) ? BRAND.navy : '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>
-                {loading ? 'Signing in...' : 'Sign In'}
-              </button>
-              {/* Passwordless route. Anyone who signed up from a band never set
-                  a password, so without this the page has no door for them. */}
-              {noAccount ? (
+              {/* Step 1 — the address. The code is the default door: it works
+                  for everyone, including people who signed up from a band and
+                  never set a password. */}
+              {codeSent ? (
+                <div style={{ background: '#FBF7EC', border: `1px solid ${BRAND.goldBorder}`, borderRadius: 8, padding: '16px 14px 14px', marginBottom: 10 }}>
+                  <div style={{ fontSize: 13.5, color: BRAND.bodyText, marginBottom: 4, lineHeight: 1.5 }}>
+                    We emailed a 6-digit code to <strong>{email}</strong>.
+                  </div>
+                  <div style={{ fontSize: 12, color: BRAND.secondaryText, marginBottom: 12, lineHeight: 1.5 }}>
+                    The code is in the subject line. Not there in a minute? Check Spam or Promotions.
+                  </div>
+                  <input
+                    className="pb-input"
+                    autoFocus
+                    autoComplete="one-time-code"
+                    style={{ ...inputStyle, marginBottom: 10, letterSpacing: '0.3em', textAlign: 'center', fontSize: 22 }}
+                    inputMode="numeric"
+                    placeholder="000000"
+                    maxLength={6}
+                    value={code}
+                    onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 6); setCode(v); if (v.length === 6) verifyCode(v) }}
+                    onKeyDown={e => { if (e.key === 'Enter') verifyCode() }}
+                  />
+                  {error && <div style={{ background: '#fef0f0', border: '1px solid #f5c6c6', borderRadius: 7, padding: '10px 14px', color: '#c0392b', fontSize: 13, marginBottom: 10 }}>{error}</div>}
+                  <button onClick={() => verifyCode()} disabled={loading || code.trim().length < 6} style={{ width: '100%', padding: '12px', borderRadius: 8, background: code.trim().length === 6 ? BRAND.gold : BRAND.silver, color: code.trim().length === 6 ? BRAND.navy : '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    {loading ? 'Checking…' : 'Sign in'}
+                  </button>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                    <button onClick={sendCode} disabled={loading} style={{ background: 'none', border: 'none', color: BRAND.goldText, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', sans-serif", padding: '6px 0' }}>Send a new code</button>
+                    <button onClick={() => { setCodeSent(false); setCode(''); setError('') }} style={{ background: 'none', border: 'none', color: BRAND.secondaryText, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', sans-serif", padding: '6px 0' }}>Use a different email</button>
+                  </div>
+                </div>
+              ) : noAccount ? (
                 <div style={{ background: '#FBF7EC', border: `1px solid ${BRAND.goldBorder}`, borderRadius: 8, padding: '14px', marginBottom: 10 }}>
                   <div style={{ fontSize: 13, color: BRAND.bodyText, marginBottom: 10, lineHeight: 1.5 }}>
                     There&apos;s no account for <strong>{email}</strong> yet. Want to create one?
@@ -247,43 +275,46 @@ export default function SignInPersonal() {
                     Create account &amp; email me a code
                   </button>
                   <div style={{ fontSize: 12, color: BRAND.secondaryText, marginTop: 10, lineHeight: 1.5 }}>
-                    If you signed up with Google or Facebook, go back and use that button instead.
+                    If you signed up with Google, Apple or Facebook, go back and use that button instead.
                   </div>
                   <button onClick={() => { setNoAccount(false); setError('') }} style={{ width: '100%', padding: '8px', marginTop: 6, background: 'none', border: 'none', color: BRAND.secondaryText, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
                     Use a different email
                   </button>
                 </div>
-              ) : !codeSent ? (
-                <button onClick={sendCode} disabled={loading || !email} style={{ width: '100%', padding: '11px', borderRadius: 8, background: 'transparent', color: BRAND.goldText, border: `1px solid ${BRAND.gold}`, fontSize: 13, fontWeight: 600, cursor: email ? 'pointer' : 'not-allowed', fontFamily: "'Inter', sans-serif", marginBottom: 10 }}>
-                  No password? Email me a code
-                </button>
               ) : (
-                <div style={{ background: '#FBF7EC', border: `1px solid ${BRAND.goldBorder}`, borderRadius: 8, padding: '14px', marginBottom: 10 }}>
-                  <div style={{ fontSize: 13, color: BRAND.bodyText, marginBottom: 10, lineHeight: 1.5 }}>
-                    We sent a 6-digit code to <strong>{email}</strong>. It can take a minute — check spam too.
-                  </div>
-                  <input
-                    className="pb-input"
-                    style={{ ...inputStyle, marginBottom: 10, letterSpacing: '0.3em', textAlign: 'center', fontSize: 18 }}
-                    inputMode="numeric"
-                    placeholder="000000"
-                    maxLength={6}
-                    value={code}
-                    onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
-                    onKeyDown={e => { if (e.key === 'Enter') verifyCode() }}
-                  />
-                  <button onClick={verifyCode} disabled={loading || code.trim().length < 6} style={{ width: '100%', padding: '12px', borderRadius: 8, background: code.trim().length === 6 ? BRAND.gold : BRAND.silver, color: code.trim().length === 6 ? BRAND.navy : '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                    Sign in
-                  </button>
-                  <button onClick={() => { setCodeSent(false); setCode(''); setError('') }} style={{ width: '100%', padding: '8px', marginTop: 8, background: 'none', border: 'none', color: BRAND.secondaryText, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
-                    Use a different email
-                  </button>
-                </div>
+                <>
+                  <input className="pb-input" style={inputStyle} type="email" autoComplete="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && email && !usePassword) sendCode() }} />
+                  {usePassword && (
+                    <input className="pb-input" style={inputStyle} type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && email && password) signInWithEmail() }} />
+                  )}
+                  {error && <div style={{ background: '#fef0f0', border: '1px solid #f5c6c6', borderRadius: 7, padding: '10px 14px', color: '#c0392b', fontSize: 13, marginBottom: 12 }}>{error}</div>}
+                  {usePassword ? (
+                    <>
+                      <button onClick={signInWithEmail} disabled={loading || !email || !password} style={{ width: '100%', padding: '13px', borderRadius: 8, background: (!loading && email && password) ? BRAND.gold : BRAND.silver, color: (!loading && email && password) ? BRAND.navy : '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>
+                        {loading ? 'Signing in...' : 'Sign In'}
+                      </button>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                        <button onClick={() => { setUsePassword(false); setError('') }} style={{ background: 'none', border: 'none', color: BRAND.goldText, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', sans-serif", padding: '4px 0' }}>Email me a code instead</button>
+                        <a href="/reset-password" style={{ color: BRAND.secondaryText, fontSize: 12, textDecoration: 'none', padding: '4px 0' }}>Forgot your password?</a>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={sendCode} disabled={loading || !email} style={{ width: '100%', padding: '13px', borderRadius: 8, background: (!loading && email) ? BRAND.gold : BRAND.silver, color: (!loading && email) ? BRAND.navy : '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Cinzel', serif", letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>
+                        {loading ? 'Sending…' : 'Email me a code'}
+                      </button>
+                      <div style={{ fontSize: 12, color: BRAND.secondaryText, textAlign: 'center', marginBottom: 12, lineHeight: 1.5 }}>
+                        No password needed — the code signs you in.{' '}
+                        <button onClick={() => { setUsePassword(true); setError('') }} style={{ background: 'none', border: 'none', color: BRAND.goldText, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', sans-serif", padding: 0 }}>Have a password?</button>
+                      </div>
+                    </>
+                  )}
+                </>
               )}
-              <button onClick={() => { setShowEmail(false); setError(''); setCodeSent(false); setCode('') }} style={{ width: '100%', padding: '10px', borderRadius: 8, background: 'transparent', color: BRAND.secondaryText, border: `1px solid ${BRAND.silverBorder}`, fontSize: 14, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
+              <button onClick={() => { setShowEmail(false); setError(''); setCodeSent(false); setCode(''); setNoAccount(false); setUsePassword(false) }} style={{ width: '100%', padding: '10px', borderRadius: 8, background: 'transparent', color: BRAND.secondaryText, border: `1px solid ${BRAND.silverBorder}`, fontSize: 14, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
                 ← Back
               </button>
-              <a href="/reset-password" style={{ display: 'block', textAlign: 'center', color: BRAND.secondaryText, fontSize: 13, textDecoration: 'none', marginTop: 10 }}>Forgot your password?</a>
             </div>
           )}
 

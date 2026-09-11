@@ -66,9 +66,9 @@ export default function SuccessCard({
     setAuthSubmitting(false)
   }
 
-  async function handleVerifyCode() {
-    const token = code.trim()
-    if (token.length < 6) return
+  async function handleVerifyCode(typed?: string) {
+    const token = (typed ?? code).trim()
+    if (token.length < 6 || authSubmitting) return
     setAuthSubmitting(true)
     setAuthError('')
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -233,10 +233,10 @@ export default function SuccessCard({
                   front saves the resend. */}
               <div style={{ fontFamily: body, fontSize: 12, color: GRAY, lineHeight: 1.5, marginBottom: 14 }}>Not in your inbox after a minute? Check <strong>Spam</strong> or <strong>Promotions</strong> — then mark it &ldquo;Not spam&rdquo; so the next one lands.</div>
               <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>6-digit code</label>
-              <input type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} placeholder="123456" onKeyDown={e => { if (e.key === 'Enter' && code.trim().length >= 6) handleVerifyCode() }} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: serif, fontSize: 22, letterSpacing: '0.3em', textAlign: 'center', color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }} />
+              <input type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 6); setCode(v); if (v.length === 6) handleVerifyCode(v) }} placeholder="123456" onKeyDown={e => { if (e.key === 'Enter' && code.trim().length >= 6) handleVerifyCode() }} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: serif, fontSize: 22, letterSpacing: '0.3em', textAlign: 'center', color: DARK, background: CREAM, marginBottom: 12, outline: 'none', boxSizing: 'border-box' }} />
               {authError && <div style={{ fontFamily: body, fontSize: 13, color: '#C0392B', marginBottom: 12 }}>{authError}</div>}
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={handleVerifyCode} disabled={authSubmitting || code.trim().length < 6} style={{ flex: 1, padding: '13px', background: code.trim().length >= 6 ? GOLD : '#ccc', color: code.trim().length >= 6 ? INK : 'white', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: code.trim().length >= 6 ? 'pointer' : 'not-allowed' }}>{authSubmitting ? 'Verifying...' : 'Verify & save ✝︎'}</button>
+                <button onClick={() => handleVerifyCode()} disabled={authSubmitting || code.trim().length < 6} style={{ flex: 1, padding: '13px', background: code.trim().length >= 6 ? GOLD : '#ccc', color: code.trim().length >= 6 ? INK : 'white', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: code.trim().length >= 6 ? 'pointer' : 'not-allowed' }}>{authSubmitting ? 'Verifying...' : 'Verify & save ✝︎'}</button>
                 <button onClick={() => { setAuthMode('email'); setAuthError(''); setCode('') }} style={{ padding: '13px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Back</button>
               </div>
               <button onClick={handleSendCode} disabled={authSubmitting} style={{ display: 'block', width: '100%', marginTop: 12, background: 'none', border: 'none', color: GOLD, fontFamily: body, fontSize: 13, cursor: 'pointer' }}>Didn&apos;t get it? Resend code</button>
