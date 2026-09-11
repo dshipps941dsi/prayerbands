@@ -361,11 +361,11 @@ export async function POST(req: NextRequest) {
                   <div style="background:#0d3d6e;padding:32px;text-align:center">
                     <div style="font-size:36px;color:#f5a623;margin-bottom:8px">🎁</div>
                     <h1 style="font-family:Georgia,serif;font-size:24px;color:#fff;margin:0;font-weight:400">Your gift arrived</h1>
-                    <p style="color:rgba(255,255,255,0.7);font-size:14px;margin:8px 0 0">${eHolder} just claimed the band you gave them</p>
+                    <p style="color:rgba(255,255,255,0.7);font-size:14px;margin:8px 0 0">${eHolder} just ${holderUserId ? 'claimed' : 'tapped'} the band you gave them</p>
                   </div>
                   <div style="padding:32px">
                     <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 20px">
-                      Hi ${eGiver} &mdash; <strong style="color:#0d3d6e">${eHolder}</strong> tapped band <strong>${eBand}</strong>${where ? ` in ${escapeHtml(where)}` : ''} and added it to their account. Your Prayer Band is now traveling with them.
+                      Hi ${eGiver} &mdash; <strong style="color:#0d3d6e">${eHolder}</strong> tapped band <strong>${eBand}</strong>${where ? ` in ${escapeHtml(where)}` : ''}${holderUserId ? ' and added it to their account' : ' and left their name on it'}. Your Prayer Band is now traveling with them.${holderUserId ? '' : ' They haven&rsquo;t made an account yet, so it isn&rsquo;t in their dashboard until they do &mdash; tapping the band again gets them there.'}
                     </p>
                     <div style="text-align:center;margin:28px 0">
                       <a href="https://prayerbands.com/band/${eBand}" style="display:inline-block;background:#2b7bc4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700">Follow its journey ✝</a>
