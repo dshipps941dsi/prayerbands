@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import PrayerBandsLogo from "@/components/PrayerBandsLogo";
 
-const ADMIN_EMAIL = "dshipps941@gmail.com";
 
 // All reads/writes go through /api/admin/contacts (service role) because RLS
 // blocks the anon client from contact_submissions and faq_entries.

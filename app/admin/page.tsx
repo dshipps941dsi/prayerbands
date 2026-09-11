@@ -39,7 +39,6 @@ const C = {
   red: '#c0392b',
 }
 
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 // Seven flat tabs with a nested sub-bar under one of them had no grouping logic:
 // sales and shipments sat beside orders as peers though they are all views of
@@ -493,8 +492,8 @@ export default function AdminPage() {
         </div>
         <p style={{ color: C.secondary, fontSize: 14, lineHeight: 1.6, marginBottom: 22 }}>
           {deniedAs
-            ? <>This browser is signed in as <strong style={{ color: C.heading }}>{deniedAs}</strong>. The admin panel needs <strong style={{ color: C.heading }}>{ADMIN_EMAIL}</strong>.</>
-            : <>Sign in as <strong style={{ color: C.heading }}>{ADMIN_EMAIL}</strong> to continue.</>}
+            ? <>This browser is signed in as <strong style={{ color: C.heading }}>{deniedAs}</strong>. The admin panel needs a team admin account.</>
+            : <>Sign in with a team admin account to continue.</>}
         </p>
         <button
           onClick={async () => { await supabase.auth.signOut(); window.location.href = '/signin/personal?redirect=/admin' }}

@@ -4,7 +4,6 @@ import { createBrowserClient } from '@supabase/ssr'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 import { THEME_OPTIONS, loadThemes, getThemeOptions } from '@/lib/themes'
 
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 export default function AdminOrgs() {
   const [orgs, setOrgs] = useState<any[]>([])

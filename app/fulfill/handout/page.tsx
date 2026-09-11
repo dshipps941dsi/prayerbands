@@ -20,7 +20,6 @@ const C = {
 }
 
 // TODO(stage 2): swap for a profiles.role check.
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 const REASONS = [
   { id: 'seed', label: 'Seeding', hint: 'Getting bands into circulation to start the network' },
@@ -239,8 +238,8 @@ export default function HandoutPage() {
         </div>
         <p style={{ color: C.secondary, fontSize: 14, lineHeight: 1.6, marginBottom: 22 }}>
           {deniedAs
-            ? <>This browser is signed in as <strong style={{ color: C.heading }}>{deniedAs}</strong>. This needs <strong style={{ color: C.heading }}>{ADMIN_EMAIL}</strong>.</>
-            : <>Sign in as <strong style={{ color: C.heading }}>{ADMIN_EMAIL}</strong> to continue.</>}
+            ? <>This browser is signed in as <strong style={{ color: C.heading }}>{deniedAs}</strong>. This needs a team admin account.</>
+            : <>Sign in with a team admin account to continue.</>}
         </p>
         <button onClick={async () => { await supabase.auth.signOut(); window.location.href = '/signin/personal?redirect=/fulfill/handout' }} style={btn(C.gold, C.navy)}>
           {deniedAs ? 'Switch account' : 'Sign in'}
