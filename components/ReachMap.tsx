@@ -16,9 +16,11 @@ const serif = 'Playfair Display, Georgia, serif'
 
 type Node = { id: string; name: string; lat: number | null; lng: number | null; city: string | null; state: string | null; country: string | null; depth: number }
 type Edge = { from: string; to: string; kind: 'chain' | 'gift'; depth: number }
-type Data = { root: { id: string; name: string } | null; nodes: Node[]; edges: Edge[]; total: number; located: number; generations: number }
+type Data = { root: { id: string; name: string } | null; nodes: Node[]; edges: Edge[]; total: number; located: number; generations: number; bands?: number; scope?: 'me' | 'band' }
 
-export default function ReachMap({ bandId }: { bandId: string }) {
+// scope 'me' = the viewer's whole ripple across every band they hold (the
+// default for a signed-in holder); 'band' = this one band's ripple only.
+export default function ReachMap({ bandId, scope = 'band' }: { bandId: string; scope?: 'me' | 'band' }) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<any>(null)
   const timer = useRef<any>(null)
@@ -32,8 +34,9 @@ export default function ReachMap({ bandId }: { bandId: string }) {
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/band-reach?bandId=${encodeURIComponent(bandId)}`).then(r => r.json()).then(d => setData(d)).catch(() => {}).finally(() => setLoading(false))
-  }, [bandId])
+    const qs = scope === 'me' ? 'scope=me' : `bandId=${encodeURIComponent(bandId)}`
+    fetch(`/api/band-reach?${qs}`).then(r => r.json()).then(d => setData(d)).catch(() => {}).finally(() => setLoading(false))
+  }, [bandId, scope])
 
   // Top-level branches = depth-0 people who gave at least one band.
   const topRoots = data
@@ -186,7 +189,9 @@ export default function ReachMap({ bandId }: { bandId: string }) {
         <div style={{ fontSize: 40, marginBottom: 12 }}>🌍</div>
         <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, color: NAVY, marginBottom: 8 }}>The ripple starts here</div>
         <div style={{ fontSize: 14, color: GRAY, lineHeight: 1.6, maxWidth: 330, margin: '0 auto' }}>
-          When someone who has held this band gives another away, it branches out here — every band, everywhere it lands.
+          {scope === 'me'
+            ? 'When you give a band away, or someone you gave one to passes theirs on, it branches out here — every band, everywhere it lands.'
+            : 'When someone who has held this band gives another away, it branches out here — every band, everywhere it lands.'}
         </div>
       </div>
     )
@@ -196,9 +201,10 @@ export default function ReachMap({ bandId }: { bandId: string }) {
     <div style={{ padding: '20px 20px 24px' }}>
       <div style={{ textAlign: 'center', marginBottom: 12 }}>
         <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, color: NAVY }}>
-          {data.total} {data.total === 1 ? 'band' : 'bands'} rippled out from this one
+          {data.total} {data.total === 1 ? 'band' : 'bands'} rippled out from {scope === 'me' ? 'you' : 'this one'}
         </div>
         <div style={{ fontSize: 12.5, color: GRAY, marginTop: 2 }}>
+          {scope === 'me' && (data.bands ?? 0) > 1 ? `across your ${data.bands} bands · ` : ''}
           {data.generations > 0 ? `${data.generations} generation${data.generations === 1 ? '' : 's'} · ` : ''}{data.located} on the map
         </div>
       </div>

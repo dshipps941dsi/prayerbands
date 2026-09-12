@@ -15,7 +15,12 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ nodes: [], edges: [], total: 0 }, { status: 401 })
 
   const bandId = (req.nextUrl.searchParams.get('bandId') || '').trim()
-  if (!bandId) return NextResponse.json({ error: 'bandId is required' }, { status: 400 })
+  // scope=me: the viewer's whole ripple — every band they hold or have held,
+  // rolled into one map — instead of one band at a time. Someone with three
+  // bands shouldn't have to flip between three partial ripples and add them
+  // up in their head; the ripple is about the person, not the band.
+  const scopeMe = req.nextUrl.searchParams.get('scope') === 'me'
+  if (!bandId && !scopeMe) return NextResponse.json({ error: 'bandId is required' }, { status: 400 })
 
   const admin = createServiceClient()
 
@@ -28,37 +33,68 @@ export async function GET(req: NextRequest) {
     if (!nodes.has(key)) nodes.set(key, { id: key, name: first(r.user_name), lat: r.latitude ?? null, lng: r.longitude ?? null, city: r.city ?? null, state: r.state ?? null, country: r.country ?? null, depth })
   }
 
-  // 1. This band's own chain of stops.
-  const { data: stops } = await admin
-    .from('registrations')
-    .select('id, user_id, user_name, latitude, longitude, city, state, country, registered_at')
-    .eq('band_id', bandId)
-    .order('registered_at', { ascending: true })
+  // 1. The chain(s) of stops we start from: one band's, or every band of mine.
+  let seedBandIds: string[]
+  if (scopeMe) {
+    const [{ data: myRegs }, { data: myBands }] = await Promise.all([
+      admin.from('registrations').select('band_id').eq('user_id', user.id).not('band_id', 'is', null),
+      admin.from('bands').select('band_id').eq('owner_id', user.id),
+    ])
+    seedBandIds = Array.from(new Set([
+      ...((myRegs ?? []) as any[]).map(r => r.band_id as string),
+      ...((myBands ?? []) as any[]).map(b => b.band_id as string),
+    ]))
+  } else {
+    seedBandIds = [bandId]
+  }
+
+  const { data: stops } = seedBandIds.length
+    ? await admin
+        .from('registrations')
+        .select('id, band_id, user_id, user_name, latitude, longitude, city, state, country, registered_at')
+        .in('band_id', seedBandIds)
+        .order('registered_at', { ascending: true })
+    : { data: [] as any[] }
 
   // Only someone who has actually held this band (or owns it) may see its reach —
   // otherwise anyone could enumerate band ids and map the whole network's giving
   // relationships and locations. The per-band journey stays public; the ripple
-  // (which reaches beyond this band) does not.
-  const isHolder = ((stops ?? []) as any[]).some(s => s.user_id === user.id)
-  if (!isHolder) {
-    const { data: band } = await admin.from('bands').select('owner_id').eq('band_id', bandId).maybeSingle()
-    if (!band || band.owner_id !== user.id) {
-      return NextResponse.json({ error: 'Not your band to view.' }, { status: 403 })
+  // (which reaches beyond this band) does not. scope=me is by construction
+  // the viewer's own bands.
+  if (!scopeMe) {
+    const isHolder = ((stops ?? []) as any[]).some(s => s.user_id === user.id)
+    if (!isHolder) {
+      const { data: band } = await admin.from('bands').select('owner_id').eq('band_id', bandId).maybeSingle()
+      if (!band || band.owner_id !== user.id) {
+        return NextResponse.json({ error: 'Not your band to view.' }, { status: 403 })
+      }
     }
   }
 
-  let prevKey: string | null = null
+  // Chain edges run within a band, in registration order; the viewer is the
+  // same node across all of their bands, which is what joins the chains.
+  const prevKeyByBand = new Map<string, string>()
   for (const s of (stops ?? []) as any[]) {
     const k = keyOf(s)
     addNode(k, s, 0)
+    const prevKey = prevKeyByBand.get(s.band_id) ?? null
     if (prevKey && prevKey !== k) edges.push({ from: prevKey, to: k, kind: 'chain', depth: 0 })
-    prevKey = k
+    prevKeyByBand.set(s.band_id, k)
+  }
+  // With no registrations at all (owns bands, never tapped one), the viewer
+  // is still the root of their own ripple.
+  if (scopeMe && !nodes.has(`u:${user.id}`)) {
+    const { data: me } = await admin.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
+    addNode(`u:${user.id}`, { user_id: user.id, user_name: me?.full_name || 'You' }, 0)
   }
 
   // 2. Branch outward: the bands each account-holder gave, generation by generation.
   const MAX_NODES = 300, MAX_DEPTH = 6
   const expanded = new Set<string>()
-  let frontier = Array.from(new Set(((stops ?? []) as any[]).filter(s => s.user_id).map(s => s.user_id as string)))
+  let frontier = Array.from(new Set([
+    ...((stops ?? []) as any[]).filter(s => s.user_id).map(s => s.user_id as string),
+    ...(scopeMe ? [user.id] : []),
+  ]))
   let depth = 1
   let generations = 0
 
@@ -71,7 +107,7 @@ export async function GET(req: NextRequest) {
       .from('bands')
       .select('band_id, upline_user_id')
       .in('upline_user_id', givers)
-      .neq('band_id', bandId)
+      .not('band_id', 'in', `(${seedBandIds.map(id => `"${id}"`).join(',')})`)
     if (!given?.length) break
 
     const bandIds = given.map((b: any) => b.band_id)
@@ -115,9 +151,14 @@ export async function GET(req: NextRequest) {
   const located = Array.from(nodes.values()).filter(n => n.lat != null).length
   // Reach = the bands given beyond this one (the gift edges).
   const reach = edges.filter(e => e.kind === 'gift').length
+  const meNode = nodes.get(`u:${user.id}`)
 
   return NextResponse.json({
-    root: rootReg ? { id: keyOf(rootReg), name: first(rootReg.user_name) } : null,
+    root: scopeMe
+      ? (meNode ? { id: meNode.id, name: meNode.name } : null)
+      : (rootReg ? { id: keyOf(rootReg), name: first(rootReg.user_name) } : null),
+    scope: scopeMe ? 'me' : 'band',
+    bands: seedBandIds.length,
     nodes: Array.from(nodes.values()),
     edges,
     total: reach,

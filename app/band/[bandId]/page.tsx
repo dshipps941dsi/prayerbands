@@ -982,7 +982,28 @@ export default function BandPage() {
                 )
               })}
             </div>
-            {journeyView === 'band' ? <PrayerChain regs={regs} /> : <ReachMap bandId={bandId} />}
+            {/* A journey is one band's chain of hands, so it stays per band;
+                with several bands, the switch to another one lives right here
+                instead of up in the header. */}
+            {journeyView === 'band' && myBands.length > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, margin: '12px 20px 0', fontSize: 12.5, color: GRAY, fontFamily: serif }}>
+                <span>Journey of</span>
+                <select
+                  aria-label="Choose which band's journey to show"
+                  value={bandId}
+                  onChange={e => { if (e.target.value !== bandId) window.location.href = `/band/${e.target.value}` }}
+                  style={{ fontFamily: serif, fontSize: 13, fontWeight: 700, color: DARK, background: 'white', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '5px 8px', cursor: 'pointer', maxWidth: 200 }}
+                >
+                  {myBands.map(b => (
+                    <option key={b.band_id} value={b.band_id}>{b.band_id}{b.label ? ` · ${b.label}` : ''}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {/* The ripple is about the person, not the band: a signed-in holder
+                sees every band they hold rolled into one map. A guest, who has
+                no account to roll up, sees this band's. */}
+            {journeyView === 'band' ? <PrayerChain regs={regs} /> : <ReachMap bandId={bandId} scope={userId ? 'me' : 'band'} />}
           </div>
         )}
 
