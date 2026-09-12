@@ -70,3 +70,25 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* iPhone Safari zooms the whole page in when a text box with a font under
+   16px gets focus, and never zooms back out — the page is left needing a
+   pinch to get around. Every form on the site sets 13–15px inline, so this
+   overrides them all on phones. !important is what lets a stylesheet beat an
+   inline style. Desktop keeps the designed sizes. */
+@media (max-width: 768px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Anything that accidentally runs wider than the screen (a long unbroken
+   string, a wide table) would otherwise make Safari shrink the page to fit.
+   `clip` cuts it off without becoming a scroll container, so sticky headers
+   keep working. */
+html, body {
+  max-width: 100%;
+  overflow-x: clip;
+}
