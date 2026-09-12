@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { track } from '@/lib/analytics'
+import { signInWithAppleSheet } from '@/lib/apple-signin'
 
 // Post-registration sign-up panel.
 //
@@ -152,6 +153,16 @@ export default function SuccessCard({
               <button onClick={async () => {
                 if (!ageConsent) return
                 const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+                // Sheet first (Face ID, page stays put); reload so the band
+                // page's claim-on-sign-in runs exactly as it does after the
+                // redirect. Fall back to the redirect where the sheet can't.
+                try {
+                  await signInWithAppleSheet(supabase)
+                  window.location.reload()
+                  return
+                } catch (e: any) {
+                  if (/popup_closed|user_cancelled|cancel/i.test(String(e?.error || e?.message || ''))) return
+                }
                 await supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: `${window.location.origin}/band/${bandId}` } })
               }} disabled={!ageConsent} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,

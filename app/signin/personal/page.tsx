@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import { signInWithAppleSheet } from '@/lib/apple-signin'
 import Logo from '@/components/Logo'
 
 // Brand palette
@@ -72,6 +73,16 @@ export default function SignInPersonal() {
   async function signInWithApple() {
     setLoading(true)
     const supabase = getSupabase()
+    // Sheet first (Face ID on iPhone, page never leaves); redirect if the
+    // sheet can't run here or the person closes it without finishing.
+    try {
+      await signInWithAppleSheet(supabase)
+      setStatus('Redirecting...')
+      window.location.replace(redirectParam() || '/my-band')
+      return
+    } catch (e: any) {
+      if (/popup_closed|user_cancelled|cancel/i.test(String(e?.error || e?.message || ''))) { setLoading(false); return }
+    }
     await supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: { redirectTo: oauthCallback() }
