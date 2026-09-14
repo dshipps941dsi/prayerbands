@@ -58,19 +58,11 @@ export default function ReachMap({ bandId, scope = 'band' }: { bandId: string; s
     const pos = new Map<string, { lat: number; lng: number; name: string; city: string | null; state: string | null; country: string | null; depth: number }>()
     data.nodes.forEach(n => { if (n.lat != null && n.lng != null) pos.set(n.id, { lat: n.lat, lng: n.lng, name: n.name, city: n.city, state: n.state, country: n.country, depth: n.depth }) })
 
-    // Fan out people who share a spot so a town of bands is legible.
-    const cell = (lat: number, lng: number) => `${lat.toFixed(1)}|${lng.toFixed(1)}`
-    const groups: Record<string, string[]> = {}
-    pos.forEach((p, id) => { (groups[cell(p.lat, p.lng)] ??= []).push(id) })
-    Object.values(groups).forEach(ids => {
-      if (ids.length <= 1) return
-      ids.forEach((id, i) => {
-        if (i === 0) return
-        const ang = (i / ids.length) * 2 * Math.PI
-        const r = 0.12 + 0.05 * Math.floor(i / 8)
-        const p = pos.get(id)!; p.lat += r * Math.sin(ang); p.lng += r * Math.cos(ang)
-      })
-    })
+    // People who share a spot become ONE pin with a count, never a fan of
+    // pins. The old fan-out pushed pins ~13 km in every direction to keep
+    // them apart, which on a coast put half a town in the sea. Pins now sit
+    // exactly where the place is; the names are in the popup.
+    const cellOf = (lat: number, lng: number) => `${lat.toFixed(2)}|${lng.toFixed(2)}`
 
     // Colour each branch its own hue so the lines read as separate connections
     // instead of one gold web. A "branch" is a direct recipient (depth 1) and
@@ -124,19 +116,43 @@ export default function ReachMap({ bandId, scope = 'band' }: { bandId: string; s
       else if (pts.length > 1) map.fitBounds(pts, { padding: [36, 36] })
       else { map.setView([20, 0], 2); return }
 
+      // One marker per place. Members are revealed one at a time by the
+      // animation, so the place's marker is redrawn each time someone new
+      // joins it — the count ticks up where the pin already is.
+      const revealed = new Set<string>()
+      const markerByCell = new Map<string, any>()
+      const drawCell = (key: string) => {
+        const ids = Array.from(revealed).filter(id => { const p = pos.get(id); return p && cellOf(p.lat, p.lng) === key })
+        if (!ids.length) return
+        const old = markerByCell.get(key); if (old) map.removeLayer(old)
+        const first = pos.get(ids[0])!
+        const hasRoot = ids.includes(rootId || '')
+        const hasChain = ids.some(id => pos.get(id)!.depth === 0)
+        const n = ids.length
+        // Depth-0 (the chain's own holders) stay gold; a place that is only
+        // branch recipients takes the colour of the first branch there so
+        // the dot ties back to its line.
+        const branchC = hasChain ? gold : colorForBranch(ids[0])
+        const fill = hasRoot || hasChain ? gold : '#fff'
+        const sz = n === 1 ? (hasRoot ? 15 : hasChain ? 12 : 10) : Math.min(34, 18 + Math.round(Math.log2(n) * 4))
+        const label = n > 1 ? `<span style="font:700 ${n > 99 ? 10 : 11}px Inter,system-ui,sans-serif;color:${fill === gold ? '#0f0d09' : branchC};line-height:${sz}px">${n}</span>` : ''
+        const dot = L.divIcon({ className: '', html: `<div style="width:${sz}px;height:${sz}px;background:${fill};border-radius:50%;border:${hasRoot && n === 1 ? 0 : 2}px solid ${branchC};box-shadow:0 0 6px rgba(0,0,0,0.35);text-align:center">${label}</div>`, iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] })
+        const m = L.marker([first.lat, first.lng], { icon: dot }).addTo(map)
+        markerByCell.set(key, m)
+        const place = [first.city, first.state, first.country].filter(Boolean).join(', ')
+        // "You" first, then the chain's holders, then branch recipients.
+        const names = ids
+          .sort((a, b) => (a === rootId ? -1 : b === rootId ? 1 : 0) || pos.get(a)!.depth - pos.get(b)!.depth || pos.get(a)!.name.localeCompare(pos.get(b)!.name))
+          .map(id => id === rootId ? '<strong>You</strong>' : escapeHtml(pos.get(id)!.name))
+        const shown = names.slice(0, 12)
+        const more = names.length - shown.length
+        m.bindPopup(`<div style="font-family:Georgia,serif;font-size:13px;max-width:220px">${place ? `<div style="color:#5C6573;margin-bottom:${n > 1 ? 4 : 0}px">${escapeHtml(place)}${n > 1 ? ` · ${n} people` : ''}</div>` : ''}<div style="line-height:1.5">${shown.join('<br/>')}${more > 0 ? `<br/><span style="color:#5C6573">and ${more} more</span>` : ''}</div></div>`)
+      }
       const drawMarker = (id: string) => {
         const p = pos.get(id); if (!p) return
         if (p.depth > 0 && !isSel(rootOf(id))) return // hide unselected branches
-        const isRoot = id === rootId
-        const sz = isRoot ? 15 : p.depth === 0 ? 12 : 10
-        // Depth-0 (this band's own holders) stay gold; branch recipients take
-        // their branch colour so a dot ties back to its line.
-        const branchC = p.depth > 0 ? colorForBranch(id) : gold
-        const fill = isRoot || p.depth === 0 ? gold : '#fff'
-        const dot = L.divIcon({ className: '', html: `<div style="width:${sz}px;height:${sz}px;background:${fill};border-radius:50%;border:${isRoot ? 0 : 2}px solid ${branchC};box-shadow:0 0 6px rgba(0,0,0,0.35)"></div>`, iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] })
-        const m = L.marker([p.lat, p.lng], { icon: dot }).addTo(map)
-        const place = [p.city, p.state, p.country].filter(Boolean).join(', ')
-        m.bindPopup(`<div style="font-family:Georgia,serif;font-size:13px"><strong>${isRoot ? 'You' : escapeHtml(p.name)}</strong>${place ? `<br/><span style="color:#5C6573">${escapeHtml(place)}</span>` : ''}</div>`)
+        revealed.add(id)
+        drawCell(cellOf(p.lat, p.lng))
       }
       const drawEdge = (e: Edge) => {
         const a = pos.get(e.from), b = pos.get(e.to)
