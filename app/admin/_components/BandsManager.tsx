@@ -30,6 +30,22 @@ export default function BandsManager() {
   const [completingId, setCompletingId] = useState<string | null>(null)
   const [pendingMsg, setPendingMsg] = useState('')
 
+  type Finding = { key: string; kind: string; severity: 'high' | 'medium' | 'low'; band_id?: string; summary: string }
+  const [integrity, setIntegrity] = useState<Finding[] | null>(null)
+  const [integrityBusy, setIntegrityBusy] = useState(false)
+  const [integrityMsg, setIntegrityMsg] = useState('')
+  async function runIntegrity() {
+    setIntegrityBusy(true); setIntegrityMsg('')
+    try {
+      const res = await fetch('/api/cron/integrity')
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setIntegrityMsg(d.error || 'The check could not run.'); return }
+      setIntegrity(d.findings || [])
+    } catch { setIntegrityMsg('Network error.') }
+    finally { setIntegrityBusy(false) }
+  }
+  useEffect(() => { runIntegrity() }, [])
+
   function loadPending() {
     fetch('/api/admin/replacements').then(r => r.json()).then(d => { if (d.pending) setPending(d.pending) }).catch(() => {})
   }
@@ -127,6 +143,31 @@ export default function BandsManager() {
     <div style={{ maxWidth: 1100 }}>
       <h2 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 4px', color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Band Management</h2>
       <p style={{ color: C.secondary, fontSize: 14, margin: '0 0 20px' }}>Link bands to a personal account, or replace a lost band.</p>
+
+      {/* Things that should not be true. The same check the daily cron runs;
+          here it is live, so a problem can be seen the minute it is suspected. */}
+      <div style={card}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 6 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 600, margin: 0, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Things that should not be true</h2>
+          <button onClick={runIntegrity} disabled={integrityBusy} style={{ padding: '8px 16px', background: C.gold, color: C.navy, border: 'none', borderRadius: 6, fontSize: 11, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, cursor: integrityBusy ? 'wait' : 'pointer', opacity: integrityBusy ? 0.6 : 1 }}>{integrityBusy ? 'Checking…' : 'Check now'}</button>
+        </div>
+        <p style={{ fontSize: 13, color: C.secondary, marginBottom: 14, lineHeight: 1.5 }}>A band on the wrong account, a hand-off that landed back on the giver, an owner who isn&rsquo;t the holder, a sign-up that stalled at the code. Runs every day at 8 am Eastern and emails you anything new; this button runs it right now.</p>
+        {integrity === null ? (
+          <div style={{ fontSize: 13, color: C.secondary }}>Not checked yet this visit.</div>
+        ) : integrity.length === 0 ? (
+          <div style={{ fontSize: 13, color: C.green, fontWeight: 600 }}>✓ Nothing found. Every band sits with its holder.</div>
+        ) : (
+          <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
+            {integrity.map(f => (
+              <li key={f.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '9px 0', borderTop: `1px solid ${C.borderSilver}`, fontSize: 13, color: C.body, lineHeight: 1.5 }}>
+                <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', padding: '2px 7px', borderRadius: 4, marginTop: 2, color: f.severity === 'high' ? '#B4441F' : f.severity === 'medium' ? C.goldText : C.secondary, background: f.severity === 'high' ? 'rgba(180,68,31,0.10)' : f.severity === 'medium' ? 'rgba(200,169,110,0.18)' : '#ECEEF1' }}>{f.severity.toUpperCase()}</span>
+                <span>{f.summary}{f.band_id && <> &middot; <a href={`/band/${f.band_id}`} target="_blank" rel="noopener" style={{ color: C.goldText }}>open band ↗</a></>}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {integrityMsg && <div style={{ marginTop: 10, fontSize: 12.5, color: C.red }}>{integrityMsg}</div>}
+      </div>
 
       {/* Pending replacements first and full width: it is the only queue here
           that represents someone waiting, and it reads as a list. */}
