@@ -35,6 +35,15 @@ export function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // The band is engraved "PrayerBands.com" on the outside and its ID on the
+  // inside, so people type exactly that: prayerbands.com/PB-XXXXX. Send it to
+  // the band page rather than a 404. Case-insensitive; IDs are stored upper.
+  const shortBand = pathname.match(/^\/(pb-[a-z0-9]{4,8})\/?$/i)
+  if (shortBand) {
+    url.pathname = `/band/${shortBand[1].toUpperCase()}`
+    return NextResponse.redirect(url, 308)
+  }
+
   // Vercel resolves the country at the edge. `request.geo` no longer exists in
   // Next 16, so the header is the supported route.
   //

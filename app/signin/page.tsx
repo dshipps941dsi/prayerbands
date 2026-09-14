@@ -35,6 +35,7 @@ export default function SignInChooser() {
         const r = new URLSearchParams(window.location.search).get('redirect')
         return r ? `?redirect=${encodeURIComponent(r)}` : ''
       })()
+  const authError = typeof window === 'undefined' ? '' : (new URLSearchParams(window.location.search).get('error') || '').slice(0, 200)
 
   return (
     <>
@@ -58,6 +59,13 @@ export default function SignInChooser() {
           <p style={{ fontSize: 15, color: BRAND.creamSoft, margin: 0, fontFamily: "'Inter', sans-serif" }}>
             How would you like to sign in?
           </p>
+          {/* A provider hand-back that failed lands here with ?error=; say so
+              rather than silently showing the same two cards again. */}
+          {authError && (
+            <p style={{ margin: '14px auto 0', maxWidth: 420, background: 'rgba(192,57,43,0.14)', border: '1px solid rgba(192,57,43,0.45)', borderRadius: 8, padding: '10px 14px', color: '#F5EDD8', fontSize: 13, fontFamily: "'Inter', sans-serif", lineHeight: 1.5 }}>
+              Sign-in didn&apos;t finish: {authError}. Please try again.
+            </p>
+          )}
         </div>
 
         <div style={{
