@@ -1344,7 +1344,21 @@ export default function BandPage() {
             opened a different browser), so lead with Sign in — not "create an
             account" they already have, and not a re-claim that would add a
             duplicate registration to their own band. */}
-        {!userId && (
+        {/* The band's latest stop is a guest (someone registered it without an
+            account — often on the giver's phone) and nobody owns it. The person
+            tapping now is most likely that guest, back on their own phone. Offer
+            the account right here, in their name, rather than sending them to a
+            sign-in page for an account they don't have. The code path claims
+            the band to the new account the moment it is verified. */}
+        {!userId && !status.band?.owner_id && status.currentHolder && !status.currentHolder.user_id && (
+          <SuccessCard
+            bandId={bandId}
+            userId={userId}
+            title={`Is this your band, ${String(status.currentHolder.user_name || '').split(' ')[0] || 'friend'}?`}
+            subtitle="It's registered in your name. Save it to a free account and it opens to you — your journal, your partners, your prayers — every time you tap."
+          />
+        )}
+        {!userId && !(!status.band?.owner_id && status.currentHolder && !status.currentHolder.user_id) && (
           <div style={{ margin: '18px 20px 0', background: 'rgba(200,169,110,0.10)', border: `1px solid ${GOLD}`, borderRadius: 14, padding: '16px 20px', textAlign: 'center' }}>
             <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Is this your band?</div>
             <div style={{ fontFamily: body, fontSize: 13, color: GRAY, marginBottom: 12, lineHeight: 1.5 }}>If you registered it, sign in to open your band, your journal, and your prayer partners.</div>
