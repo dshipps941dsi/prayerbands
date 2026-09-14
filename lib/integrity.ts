@@ -45,6 +45,18 @@ export async function runIntegrityChecks(): Promise<Finding[]> {
   const prof = new Map((profs || []).map((p: any) => [p.id, p]))
   const who = (id: string | null | undefined) => (id && (prof.get(id)?.full_name || prof.get(id)?.email)) || 'unknown'
 
+  // What each account's owner types as their own name, from every stop they
+  // have made. "Nick" typing "Nicholas" once, or a gym-named account whose
+  // only stop is its owner, must not read as someone else's band; Jennifer
+  // typing "Kathy" when every other stop of hers says "Jennifer" must.
+  const namesTypedByAccount = new Map<string, Set<string>>()
+  for (const r of regs || []) {
+    if (!r.user_id || !r.user_name) continue
+    if (!namesTypedByAccount.has(r.user_id)) namesTypedByAccount.set(r.user_id, new Set())
+    namesTypedByAccount.get(r.user_id)!.add(first(r.user_name))
+  }
+  const looksLikeSamePerson = (a: string, b: string) => a === b || (a.length >= 3 && b.length >= 3 && (a.startsWith(b) || b.startsWith(a)))
+
   for (const [bandId, r] of latestByBand) {
     const b = bandById.get(bandId)
     const acct = r.user_id ? prof.get(r.user_id) : null
@@ -53,8 +65,13 @@ export async function runIntegrityChecks(): Promise<Finding[]> {
 
     // 1. The latest stop was typed with one name but sits on an account with
     //    a different one: the "registered on someone else's phone" signature.
-    if (acct?.full_name && first(r.user_name) && first(r.user_name) !== first(acct.full_name)
-        && !first(acct.full_name).startsWith(first(r.user_name)) && !first(r.user_name).startsWith(first(acct.full_name))) {
+    //    Only when the account's owner has typed THEIR OWN name on some other
+    //    stop — proof that this account normally registers as itself.
+    const typed = first(r.user_name)
+    const acctFirst = first(acct?.full_name)
+    const ownNames = r.user_id ? namesTypedByAccount.get(r.user_id) : undefined
+    const accountKnowsItself = !!ownNames && [...ownNames].some(n => n !== typed && looksLikeSamePerson(n, acctFirst))
+    if (acct?.full_name && typed && !looksLikeSamePerson(typed, acctFirst) && accountKnowsItself) {
       findings.push({
         key: `wrong_account:${bandId}:${r.id}`, kind: 'wrong_account', severity: 'high', band_id: bandId,
         summary: `${bandId}: the latest stop says "${r.user_name}" but sits on ${acct.full_name}'s account (${acct.email}).`,
