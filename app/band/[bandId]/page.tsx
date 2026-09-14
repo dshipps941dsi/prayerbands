@@ -650,16 +650,26 @@ export default function BandPage() {
   async function handleAcceptTransfer() {
     if (!claimName.trim()) return
     setSubmitting(true)
+    // The giver often hands over their own phone for the recipient to accept
+    // on ("Emily" typed while signed in as Matt). Same rule as a first tap:
+    // a different name means someone else, and the band must not land back
+    // on the giver's account.
+    const forSomeoneElse = !!userId && forOther && !namesMatch(myName, claimName)
     try {
       // register-band completes the pending transfer server-side (atomic with
       // the new holder's registration) — no client-side band/transfer writes.
       const res = await fetch('/api/register-band', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bandId, name: claimName, city: claimCity, state: claimState, country: claimCountry, prayer: claimPrayer }),
+        body: JSON.stringify({ bandId, name: claimName, city: claimCity, state: claimState, country: claimCountry, prayer: claimPrayer, forSomeoneElse }),
       })
       if (!res.ok) throw new Error('register-band failed')
-      localStorage.setItem(`holder_${bandId}`, 'true')
+      if (forSomeoneElse) {
+        try { localStorage.setItem(`for_other_${bandId}`, claimName.trim()) } catch {}
+        setRegisteredForOther(claimName.trim())
+      } else {
+        localStorage.setItem(`holder_${bandId}`, 'true')
+      }
       setClaimStep('done')
       // No auto-reload. This screen is where someone creates their account, and
       // an 8s timer tore them off it mid-signup — long before they could enter
@@ -1263,7 +1273,8 @@ export default function BandPage() {
           </div>
         )}
         {claimStep === 'form' && <ClaimForm title="You're joining the chain ✝︎" subtitle="Add your name and a prayer to complete the handoff." submitLabel="Accept & add my prayer ✝︎" onSubmit={handleAcceptTransfer} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} signedInName={myName} forOther={forOther} setForOther={setForOther} />}
-        {claimStep === 'done' && <SuccessCard bandId={bandId} userId={userId} title="The band is yours now" subtitle="You've been added to the prayer chain. Every time you tap this band, you'll see the full journey — and when you're ready, you can pass it on too." />}
+        {claimStep === 'done' && registeredForOther && <ForOtherDone bandId={bandId} name={registeredForOther} />}
+        {claimStep === 'done' && !registeredForOther && <SuccessCard bandId={bandId} userId={userId} title="The band is yours now" subtitle="You've been added to the prayer chain. Every time you tap this band, you'll see the full journey — and when you're ready, you can pass it on too." />}
         <PrayerChain regs={regs} />
         <div style={{ height: 40 }} />
       </div>
