@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_KEY!
   )
   try {
-    const { bandId, name, city, state, country, prayer, verse, email } = await req.json()
+    const { bandId, name, city, state, country, prayer, verse, email, forSomeoneElse } = await req.json()
 
     if (!bandId || !name) {
       return NextResponse.json({ error: 'Band ID and name are required' }, { status: 400 })
@@ -41,6 +41,14 @@ export async function POST(req: NextRequest) {
       const { data: { user } } = await authed.auth.getUser()
       holderUserId = user?.id ?? null
     } catch { /* not signed in — anonymous registration */ }
+
+    // A signed-in person registering a band for someone standing next to them
+    // (a parent for a kid, a friend helping a friend). The stop is recorded in
+    // the other person's name as a guest so the band stays claimable by them,
+    // and the helper is remembered as the giver rather than becoming the
+    // holder. Three real bands ended up on the wrong account before this.
+    const helperUserId = forSomeoneElse === true ? holderUserId : null
+    if (helperUserId) holderUserId = null
 
     // Normalize + bound user text (the endpoint is public, so validate here).
     const cleanName = titleCase(String(name).trim().slice(0, 80)) || ''
@@ -161,6 +169,7 @@ export async function POST(req: NextRequest) {
         band_id: bandId,
         user_name: cleanName,
         user_id: holderUserId,
+        registered_by: helperUserId,
         city: geoCity,
         state: geoState,
         country: geoCountry,
@@ -185,6 +194,16 @@ export async function POST(req: NextRequest) {
       .from('bands')
       .update({ status: 'registered' })
       .eq('band_id', bandId)
+
+    // Registered on someone's behalf: the helper is the giver if nobody else
+    // is yet, and the band must not sit on the helper's account.
+    if (helperUserId) {
+      const { data: bd } = await supabase.from('bands').select('owner_id, upline_user_id').eq('band_id', bandId).maybeSingle()
+      const patch: Record<string, unknown> = {}
+      if (bd && bd.owner_id === helperUserId) patch.owner_id = null
+      if (bd && !bd.upline_user_id) patch.upline_user_id = helperUserId
+      if (Object.keys(patch).length) await supabase.from('bands').update(patch).eq('band_id', bandId)
+    }
 
     // A signed-in person registering a stop has just given their name. If their
     // account has none — the emailed-code sign-up never asks — take it.
@@ -326,7 +345,8 @@ export async function POST(req: NextRequest) {
       // Covers both a plain gift claim and a hand-off (upline is set in both).
       const giverId = (bandData as any)?.upline_user_id as string | null | undefined
       const isFirstClaim = (prevRegs || []).length === 0
-      if (giverId && giverId !== holderUserId && isFirstClaim) {
+      // (Not when the giver is the one doing the registering on someone's behalf.)
+      if (giverId && giverId !== holderUserId && giverId !== helperUserId && isFirstClaim) {
         try {
           const { data: giverProfile } = await supabase
             .from('profiles')

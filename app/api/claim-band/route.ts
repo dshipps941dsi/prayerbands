@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Too many attempts. Please wait a minute and try again.' }, { status: 429 })
     }
 
-    const { bandId } = await req.json()
+    const { bandId, explicit } = await req.json()
     if (!bandId) {
       return NextResponse.json({ error: 'Band ID is required' }, { status: 400 })
     }
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     // unowned band look unheld and then claim it.
     const { data: latest } = await admin
       .from('registrations')
-      .select('user_id')
+      .select('user_id, registered_by, user_name')
       .eq('band_id', bandId)
       .neq('source', 'wall')
       .order('registered_at', { ascending: false })
@@ -66,6 +66,12 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
     if (latest?.user_id && latest.user_id !== user.id) {
       return NextResponse.json({ error: 'This band is currently held by someone else.' }, { status: 403 })
+    }
+    // The latest stop was made by this very account on someone else's behalf
+    // ("I'm registering it for Kathy"). Opening the page again must not quietly
+    // take the band back; only a deliberate tap on "Claim this band" may.
+    if (!explicit && latest && !latest.user_id && latest.registered_by === user.id) {
+      return NextResponse.json({ error: `This band was registered for ${latest.user_name || 'someone else'}; it is theirs to claim.`, forOther: true }, { status: 409 })
     }
 
     const { error } = await admin

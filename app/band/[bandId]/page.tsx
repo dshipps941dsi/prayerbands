@@ -106,7 +106,44 @@ function avatarColor(i: number, total: number): string {
   return 'var(--pb-avatar-past, #9BB5A0)'
 }
 
-function ClaimForm({ onSubmit, onBack, title, subtitle, submitLabel, claimName, setClaimName, claimPrayer, setClaimPrayer, claimCity, setClaimCity, claimState, setClaimState, claimCountry, setClaimCountry, submitting }: {
+// "Jackson" and "Jackson Shipps" are the same person; "Jackson" and "Victor"
+// are not. First token, case-insensitive, is the comparison people mean.
+function namesMatch(mine: string | null | undefined, typed: string): boolean {
+  const a = (mine || '').trim().toLowerCase(), b = typed.trim().toLowerCase()
+  if (!a || !b) return true // nothing to compare against → assume it's them
+  if (a === b) return true
+  const fa = a.split(/\s+/)[0], fb = b.split(/\s+/)[0]
+  return fa === fb || a.startsWith(b) || b.startsWith(a)
+}
+
+// After registering a band for someone else: the one thing left to do is get
+// the link into their hands so they can claim it from their own phone.
+function ForOtherDone({ bandId, name }: { bandId: string; name: string }) {
+  const [copied, setCopied] = useState(false)
+  const url = `https://prayerbands.com/${bandId}`
+  const text = `${name.split(' ')[0]}, your Prayer Band is registered. Tap the band with your phone, or open this link, to claim it: ${url}`
+  async function share() {
+    try {
+      if (navigator.share) { await navigator.share({ title: 'Your Prayer Band', text, url }); return }
+    } catch { /* cancelled — fall through to copy */ }
+    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch {}
+  }
+  return (
+    <div style={{ margin: '24px 20px', background: 'white', borderRadius: 16, padding: '24px', border: '1px solid rgba(44,24,16,0.1)', boxShadow: '0 4px 20px rgba(44,24,16,0.06)', textAlign: 'center' }}>
+      <div style={{ fontSize: 40, marginBottom: 10 }}>🙏</div>
+      <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Registered for {name}</div>
+      <div style={{ fontFamily: body, fontSize: 13.5, color: GRAY, lineHeight: 1.6, marginBottom: 18 }}>
+        The band is in {name.split(' ')[0]}&apos;s name and ready for them to claim. When they tap it with their own phone, it becomes theirs and lands in their dashboard. Send them the link so they have it.
+      </div>
+      <button onClick={share} style={{ display: 'block', width: '100%', padding: 14, background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+        {copied ? '✓ Copied' : `Send ${name.split(' ')[0]} the link →`}
+      </button>
+      <div style={{ marginTop: 10, fontFamily: body, fontSize: 12, color: GRAY }}>{url}</div>
+    </div>
+  )
+}
+
+function ClaimForm({ onSubmit, onBack, title, subtitle, submitLabel, claimName, setClaimName, claimPrayer, setClaimPrayer, claimCity, setClaimCity, claimState, setClaimState, claimCountry, setClaimCountry, submitting, signedInName, forOther, setForOther }: {
   onSubmit: () => void
   onBack?: () => void
   title: string
@@ -114,6 +151,9 @@ function ClaimForm({ onSubmit, onBack, title, subtitle, submitLabel, claimName, 
   submitLabel: string
   claimName: string
   setClaimName: (v: string) => void
+  signedInName?: string | null
+  forOther?: boolean
+  setForOther?: (v: boolean) => void
   claimPrayer: string
   setClaimPrayer: (v: string) => void
   claimCity: string
@@ -131,6 +171,23 @@ function ClaimForm({ onSubmit, onBack, title, subtitle, submitLabel, claimName, 
       <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 20 }}>{subtitle}</div>
       <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Your name *</label>
       <input value={claimName} onChange={e => setClaimName(e.target.value)} placeholder="First name or full name" style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 15, color: DARK, background: CREAM, marginBottom: 16, outline: 'none', boxSizing: 'border-box' }} />
+      {/* Signed in as one person, typing another's name: ask who the band is
+          for. Helping someone tap is the most natural thing people do, and
+          silently claiming their band to the helper's account was the result
+          three times over. Defaults to "someone else" because that is what a
+          different name almost always means, and the other way is the one
+          that causes harm. */}
+      {signedInName && claimName.trim().length > 1 && !namesMatch(signedInName, claimName) && setForOther && (
+        <div style={{ background: 'rgba(184,134,11,0.08)', border: `1px solid ${GOLD}`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+          <div style={{ fontFamily: body, fontSize: 12.5, color: DARK, marginBottom: 8 }}>You&apos;re signed in as <strong>{signedInName}</strong>. Who is this band for?</div>
+          {([[true, `Someone else — I'm registering it for ${claimName.trim().split(' ')[0]}`], [false, `Me — it's my band`]] as const).map(([val, label]) => (
+            <label key={String(val)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0', cursor: 'pointer', fontFamily: body, fontSize: 13.5, color: DARK }}>
+              <input type="radio" name="pb-for" checked={(forOther ?? true) === val} onChange={() => setForOther(val)} style={{ accentColor: GOLD, width: 16, height: 16 }} />
+              {label}
+            </label>
+          ))}
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
         <div style={{ flex: 1 }}>
           <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>City *</label>
@@ -186,6 +243,11 @@ export default function BandPage() {
   // only by typing the URL.
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [claimName, setClaimName] = useState('')
+  // The signed-in person's own name, so the form can tell "I'm registering
+  // this for myself" from "for the person next to me" and behave accordingly.
+  const [myName, setMyName] = useState<string | null>(null)
+  const [forOther, setForOther] = useState(false)
+  const [registeredForOther, setRegisteredForOther] = useState<string | null>(null) // their name, once saved
   const [claimCity, setClaimCity] = useState('')
   const [claimState, setClaimState] = useState('')
   const [claimCountry, setClaimCountry] = useState('United States')
@@ -264,7 +326,15 @@ export default function BandPage() {
 
   useEffect(() => {
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-    supabase.auth.getUser().then(({ data }) => { setUserId(data?.user?.id ?? null); setUserEmail(data?.user?.email ?? null) })
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data?.user?.id ?? null); setUserEmail(data?.user?.email ?? null)
+      const meta = (data?.user?.user_metadata || {}) as Record<string, unknown>
+      const metaName = String(meta.full_name || meta.name || '').trim()
+      if (data?.user?.id) {
+        supabase.from('profiles').select('full_name').eq('id', data.user.id).maybeSingle()
+          .then(({ data: p }) => setMyName((p?.full_name || metaName || '').trim() || null))
+      }
+    })
   }, [])
 
   // Unread notification count for the bell (signed-in account holders only).
@@ -308,6 +378,9 @@ export default function BandPage() {
     if (!userId || !status.band) return
     if (status.band.owner_id) return
     if (!status.registrations?.length) return
+    // Registered on someone else's behalf from this phone: the band is theirs
+    // to claim, not the helper's. (The server refuses too, via registered_by.)
+    try { if (localStorage.getItem(`for_other_${bandId}`)) return } catch {}
     fetch('/api/claim-band', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -466,14 +539,21 @@ export default function BandPage() {
   async function handleClaim() {
     if (!claimName.trim()) return
     setSubmitting(true)
+    // Only meaningful when signed in and the typed name isn't the account's.
+    const forSomeoneElse = !!userId && forOther && !namesMatch(myName, claimName)
     try {
       const res = await fetch('/api/register-band', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bandId, name: claimName, city: claimCity, state: claimState, country: claimCountry, prayer: claimPrayer, userId: userId ?? null }),
+        body: JSON.stringify({ bandId, name: claimName, city: claimCity, state: claimState, country: claimCountry, prayer: claimPrayer, userId: userId ?? null, forSomeoneElse }),
       })
       if (!res.ok) throw new Error('register-band failed')
-      localStorage.setItem(`holder_${bandId}`, 'true')
+      if (forSomeoneElse) {
+        try { localStorage.setItem(`for_other_${bandId}`, claimName.trim()) } catch {}
+        setRegisteredForOther(claimName.trim())
+      } else {
+        localStorage.setItem(`holder_${bandId}`, 'true')
+      }
       setClaimStep('done')
       // No auto-reload. This screen is where someone creates their account, and
       // an 8s timer tore them off it mid-signup — long before they could enter
@@ -492,7 +572,7 @@ export default function BandPage() {
       const res = await fetch('/api/claim-band', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bandId }),
+        body: JSON.stringify({ bandId, explicit: true }),
       })
       const data = await res.json()
       if (res.status === 401) { router.push(`/signin?redirect=/band/${bandId}`); return }
@@ -1182,7 +1262,7 @@ export default function BandPage() {
             <button onClick={() => { if (status.transfer?.recipient_name && !claimName) setClaimName(status.transfer.recipient_name); setClaimStep('form') }} style={{ display: 'inline-block', padding: '13px 28px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Accept this band →</button>
           </div>
         )}
-        {claimStep === 'form' && <ClaimForm title="You're joining the chain ✝︎" subtitle="Add your name and a prayer to complete the handoff." submitLabel="Accept & add my prayer ✝︎" onSubmit={handleAcceptTransfer} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
+        {claimStep === 'form' && <ClaimForm title="You're joining the chain ✝︎" subtitle="Add your name and a prayer to complete the handoff." submitLabel="Accept & add my prayer ✝︎" onSubmit={handleAcceptTransfer} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} signedInName={myName} forOther={forOther} setForOther={setForOther} />}
         {claimStep === 'done' && <SuccessCard bandId={bandId} userId={userId} title="The band is yours now" subtitle="You've been added to the prayer chain. Every time you tap this band, you'll see the full journey — and when you're ready, you can pass it on too." />}
         <PrayerChain regs={regs} />
         <div style={{ height: 40 }} />
@@ -1204,8 +1284,9 @@ export default function BandPage() {
           </div>
         )}
         <NetworkConnectPrompt bandId={bandId} />
-        {claimStep === 'form' && <ClaimForm title="Join the Journey" subtitle="Your prayer becomes part of this band's story forever." submitLabel="Add my prayer to this band ✝︎" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
-        {claimStep === 'done' && <SuccessCard bandId={bandId} userId={userId} title="You're part of this story" subtitle="Your prayer has been woven into this band's journey. When you pass it on, they'll see every prayer that came before — including yours." />}
+        {claimStep === 'form' && <ClaimForm title="Join the Journey" subtitle="Your prayer becomes part of this band's story forever." submitLabel="Add my prayer to this band ✝︎" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} signedInName={myName} forOther={forOther} setForOther={setForOther} />}
+        {claimStep === 'done' && registeredForOther && <ForOtherDone bandId={bandId} name={registeredForOther} />}
+        {claimStep === 'done' && !registeredForOther && <SuccessCard bandId={bandId} userId={userId} title="You're part of this story" subtitle="Your prayer has been woven into this band's journey. When you pass it on, they'll see every prayer that came before — including yours." />}
         <div style={{ height: 40 }} />
       </div>
     )
@@ -1241,8 +1322,9 @@ export default function BandPage() {
             <button onClick={() => setClaimStep('form')} style={{ padding: '10px 24px', background: GOLD, color: INK, border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>I now have this band →</button>
           </div>
         )}
-        {claimStep === 'form' && <ClaimForm title="Join the Chain" subtitle="Add your name and prayer to continue this band's journey." submitLabel="Join the chain ✝︎" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} />}
-        {claimStep === 'done' && <SuccessCard bandId={bandId} userId={userId} title="Welcome to the chain" subtitle="Your prayer has been added. Tap your band any time to see the full journey." />}
+        {claimStep === 'form' && <ClaimForm title="Join the Chain" subtitle="Add your name and prayer to continue this band's journey." submitLabel="Join the chain ✝︎" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} signedInName={myName} forOther={forOther} setForOther={setForOther} />}
+        {claimStep === 'done' && registeredForOther && <ForOtherDone bandId={bandId} name={registeredForOther} />}
+        {claimStep === 'done' && !registeredForOther && <SuccessCard bandId={bandId} userId={userId} title="Welcome to the chain" subtitle="Your prayer has been added. Tap your band any time to see the full journey." />}
         <PrayerChain regs={regs} />
         <div style={{ height: 40 }} />
       </div>
@@ -1404,13 +1486,16 @@ export default function BandPage() {
             claimCountry={claimCountry}
             setClaimCountry={setClaimCountry}
             submitting={submitting}
+            signedInName={myName}
+            forOther={forOther}
+            setForOther={setForOther}
           />
         </div>
       )}
 
       {claimStep === 'done' && (
         <div style={{ background: CREAM }}>
-          <SuccessCard bandId={bandId} userId={userId} title="The journey has begun" subtitle="Your prayer is the first in this band's chain. Every person who holds it next will see what you wrote today." />
+          {registeredForOther ? <ForOtherDone bandId={bandId} name={registeredForOther} /> : <SuccessCard bandId={bandId} userId={userId} title="The journey has begun" subtitle="Your prayer is the first in this band's chain. Every person who holds it next will see what you wrote today." />}
         </div>
       )}
 
