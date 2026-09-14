@@ -88,11 +88,11 @@ export default function SuccessCard({
     // and left their bands unowned.
     try { await supabase.auth.getSession() } catch {}
     try {
-      const res = await fetch('/api/claim-band', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bandId }) })
+      const res = await fetch('/api/claim-band', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bandId, explicit: true }) })
       // One retry: the cookie can still be a moment behind on a slow phone.
       if (!res.ok) {
         await new Promise(r => setTimeout(r, 1200))
-        await fetch('/api/claim-band', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bandId }) })
+        await fetch('/api/claim-band', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bandId, explicit: true }) })
       }
     } catch {}
     // Signed in. Offer a password before leaving: the code created the account

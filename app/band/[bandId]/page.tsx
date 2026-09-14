@@ -374,20 +374,44 @@ export default function BandPage() {
   // about who the band is for. Every account this was written for — Jackson's,
   // Brinley's — registered first and signed in after, so all of them still
   // claim on the way back.
+  //
+  // It no longer claims on its own. Opening a page is not a decision, and a
+  // silent claim is how a band handed to Emily ended up back on Matt's account
+  // when he tapped it to check. Instead the page OFFERS: when the last stop
+  // is a guest registration that looks like it was this person's — same name
+  // as the account, or made from this phone — a one-tap "make it mine"
+  // appears. Nothing happens until they tap it.
+  const [claimOffer, setClaimOffer] = useState<{ name: string } | null>(null)
   useEffect(() => {
-    if (!userId || !status.band) return
-    if (status.band.owner_id) return
-    if (!status.registrations?.length) return
-    // Registered on someone else's behalf from this phone: the band is theirs
-    // to claim, not the helper's. (The server refuses too, via registered_by.)
-    try { if (localStorage.getItem(`for_other_${bandId}`)) return } catch {}
-    fetch('/api/claim-band', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bandId }),
-    }).catch(() => {})
+    setClaimOffer(null)
+    if (!userId || !status.band || status.band.owner_id) return
+    const regs = (status.registrations || []) as any[]
+    const latest = regs[regs.length - 1]
+    if (!latest || latest.user_id) return
+    try {
+      if (localStorage.getItem(`for_other_${bandId}`)) return
+      if (localStorage.getItem(`not_mine_${bandId}`)) return
+      const fromThisPhone = !!localStorage.getItem(`holder_${bandId}`)
+      if (fromThisPhone || namesMatch(myName, String(latest.user_name || ''))) setClaimOffer({ name: String(latest.user_name || 'you') })
+    } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, status.band?.band_id, status.band?.owner_id, status.registrations?.length])
+  }, [userId, myName, status.band?.band_id, status.band?.owner_id, status.registrations?.length])
+
+  const claimOfferCard = claimOffer && (
+    <div style={{ margin: '14px 20px 0', background: 'rgba(184,134,11,0.10)', border: `1px solid ${GOLD}`, borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+      <div style={{ flex: 1, minWidth: 180, fontFamily: body, fontSize: 13.5, color: DARK, lineHeight: 1.45 }}>
+        This band was registered as <strong>{claimOffer.name}</strong>. Is it yours?
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={claimToAccount} disabled={claimingOwnership} style={{ padding: '9px 14px', background: GOLD, color: INK, border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          {claimingOwnership ? 'Saving…' : 'Yes, make it mine'}
+        </button>
+        <button onClick={() => { try { localStorage.setItem(`not_mine_${bandId}`, '1') } catch {}; setClaimOffer(null) }} style={{ padding: '9px 12px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 13, cursor: 'pointer' }}>
+          Not mine
+        </button>
+      </div>
+    </div>
+  )
 
   // Bands available in the header switcher. Signed-out visitors get none, so
   // the control stays hidden for anyone tapping a stranger's band.
@@ -1059,6 +1083,7 @@ export default function BandPage() {
           </>
         )}
 
+        {claimOfferCard}
         {activeTab === 'journey' && (
           <div>
             <div style={{ display: 'flex', gap: 4, background: 'white', border: '1px solid rgba(44,24,16,0.1)', borderRadius: 12, padding: 4, margin: '20px 20px 0' }}>
@@ -1308,6 +1333,7 @@ export default function BandPage() {
       <div style={{ minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
         <StatsStrip regs={regs} />
+        {claimOfferCard}
         <div style={{ padding: '24px 20px 0', textAlign: 'center' }}>
           <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, marginBottom: 8 }}>✝︎ Prayer Band Journey</div>
           <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{bandId}</div>
