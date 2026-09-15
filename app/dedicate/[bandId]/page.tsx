@@ -123,6 +123,9 @@ function DedicateInner() {
             <p style={{ fontSize: 15, color: '#5C6573', lineHeight: 1.7 }}>
               When {recipient ? recipient : 'they'} taps this band for the first time, your dedication will be waiting. 🙏
             </p>
+            <a href="/my-band?tab=account" style={{ display: 'inline-block', marginTop: 8, background: '#C8A96E', color: '#0A1628', textDecoration: 'none', padding: '11px 22px', borderRadius: 8, fontFamily: "'Cinzel', serif", fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>
+              See all my bands &rarr;
+            </a>
           </div>
         )}
       </div>

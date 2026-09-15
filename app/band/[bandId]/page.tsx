@@ -9,6 +9,7 @@ import AvatarBadge from '@/components/AvatarBadge'
 import NotificationsPanel from '@/components/NotificationsPanel'
 import PushToggle from '@/components/PushToggle'
 import { syncAppBadge } from '@/lib/app-badge'
+import MyBandsPanel from '@/components/MyBandsPanel'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
 import PrayerTabs from '@/components/PrayerTabs'
 import FocusOverlay from '@/components/FocusOverlay'
@@ -415,6 +416,18 @@ export default function BandPage() {
 
   // Bands available in the header switcher. Signed-out visitors get none, so
   // the control stays hidden for anyone tapping a stranger's band.
+  // Deep links: ?tab=account opens the Account tab (emails and My Bands link
+  // here); ?action=pass opens the hand-off sheet for this band straight away.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const sp = new URLSearchParams(window.location.search)
+    const tab = sp.get('tab')
+    if (tab === 'account' || tab === 'journey' || tab === 'purchase') setActiveTab(tab as any)
+    if (sp.get('action') === 'pass') setTransferStep('sheet')
+    if (tab || sp.get('action')) window.history.replaceState({}, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     if (!userId) { setMyBands([]); return }
     fetch('/api/my-bands')
@@ -1173,6 +1186,10 @@ export default function BandPage() {
                 <div style={{ background: 'white', borderRadius: 12, padding: '14px 18px', border: '1px solid rgba(44,24,16,0.1)' }}>
                   <PushToggle compact />
                 </div>
+                {/* My Bands — every band on the account, open / pass on, and
+                    gift messages for unopened ones. Band management lives here
+                    now, not only on the old dashboard. */}
+                <MyBandsPanel userId={userId} currentBandId={bandId} defaultBandId={defaultBandId} />
                 {/* My Messages — the same feed as the top mailbox, collapsed by
                     default. Expanding mounts the feed, which marks messages seen
                     (clears the tab + mailbox badge). */}
@@ -1189,9 +1206,6 @@ export default function BandPage() {
                     </div>
                   )}
                 </div>
-                <a href="/dashboard" style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
-                  📊 My Dashboard
-                </a>
                 {(myRole === 'admin' || myRole === 'fulfillment') && (
                   <a href={myRole === 'admin' ? '/admin' : '/fulfill'} style={{ display: 'block', background: 'white', borderRadius: 12, padding: '16px 20px', border: `1px solid ${GOLD}`, fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
                     {myRole === 'admin' ? '⚙️ Admin Control Centre' : '📦 Fulfillment'}
