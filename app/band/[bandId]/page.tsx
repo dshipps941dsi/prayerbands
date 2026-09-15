@@ -251,6 +251,11 @@ export default function BandPage() {
 
   const [status, setStatus] = useState<BandStatus>({ screen: 'loading' })
   const [userId, setUserId] = useState<string | null>(null)
+  // True once the session lookup has answered (signed in or not). The band
+  // status is not asked for before then — asking twice, once as a stranger and
+  // once as the owner, let the stranger's answer land last and win.
+  const [authChecked, setAuthChecked] = useState(false)
+  const statusSeq = useRef(0)
   // Admin's own email, so the Account tab can offer a way into the control
   // centre. Everything now routes to the band view, which left /admin reachable
   // only by typing the URL.
@@ -375,13 +380,14 @@ export default function BandPage() {
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data?.user?.id ?? null); setUserEmail(data?.user?.email ?? null)
+      setAuthChecked(true)
       const meta = (data?.user?.user_metadata || {}) as Record<string, unknown>
       const metaName = String(meta.full_name || meta.name || '').trim()
       if (data?.user?.id) {
         supabase.from('profiles').select('full_name').eq('id', data.user.id).maybeSingle()
           .then(({ data: p }) => setMyName((p?.full_name || metaName || '').trim() || null))
       }
-    })
+    }).catch(() => setAuthChecked(true))
   }, [])
 
   // Unread notification count for the bell (signed-in account holders only).
@@ -519,11 +525,12 @@ export default function BandPage() {
   }, [bandId, userId])
 
   useEffect(() => {
-    if (!bandId) return
+    if (!bandId || !authChecked) return
     const localHolder = localStorage.getItem(`holder_${bandId}`)
     const url = `/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}${localHolder ? '&localHolder=true' : ''}`
-    fetch(url).then(r => r.json()).then(data => setStatus(data)).catch(() => setStatus({ screen: 'error' }))
-  }, [bandId, userId])
+    const seq = ++statusSeq.current
+    fetch(url).then(r => r.json()).then(data => { if (seq === statusSeq.current) setStatus(data) }).catch(() => { if (seq === statusSeq.current) setStatus({ screen: 'error' }) })
+  }, [bandId, userId, authChecked])
 
   // Auto-hide only the top header: hide it as you scroll DOWN (more room to
   // read), bring it back as you scroll UP, and always show it at the very top.
