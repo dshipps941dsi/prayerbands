@@ -52,134 +52,151 @@ export async function GET(req: NextRequest) {
 
   const items: any[] = []
 
-  // 1. Band events — registrations on the owner's bands.
-  const { data: bands } = await admin.from('bands').select('band_id').eq('owner_id', effectiveId)
+  // Three waves instead of ~25 sequential round trips. Everything in a wave
+  // depends only on the wave before it; the badge on every signed-in band
+  // open used to wait for all of them one after another.
+  const isUS = (c: unknown) => /^(us|usa|united states)$/i.test(String(c || ''))
+
+  // ── Wave 1: everything keyed on the viewer alone ──────────────────────────
+  const [
+    { data: bands }, { data: giftBands }, { data: orders }, { data: subs }, { data: prs },
+    { data: mems }, { data: myReqs }, { data: conns }, { data: pend }, { data: encs }, { data: anns }, { data: profile },
+  ] = await Promise.all([
+    admin.from('bands').select('band_id').eq('owner_id', effectiveId),
+    admin.from('bands').select('band_id').eq('upline_user_id', effectiveId).neq('owner_id', effectiveId),
+    email
+      ? admin.from('orders').select('id, status, tracking_number, created_at').eq('customer_email', email)
+          .in('status', ['processing', 'shipped']).gte('created_at', since).order('created_at', { ascending: false }).limit(20)
+      : Promise.resolve({ data: [] as any[] }),
+    admin.from('subscriptions').select('id').eq('user_id', effectiveId),
+    admin.from('prayer_requests_with_counts').select('id, title, body, total_intercessions, created_at, user_id')
+      .eq('visibility', 'public').eq('status', 'active').neq('user_id', effectiveId).gte('created_at', since)
+      .order('created_at', { ascending: false }).limit(6),
+    admin.from('circle_members').select('circle_id').eq('user_id', effectiveId),
+    admin.from('prayer_network_requests').select('id').eq('user_id', effectiveId),
+    admin.from('prayer_network_connections').select('requester_id, recipient_id').eq('status', 'accepted')
+      .or(`requester_id.eq.${effectiveId},recipient_id.eq.${effectiveId}`),
+    admin.from('prayer_network_connections').select('id, requester_id, created_at')
+      .eq('recipient_id', effectiveId).eq('status', 'pending').gte('created_at', since)
+      .order('created_at', { ascending: false }).limit(20),
+    admin.from('prayer_encouragements').select('id, from_user_id, note, created_at')
+      .eq('to_user_id', effectiveId).gte('created_at', since).order('created_at', { ascending: false }).limit(20),
+    admin.from('announcements').select('id, title, body, cta_label, cta_href, created_at')
+      .eq('active', true).or(`target_user_id.is.null,target_user_id.eq.${effectiveId}`)
+      .gte('created_at', since).order('created_at', { ascending: false }).limit(10),
+    admin.from('profiles').select('notifications_last_seen, dismissed_notifications, referral_code').eq('id', effectiveId).maybeSingle(),
+  ])
+
   const bandIds = (bands || []).map((b: any) => b.band_id)
-  if (bandIds.length) {
-    const { data: regs } = await admin
-      .from('registrations')
-      .select('id, band_id, user_name, city, country, prayer, registered_at')
-      .in('band_id', bandIds)
-      .gte('registered_at', since)
-      .order('registered_at', { ascending: false })
-      .limit(40)
-    for (const r of regs || []) {
-      const who = r.user_name || 'Someone'
-      const where = [r.city, r.country].filter(Boolean).join(', ')
-      if (r.prayer) {
-        items.push({ id: `prayer-${r.id}`, type: 'prayer', icon: '🙏', ts: r.registered_at, band_id: r.band_id,
-          title: `${who} left a prayer on ${r.band_id}`, detail: r.prayer })
-      } else {
-        items.push({ id: `reg-${r.id}`, type: 'registration', icon: '✦', ts: r.registered_at, band_id: r.band_id,
-          title: `${r.band_id} reached ${who}`, detail: where ? `in ${where}` : '' })
-      }
+  const giftIds = (giftBands || []).map((b: any) => b.band_id)
+  const subIds = (subs || []).map((s: any) => s.id)
+  const circleIds = [...new Set((mems || []).map((m: any) => m.circle_id))]
+  const myReqIds = (myReqs || []).map((r: any) => r.id)
+  const partnerIds = [...new Set((conns || []).map((c: any) => c.requester_id === effectiveId ? c.recipient_id : c.requester_id))]
+
+  // ── Wave 2: keyed on wave-1 ids ───────────────────────────────────────────
+  const none = Promise.resolve({ data: [] as any[] })
+  const [{ data: regs }, { data: giftRegs }, { data: ships }, { data: circles }, { data: creqs }, { data: replies }, { data: shared }] = await Promise.all([
+    bandIds.length
+      ? admin.from('registrations').select('id, band_id, user_name, city, country, prayer, registered_at')
+          .in('band_id', bandIds).gte('registered_at', since).order('registered_at', { ascending: false }).limit(40)
+      : none,
+    giftIds.length
+      ? admin.from('registrations').select('id, band_id, user_name, city, state, country, registered_at')
+          .in('band_id', giftIds).order('registered_at', { ascending: true }).limit(500)
+      : none,
+    subIds.length
+      ? admin.from('subscription_shipments').select('id, status, tracking_number, created_at')
+          .in('subscription_id', subIds).eq('status', 'shipped').gte('created_at', since).order('created_at', { ascending: false }).limit(20)
+      : none,
+    circleIds.length ? admin.from('prayer_circles').select('id, name').in('id', circleIds) : none,
+    circleIds.length
+      ? admin.from('circle_prayer_requests').select('id, circle_id, user_id, request_text, created_at')
+          .in('circle_id', circleIds).neq('user_id', effectiveId).gte('created_at', since).order('created_at', { ascending: false }).limit(60)
+      : none,
+    myReqIds.length
+      ? admin.from('prayer_request_comments').select('id, user_id, body, created_at')
+          .in('request_id', myReqIds).neq('user_id', effectiveId).gte('created_at', since).order('created_at', { ascending: false }).limit(30)
+      : none,
+    partnerIds.length
+      ? admin.from('prayer_network_requests').select('id, user_id, request_text, audience, created_at')
+          .in('user_id', partnerIds).eq('is_answered', false).neq('visibility', 'public')
+          .not('excluded_user_ids', 'cs', `{${effectiveId}}`).gte('created_at', since).order('created_at', { ascending: false }).limit(40)
+      : none,
+  ])
+
+  // ── Wave 3: group membership for group-audience requests, and ONE name lookup ──
+  const groupReqs = (shared || []).filter((r: any) => typeof r.audience === 'string' && r.audience.startsWith('group:'))
+  const gids = [...new Set(groupReqs.map((r: any) => r.audience.slice(6)))]
+  const nameIds = [
+    ...(replies || []).map((r: any) => r.user_id),
+    ...(shared || []).map((r: any) => r.user_id),
+    ...(pend || []).map((c: any) => c.requester_id),
+    ...(encs || []).map((e: any) => e.from_user_id),
+  ].filter(Boolean)
+  const [{ data: mem }, { data: nameRows }] = await Promise.all([
+    gids.length ? admin.from('partner_group_members').select('group_id').eq('member_id', effectiveId).in('group_id', gids) : none,
+    nameIds.length ? admin.from('profiles').select('id, full_name, email').in('id', [...new Set(nameIds)]) : none,
+  ])
+  const inGroups = new Set<string>((mem || []).map((m: any) => m.group_id))
+  const names: Record<string, string> = {}
+  for (const p of nameRows || []) names[(p as any).id] = (p as any).full_name || ((p as any).email ? (p as any).email.split('@')[0] : 'Someone')
+
+  // ── Build the feed ────────────────────────────────────────────────────────
+
+  // 1. Band events — registrations on the owner's bands.
+  for (const r of regs || []) {
+    const who = r.user_name || 'Someone'
+    const where = [r.city, r.country].filter(Boolean).join(', ')
+    if (r.prayer) {
+      items.push({ id: `prayer-${r.id}`, type: 'prayer', icon: '🙏', ts: r.registered_at, band_id: r.band_id,
+        title: `${who} left a prayer on ${r.band_id}`, detail: r.prayer })
+    } else {
+      items.push({ id: `reg-${r.id}`, type: 'registration', icon: '✦', ts: r.registered_at, band_id: r.band_id,
+        title: `${r.band_id} reached ${who}`, detail: where ? `in ${where}` : '' })
     }
   }
 
-  // 1b. Gifts received — bands I BOUGHT for someone else. Those ship with no
-  // owner (so the recipient can claim them) and me as upline_user_id, so the
-  // owned-bands feed above never sees them. Surface the FIRST registration of
-  // each such band: "<name> received your gift band". Excludes bands I also
-  // own, which section 1 already covers.
+  // 1b. Gifts received — bands I gave (upline = me, not owned by me): the FIRST
+  // registration of each is "<name> received your gift band".
   {
-    const { data: giftBands } = await admin
-      .from('bands')
-      .select('band_id')
-      .eq('upline_user_id', effectiveId)
-      .neq('owner_id', effectiveId)
-    const giftIds = (giftBands || []).map((b: any) => b.band_id)
-    if (giftIds.length) {
-      const { data: giftRegs } = await admin
-        .from('registrations')
-        .select('id, band_id, user_name, city, state, country, registered_at')
-        .in('band_id', giftIds)
-        .order('registered_at', { ascending: true })
-      const firstByBand = new Map<string, any>()
-      for (const r of giftRegs || []) if (!firstByBand.has(r.band_id)) firstByBand.set(r.band_id, r)
-      for (const r of Array.from(firstByBand.values())) {
-        if (new Date(r.registered_at) < new Date(since)) continue
-        const who = r.user_name || 'Someone'
-        const isUS = /^(us|usa|united states)$/i.test(String(r.country || ''))
-        const where = [r.city, r.state, isUS ? null : r.country].filter(Boolean).join(', ')
-        items.push({ id: `gift-${r.id}`, type: 'gift_received', icon: '🎁', ts: r.registered_at, band_id: r.band_id,
-          title: `${who} received your gift band`, detail: where ? `Claimed in ${where} — your Prayer Band is traveling with them.` : 'They claimed it — your Prayer Band is traveling with them.' })
-      }
+    const firstByBand = new Map<string, any>()
+    for (const r of giftRegs || []) if (!firstByBand.has(r.band_id)) firstByBand.set(r.band_id, r)
+    for (const r of Array.from(firstByBand.values())) {
+      if (new Date(r.registered_at) < new Date(since)) continue
+      const who = r.user_name || 'Someone'
+      const where = [r.city, r.state, isUS(r.country) ? null : r.country].filter(Boolean).join(', ')
+      items.push({ id: `gift-${r.id}`, type: 'gift_received', icon: '🎁', ts: r.registered_at, band_id: r.band_id,
+        title: `${who} received your gift band`, detail: where ? `Claimed in ${where} — your Prayer Band is traveling with them.` : 'They claimed it — your Prayer Band is traveling with them.' })
     }
   }
 
   // 2. Orders — being fulfilled or shipped.
-  if (email) {
-    const { data: orders } = await admin
-      .from('orders')
-      .select('id, status, tracking_number, created_at')
-      .eq('customer_email', email)
-      .in('status', ['processing', 'shipped'])
-      .gte('created_at', since)
-      .order('created_at', { ascending: false })
-      .limit(20)
-    for (const o of orders || []) {
-      if (o.status === 'shipped') {
-        items.push({ id: `order-ship-${o.id}`, type: 'order', icon: '📦', ts: o.created_at,
-          title: `Your order #${o.id} shipped`, detail: o.tracking_number ? `Tracking: ${o.tracking_number}` : 'On its way to you.' })
-      } else {
-        items.push({ id: `order-proc-${o.id}`, type: 'order', icon: '📦', ts: o.created_at,
-          title: `Your order #${o.id} is being prepared`, detail: 'We’re getting your bands ready.' })
-      }
+  for (const o of orders || []) {
+    if (o.status === 'shipped') {
+      items.push({ id: `order-ship-${o.id}`, type: 'order', icon: '📦', ts: o.created_at,
+        title: `Your order #${o.id} shipped`, detail: o.tracking_number ? `Tracking: ${o.tracking_number}` : 'On its way to you.' })
+    } else {
+      items.push({ id: `order-proc-${o.id}`, type: 'order', icon: '📦', ts: o.created_at,
+        title: `Your order #${o.id} is being prepared`, detail: 'We’re getting your bands ready.' })
     }
   }
 
   // 3. Subscription shipments — shipped.
-  const { data: subs } = await admin.from('subscriptions').select('id').eq('user_id', effectiveId)
-  const subIds = (subs || []).map((s: any) => s.id)
-  if (subIds.length) {
-    const { data: ships } = await admin
-      .from('subscription_shipments')
-      .select('id, status, tracking_number, created_at')
-      .in('subscription_id', subIds)
-      .eq('status', 'shipped')
-      .gte('created_at', since)
-      .order('created_at', { ascending: false })
-      .limit(20)
-    for (const s of ships || []) {
-      items.push({ id: `sub-ship-${s.id}`, type: 'shipment', icon: '🔁', ts: s.created_at,
-        title: 'Your subscription band shipped', detail: s.tracking_number ? `Tracking: ${s.tracking_number}` : 'On its way to you.' })
-    }
+  for (const s of ships || []) {
+    items.push({ id: `sub-ship-${s.id}`, type: 'shipment', icon: '🔁', ts: s.created_at,
+      title: 'Your subscription band shipped', detail: s.tracking_number ? `Tracking: ${s.tracking_number}` : 'On its way to you.' })
   }
 
-  // Community items (prayer requests + circles) can be high-volume, so circle
-  // activity is grouped per circle and public requests are capped — otherwise a
-  // busy circle would bury the user's own band/order notifications.
-
   // 4. A few recent public prayer requests you can pray for (quick-pray action).
-  const { data: prs } = await admin
-    .from('prayer_requests_with_counts')
-    .select('id, title, body, total_intercessions, created_at, user_id')
-    .eq('visibility', 'public')
-    .eq('status', 'active')
-    .neq('user_id', effectiveId)
-    .gte('created_at', since)
-    .order('created_at', { ascending: false })
-    .limit(6)
   for (const r of prs || []) {
     items.push({ id: `pr-${r.id}`, type: 'prayer_request', icon: '🙏', ts: r.created_at, requestId: r.id,
       title: r.title || 'Someone asked for prayer', detail: r.body || '', intercessions: r.total_intercessions || 0 })
   }
 
-  // 5. New prayer requests in circles you belong to — grouped into ONE summary
-  // per circle (deep-links to the circle), so a popular circle = one line.
-  const { data: mems } = await admin.from('circle_members').select('circle_id').eq('user_id', effectiveId)
-  const circleIds = [...new Set((mems || []).map((m: any) => m.circle_id))]
-  if (circleIds.length) {
-    const { data: circles } = await admin.from('prayer_circles').select('id, name').in('id', circleIds)
+  // 5. New prayer requests in circles you belong to — ONE summary per circle.
+  {
     const nameById: Record<string, string> = Object.fromEntries((circles || []).map((c: any) => [c.id, c.name]))
-    const { data: creqs } = await admin
-      .from('circle_prayer_requests')
-      .select('id, circle_id, user_id, request_text, created_at')
-      .in('circle_id', circleIds)
-      .neq('user_id', effectiveId)
-      .gte('created_at', since)
-      .order('created_at', { ascending: false })
-      .limit(60)
     const byCircle = new Map<string, any[]>()
     for (const r of creqs || []) {
       if (!byCircle.has(r.circle_id)) byCircle.set(r.circle_id, [])
@@ -197,128 +214,47 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Name resolver for the person-driven items below.
-  const namesFor = async (ids: string[]): Promise<Record<string, string>> => {
-    const uniq = [...new Set(ids)].filter(Boolean)
-    if (!uniq.length) return {}
-    const { data } = await admin.from('profiles').select('id, full_name, email').in('id', uniq)
-    const out: Record<string, string> = {}
-    for (const p of data || []) out[(p as any).id] = (p as any).full_name || ((p as any).email ? (p as any).email.split('@')[0] : 'Someone')
-    return out
-  }
-
   // 6. Replies to your shared prayers (private to you).
-  {
-    const { data: myReqs } = await admin.from('prayer_network_requests').select('id').eq('user_id', effectiveId)
-    const myReqIds = (myReqs || []).map((r: any) => r.id)
-    if (myReqIds.length) {
-      const { data: replies } = await admin
-        .from('prayer_request_comments')
-        .select('id, user_id, body, created_at')
-        .in('request_id', myReqIds)
-        .neq('user_id', effectiveId)
-        .gte('created_at', since)
-        .order('created_at', { ascending: false })
-        .limit(30)
-      const names = await namesFor((replies || []).map((r: any) => r.user_id))
-      for (const r of replies || []) {
-        items.push({ id: `reply-${r.id}`, type: 'reply', icon: '💬', ts: r.created_at,
-          title: `${names[r.user_id] || 'Someone'} replied to your prayer`, detail: r.body })
-      }
-    }
+  for (const r of replies || []) {
+    items.push({ id: `reply-${r.id}`, type: 'reply', icon: '💬', ts: r.created_at,
+      title: `${names[r.user_id] || 'Someone'} replied to your prayer`, detail: r.body })
   }
 
   // 7. Prayer requests a partner shared with you (network / group — never wall
   // or private). Group-audience requests only reach you if you're in the group.
   {
-    const { data: conns } = await admin.from('prayer_network_connections')
-      .select('requester_id, recipient_id').eq('status', 'accepted')
-      .or(`requester_id.eq.${effectiveId},recipient_id.eq.${effectiveId}`)
-    const partnerIds = [...new Set((conns || []).map((c: any) => c.requester_id === effectiveId ? c.recipient_id : c.requester_id))]
-    if (partnerIds.length) {
-      const { data: shared } = await admin.from('prayer_network_requests')
-        .select('id, user_id, request_text, audience, created_at')
-        .in('user_id', partnerIds)
-        .eq('is_answered', false)
-        .neq('visibility', 'public')
-        .not('excluded_user_ids', 'cs', `{${effectiveId}}`) // don't notify excluded partners
-        .gte('created_at', since)
-        .order('created_at', { ascending: false })
-        .limit(40)
-      const groupReqs = (shared || []).filter((r: any) => typeof r.audience === 'string' && r.audience.startsWith('group:'))
-      const inGroups = new Set<string>()
-      if (groupReqs.length) {
-        const gids = [...new Set(groupReqs.map((r: any) => r.audience.slice(6)))]
-        const { data: mem } = await admin.from('partner_group_members').select('group_id').eq('member_id', effectiveId).in('group_id', gids)
-        ;(mem || []).forEach((m: any) => inGroups.add(m.group_id))
-      }
-      const reaching = (shared || []).filter((r: any) => {
-        const a = r.audience || 'network'
-        if (a === 'private') return false
-        if (a.startsWith('group:')) return inGroups.has(a.slice(6))
-        return true
-      }).slice(0, 8)
-      const names = await namesFor(reaching.map((r: any) => r.user_id))
-      for (const r of reaching) {
-        items.push({ id: `netreq-${r.id}`, type: 'network_request', icon: '🙏', ts: r.created_at,
-          title: `${names[r.user_id] || 'A partner'} asked for prayer`, detail: r.request_text })
-      }
+    const reaching = (shared || []).filter((r: any) => {
+      const a = r.audience || 'network'
+      if (a === 'private') return false
+      if (a.startsWith('group:')) return inGroups.has(a.slice(6))
+      return true
+    }).slice(0, 8)
+    for (const r of reaching) {
+      items.push({ id: `netreq-${r.id}`, type: 'network_request', icon: '🙏', ts: r.created_at,
+        title: `${names[r.user_id] || 'A partner'} asked for prayer`, detail: r.request_text })
     }
   }
 
   // 8. Pending connection requests — someone wants to be your prayer partner.
-  {
-    const { data: pend } = await admin.from('prayer_network_connections')
-      .select('id, requester_id, created_at')
-      .eq('recipient_id', effectiveId).eq('status', 'pending')
-      .gte('created_at', since)
-      .order('created_at', { ascending: false })
-      .limit(20)
-    const names = await namesFor((pend || []).map((c: any) => c.requester_id))
-    for (const c of pend || []) {
-      items.push({ id: `conn-${c.id}`, type: 'connection', icon: '🤝', ts: c.created_at,
-        title: `${names[c.requester_id] || 'Someone'} wants to connect in prayer`, detail: 'Open Partners to accept.' })
-    }
+  for (const c of pend || []) {
+    items.push({ id: `conn-${c.id}`, type: 'connection', icon: '🤝', ts: c.created_at,
+      title: `${names[c.requester_id] || 'Someone'} wants to connect in prayer`, detail: 'Open Partners to accept.' })
   }
 
-  // 9. "Someone prayed for you" — peer encouragements sent by a partner, or by
-  // someone who prayed for one of your requests.
-  {
-    const { data: encs } = await admin
-      .from('prayer_encouragements')
-      .select('id, from_user_id, note, created_at')
-      .eq('to_user_id', effectiveId)
-      .gte('created_at', since)
-      .order('created_at', { ascending: false })
-      .limit(20)
-    if (encs && encs.length) {
-      const names = await namesFor(encs.map((e: any) => e.from_user_id))
-      for (const e of encs) {
-        items.push({ id: `enc-${e.id}`, type: 'encouragement', icon: '🙏', ts: e.created_at,
-          title: `${names[e.from_user_id] || 'Someone'} prayed for you`, detail: e.note || '' })
-      }
-    }
+  // 9. "Someone prayed for you" — peer encouragements.
+  for (const e of encs || []) {
+    items.push({ id: `enc-${e.id}`, type: 'encouragement', icon: '🙏', ts: e.created_at,
+      title: `${names[e.from_user_id] || 'Someone'} prayed for you`, detail: e.note || '' })
   }
 
   // 10. Announcements — team messages sent through the app. A broadcast
   // (target_user_id null) reaches everyone; a targeted one only its recipient.
-  {
-    const { data: anns } = await admin
-      .from('announcements')
-      .select('id, title, body, cta_label, cta_href, created_at')
-      .eq('active', true)
-      .or(`target_user_id.is.null,target_user_id.eq.${effectiveId}`)
-      .gte('created_at', since)
-      .order('created_at', { ascending: false })
-      .limit(10)
-    for (const a of anns || []) {
-      items.push({ id: `ann-${a.id}`, type: 'announcement', icon: '📣', ts: a.created_at,
-        title: a.title, detail: a.body || '',
-        ...(a.cta_href ? { ctaHref: a.cta_href, ctaLabel: a.cta_label || 'Open' } : {}) })
-    }
+  for (const a of anns || []) {
+    items.push({ id: `ann-${a.id}`, type: 'announcement', icon: '📣', ts: a.created_at,
+      title: a.title, detail: a.body || '',
+      ...(a.cta_href ? { ctaHref: a.cta_href, ctaLabel: a.cta_label || 'Open' } : {}) })
   }
 
-  const { data: profile } = await admin.from('profiles').select('notifications_last_seen, dismissed_notifications, referral_code').eq('id', effectiveId).maybeSingle()
   const dismissed = new Set(Array.isArray(profile?.dismissed_notifications) ? profile.dismissed_notifications : [])
 
   // 9. Give $2, Get $2 promo — one gentle inbox nudge with a share action.
