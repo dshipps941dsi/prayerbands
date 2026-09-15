@@ -109,10 +109,11 @@ export async function GET(req: NextRequest) {
     if (!prev || s.registered_at > prev) heldCutoff.set(s.band_id, s.registered_at)
   }
   const heldIds = [...heldCutoff.keys()]
+  const myStopIds = [...new Set((myStops || []).map((s: any) => s.band_id))]
 
   // ── Wave 2: keyed on wave-1 ids ───────────────────────────────────────────
   const none = Promise.resolve({ data: [] as any[] })
-  const [{ data: regs }, { data: giftRegs }, { data: ships }, { data: circles }, { data: creqs }, { data: replies }, { data: shared }, { data: heldRegs }] = await Promise.all([
+  const [{ data: regs }, { data: giftRegs }, { data: ships }, { data: circles }, { data: creqs }, { data: replies }, { data: shared }, { data: heldRegs }, { data: dedBands }] = await Promise.all([
     bandIds.length
       ? admin.from('registrations').select('id, band_id, user_name, city, country, prayer, registered_at')
           .in('band_id', bandIds).gte('registered_at', since).order('registered_at', { ascending: false }).limit(40)
@@ -143,7 +144,12 @@ export async function GET(req: NextRequest) {
       ? admin.from('registrations').select('id, band_id, user_id, user_name, city, state, country, registered_at')
           .in('band_id', heldIds).neq('source', 'wall').order('registered_at', { ascending: true }).limit(400)
       : none,
+    // Bands I hold that came with a gift message.
+    myStopIds.length
+      ? admin.from('bands').select('band_id, dedication_note, dedication_recipient, upline_user_id').in('band_id', myStopIds).not('dedication_note', 'is', null)
+      : none,
   ])
+  const dedIds = (dedBands || []).map((b: any) => b.band_id)
 
   // ── Wave 3: group membership for group-audience requests, and ONE name lookup ──
   const groupReqs = (shared || []).filter((r: any) => typeof r.audience === 'string' && r.audience.startsWith('group:'))
@@ -154,10 +160,13 @@ export async function GET(req: NextRequest) {
     ...(pend || []).map((c: any) => c.requester_id),
     ...(accepted || []).map((c: any) => c.recipient_id),
     ...(encs || []).map((e: any) => e.from_user_id),
+    ...(dedBands || []).map((b: any) => b.upline_user_id),
   ].filter(Boolean)
-  const [{ data: mem }, { data: nameRows }] = await Promise.all([
+  const [{ data: mem }, { data: nameRows }, { data: dedFirst }] = await Promise.all([
     gids.length ? admin.from('partner_group_members').select('group_id').eq('member_id', effectiveId).in('group_id', gids) : none,
     nameIds.length ? admin.from('profiles').select('id, full_name, email').in('id', [...new Set(nameIds)]) : none,
+    // Who opened each dedicated band first — the message belongs to them.
+    dedIds.length ? admin.from('registrations').select('band_id, user_id, registered_at').in('band_id', dedIds).neq('source', 'wall').order('registered_at', { ascending: true }).limit(500) : none,
   ])
   const inGroups = new Set<string>((mem || []).map((m: any) => m.group_id))
   const names: Record<string, string> = {}
@@ -175,6 +184,24 @@ export async function GET(req: NextRequest) {
     } else {
       items.push({ id: `reg-${r.id}`, type: 'registration', icon: '✦', ts: r.registered_at, band_id: r.band_id,
         title: `${r.band_id} reached ${who}`, detail: where ? `in ${where}` : '' })
+    }
+  }
+
+  // 0. The message that came with the band. It shows once on the first tap and
+  // was gone; here it stays, dated to that first tap, so the moment can be
+  // revisited — and it is the first thing a new person finds in the inbox.
+  // Only for the person who opened the band first; later holders were not
+  // the ones it was written for. Not subject to the 30-day window.
+  {
+    const firstBy = new Map<string, any>()
+    for (const r of dedFirst || []) if (!firstBy.has(r.band_id)) firstBy.set(r.band_id, r)
+    for (const b of dedBands || []) {
+      const first = firstBy.get(b.band_id)
+      if (!first || first.user_id !== effectiveId) continue
+      const giver = b.upline_user_id ? names[b.upline_user_id] : null
+      items.push({ id: `ded-${b.band_id}`, type: 'dedication', icon: '💌', ts: first.registered_at, band_id: b.band_id,
+        title: `A message came with your band${giver ? ` from ${giver}` : ''}`,
+        detail: `${b.dedication_recipient ? `For ${b.dedication_recipient} — ` : ''}${b.dedication_note}` })
     }
   }
 

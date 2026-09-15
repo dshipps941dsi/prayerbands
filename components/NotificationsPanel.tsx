@@ -172,7 +172,7 @@ export default function NotificationsPanel({
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {notifs.map((n) => {
-                const isPrayerLike = n.type === 'prayer' || n.type === 'prayer_request' || n.type === 'encouragement'
+                const isPrayerLike = n.type === 'prayer' || n.type === 'prayer_request' || n.type === 'encouragement' || n.type === 'dedication'
                 const isNew = !!n.ts && new Date(n.ts).getTime() > seenTs
                 const isPromo = n.type === 'promo'
                 return (
