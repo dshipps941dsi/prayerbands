@@ -1,3 +1,4 @@
+import { sendEmail } from '@/lib/email'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { isInternalOrAdmin } from '@/lib/internal-auth'
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
     const eNewHolder = escapeHtml(newHolderName || 'Someone')
     const eLocation = escapeHtml(location)
     const eBandId = escapeHtml(bandId)
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await sendEmail({
       from: 'Prayer Bands <bands@prayerbands.com>',
       to: [ownerEmail],
       subject: `✝ Your band ${bandId} just moved on — keep the chain going`,

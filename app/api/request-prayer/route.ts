@@ -1,3 +1,4 @@
+import { sendEmail } from '@/lib/email'
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
@@ -132,7 +133,7 @@ export async function POST(req: NextRequest) {
       const unsubSender = unsubUrl(recipient.email, userId)
       const unsubAll = unsubUrl(recipient.email, 'all')
 
-      await resend.emails.send({
+      await sendEmail({
         from: 'Prayer Bands <bands@prayerbands.com>',
         to: [recipient.email],
         subject: `🙏 ${senderName} is asking for prayer`,

@@ -1,3 +1,4 @@
+import { sendEmail } from '@/lib/email'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
 import { bandDescription, themeLabelMap } from '@/lib/band-label'
@@ -232,7 +233,7 @@ export async function sendShippingConfirmation(input: ShippingConfirmationInput)
 </body>
 </html>`
 
-    const { error } = await resend.emails.send({
+    const { error } = await sendEmail({
       from: 'Prayer Bands <hello@prayerbands.com>',
       to: customerEmail,
       subject: 'Your Prayer Bands Have Shipped! ✨',

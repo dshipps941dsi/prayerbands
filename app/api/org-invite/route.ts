@@ -1,3 +1,4 @@
+import { sendEmail } from '@/lib/email'
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 import { Resend } from 'resend'
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY!)
-    await resend.emails.send({
+    await sendEmail({
       from: 'Prayer Bands <bands@prayerbands.com>',
       to: [email],
       subject: `✝ You're invited to join ${org.name} on Prayer Bands`,

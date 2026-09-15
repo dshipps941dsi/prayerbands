@@ -1,3 +1,4 @@
+import { sendEmail } from '@/lib/email'
 import { NextRequest, NextResponse } from 'next/server'
 import { isTeamAdmin } from '@/lib/team';
 import { createServerClient } from '@supabase/ssr'
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
     const safe = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
 
     try {
-      const { error } = await resend.emails.send({
+      const { error } = await sendEmail({
         from: 'Prayer Bands <bands@prayerbands.com>',
         to: [to],
         replyTo: adminEmail,

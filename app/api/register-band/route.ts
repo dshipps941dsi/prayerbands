@@ -1,3 +1,4 @@
+import { sendEmail } from '@/lib/email'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
 import { adoptNameFromRegistration } from '@/lib/adopt-name'
@@ -373,7 +374,7 @@ export async function POST(req: NextRequest) {
         const ePrayer = escapeHtml(cleanPrayer)
         const eBandId = escapeHtml(bandId)
         for (const email of alertEmails) {
-          await resend.emails.send({
+          await sendEmail({
             from: 'Prayer Bands <bands@prayerbands.com>',
             to: [email],
             subject: `✝ Your band ${bandId} just moved to ${location}`,
@@ -447,7 +448,7 @@ export async function POST(req: NextRequest) {
             // "Venice, FL" at home; the country only when it is not the US.
             const isUS = /^(us|usa|united states)$/i.test(String(geoCountry || ''))
             const where = [geoCity, geoState, isUS ? null : geoCountry].filter(Boolean).join(', ')
-            await resend.emails.send({
+            await sendEmail({
               from: 'Prayer Bands <bands@prayerbands.com>',
               to: [giverProfile.email],
               subject: `🎁 ${cleanName || 'Someone'} received your Prayer Band`,

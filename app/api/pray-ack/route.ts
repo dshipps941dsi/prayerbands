@@ -1,4 +1,5 @@
 
+import { sendEmail } from '@/lib/email'
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
     const ePrayerText = escapeHtml(prayer.prayer_text)
 
     if (requesterEmail) {
-      await resend.emails.send({
+      await sendEmail({
         from: 'Prayer Bands <bands@prayerbands.com>',
         to: [requesterEmail],
         subject: `🙏 ${acknowledgerDisplayName} is praying for you`,

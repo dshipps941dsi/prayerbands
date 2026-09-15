@@ -1,3 +1,4 @@
+import { sendEmail } from '@/lib/email'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
       const eRequesterName = escapeHtml(requesterName)
       if (rprofile?.email) {
         const resend = new Resend(process.env.RESEND_API_KEY!)
-        await resend.emails.send({
+        await sendEmail({
           from: 'Prayer Bands <bands@prayerbands.com>',
           to: [rprofile.email],
           subject: `🙏 ${requesterName} wants to connect with you in prayer`,

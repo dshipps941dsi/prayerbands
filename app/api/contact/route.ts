@@ -1,3 +1,4 @@
+import { sendEmail } from '@/lib/email'
 import { escapeHtml } from '@/lib/escape-html';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from "next/server";
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest) {
 
     // --- 4. Send admin notification email ---
     try {
-      await resend.emails.send({
+      await sendEmail({
         from: FROM_EMAIL,
         to: ADMIN_EMAIL,
         subject: `[Prayer Bands Contact] ${category.toUpperCase()}: ${subject || name}`,
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest) {
 
     // --- 5. Send confirmation to sender ---
     try {
-      await resend.emails.send({
+      await sendEmail({
         from: FROM_EMAIL,
         to: email,
         subject: "We received your message — Prayer Bands",

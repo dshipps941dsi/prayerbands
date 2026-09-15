@@ -1,3 +1,4 @@
+import { sendEmail } from '@/lib/email'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY!)
     await Promise.allSettled(uniqueIntercessors.map(({ name, email }) =>
-      resend.emails.send({
+      sendEmail({
         from: 'Prayer Bands <prayer@prayerbands.com>',
         to: email,
         subject: `✨ Prayer Answered — ${requesterName} has a testimony to share`,

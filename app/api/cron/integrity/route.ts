@@ -1,3 +1,4 @@
+import { sendEmail } from '@/lib/email'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
@@ -59,7 +60,7 @@ export async function GET(req: NextRequest) {
     if (emails.length && process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY)
       const rows = toNotify.map(f => `<li style="margin:0 0 10px"><strong style="color:${f.severity === 'high' ? '#B4441F' : '#0d3d6e'}">${f.severity.toUpperCase()}</strong> &middot; ${escapeHtml(f.summary)}</li>`).join('')
-      await resend.emails.send({
+      await sendEmail({
         from: 'Prayer Bands <bands@prayerbands.com>',
         to: emails,
         subject: `Integrity check: ${toNotify.length} new finding${toNotify.length === 1 ? '' : 's'}`,

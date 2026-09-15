@@ -1,3 +1,4 @@
+import { sendEmail } from '@/lib/email'
 import { escapeHtml } from '@/lib/escape-html'
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
       const type = session.metadata?.type || 'standard'
 
       if (email) {
-        await resend.emails.send({
+        await sendEmail({
           from: 'Prayer Bands <bands@prayerbands.com>',
           to: [email],
           subject: '✝ Your Prayer Bands Order is Confirmed',
@@ -127,7 +128,7 @@ export async function POST(req: NextRequest) {
         })
       }
 
-      await resend.emails.send({
+      await sendEmail({
         from: 'Prayer Bands <bands@prayerbands.com>',
         to: ['dshipps941@gmail.com'],
         subject: `✝ New Order — ${qty}x ${type} band — $${amount}`,
@@ -428,7 +429,7 @@ async function sendSubscriptionEmails(session: Stripe.Checkout.Session, plan: an
     const cadence = plan?.interval_months > 1 ? `every ${plan.interval_months} months` : 'every month'
 
     if (email) {
-      await resend.emails.send({
+      await sendEmail({
         from: 'Prayer Bands <bands@prayerbands.com>',
         to: [email],
         subject: '✝ Your Prayer Bands Subscription is Active',
@@ -468,7 +469,7 @@ async function sendSubscriptionEmails(session: Stripe.Checkout.Session, plan: an
       })
     }
 
-    await resend.emails.send({
+    await sendEmail({
       from: 'Prayer Bands <bands@prayerbands.com>',
       to: ['dshipps941@gmail.com'],
       subject: `✝ New Subscription — ${planName} (${bands}x ${bandColor})`,

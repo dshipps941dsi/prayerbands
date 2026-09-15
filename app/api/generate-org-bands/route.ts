@@ -1,3 +1,4 @@
+import { sendEmail } from '@/lib/email'
 import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
@@ -102,7 +103,7 @@ export async function POST(req: NextRequest) {
     // Send supplier CSV to admin email
     const { Resend } = await import('resend')
     const resend = new Resend(process.env.RESEND_API_KEY)
-    await resend.emails.send({
+    await sendEmail({
       from: 'Prayer Bands <bands@prayerbands.com>',
       to: ['dshipps941@gmail.com'],
       subject: `✝ ${org.name} — ${quantity} Band IDs Generated (${org.prefix})`,

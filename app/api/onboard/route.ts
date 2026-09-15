@@ -1,3 +1,4 @@
+import { sendEmail } from '@/lib/email'
 import { escapeHtml } from '@/lib/escape-html';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
       .eq('id', userId);
 
     // Send welcome email
-    await resend.emails.send({
+    await sendEmail({
       from: 'Prayer Bands <bands@prayerbands.com>',
       to: [email],
       subject: '✝ Welcome to Prayer Bands — Your Ministry Account is Ready',
@@ -156,7 +157,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Notify you
-    await resend.emails.send({
+    await sendEmail({
       from: 'Prayer Bands <bands@prayerbands.com>',
       to: ['dshipps941@gmail.com'],
       subject: `✝ New Church Account — ${escapeHtml(name)} (${escapeHtml(prefix.toUpperCase())})`,
