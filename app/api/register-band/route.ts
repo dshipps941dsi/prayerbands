@@ -201,7 +201,9 @@ export async function POST(req: NextRequest) {
       const { data: bd } = await supabase.from('bands').select('owner_id, upline_user_id').eq('band_id', bandId).maybeSingle()
       const patch: Record<string, unknown> = {}
       if (bd && bd.owner_id === helperUserId) patch.owner_id = null
-      if (bd && !bd.upline_user_id) patch.upline_user_id = helperUserId
+      // The helper is the giver: always when they owned it (they are handing
+      // their own band over), otherwise only if nobody else is credited yet.
+      if (bd && (bd.owner_id === helperUserId || !bd.upline_user_id)) patch.upline_user_id = helperUserId
       if (Object.keys(patch).length) await supabase.from('bands').update(patch).eq('band_id', bandId)
     }
 
@@ -272,6 +274,32 @@ export async function POST(req: NextRequest) {
             .update({ upline_user_id: giver, upline_band_id: bandId })
             .eq('id', holderUserId)
             .is('upline_user_id', null)
+        }
+      }
+    }
+
+    // Implicit hand-off. Nobody pressed "Pass this band on": someone owned a
+    // band, physically handed it over, and the new person tapped it. That is
+    // how most bands will move — a coach with a pile of twenty, Jeff with his
+    // three — and it must work with zero steps for the giver. So the tap IS
+    // the hand-off: the new holder takes the band (or it is released for a
+    // guest to claim), and the previous owner becomes the link above them.
+    let implicitGiverId: string | null = null
+    if (!(completedTransfers && completedTransfers.length > 0) && !helperUserId) {
+      const { data: cur } = await supabase.from('bands').select('owner_id').eq('band_id', bandId).maybeSingle()
+      const prevOwner = (cur?.owner_id as string | null) ?? null
+      if (prevOwner && prevOwner !== holderUserId) {
+        implicitGiverId = prevOwner
+        const { data: giverProfile } = await supabase.from('profiles').select('email').eq('id', prevOwner).maybeSingle()
+        await supabase
+          .from('bands')
+          .update({ owner_id: holderUserId || null, upline_user_id: prevOwner, upline_email: (giverProfile as any)?.email ?? null })
+          .eq('band_id', bandId)
+        if (holderUserId) {
+          const { data: recipientProfile } = await supabase.from('profiles').select('upline_user_id').eq('id', holderUserId).maybeSingle()
+          if (recipientProfile && !(recipientProfile as any).upline_user_id) {
+            await supabase.from('profiles').update({ upline_user_id: prevOwner, upline_band_id: bandId }).eq('id', holderUserId).is('upline_user_id', null)
+          }
         }
       }
     }
@@ -402,11 +430,23 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      if (bandData?.owner_id) {
+      // Who to tell that the band moved on: the person who owned it before
+      // this tap. After an implicit hand-off bandData.owner_id is already the
+      // NEW holder, so use the giver captured above. A first-ever claim is
+      // covered by the gift email, not this one.
+      const notifyOwnerId = implicitGiverId
+        ?? (bandData?.owner_id && bandData.owner_id !== holderUserId ? (bandData.owner_id as string) : null)
+      if (notifyOwnerId && (prevRegs || []).length > 0) {
+        await sendPush(notifyOwnerId, {
+          title: `${cleanName || 'Someone'} now has your Prayer Band`,
+          body: `${bandId} was passed on${geoCity ? ` in ${geoCity}` : ''}. Its journey continues from you.`,
+          url: '/my-band',
+          tag: `passed-on-${bandId}`,
+        })
         const { data: ownerProfile } = await supabase
           .from('profiles')
           .select('email, full_name, email_notifications')
-          .eq('id', bandData.owner_id)
+          .eq('id', notifyOwnerId)
           .single()
 
         if (ownerProfile?.email && ownerProfile.email_notifications !== false) {
