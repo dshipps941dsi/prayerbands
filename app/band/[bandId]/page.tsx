@@ -282,7 +282,7 @@ export default function BandPage() {
   const [transferNote, setTransferNote] = useState('')
   const [transferName, setTransferName] = useState('')  // who the band is being passed to
   const [transferFrom, setTransferFrom] = useState('')  // the "From" line, as the giver wants to be seen
-  const [transferStep, setTransferStep] = useState<'idle' | 'sheet' | 'pending' | 'save_prompt'>('idle')
+  const [transferStep, setTransferStep] = useState<'idle' | 'choose' | 'sheet' | 'pending' | 'save_prompt'>('idle')
   const [transferComplete, setTransferComplete] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [expandedPrayer, setExpandedPrayer] = useState<string | null>(null)
@@ -349,7 +349,7 @@ export default function BandPage() {
     return () => io.disconnect()
   })
   // Bands this person owns or holds, for the header switcher.
-  const [myBands, setMyBands] = useState<{ band_id: string; label: string | null }[]>([])
+  const [myBands, setMyBands] = useState<{ band_id: string; label: string | null; giving?: boolean }[]>([])
   const [defaultBandId, setDefaultBandId] = useState<string | null>(null)
   const [notifOpen, setNotifOpen] = useState(false)
   const [walk, setWalk] = useState<VerseWalk>({ total: 0, run: 0, returning: false })
@@ -779,6 +779,32 @@ export default function BandPage() {
     </div>
   ) : null
 
+  const chooseSheet = transferStep === 'choose' ? (
+    <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 250, display: 'flex', alignItems: 'flex-end' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '14px 16px calc(28px + env(safe-area-inset-bottom, 0px))', width: '100%', boxSizing: 'border-box', maxHeight: '75vh', overflowY: 'auto', position: 'relative' }}>
+        <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 14px' }} />
+        <button onClick={() => setTransferStep('idle')} aria-label="Close" style={{ position: 'absolute', top: 10, right: 12, width: 34, height: 34, borderRadius: 17, border: 'none', background: 'rgba(44,24,16,0.08)', color: DARK, fontSize: 16, cursor: 'pointer' }}>✕</button>
+        <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Which band are you passing on?</div>
+        <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14 }}>Check the ID printed inside the band.</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {myBands.map(b => {
+            const isThis = b.band_id === bandId
+            return (
+              <button key={b.band_id} onClick={() => { if (isThis) setTransferStep('sheet'); else window.location.assign(`/band/${b.band_id}?action=pass`) }}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', padding: '12px 14px', background: 'white', border: `1px solid ${isThis ? GOLD : 'rgba(44,24,16,0.12)'}`, borderRadius: 10, cursor: 'pointer' }}>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: 'block', fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.label || b.band_id}</span>
+                  <span style={{ display: 'block', fontFamily: 'monospace', fontSize: 12, color: GRAY, marginTop: 2 }}>{b.band_id}{isThis ? ' · this band' : ''}{b.giving ? <span style={{ fontFamily: body, color: GOLD, fontWeight: 600 }}> · to give away</span> : ''}</span>
+                </span>
+                <span style={{ color: GRAY, fontSize: 18 }}>›</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  ) : null
+
   const transferSheet = transferStep === 'sheet' ? (
     <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 250 /* above the fixed tab bar (200), which covered the last row */, display: 'flex', alignItems: 'flex-end' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
@@ -1195,6 +1221,9 @@ export default function BandPage() {
                 {transferStep === 'idle' && !transferComplete && (
                   <button onClick={() => {
                     const accountless = !userId && localStorage.getItem(`holder_${bandId}`) === 'true'
+                    // More than one band on the account: ask which one first,
+                    // the way packing an order shows each band by design and ID.
+                    if (userId && myBands.length > 1) { setTransferStep('choose'); return }
                     setTransferStep(accountless ? 'save_prompt' : 'sheet')
                   }} style={{ display: 'flex', alignItems: 'center', gap: 6, background: GOLD, color: INK, border: 'none', borderRadius: 10, padding: '8px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Transfer Band</button>
                 )}
@@ -1388,7 +1417,7 @@ export default function BandPage() {
           </div>
         )}
 
-        {transferSheet}{accountMenu}
+        {transferSheet}{chooseSheet}{accountMenu}
         <div style={{ height: 100 }} />
         <BottomNav />
 
@@ -1661,7 +1690,7 @@ export default function BandPage() {
           {/* Hand-off from the entry screen: the sheet + "waiting for them to
               tap" state live here too, so a bulk buyer never has to claim first. */}
           {transferStep === 'pending' && <div style={{ marginTop: 20, width: '100%', maxWidth: 420 }}><PendingBanner /></div>}
-          {transferSheet}{accountMenu}
+          {transferSheet}{chooseSheet}{accountMenu}
 
           {/* Pinned footer: always on screen, whatever is scrolled. The main
               button says what the step is; this one says that there is one. */}
