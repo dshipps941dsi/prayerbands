@@ -1400,7 +1400,7 @@ export default function BandPage() {
           </div>
         )}
         <NetworkConnectPrompt bandId={bandId} />
-        {claimStep === 'prompt' && (
+        {claimStep === 'prompt' && !claimOffer && (
           <div style={{ margin: '20px 20px 0', background: 'white', borderRadius: 14, padding: '18px 20px', border: `1px solid ${GOLD}`, textAlign: 'center' }}>
             <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Do you now have this band?</div>
             <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14 }}>If this band was passed to you, join the chain.</div>
@@ -1528,11 +1528,15 @@ export default function BandPage() {
           )}
           {userId && status.band && !status.band.owner_id && (
             <button
-              onClick={claimToAccount}
+              // Opens the registration form as yourself rather than claiming
+              // outright: claiming an untapped band made an owner with no stop —
+              // an empty journey, no name, and the giver never told. The form
+              // writes the stop and the server makes you owner in one go.
+              onClick={() => { setForOther(false); if (!claimName && myName) setClaimName(myName); setClaimStep('form') }}
               disabled={claimingOwnership}
               style={{ marginTop: 12, padding: '12px 28px', background: 'transparent', color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 10, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
             >
-              {claimingOwnership ? 'Adding…' : "This one's mine — add it to my account"}
+              This one&apos;s mine — add my name &amp; a prayer
             </button>
           )}
 

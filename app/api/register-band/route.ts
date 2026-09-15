@@ -153,6 +153,34 @@ export async function POST(req: NextRequest) {
       .eq('band_id', bandId)
       .not('email', 'is', null)
 
+    // The stop before this one. Used twice below: to adopt a matching guest
+    // stop instead of stacking a duplicate, and to know who handed the band
+    // over when nobody formally owned it.
+    const { data: latestBefore } = await supabase
+      .from('registrations')
+      .select('id, user_id, user_name, registered_by')
+      .eq('band_id', bandId)
+      .neq('source', 'wall')
+      .order('registered_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    // Same person, second time: someone who registered as a guest and is now
+    // signed in (or reached the journey's "I now have this band" while their
+    // own guest stop is the latest). Attach the existing stop to their account
+    // instead of writing "Kathy → Kathy". Only a guest stop nobody registered
+    // on someone else's behalf, and only on a first-name match.
+    if (holderUserId && !helperUserId && latestBefore && !latestBefore.user_id && !latestBefore.registered_by) {
+      const a = String(latestBefore.user_name || '').trim().toLowerCase().split(/\s+/)[0]
+      const b = cleanName.toLowerCase().split(/\s+/)[0]
+      if (a && b && (a === b || (a.length >= 3 && b.length >= 3 && (a.startsWith(b) || b.startsWith(a))))) {
+        await supabase.from('registrations').update({ user_id: holderUserId }).eq('id', latestBefore.id)
+        await supabase.from('bands').update({ owner_id: holderUserId, status: 'registered' }).eq('band_id', bandId).is('owner_id', null)
+        await adoptNameFromRegistration(supabase, holderUserId, cleanName)
+        return NextResponse.json({ success: true, registrationId: latestBefore.id, adopted: true })
+      }
+    }
+
     // Auto-flag prayers containing filtered language for admin review (hidden
     // from the public wall until approved). Soft — never blocks the submission.
     const autoFlag = isFlaggable(cleanPrayer)
@@ -299,6 +327,25 @@ export async function POST(req: NextRequest) {
           const { data: recipientProfile } = await supabase.from('profiles').select('upline_user_id').eq('id', holderUserId).maybeSingle()
           if (recipientProfile && !(recipientProfile as any).upline_user_id) {
             await supabase.from('profiles').update({ upline_user_id: prevOwner, upline_band_id: bandId }).eq('id', holderUserId).is('upline_user_id', null)
+          }
+        }
+      } else if (!prevOwner && holderUserId) {
+        // Nobody owned it (a gift band, a seeded band, or a band whose first
+        // holder never signed in). A signed-in registrant takes it — so a
+        // first tap while signed in leaves an owner WITH a stop, not just a
+        // holder — and if the previous stop was another account's, that
+        // person handed it on and becomes the link above.
+        const prevHolder = latestBefore?.user_id && latestBefore.user_id !== holderUserId ? (latestBefore.user_id as string) : null
+        await supabase
+          .from('bands')
+          .update({ owner_id: holderUserId, ...(prevHolder ? { upline_user_id: prevHolder } : {}) })
+          .eq('band_id', bandId)
+          .is('owner_id', null)
+        if (prevHolder) {
+          implicitGiverId = prevHolder
+          const { data: recipientProfile } = await supabase.from('profiles').select('upline_user_id').eq('id', holderUserId).maybeSingle()
+          if (recipientProfile && !(recipientProfile as any).upline_user_id) {
+            await supabase.from('profiles').update({ upline_user_id: prevHolder, upline_band_id: bandId }).eq('id', holderUserId).is('upline_user_id', null)
           }
         }
       }
