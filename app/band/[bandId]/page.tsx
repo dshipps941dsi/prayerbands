@@ -23,6 +23,7 @@ const MyBandsPanel = dynamic(() => import('@/components/MyBandsPanel'), { ssr: f
 const PrayerTabs = dynamic(() => import('@/components/PrayerTabs'), { ssr: false, loading: tabFallback })
 const ReachMap = dynamic(() => import('@/components/ReachMap'), { ssr: false, loading: tabFallback })
 const PurchaseTab = dynamic(() => import('@/components/PurchaseTab'), { ssr: false, loading: tabFallback })
+const SettingsPanel = dynamic(() => import('@/components/SettingsPanel'), { ssr: false, loading: tabFallback })
 import { COUNTRIES, subdivisionsFor } from '@/lib/locations'
 import { publicName } from '@/lib/public-name'
 import { track } from '@/lib/analytics'
@@ -306,17 +307,22 @@ export default function BandPage() {
   const bandsRef = useRef<HTMLDivElement | null>(null)
   const msgsRef = useRef<HTMLDivElement | null>(null)
   const [bandsOpen, setBandsOpen] = useState(true)
-  function goAccount(section: 'inbox' | 'bands' | 'top') {
+  // Profile & settings section on the Account tab (was the /settings page).
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const settingsRef = useRef<HTMLDivElement | null>(null)
+  const [profileTick, setProfileTick] = useState(0)
+  function goAccount(section: 'inbox' | 'bands' | 'top' | 'settings') {
     setAccountMenuOpen(false)
     setActiveTab('account')
     if (section === 'inbox') setMsgsOpen(true)
+    if (section === 'settings') setSettingsOpen(true)
     // My Bands sits above the inbox and fills in after a fetch, which used to
     // push the inbox back off screen after the scroll. Fold it when heading
     // to the inbox, and scroll again as the panels finish loading.
-    setBandsOpen(section !== 'inbox')
+    setBandsOpen(section === 'bands' || section === 'top')
     const go = () => {
       if (section === 'top') window.scrollTo({ top: 0, behavior: 'smooth' })
-      else (section === 'inbox' ? msgsRef : bandsRef).current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      else ({ inbox: msgsRef, bands: bandsRef, settings: settingsRef }[section]).current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
     for (const ms of [80, 400, 900]) setTimeout(go, ms)
   }
@@ -465,9 +471,10 @@ export default function BandPage() {
     if (tab === 'account' || tab === 'journey' || tab === 'purchase') setActiveTab(tab as any)
     if (sp.get('action') === 'pass') setTransferStep('sheet')
     if (sp.get('dedicate')) { setActiveTab('account'); setDedicateOpen(true) }
+    if (sp.get('settings')) { setActiveTab('account'); setSettingsOpen(true); for (const ms of [300, 900]) setTimeout(() => settingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), ms) }
     const open = sp.get('open')
     if (open === 'requests' || open === 'partners' || open === 'circles') { setPrayerSub(open); setActiveTab('home'); setFocus('prayer') }
-    if (tab || sp.get('action') || sp.get('dedicate') || open) window.history.replaceState({}, '', window.location.pathname)
+    if (tab || sp.get('action') || sp.get('dedicate') || sp.get('settings') || open) window.history.replaceState({}, '', window.location.pathname)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -540,7 +547,7 @@ export default function BandPage() {
     supabase.from('profiles').select('avatar_icon, full_name, avatar_initials, avatar_font').eq('id', userId).maybeSingle()
       .then(({ data }) => setMyProfile(data ? { avatar_icon: (data as any).avatar_icon ?? null, full_name: (data as any).full_name ?? null, avatar_initials: (data as any).avatar_initials ?? null, avatar_font: (data as any).avatar_font ?? null } : null))
     fetch('/api/me/role').then(r => r.json()).then(d => setMyRole(d.role ?? null)).catch(() => setMyRole(null))
-  }, [userId])
+  }, [userId, profileTick])
 
   // Referral credit + code — fetched once signed in, so the Home promo banner
   // and the Account tab both have it.
@@ -727,7 +734,7 @@ export default function BandPage() {
         {([
           { key: 'inbox', label: 'Inbox', hint: 'Prayers, requests and your ripple', glyph: <Icon name="mail" size={20} color={DARK} bg="white" />, badge: unread, onClick: () => goAccount('inbox') },
           { key: 'bands', label: 'My Bands', hint: 'Open a band, pass one on, gift messages', glyph: <span style={{ fontSize: 20, lineHeight: 1 }}>⟳</span>, onClick: () => goAccount('bands') },
-          { key: 'settings', label: 'Settings', hint: 'Avatar, profile, notifications', glyph: <span style={{ fontSize: 19, lineHeight: 1 }}>⚙</span>, href: '/settings' },
+          { key: 'settings', label: 'Settings', hint: 'Avatar, name, password, sign-in', glyph: <span style={{ fontSize: 19, lineHeight: 1 }}>⚙</span>, onClick: () => goAccount('settings') },
           { key: 'account', label: 'Account', hint: 'Store credit, referrals, sign out', glyph: <Icon name="user" size={20} color={DARK} bg="white" />, onClick: () => goAccount('top') },
         ] as { key: string; label: string; hint: string; glyph: React.ReactNode; badge?: number; onClick?: () => void; href?: string }[]).map(item => {
           const inner = (
@@ -1238,7 +1245,7 @@ export default function BandPage() {
                 <AvatarBadge icon={myProfile?.avatar_icon} initials={myProfile?.avatar_initials} font={myProfile?.avatar_font} name={myProfile?.full_name || (regs.length ? regs[regs.length - 1].user_name : '')} size={48} />
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{myProfile?.full_name || 'Account'}</div>
-                  <a href="/settings" style={{ fontFamily: body, fontSize: 12, color: GOLD, textDecoration: 'none' }}>Edit avatar &amp; profile →</a>
+                  <button onClick={() => goAccount('settings')} style={{ background: 'none', border: 'none', padding: 0, fontFamily: body, fontSize: 12, color: GOLD, cursor: 'pointer' }}>Edit avatar &amp; profile →</button>
                 </div>
               </div>
             ) : (
@@ -1309,9 +1316,14 @@ export default function BandPage() {
                     {myRole === 'admin' ? '⚙️ Admin Control Centre' : '📦 Fulfillment'}
                   </a>
                 )}
-                <a href="/settings" style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'white', borderRadius: 12, padding: '16px 20px', border: '1px solid rgba(44,24,16,0.1)', fontFamily: serif, fontSize: 15, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
-                  <Icon name="settings" size={18} color={DARK} bg="white" /> Settings
-                </a>
+                <div ref={settingsRef} style={{ background: 'white', borderRadius: 12, padding: '4px 18px', border: '1px solid rgba(44,24,16,0.1)', scrollMarginTop: 80 }}>
+                  <button onClick={() => setSettingsOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '14px 0', cursor: 'pointer', textAlign: 'left' }}>
+                    <Icon name="settings" size={18} color={DARK} bg="white" />
+                    <span style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, color: DARK }}>Profile &amp; Settings</span>
+                    <span style={{ marginLeft: 'auto', color: GRAY, fontSize: 13, transform: settingsOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</span>
+                  </button>
+                  {settingsOpen && <div style={{ paddingBottom: 12 }}><SettingsPanel userId={userId} onProfileChange={() => setProfileTick(t => t + 1)} /></div>}
+                </div>
                 <button onClick={async () => {
                   const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
                   await supabase.auth.signOut()
