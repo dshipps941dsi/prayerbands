@@ -50,10 +50,13 @@ export default function CirclesSection({ userId }: { userId: string }) {
   // A circle opened inline (its prayer feed), instead of navigating away.
   const [viewingId, setViewingId] = useState<string | null>(null)
 
+  const reloadSeq = useRef(0)
   const reload = useCallback(async () => {
+    const seq = ++reloadSeq.current
     const res = await fetch('/api/circles/my-circles')
     if (res.ok) {
       const data = await res.json()
+      if (seq !== reloadSeq.current) return
       const seen = new Set<string>()
       const unique = ((data.circles ?? []) as CircleSummary[]).filter(c => {
         if (seen.has(c.id)) return false
@@ -425,10 +428,14 @@ function CircleView({ circleId, onBack }: { circleId: string; onBack: () => void
     if (await copyText(msg)) { setShareCopied(true); setTimeout(() => setShareCopied(false), 1500) }
   }
 
+  const circleSeq = useRef(0)
   const loadCircle = useCallback(async () => {
+    const seq = ++circleSeq.current
     const res = await fetch(`/api/circles/${circleId}`)
+    if (seq !== circleSeq.current) return
     if (!res.ok) { setError('Could not open this circle.'); setLoading(false); return }
     const d = await res.json()
+    if (seq !== circleSeq.current) return
     setCircle(d.circle)
     setRequests(d.requests ?? [])
     setMembers(d.members ?? [])

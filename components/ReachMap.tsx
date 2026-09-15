@@ -32,10 +32,13 @@ export default function ReachMap({ bandId, scope = 'band' }: { bandId: string; s
   // long downline stays tidy).
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
+  // Switching band ↔ me quickly fires two loads; only the latest may paint.
+  const loadSeq = useRef(0)
   useEffect(() => {
     setLoading(true)
+    const seq = ++loadSeq.current
     const qs = scope === 'me' ? 'scope=me' : `bandId=${encodeURIComponent(bandId)}`
-    fetch(`/api/band-reach?${qs}`).then(r => r.json()).then(d => setData(d)).catch(() => {}).finally(() => setLoading(false))
+    fetch(`/api/band-reach?${qs}`).then(r => r.json()).then(d => { if (seq === loadSeq.current) setData(d) }).catch(() => {}).finally(() => { if (seq === loadSeq.current) setLoading(false) })
   }, [bandId, scope])
 
   // Top-level branches = depth-0 people who gave at least one band.

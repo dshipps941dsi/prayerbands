@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
 import AvatarBadge from './AvatarBadge'
@@ -213,7 +213,12 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [replyDraft, setReplyDraft] = useState<Record<string, string>>({})
   const [replyBusy, setReplyBusy] = useState(false)
 
+  // Loads overlap: the first load, and a reload after every action. A slower
+  // earlier load must not overwrite the newer picture (an accepted request
+  // reappearing as pending). Only the latest load may set state.
+  const loadSeq = useRef(0)
   async function load() {
+    const seq = ++loadSeq.current
     const [netRes, circleRes, bandsRes, groupsRes, listsRes] = await Promise.all([
       fetch('/api/network/my-network'),
       showPartners ? fetch('/api/circles/open-requests') : Promise.resolve(null),
@@ -222,8 +227,10 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       showRequests ? fetch('/api/network/lists') : Promise.resolve(null),
       showPartners ? loadChain() : Promise.resolve(null),
     ])
+    if (seq !== loadSeq.current) return
     if (netRes.ok) {
       const d = await netRes.json()
+      if (seq !== loadSeq.current) return
       setConnections([...(d.connections ?? []), ...(d.lineage_partners ?? [])])
       setPending(d.pending_requests ?? [])
       setMyRequests(d.my_requests ?? [])
@@ -233,6 +240,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     }
     if (bandsRes && bandsRes.ok) {
       const d = await bandsRes.json()
+      if (seq !== loadSeq.current) return
       // Any band the viewer holds works as their connect code — someone
       // entering it lands on that band and connects to its holder (them).
       const first = (d.bands ?? [])[0]
@@ -240,14 +248,17 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     }
     if (circleRes && circleRes.ok) {
       const d = await circleRes.json()
+      if (seq !== loadSeq.current) return
       setCircleRequests(d.requests ?? [])
     }
     if (groupsRes && groupsRes.ok) {
       const d = await groupsRes.json()
+      if (seq !== loadSeq.current) return
       setGroups(d.groups ?? [])
     }
     if (listsRes && listsRes.ok) {
       const d = await listsRes.json()
+      if (seq !== loadSeq.current) return
       setLists(d.lists ?? [])
     }
     setLoading(false)

@@ -256,6 +256,10 @@ export default function BandPage() {
   // once as the owner, let the stranger's answer land last and win.
   const [authChecked, setAuthChecked] = useState(false)
   const statusSeq = useRef(0)
+  // Same idea for the other replies that can land out of order.
+  const unreadSeq = useRef(0)
+  const profileSeq = useRef(0)
+  const bandsSeq = useRef(0)
   // Admin's own email, so the Account tab can offer a way into the control
   // centre. Everything now routes to the band view, which left /admin reachable
   // only by typing the URL.
@@ -393,9 +397,10 @@ export default function BandPage() {
   // Unread notification count for the bell (signed-in account holders only).
   useEffect(() => {
     if (!userId) { setUnread(0); return }
+    const seq = ++unreadSeq.current
     fetch('/api/my-notifications')
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setUnread(d.unread || 0) })
+      .then(d => { if (d && seq === unreadSeq.current) setUnread(d.unread || 0) })
       .catch(() => {})
   }, [userId])
 
@@ -487,9 +492,10 @@ export default function BandPage() {
 
   useEffect(() => {
     if (!userId) { setMyBands([]); return }
+    const seq = ++bandsSeq.current
     fetch('/api/my-bands')
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.bands) { setMyBands(d.bands); setDefaultBandId(d.default_band_id ?? null) } })
+      .then(d => { if (d?.bands && seq === bandsSeq.current) { setMyBands(d.bands); setDefaultBandId(d.default_band_id ?? null) } })
       .catch(() => {})
   }, [userId])
 
@@ -551,10 +557,11 @@ export default function BandPage() {
   // The signed-in person's avatar + name, for the account header and nav.
   useEffect(() => {
     if (!userId) { setMyProfile(null); return }
+    const seq = ++profileSeq.current
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     supabase.from('profiles').select('avatar_icon, full_name, avatar_initials, avatar_font').eq('id', userId).maybeSingle()
-      .then(({ data }) => setMyProfile(data ? { avatar_icon: (data as any).avatar_icon ?? null, full_name: (data as any).full_name ?? null, avatar_initials: (data as any).avatar_initials ?? null, avatar_font: (data as any).avatar_font ?? null } : null))
-    fetch('/api/me/role').then(r => r.json()).then(d => setMyRole(d.role ?? null)).catch(() => setMyRole(null))
+      .then(({ data }) => seq === profileSeq.current && setMyProfile(data ? { avatar_icon: (data as any).avatar_icon ?? null, full_name: (data as any).full_name ?? null, avatar_initials: (data as any).avatar_initials ?? null, avatar_font: (data as any).avatar_font ?? null } : null))
+    fetch('/api/me/role').then(r => r.json()).then(d => { if (seq === profileSeq.current) setMyRole(d.role ?? null) }).catch(() => { if (seq === profileSeq.current) setMyRole(null) })
   }, [userId, profileTick])
 
   // Referral credit + code — fetched once signed in, so the Home promo banner
@@ -682,6 +689,7 @@ export default function BandPage() {
       if (!res.ok) { alert(data.error || 'Could not claim this band.'); return }
       const url = `/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}`
       const fresh = await fetch(url).then(r => r.json())
+      statusSeq.current++
       setStatus(fresh)
     } catch {
       alert('Something went wrong. Please try again.')
@@ -881,7 +889,7 @@ export default function BandPage() {
             <a href={`/signin?redirect=${encodeURIComponent(`/band/${bandId}`)}`} style={{ fontFamily: serif, fontSize: 13, fontWeight: 700, color: INK, background: GOLD, textDecoration: 'none', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '7px 16px', whiteSpace: 'nowrap' }}>Sign in</a>
           )}
         </div>
-        <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} userId={userId} onSeen={() => setUnread(0)} />
+        <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} userId={userId} onSeen={() => { unreadSeq.current++; setUnread(0) }} />
       </nav>
     )
   }
@@ -1319,7 +1327,7 @@ export default function BandPage() {
                   </button>
                   {msgsOpen && (
                     <div style={{ paddingBottom: 12 }}>
-                      <NotificationsPanel inline open={false} onClose={() => {}} userId={userId} onSeen={() => setUnread(0)} />
+                      <NotificationsPanel inline open={false} onClose={() => {}} userId={userId} onSeen={() => { unreadSeq.current++; setUnread(0) }} />
                     </div>
                   )}
                 </div>
