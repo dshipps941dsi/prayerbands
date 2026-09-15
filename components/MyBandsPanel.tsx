@@ -70,7 +70,6 @@ export default function MyBandsPanel({ userId, currentBandId, defaultBandId, ope
               recipient. Renders nothing when there are none. */}
           <GiftDedications userId={userId} autoOpen={openDedication} />
 
-          <a href="/dashboard" style={{ display: 'inline-block', fontFamily: body, fontSize: 12.5, color: GRAY, textDecoration: 'none' }}>Full dashboard, subscription &amp; prayer map →</a>
         </div>
       )}
     </div>

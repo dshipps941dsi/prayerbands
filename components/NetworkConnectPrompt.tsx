@@ -106,8 +106,8 @@ export default function NetworkConnectPrompt({ bandId }: { bandId: string }) {
     return (
       <div style={cardStyle}>
         {title(`${name} wants to connect`)}
-        {sub('Respond to this request from your dashboard.')}
-        {goldButton('Review Request →', () => router.push('/dashboard?tab=prayers'))}
+        {sub('Accept or decline under My Partners.')}
+        {goldButton('Review Request →', () => { window.location.assign(`/band/${bandId}?open=partners`) })}
       </div>
     )
   }

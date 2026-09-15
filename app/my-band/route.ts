@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   // Signed out — the band page can't be resolved, so send them to sign in and
   // come back here once they have a session.
   if (!user) {
-    return NextResponse.redirect(`${origin}/signin?redirect=/my-band`, { status: 307 })
+    return NextResponse.redirect(`${origin}/signin?redirect=${encodeURIComponent(`/my-band${qs}`)}`, { status: 307 })
   }
 
   const admin = createServiceClient()
@@ -63,10 +63,11 @@ export async function GET(req: Request) {
     bandId = ownedBand?.band_id ?? null
   }
 
-  // No band yet (e.g. an account made before a purchase) — the dashboard is the
-  // only sensible landing place.
+  // No band yet (an account made before a purchase, or a subscription whose
+  // first shipment is still on its way): there is no band page to show, so
+  // the store is where a first band comes from.
   if (!bandId) {
-    return NextResponse.redirect(`${origin}/dashboard`, { status: 307 })
+    return NextResponse.redirect(`${origin}/store`, { status: 307 })
   }
 
   return NextResponse.redirect(`${origin}/band/${bandId}${qs}`, { status: 307 })

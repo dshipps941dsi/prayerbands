@@ -331,7 +331,7 @@ export default function SettingsPage() {
             <div className="set-card">
               <div className="set-card-title">Account</div>
               <p style={{ fontSize: 14, color: "#5C6573", lineHeight: 1.6, marginBottom: 16 }}>
-                Manage your bands, subscription, and prayer network from your <Link href="/dashboard" className="set-link">dashboard</Link>.
+                Manage your bands, subscription, and prayer partners from the <Link href="/my-band?tab=account" className="set-link">Account tab</Link> in the app.
               </p>
               <button className="set-signout" onClick={signOut}>🚪 Sign Out</button>
             </div>

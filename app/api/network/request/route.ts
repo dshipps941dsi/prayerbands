@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
                   <strong style="color:#1a6b4a">${eRequesterName}</strong> tapped your prayer band and asked to connect with you as Prayer Partners. If you accept, you'll be able to lift each other up in prayer.
                 </p>
                 <div style="text-align:center;margin:28px 0">
-                  <a href="https://prayerbands.com/dashboard?tab=prayers" style="display:inline-block;background:#1a6b4a;color:#fff;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:16px;font-weight:700;font-family:Georgia,serif">Review the Request ✝</a>
+                  <a href="https://prayerbands.com/my-band?open=partners" style="display:inline-block;background:#1a6b4a;color:#fff;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:16px;font-weight:700;font-family:Georgia,serif">Review the Request ✝</a>
                 </div>
                 <p style="font-size:13px;color:#8896a8;text-align:center;font-style:italic;margin:0">
                   Open your dashboard to accept or decline. ✝

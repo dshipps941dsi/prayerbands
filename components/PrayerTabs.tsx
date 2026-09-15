@@ -55,8 +55,9 @@ function readSeen(): Set<Sub> {
   }
 }
 
-export default function PrayerTabs({ userId, onExpand }: { userId: string; onExpand?: () => void }) {
-  const [sub, setSub] = useState<Sub>('requests')
+export type PrayerSub = Sub
+export default function PrayerTabs({ userId, onExpand, initialSub = 'requests' }: { userId: string; onExpand?: () => void; initialSub?: Sub }) {
+  const [sub, setSub] = useState<Sub>(initialSub)
   // Explicitly opened with the ⓘ, per tab.
   const [opened, setOpened] = useState<Set<Sub>>(new Set())
   // Closed for now, without ticking "don't show again".

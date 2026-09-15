@@ -43,7 +43,7 @@ const GROUPS: { title: string; intro: string; entries: Entry[] }[] = [
     title: "Dashboards & Account",
     intro: "Require sign-in. Open while logged in to the matching account type.",
     entries: [
-      { href: "/dashboard", label: "My Dashboard", desc: "Personal dashboard (individual account)." },
+      { href: "/my-band", label: "My Bands", desc: "Your band, journey, prayers and account." },
       { href: "/org/dashboard", label: "Church Dashboard", desc: "Ministry dashboard (org account)." },
       { href: "/settings", label: "Account Settings", desc: "Edit name, change password, sign out." },
     ],

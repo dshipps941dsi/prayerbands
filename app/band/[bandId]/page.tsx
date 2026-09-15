@@ -29,6 +29,8 @@ import { track } from '@/lib/analytics'
 import { CATEGORIES, getVerseForCategory, verseSlug } from '@/lib/verses'
 import { recordVerseView, type VerseWalk } from '@/lib/verseWalk'
 import WalkLine from '@/components/band/WalkLine'
+import SubscriptionPanel from '@/components/SubscriptionPanel'
+import type { PrayerSub } from '@/components/PrayerTabs'
 
 type Registration = {
   id: string
@@ -278,6 +280,8 @@ export default function BandPage() {
   const [activeTab, setActiveTab] = useState<'home' | 'journey' | 'purchase' | 'account'>('home')
   // ?dedicate=1 (from the shipping email / dedicate page): open this band's gift message for editing.
   const [dedicateOpen, setDedicateOpen] = useState(false)
+  // ?open=partners (emails, circle pages): the prayer panel, on that sub-tab.
+  const [prayerSub, setPrayerSub] = useState<PrayerSub>('requests')
   // Full-screen focus mode: meditate on the verse, or the journal with nothing else.
   const [focus, setFocus] = useState<null | 'verse' | 'prayer'>(null)
   // Auto-hiding bottom nav: hidden on load for a clean first view, revealed
@@ -455,7 +459,9 @@ export default function BandPage() {
     if (tab === 'account' || tab === 'journey' || tab === 'purchase') setActiveTab(tab as any)
     if (sp.get('action') === 'pass') setTransferStep('sheet')
     if (sp.get('dedicate')) { setActiveTab('account'); setDedicateOpen(true) }
-    if (tab || sp.get('action') || sp.get('dedicate')) window.history.replaceState({}, '', window.location.pathname)
+    const open = sp.get('open')
+    if (open === 'requests' || open === 'partners' || open === 'circles') { setPrayerSub(open); setActiveTab('home'); setFocus('prayer') }
+    if (tab || sp.get('action') || sp.get('dedicate') || open) window.history.replaceState({}, '', window.location.pathname)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -1165,7 +1171,7 @@ export default function BandPage() {
 
             <div style={{ padding: '20px 20px 40px' }}>
               {userId ? (
-                <PrayerTabs userId={userId} onExpand={() => setFocus('prayer')} />
+                <PrayerTabs userId={userId} onExpand={() => setFocus('prayer')} initialSub={prayerSub} />
               ) : (
                 <div style={{ background: 'white', borderRadius: 14, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
                   <div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div>
@@ -1271,6 +1277,8 @@ export default function BandPage() {
                 {/* My Bands — every band on the account, open / pass on, and
                     gift messages for unopened ones. Band management lives here
                     now, not only on the old dashboard. */}
+                {/* Subscription (plan, next shipment, billing) — nothing for non-subscribers. */}
+                <SubscriptionPanel userId={userId} />
                 <div ref={bandsRef} style={{ scrollMarginTop: 80 }}>
                   <MyBandsPanel userId={userId} currentBandId={bandId} defaultBandId={defaultBandId} openDedication={dedicateOpen ? bandId : null} />
                 </div>
@@ -1365,7 +1373,7 @@ export default function BandPage() {
         {focus === 'prayer' && userId && (
           <FocusOverlay onClose={() => setFocus(null)}>
             <div style={{ maxWidth: 640, margin: '0 auto', padding: '68px 20px 48px' }}>
-              <PrayerTabs userId={userId} />
+              <PrayerTabs userId={userId} initialSub={prayerSub} />
             </div>
           </FocusOverlay>
         )}

@@ -199,7 +199,7 @@ function CirclePageInner() {
     if (res.ok) {
       // Leaving the circle yourself — you're no longer a member, so navigate away.
       if (userId === myUserId) {
-        router.push('/dashboard?tab=prayers')
+        router.push('/my-band?open=circles')
         return
       }
       setMembers(prev => prev.filter(m => m.user_id !== userId))
@@ -239,7 +239,7 @@ function CirclePageInner() {
       body: JSON.stringify({ is_closed: true })
     })
     if (res.ok) {
-      router.push('/dashboard?tab=prayers')
+      router.push('/my-band?open=circles')
     }
   }
 
@@ -336,7 +336,7 @@ function CirclePageInner() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
-              onClick={() => router.push(isMember ? '/dashboard?tab=prayers' : '/circles')}
+              onClick={() => router.push(isMember ? '/my-band?open=circles' : '/circles')}
               style={{
                 background: 'none',
                 border: 'none',
