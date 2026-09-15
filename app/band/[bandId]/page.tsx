@@ -304,6 +304,7 @@ export default function BandPage() {
   // Tapping "Account" in the bottom bar raises a short menu (Inbox, My Bands,
   // Settings, Account) instead of dropping people at the top of a long tab.
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const menuTouchY = useRef<number | null>(null)
   const bandsRef = useRef<HTMLDivElement | null>(null)
   const msgsRef = useRef<HTMLDivElement | null>(null)
   const [bandsOpen, setBandsOpen] = useState(true)
@@ -729,8 +730,12 @@ export default function BandPage() {
   const accountMenu = accountMenuOpen ? (
     <div onClick={() => setAccountMenuOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 250 /* above the fixed tab bar (200), which covered the last row */, display: 'flex', alignItems: 'flex-end' }}>
       <style>{`@keyframes pbRise { from { transform: translateY(100%) } to { transform: none } } @media (prefers-reduced-motion: reduce) { .pb-rise { animation: none !important } }`}</style>
-      <div onClick={e => e.stopPropagation()} className="pb-rise" style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '14px 16px calc(28px + env(safe-area-inset-bottom, 0px))', width: '100%', boxSizing: 'border-box', animation: 'pbRise 0.22s ease-out' }}>
+      <div onClick={e => e.stopPropagation()} className="pb-rise"
+        onTouchStart={e => { menuTouchY.current = e.touches[0].clientY }}
+        onTouchEnd={e => { const dy = e.changedTouches[0].clientY - (menuTouchY.current ?? e.changedTouches[0].clientY); menuTouchY.current = null; if (dy > 60) setAccountMenuOpen(false) }}
+        style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '14px 16px calc(28px + env(safe-area-inset-bottom, 0px))', width: '100%', boxSizing: 'border-box', animation: 'pbRise 0.22s ease-out', position: 'relative' }}>
         <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 14px' }} />
+        <button onClick={() => setAccountMenuOpen(false)} aria-label="Close" style={{ position: 'absolute', top: 10, right: 12, width: 34, height: 34, borderRadius: 17, border: 'none', background: 'rgba(44,24,16,0.08)', color: DARK, fontSize: 16, cursor: 'pointer' }}>✕</button>
         {([
           { key: 'inbox', label: 'Inbox', hint: 'Prayers, requests and your ripple', glyph: <Icon name="mail" size={20} color={DARK} bg="white" />, badge: unread, onClick: () => goAccount('inbox') },
           { key: 'bands', label: 'My Bands', hint: 'Open a band, pass one on, gift messages', glyph: <span style={{ fontSize: 20, lineHeight: 1 }}>⟳</span>, onClick: () => goAccount('bands') },
@@ -1587,9 +1592,25 @@ export default function BandPage() {
             .pb-cta-pulse { animation: pbCtaPulse 1.7s ease-in-out infinite; }
             @media (prefers-reduced-motion: reduce) { .pb-cta-pulse { animation: none; } }
           `}</style>
+          {/* A credited giver (handed a pile by the person above them) is here to
+              give this one away, not to register it — so that comes first. */}
+          {userId && status.band && !status.band.owner_id && status.canHandOff && (
+            <button
+              className="pb-cta-pulse"
+              onClick={() => setTransferStep('sheet')}
+              style={{ padding: '18px 40px', background: GOLD, color: INK, border: 'none', borderRadius: 12, fontFamily: serif, fontSize: 18, fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 30px rgba(184,134,11,0.30)', width: '100%', maxWidth: 380, marginBottom: 8 }}
+            >
+              🎁 I&apos;m giving this one to someone →
+            </button>
+          )}
+          {userId && status.band && !status.band.owner_id && status.canHandOff && (
+            <div style={{ marginBottom: 18, fontFamily: body, fontSize: 12, color: 'rgba(255,255,255,0.55)', maxWidth: 320 }}>
+              Add their name and a note now, or just hand it over &mdash; when they tap it, it becomes theirs and you stay the link above them.
+            </div>
+          )}
           <button
             ref={entryCtaRef}
-            className="pb-cta-pulse"
+            className={status.canHandOff && userId && status.band && !status.band.owner_id ? '' : 'pb-cta-pulse'}
             onClick={() => setClaimStep('form')}
             style={{
               padding: '18px 40px', background: GOLD, color: INK,
@@ -1605,22 +1626,6 @@ export default function BandPage() {
             Takes about 30 seconds. No account needed.
           </div>
 
-          {/* Shortcut for a bulk/gift buyer: they're the band's upline but never
-              claimed it, so let them hand it off straight from the tap —
-              tap → name → give — without a claim step first. */}
-          {userId && status.band && !status.band.owner_id && status.canHandOff && (
-            <button
-              onClick={() => setTransferStep('sheet')}
-              style={{ marginTop: 16, padding: '13px 30px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 22px rgba(184,134,11,0.3)' }}
-            >
-              🎁 I&apos;m giving this one to someone →
-            </button>
-          )}
-          {userId && status.band && !status.band.owner_id && status.canHandOff && (
-            <div style={{ marginTop: 8, fontFamily: body, fontSize: 12, color: 'rgba(255,255,255,0.55)', maxWidth: 320 }}>
-              Add their name and a note now, or just hand it over &mdash; when they tap it, it becomes theirs and you stay the link above them.
-            </div>
-          )}
           {userId && status.band && !status.band.owner_id && (
             <button
               // Opens the registration form as yourself rather than claiming
