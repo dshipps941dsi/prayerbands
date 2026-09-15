@@ -296,6 +296,20 @@ export default function BandPage() {
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
   const [msgsOpen, setMsgsOpen] = useState(false)  // "My Messages" accordion on the Account tab
+  // Tapping "Account" in the bottom bar raises a short menu (Inbox, My Bands,
+  // Settings, Account) instead of dropping people at the top of a long tab.
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const bandsRef = useRef<HTMLDivElement | null>(null)
+  const msgsRef = useRef<HTMLDivElement | null>(null)
+  function goAccount(section: 'inbox' | 'bands' | 'top') {
+    setAccountMenuOpen(false)
+    setActiveTab('account')
+    if (section === 'inbox') setMsgsOpen(true)
+    setTimeout(() => {
+      if (section === 'top') window.scrollTo({ top: 0, behavior: 'smooth' })
+      else (section === 'inbox' ? msgsRef : bandsRef).current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 80)
+  }
   // First-tap entry screen: is the main call-to-action on screen? When it
   // isn't (scrolled past, or pushed down by a long gift note), a bar pinned to
   // the bottom carries the same button so it can never be missed.
@@ -693,6 +707,39 @@ export default function BandPage() {
   // component) so it can render on BOTH the personal-space screen and the
   // entry screen without remounting — a nested component would recreate on
   // every keystroke and drop focus from the inputs.
+  const accountMenu = accountMenuOpen ? (
+    <div onClick={() => setAccountMenuOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
+      <style>{`@keyframes pbRise { from { transform: translateY(100%) } to { transform: none } } @media (prefers-reduced-motion: reduce) { .pb-rise { animation: none !important } }`}</style>
+      <div onClick={e => e.stopPropagation()} className="pb-rise" style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '14px 16px calc(24px + env(safe-area-inset-bottom, 0px))', width: '100%', boxSizing: 'border-box', animation: 'pbRise 0.22s ease-out' }}>
+        <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 14px' }} />
+        {([
+          { key: 'inbox', label: 'Inbox', hint: 'Prayers, requests and your ripple', glyph: <Icon name="mail" size={20} color={DARK} bg="white" />, badge: unread, onClick: () => goAccount('inbox') },
+          { key: 'bands', label: 'My Bands', hint: 'Open a band, pass one on, gift messages', glyph: <span style={{ fontSize: 20, lineHeight: 1 }}>⟳</span>, onClick: () => goAccount('bands') },
+          { key: 'settings', label: 'Settings', hint: 'Avatar, profile, notifications', glyph: <span style={{ fontSize: 19, lineHeight: 1 }}>⚙</span>, href: '/settings' },
+          { key: 'account', label: 'Account', hint: 'Store credit, referrals, sign out', glyph: <Icon name="user" size={20} color={DARK} bg="white" />, onClick: () => goAccount('top') },
+        ] as { key: string; label: string; hint: string; glyph: React.ReactNode; badge?: number; onClick?: () => void; href?: string }[]).map(item => {
+          const inner = (
+            <>
+              <span style={{ width: 40, height: 40, borderRadius: 12, background: 'white', border: '1px solid rgba(44,24,16,0.1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative' }}>
+                {item.glyph}
+                {!!item.badge && <span style={{ position: 'absolute', top: -5, right: -5, background: '#E5484D', color: '#fff', borderRadius: 10, minWidth: 17, height: 17, fontSize: 10, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', boxSizing: 'border-box' }}>{item.badge > 99 ? '99+' : item.badge}</span>}
+              </span>
+              <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                <span style={{ display: 'block', fontFamily: serif, fontSize: 16, fontWeight: 700, color: DARK }}>{item.label}</span>
+                <span style={{ display: 'block', fontFamily: body, fontSize: 12.5, color: GRAY, marginTop: 1 }}>{item.hint}</span>
+              </span>
+              <span style={{ color: GRAY, fontSize: 18 }}>›</span>
+            </>
+          )
+          const style: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '11px 6px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(44,24,16,0.08)', cursor: 'pointer', textDecoration: 'none', boxSizing: 'border-box' }
+          return item.href
+            ? <a key={item.key} href={item.href} style={style}>{inner}</a>
+            : <button key={item.key} onClick={item.onClick} style={style}>{inner}</button>
+        })}
+      </div>
+    </div>
+  ) : null
+
   const transferSheet = transferStep === 'sheet' ? (
     <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
@@ -1001,7 +1048,7 @@ export default function BandPage() {
         {tabs.map(tab => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => { if (tab.id === 'account' && userId) setAccountMenuOpen(true); else setActiveTab(tab.id as any) }}
             style={{
               flex: 1, padding: '10px 4px 8px', border: 'none', background: 'transparent',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
@@ -1224,11 +1271,13 @@ export default function BandPage() {
                 {/* My Bands — every band on the account, open / pass on, and
                     gift messages for unopened ones. Band management lives here
                     now, not only on the old dashboard. */}
-                <MyBandsPanel userId={userId} currentBandId={bandId} defaultBandId={defaultBandId} openDedication={dedicateOpen ? bandId : null} />
+                <div ref={bandsRef} style={{ scrollMarginTop: 80 }}>
+                  <MyBandsPanel userId={userId} currentBandId={bandId} defaultBandId={defaultBandId} openDedication={dedicateOpen ? bandId : null} />
+                </div>
                 {/* My Messages — the same feed as the top mailbox, collapsed by
                     default. Expanding mounts the feed, which marks messages seen
                     (clears the tab + mailbox badge). */}
-                <div style={{ background: 'white', borderRadius: 12, padding: '4px 18px', border: '1px solid rgba(44,24,16,0.1)' }}>
+                <div ref={msgsRef} style={{ background: 'white', borderRadius: 12, padding: '4px 18px', border: '1px solid rgba(44,24,16,0.1)', scrollMarginTop: 80 }}>
                   <button onClick={() => setMsgsOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '14px 0', cursor: 'pointer', textAlign: 'left' }}>
                     <Icon name="mail" size={18} color={DARK} bg="white" />
                     <span style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, color: DARK }}>My Messages</span>
@@ -1293,7 +1342,7 @@ export default function BandPage() {
           </div>
         )}
 
-        {transferSheet}
+        {transferSheet}{accountMenu}
         <div style={{ height: 100 }} />
         <BottomNav />
 
@@ -1566,7 +1615,7 @@ export default function BandPage() {
           {/* Hand-off from the entry screen: the sheet + "waiting for them to
               tap" state live here too, so a bulk buyer never has to claim first. */}
           {transferStep === 'pending' && <div style={{ marginTop: 20, width: '100%', maxWidth: 420 }}><PendingBanner /></div>}
-          {transferSheet}
+          {transferSheet}{accountMenu}
 
           {/* Pinned footer: always on screen, whatever is scrolled. The main
               button says what the step is; this one says that there is one. */}
