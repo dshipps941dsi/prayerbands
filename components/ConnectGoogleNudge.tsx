@@ -39,7 +39,7 @@ export default function ConnectGoogleNudge() {
     setBusy(true)
     const { data, error } = await sb().auth.linkIdentity({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/my-band?tab=account')}` },
     })
     if (error) { setBusy(false); return }
     if (data?.url) window.location.href = data.url

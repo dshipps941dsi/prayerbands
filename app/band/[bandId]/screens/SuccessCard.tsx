@@ -116,7 +116,7 @@ export default function SuccessCard({
   async function handleGoogleSignIn() {
     if (!ageConsent) return
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/band/${bandId}` } })
+    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(`/band/${bandId}`)}` } })
   }
 
   if (userId) return null
@@ -163,7 +163,7 @@ export default function SuccessCard({
                 } catch (e: any) {
                   if (/popup_closed|user_cancelled|cancel/i.test(String(e?.error || e?.message || ''))) return
                 }
-                await supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: `${window.location.origin}/band/${bandId}` } })
+                await supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(`/band/${bandId}`)}` } })
               }} disabled={!ageConsent} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                 width: '100%', padding: '13px', marginBottom: 10,
@@ -177,7 +177,7 @@ export default function SuccessCard({
               <button onClick={async () => {
                 if (!ageConsent) return
                 const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-                await supabase.auth.signInWithOAuth({ provider: 'facebook', options: { redirectTo: `${window.location.origin}/band/${bandId}` } })
+                await supabase.auth.signInWithOAuth({ provider: 'facebook', options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(`/band/${bandId}`)}` } })
               }} disabled={!ageConsent} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                 width: '100%', padding: '13px', marginBottom: 10,

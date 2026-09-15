@@ -123,7 +123,7 @@ export default function SettingsPage() {
     setLinkMsg("");
     const { data, error } = await supabase().auth.linkIdentity({
       provider,
-      options: { redirectTo: `${window.location.origin}/settings` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/settings')}` },
     });
     if (error) setLinkMsg(error.message || `Could not connect ${provider}.`);
     else if (data?.url) window.location.href = data.url;
