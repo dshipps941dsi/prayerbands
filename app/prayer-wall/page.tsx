@@ -173,7 +173,7 @@ export default function PrayerWallPage() {
   return (
     <div style={{ fontFamily: 'Inter, sans-serif', background: '#F6F1E4', minHeight: '100vh', color: '#2A3344' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+        
         * { box-sizing: border-box; margin: 0; padding: 0; }
         .cormorant { font-family: 'Cormorant Garamond', serif; }
         .inter { font-family: 'Inter', sans-serif; }

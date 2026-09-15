@@ -28,7 +28,7 @@ export default function WelcomeQrPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#F6F1E4', fontFamily: "'Inter', system-ui, sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+        
         .wq-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; padding: 18px 16px; }
         .wq-input { width: 84px; padding: 9px 10px; border: 1px solid rgba(92,101,115,0.3); border-radius: 8px; font-size: 15px; text-align: center; font-family: 'Inter', sans-serif; }
         .wq-print { background: ${NAVY}; color: #F5EDD8; border: 1px solid rgba(200,169,110,0.45); border-radius: 8px; padding: 10px 20px; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; cursor: pointer; }

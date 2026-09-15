@@ -2,14 +2,6 @@
 import { useState, useEffect } from 'react'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
 
-// Brand font import
-if (typeof document !== 'undefined' && !document.getElementById('pb-brand-fonts')) {
-  const link = document.createElement('link')
-  link.id = 'pb-brand-fonts'
-  link.rel = 'stylesheet'
-  link.href = 'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap'
-  document.head.appendChild(link)
-}
 
 const CREAM_BG = '#F6F1E4'
 const CARD_BG = '#FFFDF8'

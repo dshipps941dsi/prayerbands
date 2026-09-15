@@ -63,7 +63,7 @@ export default function WelcomePage() {
   return (
     <div style={{ background: "#060d1c", minHeight: "100vh", fontFamily: "'Inter', system-ui, sans-serif", color: INK }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+        
         .wc-cinzel { font-family: 'Cinzel', Georgia, serif; }
         .wc-wrap { padding: 40px 20px 64px; display: flex; justify-content: center; }
         .wc-card { width: 100%; max-width: 680px; background: ${IVORY}; border: 1px solid ${LINE}; border-radius: 8px; overflow: hidden; box-shadow: 0 24px 70px rgba(0,0,0,0.45); }

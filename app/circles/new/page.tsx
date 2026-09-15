@@ -67,8 +67,7 @@ export default function NewCirclePage() {
     }
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#F6F1E4', fontFamily: "'Inter', sans-serif", padding: '0 0 80px 0' }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');`}</style>
-        <div style={{ padding: '48px 24px 0', maxWidth: 480, margin: '0 auto', textAlign: 'center' }}>
+                <div style={{ padding: '48px 24px 0', maxWidth: 480, margin: '0 auto', textAlign: 'center' }}>
           <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={36} color="#C8A96E" /></div>
           <div style={{ fontSize: 40, color: '#C8A96E', marginBottom: 12 }}>✓</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 26, fontWeight: 700, color: '#15223B', margin: '0 0 8px' }}>Circle Created!</h1>
@@ -99,8 +98,7 @@ export default function NewCirclePage() {
       fontFamily: "'Inter', sans-serif",
       padding: '0 0 80px 0'
     }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');`}</style>
-
+      
       {/* Header */}
       <div style={{
         backgroundColor: '#FFFDF8',

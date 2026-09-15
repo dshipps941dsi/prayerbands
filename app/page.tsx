@@ -558,7 +558,7 @@ export default function HomePage() {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────────
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+  
   *,*::before,*::after { box-sizing: border-box; }
   :root {
     --navy:#0A1628; --navy2:#0E1E38; --navy3:#132544;

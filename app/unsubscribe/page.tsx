@@ -35,8 +35,7 @@ function UnsubscribeInner() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(180deg, ${NAVY} 0%, #0E1E38 55%, ${NAVY} 100%)`, fontFamily: "'Inter', sans-serif", padding: '24px 16px' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700&family=Inter:wght@300;400;500;600&display=swap');`}</style>
-      <div style={card}>
+            <div style={card}>
         <div style={{ fontSize: 40, color: GOLD, marginBottom: 14 }}>✝︎</div>
 
         {state === 'done' ? (

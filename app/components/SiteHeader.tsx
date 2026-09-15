@@ -54,7 +54,7 @@ export default function SiteHeader() {
         </nav>
       </div>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+        
         .site-header {
           position: sticky; top: 0; z-index: 1000;
           background: rgba(246,241,228,0.95);

@@ -22,7 +22,7 @@ const BRAND = {
   splashText: 'rgba(245,237,216,0.85)',
 }
 
-const FONTS = "@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');"
+const FONTS = ""
 
 function AcceptInviteInner() {
   const searchParams = useSearchParams()

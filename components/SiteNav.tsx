@@ -95,7 +95,7 @@ export default function SiteNav({ onCartClick, cartCount = 0 }: { onCartClick?: 
 }
 
 const navStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+  
   .sn-topbar { background:#0A1628; color:rgba(245,237,216,0.8); font-size:0.72rem; letter-spacing:0.06em; display:flex; justify-content:center; gap:34px; align-items:center; padding:9px 20px; position:relative; z-index:101; font-family:'Inter',sans-serif; }
   .sn-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#C8A96E; margin-right:6px; }
   @media (max-width:760px){ .sn-topbar-sep { display:none; } .sn-topbar { gap:18px; font-size:0.66rem; } }

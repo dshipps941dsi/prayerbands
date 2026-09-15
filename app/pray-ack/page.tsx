@@ -28,8 +28,7 @@ const email = searchParams?.get('email')
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F1E4', fontFamily: 'Inter, sans-serif', padding: 24 }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');`}</style>
-      <div style={{ background: '#FFFDF8', borderRadius: 14, padding: '48px 40px', maxWidth: 440, width: '100%', border: '1px solid rgba(200,169,110,0.34)', boxShadow: '0 4px 24px rgba(10,22,40,0.08)', textAlign: 'center' }}>
+            <div style={{ background: '#FFFDF8', borderRadius: 14, padding: '48px 40px', maxWidth: 440, width: '100%', border: '1px solid rgba(200,169,110,0.34)', boxShadow: '0 4px 24px rgba(10,22,40,0.08)', textAlign: 'center' }}>
         <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'center' }}><PrayerBandsLogo size={40} color="#C8A96E" /></div>
         {status === 'loading' && (
           <div>

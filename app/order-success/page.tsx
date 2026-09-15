@@ -89,8 +89,7 @@ function OrderSuccessInner() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F6F1E4', fontFamily: body, color: DARK }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');`}</style>
-      {/* Nav */}
+            {/* Nav */}
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(10,22,40,0.12)', background: 'rgba(246,241,228,0.97)' }}>
         <Logo size={28} withName nameColor={DARK} nameSize={18} />
       </nav>

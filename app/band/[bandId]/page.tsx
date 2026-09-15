@@ -1,22 +1,28 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
 import { escapeHtml } from '@/lib/escape-html'
 import Icon, { type IconName } from '@/components/Icon'
 import AvatarBadge from '@/components/AvatarBadge'
-import NotificationsPanel from '@/components/NotificationsPanel'
 import PushToggle from '@/components/PushToggle'
 import { syncAppBadge } from '@/lib/app-badge'
-import MyBandsPanel from '@/components/MyBandsPanel'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
-import PrayerTabs from '@/components/PrayerTabs'
 import FocusOverlay from '@/components/FocusOverlay'
-import ReachMap from '@/components/ReachMap'
-import PurchaseTab from '@/components/PurchaseTab'
 import { useApplyTheme } from '@/components/ThemeProvider'
 import SuccessCard from './screens/SuccessCard'
+
+// The first paint after a tap is the band's own screen. Everything behind a
+// tab (the prayer wall, the ripple map with Leaflet, the store, the account
+// panels) loads only when that tab is opened.
+const tabFallback = () => <div style={{ padding: 24, textAlign: 'center', fontSize: 13, opacity: 0.6 }}>Loading…</div>
+const NotificationsPanel = dynamic(() => import('@/components/NotificationsPanel'), { ssr: false })
+const MyBandsPanel = dynamic(() => import('@/components/MyBandsPanel'), { ssr: false, loading: tabFallback })
+const PrayerTabs = dynamic(() => import('@/components/PrayerTabs'), { ssr: false, loading: tabFallback })
+const ReachMap = dynamic(() => import('@/components/ReachMap'), { ssr: false, loading: tabFallback })
+const PurchaseTab = dynamic(() => import('@/components/PurchaseTab'), { ssr: false, loading: tabFallback })
 import { COUNTRIES, subdivisionsFor } from '@/lib/locations'
 import { publicName } from '@/lib/public-name'
 import { track } from '@/lib/analytics'

@@ -24,8 +24,7 @@ export default function UnavailablePage() {
         fontFamily: "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif",
       }}
     >
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@600&family=Inter:wght@400;500&display=swap');`}</style>
-
+      
       <div style={{ marginBottom: 30 }}>
         <PrayerBandsLogo size={46} color="#C8A96E" />
       </div>

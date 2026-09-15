@@ -2,7 +2,7 @@
 // site's cream ground, Cormorant for display, Inter for body. Post prose is
 // kept to ~68 characters a line for reading, not for a wide screen.
 export const blogStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap');
+  
   .pbb-page { background: #F6F1E4; min-height: 100vh; font-family: 'Inter', sans-serif; color: #2A3344; }
   .pbb-hero {
     text-align: center; padding: 64px 24px 48px;
