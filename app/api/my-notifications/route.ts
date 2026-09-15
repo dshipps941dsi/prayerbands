@@ -8,6 +8,8 @@ const ADMIN_EMAIL = 'dshipps941@gmail.com'
 // "Give $2, Get $2" referral promo — surfaced as an inbox notification (not a
 // banner over the daily moment). Shows while now < PROMO_END_MS; ts is fixed at
 // the start so it reads as NEW once, then settles into the feed.
+// When the gift message started appearing in the inbox.
+const DEDICATION_INBOX_SINCE = '2026-09-15T11:30:00.000Z'
 const PROMO_START = '2026-08-27T00:00:00Z'
 const PROMO_END_MS = Date.parse('2026-10-27T00:00:00Z')
 
@@ -199,9 +201,14 @@ export async function GET(req: NextRequest) {
       const first = firstBy.get(b.band_id)
       if (!first || first.user_id !== effectiveId) continue
       const giver = b.upline_user_id ? names[b.upline_user_id] : null
-      items.push({ id: `ded-${b.band_id}`, type: 'dedication', icon: '💌', ts: first.registered_at, band_id: b.band_id,
+      // Messages from before this existed in the inbox are dated to the day
+      // it arrived, so they count as new once and light the badge for the
+      // people who already had one; the first-tap date is kept in the text.
+      const backfilled = first.registered_at < DEDICATION_INBOX_SINCE
+      const opened = new Date(first.registered_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+      items.push({ id: `ded-${b.band_id}`, type: 'dedication', icon: '💌', ts: backfilled ? DEDICATION_INBOX_SINCE : first.registered_at, band_id: b.band_id,
         title: `A message came with your band${giver ? ` from ${giver}` : ''}`,
-        detail: `${b.dedication_recipient ? `For ${b.dedication_recipient} — ` : ''}${b.dedication_note}` })
+        detail: `${b.dedication_recipient ? `For ${b.dedication_recipient} — ` : ''}${b.dedication_note}${backfilled ? ` (You first opened it on ${opened}.)` : ''}` })
     }
   }
 
