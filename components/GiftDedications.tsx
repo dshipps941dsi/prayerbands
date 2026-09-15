@@ -6,6 +6,8 @@ interface Ded {
   band_id: string
   dedication_recipient: string
   dedication_note: string
+  description?: string   // "Breast Cancer Awareness · S"
+  ship_to?: string       // who the parcel was addressed to
   taps: number
 }
 
@@ -40,7 +42,8 @@ export default function GiftDedications({ userId, readOnly = false }: { userId?:
 
   function startEdit(b: Ded) {
     setEditing(b.band_id)
-    setRecipient(b.dedication_recipient)
+    // Start from the name the parcel is going to, so "For:" is usually already right.
+    setRecipient(b.dedication_recipient || b.ship_to || '')
     setNote(b.dedication_note)
     setErr('')
   }
@@ -90,6 +93,16 @@ export default function GiftDedications({ userId, readOnly = false }: { userId?:
                 <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: NAVY }}>{b.band_id}</span>
                 <span style={{ fontSize: 10.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: GOLD_TEXT, fontFamily: 'Cinzel, serif' }}>Not yet opened</span>
               </div>
+              {/* Which band this is, in words a person uses: the design, and who
+                  the parcel is going to. An ID alone tells nobody which of two
+                  gifts is which. */}
+              {(b.description || b.ship_to) && (
+                <div style={{ marginTop: 4, fontSize: 13, color: NAVY, fontFamily: 'Inter, sans-serif' }}>
+                  {b.description && <span style={{ fontWeight: 600 }}>{b.description}</span>}
+                  {b.description && b.ship_to && <span style={{ color: SLATE }}> &middot; </span>}
+                  {b.ship_to && <span style={{ color: SLATE }}>shipping to <strong style={{ color: NAVY }}>{b.ship_to}</strong></span>}
+                </div>
+              )}
 
               {!isEditing && (
                 <div style={{ marginTop: 8 }}>
@@ -103,7 +116,7 @@ export default function GiftDedications({ userId, readOnly = false }: { userId?:
                   )}
                   {!readOnly && (
                     <button onClick={() => startEdit(b)} style={{ marginTop: 8, background: 'transparent', border: `1px solid ${GOLD}`, color: GOLD_TEXT, borderRadius: 8, padding: '6px 14px', fontSize: 11.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                      {has ? 'Edit message' : 'Add message'}
+                      {has ? 'Edit message' : (b.ship_to ? `Add a message for ${b.ship_to.split(' ')[0]}` : 'Add message')}
                     </button>
                   )}
                 </div>

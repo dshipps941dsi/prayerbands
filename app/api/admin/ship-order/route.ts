@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const admin = createServiceClient()
   const { data: order } = await admin
     .from('orders')
-    .select('id, customer_email, customer_name, assigned_band_ids, status')
+    .select('id, customer_email, customer_name, assigned_band_ids, status, shipping_address')
     .eq('id', orderId)
     .maybeSingle()
   if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
     orderId: order.id,
     customerEmail: order.customer_email,
     customerName: order.customer_name,
+    shipToName: ((order as any).shipping_address?.name as string | undefined) ?? null,
     bandIds: order.assigned_band_ids,
     trackingNumber,
   })

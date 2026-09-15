@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { bandDescription, themeLabelMap } from '@/lib/band-label'
 
 // Owner-authorized dedication management: lets a signed-in buyer add/edit the
 // gift message on any band they own, from their dashboard — no per-band token
@@ -17,17 +18,38 @@ export async function GET(_req: NextRequest) {
   const admin = createServiceClient()
   const { data: bands, error } = await admin
     .from('bands')
-    .select('band_id, dedication_recipient, dedication_note, dedication_viewed, created_at, registrations(count)')
+    .select('band_id, dedication_recipient, dedication_note, dedication_viewed, created_at, theme, color, size, registrations(count)')
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false })
     .limit(200)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // What each band looks like, and who its parcel was addressed to — the two
+  // facts that tell "PB-DTUGN" from "PB-RLQ8S" when a buyer sent bands to two
+  // people at two addresses. Ship-to comes from the buyer's own orders.
+  const { data: themeRows } = await admin.from('band_themes').select('key, label')
+  const labels = themeLabelMap(themeRows as { key: string; label: string }[] | null)
+  const shipToByBand = new Map<string, string>()
+  if (user.email && (bands ?? []).length) {
+    const { data: orders } = await admin
+      .from('orders')
+      .select('assigned_band_ids, shipping_address')
+      .ilike('customer_email', user.email)
+      .overlaps('assigned_band_ids', (bands ?? []).map((b: any) => b.band_id))
+    for (const o of orders ?? []) {
+      const name = String((o as any).shipping_address?.name || '').trim()
+      if (!name) continue
+      for (const id of (o as any).assigned_band_ids || []) shipToByBand.set(id, name)
+    }
+  }
 
   const list = (bands ?? [])
     .map((b: any) => ({
       band_id: b.band_id,
       dedication_recipient: b.dedication_recipient ?? '',
       dedication_note: b.dedication_note ?? '',
+      description: bandDescription(b, labels),
+      ship_to: shipToByBand.get(b.band_id) ?? '',
       taps: b.registrations?.[0]?.count ?? 0,
     }))
     .filter(b => b.taps === 0) // only bands not yet opened — editing a tapped one has no effect

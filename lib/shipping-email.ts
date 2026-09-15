@@ -12,13 +12,16 @@ export type ShippingConfirmationInput = {
   customerName?: string | null
   bandIds?: string[] | null
   trackingNumber?: string | null
+  // Who the parcel is addressed to. When a buyer sends bands to two people at
+  // two addresses, this is what tells the two emails apart.
+  shipToName?: string | null
 }
 
 // Builds and sends the "your order shipped" email. Pure server-side helper with
 // no request/auth coupling, so any trusted server route (admin or fulfillment)
 // can call it directly. Returns { ok } rather than throwing.
 export async function sendShippingConfirmation(input: ShippingConfirmationInput): Promise<{ ok: boolean; error?: string }> {
-  const { orderId, customerEmail, customerName, bandIds, trackingNumber } = input
+  const { orderId, customerEmail, customerName, bandIds, trackingNumber, shipToName } = input
   if (!customerEmail) return { ok: false, error: 'No customer email' }
 
   try {
@@ -29,12 +32,12 @@ export async function sendShippingConfirmation(input: ShippingConfirmationInput)
       ? `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(String(trackingNumber))}`
       : 'https://tools.usps.com/go/TrackConfirmAction'
 
-    let bandRows: { band_id: string; dedication_token: string | null; description: string }[] = []
+    let bandRows: { band_id: string; dedication_token: string | null; description: string; forName: string }[] = []
     if (Array.isArray(bandIds) && bandIds.length > 0) {
       const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!)
       const { data } = await supabase
         .from('bands')
-        .select('band_id, dedication_token, theme, color, size')
+        .select('band_id, dedication_token, theme, color, size, dedication_recipient')
         .in('band_id', bandIds)
       const { data: themeRows } = await supabase.from('band_themes').select('key, label')
       const labels = themeLabelMap(themeRows as { key: string; label: string }[] | null)
@@ -45,6 +48,9 @@ export async function sendShippingConfirmation(input: ShippingConfirmationInput)
           band_id: id,
           dedication_token: b?.dedication_token ?? null,
           description: b ? bandDescription(b, labels) : '',
+          // A name already on the band wins; otherwise the person the parcel
+          // is addressed to; otherwise nothing (the buyer's own band).
+          forName: String(b?.dedication_recipient || shipToName || '').trim(),
         }
       })
     }
@@ -53,6 +59,11 @@ export async function sendShippingConfirmation(input: ShippingConfirmationInput)
       const msgUrl = b.dedication_token
         ? `https://prayerbands.com/dedicate/${b.band_id}?token=${b.dedication_token}`
         : `https://prayerbands.com/band/${b.band_id}`
+      const forFirst = escapeHtml(b.forName.split(/\s+/)[0] || '')
+      const forLine = b.forName
+        ? `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#56657A;margin-top:2px;">Shipping to <strong style="color:#12233F;">${escapeHtml(b.forName)}</strong></div>`
+        : ''
+      const buttonText = forFirst ? `Send a message to ${forFirst} &rarr;` : 'Add personal message &rarr;'
       return `
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px;border:1px solid #DDE4EF;border-radius:12px;background:#F8FAFE;">
                 <tr>
@@ -62,9 +73,10 @@ export async function sendShippingConfirmation(input: ShippingConfirmationInput)
                         <td class="stack" valign="middle">
                           <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;font-weight:bold;letter-spacing:1.2px;text-transform:uppercase;color:#A1782D;">${b.description ? escapeHtml(b.description) : 'Band ID'}</div>
                           <div style="font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:25px;font-weight:bold;color:#12233F;">${escapeHtml(b.band_id)}</div>
+                          ${forLine}
                         </td>
                         <td class="stack stack-gap" align="right" valign="middle">
-                          <a href="${msgUrl}" style="display:inline-block;border:1px solid #C89A3D;color:#8A641F;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;font-weight:bold;padding:10px 14px;border-radius:7px;">Add personal message &rarr;</a>
+                          <a href="${msgUrl}" style="display:inline-block;border:1px solid #C89A3D;color:#8A641F;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;font-weight:bold;padding:10px 14px;border-radius:7px;">${buttonText}</a>
                         </td>
                       </tr>
                     </table>
