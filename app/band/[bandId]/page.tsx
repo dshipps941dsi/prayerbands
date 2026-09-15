@@ -810,7 +810,25 @@ export default function BandPage() {
       <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
         <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
         <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Pass This Band On</div>
-        <div style={{ fontFamily: body, fontSize: 14, color: GRAY, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>Write a prayer or note for the person you're giving this to.</div>
+        <div style={{ fontFamily: body, fontSize: 14, color: GRAY, fontStyle: 'italic', marginBottom: 14, lineHeight: 1.5 }}>Write a prayer or note for the person you're giving this to.</div>
+        {/* Which band this is — design and ID, as on a packing slip — so the
+            right one goes. "Change" lists the others; that list is not the
+            default because it gets long. */}
+        {(() => {
+          const me = myBands.find(b => b.band_id === bandId)
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'white', border: `1px solid ${GOLD}`, borderRadius: 10, padding: '10px 14px', marginBottom: 18 }}>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontFamily: body, fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: GRAY }}>Passing on</span>
+                <span style={{ display: 'block', fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{me?.label || (status.band?.theme && status.band.theme !== 'default' ? String(status.band.theme) : status.band?.color ? String(status.band.color) : 'Prayer Band')}</span>
+                <span style={{ display: 'block', fontFamily: 'monospace', fontSize: 12, color: GRAY }}>{bandId}</span>
+              </span>
+              {userId && myBands.length > 1 && (
+                <button onClick={() => setTransferStep('choose')} style={{ background: 'none', border: 'none', color: GOLD, fontFamily: body, fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 2px' }}>Change</button>
+              )}
+            </div>
+          )
+        })()}
         <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>Who is this for? (optional)</label>
         <input value={transferName} onChange={e => setTransferName(e.target.value)} placeholder="Their name — e.g. Sarah" maxLength={80} style={{ display: 'block', width: '100%', padding: '12px 14px', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 14, color: DARK, background: 'white', marginBottom: 14, outline: 'none', boxSizing: 'border-box' }} />
         <label style={{ display: 'block', fontFamily: body, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: GRAY, marginBottom: 6 }}>From (optional)</label>
@@ -1221,9 +1239,6 @@ export default function BandPage() {
                 {transferStep === 'idle' && !transferComplete && (
                   <button onClick={() => {
                     const accountless = !userId && localStorage.getItem(`holder_${bandId}`) === 'true'
-                    // More than one band on the account: ask which one first,
-                    // the way packing an order shows each band by design and ID.
-                    if (userId && myBands.length > 1) { setTransferStep('choose'); return }
                     setTransferStep(accountless ? 'save_prompt' : 'sheet')
                   }} style={{ display: 'flex', alignItems: 'center', gap: 6, background: GOLD, color: INK, border: 'none', borderRadius: 10, padding: '8px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Transfer Band</button>
                 )}
