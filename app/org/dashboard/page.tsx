@@ -1,4 +1,5 @@
 'use client'
+import { escapeHtml } from '@/lib/escape-html'
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'

@@ -4,7 +4,6 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { BUILTIN_THEMES } from '@/lib/themes'
 import { bandIdCandidate, bandIdFilter } from '@/lib/band-id'
 
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 async function callerEmail(): Promise<string | null> {
   const supabase = await createClient()

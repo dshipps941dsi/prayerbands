@@ -1,3 +1,4 @@
+import { escapeHtml } from '@/lib/escape-html'
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
@@ -94,7 +95,7 @@ export async function POST(req: NextRequest) {
               <div style="background:#0d3d6e;padding:32px;text-align:center">
                 <div style="font-size:36px;color:#f5a623;margin-bottom:8px">✝</div>
                 <h1 style="font-family:Georgia,serif;font-size:24px;color:#fff;margin:0;font-weight:400">Order Confirmed!</h1>
-                <p style="color:rgba(255,255,255,0.6);font-size:14px;margin:8px 0 0">Thank you, ${name}</p>
+                <p style="color:rgba(255,255,255,0.6);font-size:14px;margin:8px 0 0">Thank you, ${escapeHtml(name)}</p>
               </div>
               <div style="padding:32px">
                 <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 20px">
@@ -133,13 +134,13 @@ export async function POST(req: NextRequest) {
         html: `
           <div style="font-family:sans-serif;max-width:400px;margin:0 auto;padding:24px">
             <h2 style="color:#1a5fa0">New Prayer Bands Order ✝</h2>
-            <p><strong>Customer:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Customer:</strong> ${escapeHtml(name)}</p>
+            <p><strong>Email:</strong> ${escapeHtml(email)}</p>
             <p><strong>Type:</strong> ${type}</p>
             <p><strong>Quantity:</strong> ${qty}</p>
             <p><strong>Amount:</strong> $${amount}</p>
-            <p><strong>Message:</strong> ${session.metadata?.customMessage || 'None'}</p>
-            <p><strong>Verse:</strong> ${session.metadata?.verse || 'None'}</p>
+            <p><strong>Message:</strong> ${escapeHtml(session.metadata?.customMessage || 'None')}</p>
+            <p><strong>Verse:</strong> ${escapeHtml(session.metadata?.verse || 'None')}</p>
             <a href="https://dashboard.stripe.com/payments" style="background:#2b7bc4;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px">View in Stripe →</a>
           </div>
         `
@@ -436,7 +437,7 @@ async function sendSubscriptionEmails(session: Stripe.Checkout.Session, plan: an
             <div style="background:#0d3d6e;padding:32px;text-align:center">
               <div style="font-size:36px;color:#f5a623;margin-bottom:8px">✝</div>
               <h1 style="font-family:Georgia,serif;font-size:24px;color:#fff;margin:0;font-weight:400">Subscription Active!</h1>
-              <p style="color:rgba(255,255,255,0.6);font-size:14px;margin:8px 0 0">Thank you, ${name}</p>
+              <p style="color:rgba(255,255,255,0.6);font-size:14px;margin:8px 0 0">Thank you, ${escapeHtml(name)}</p>
             </div>
             <div style="padding:32px">
               <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 20px">
@@ -474,8 +475,8 @@ async function sendSubscriptionEmails(session: Stripe.Checkout.Session, plan: an
       html: `
         <div style="font-family:sans-serif;max-width:400px;margin:0 auto;padding:24px">
           <h2 style="color:#1a5fa0">New Prayer Bands Subscription ✝</h2>
-          <p><strong>Customer:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Customer:</strong> ${escapeHtml(name)}</p>
+          <p><strong>Email:</strong> ${escapeHtml(email)}</p>
           <p><strong>Plan:</strong> ${planName}</p>
           <p><strong>Bands/cycle:</strong> ${bands} × ${bandColor}</p>
           <p><strong>Cadence:</strong> ${cadence}</p>

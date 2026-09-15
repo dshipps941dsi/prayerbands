@@ -5,7 +5,6 @@ import { buildLabelSheet, buildCalibrationSheet, LABELS_PER_SHEET, type SheetLab
 
 // TODO(stage 2): replace with a profiles.role check so packers can print without
 // being the owner's Google account.
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 async function isAdmin(): Promise<boolean> {
   const supabase = await createClient()

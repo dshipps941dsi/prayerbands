@@ -4,7 +4,6 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { availableFor, orphanStock, type OpenOrder, type StockBand } from '@/lib/inventory'
 import { isMapped } from '@/lib/fulfillment'
 
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 async function isAdmin(): Promise<boolean> {
   const supabase = await createClient()

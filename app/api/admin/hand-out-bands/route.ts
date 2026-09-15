@@ -3,7 +3,6 @@ import { isTeamMember } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 // TODO(stage 2): replace with a profiles.role check.
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 async function adminUser() {
   const supabase = await createClient()

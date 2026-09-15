@@ -1,3 +1,4 @@
+import { likeLiteral } from '@/lib/like'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { bandDescription, themeLabelMap } from '@/lib/band-label'
@@ -34,7 +35,7 @@ export async function GET(_req: NextRequest) {
     const { data: orders } = await admin
       .from('orders')
       .select('assigned_band_ids, shipping_address')
-      .ilike('customer_email', user.email)
+      .ilike('customer_email', likeLiteral(user.email))
       .overlaps('assigned_band_ids', (bands ?? []).map((b: any) => b.band_id))
     for (const o of orders ?? []) {
       const name = String((o as any).shipping_address?.name || '').trim()

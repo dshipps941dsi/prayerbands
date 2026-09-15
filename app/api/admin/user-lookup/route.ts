@@ -4,7 +4,6 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 export async function GET(req: NextRequest) {
   // Gate to the admin account.

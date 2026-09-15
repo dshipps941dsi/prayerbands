@@ -1,3 +1,4 @@
+import { likeLiteral } from '@/lib/like'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServerClient, createServiceClient } from '@/lib/supabase/server'
 
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
     const { data: myOrder } = await admin
       .from('orders')
       .select('id')
-      .ilike('customer_email', user.email)
+      .ilike('customer_email', likeLiteral(user.email))
       .contains('assigned_band_ids', [bandId])
       .limit(1)
       .maybeSingle()

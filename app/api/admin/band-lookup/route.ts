@@ -4,7 +4,6 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { bandIdCandidate, bandIdFilter } from '@/lib/band-id'
 
 // TODO(stage 2): replace with a profiles.role check.
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 async function adminUser() {
   const supabase = await createClient()

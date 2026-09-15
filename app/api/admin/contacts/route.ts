@@ -5,7 +5,6 @@ import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { Resend } from 'resend'
 
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 // RLS blocks the anon/browser client from reading or writing contact_submissions
 // and faq_entries, so the admin UI must go through this service-role route.

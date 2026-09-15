@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Too many attempts. Please wait a minute and try again.' }, { status: 429 })
     }
 
-    const { bandId, explicit } = await req.json()
+    const { bandId } = await req.json()
     if (!bandId) {
       return NextResponse.json({ error: 'Band ID is required' }, { status: 400 })
     }
@@ -70,7 +70,9 @@ export async function POST(req: NextRequest) {
     // The latest stop was made by this very account on someone else's behalf
     // ("I'm registering it for Kathy"). Opening the page again must not quietly
     // take the band back; only a deliberate tap on "Claim this band" may.
-    if (!explicit && latest && !latest.user_id && latest.registered_by === user.id) {
+    // Applies to the explicit button too: "Yes, make it mine" on a band you
+    // registered for Kathy is still Kathy's band.
+    if (latest && !latest.user_id && latest.registered_by === user.id) {
       return NextResponse.json({ error: `This band was registered for ${latest.user_name || 'someone else'}; it is theirs to claim.`, forOther: true }, { status: 409 })
     }
 

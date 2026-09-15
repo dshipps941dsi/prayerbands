@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 // Confusable-free alphabet (no 0/O/1/I) so printed IDs are easy to read/type.
 const SAFE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 const MAX_TOTAL = 2000

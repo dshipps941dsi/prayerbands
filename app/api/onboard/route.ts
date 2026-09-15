@@ -1,8 +1,11 @@
+import { escapeHtml } from '@/lib/escape-html';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { ensureReferralCode } from '@/lib/referral';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_KEY!
@@ -10,6 +13,11 @@ export async function POST(req: Request) {
   const resend = new Resend(process.env.RESEND_API_KEY!);
 
   try {
+    // Creates a confirmed account and a ministry org from an open form: keep it
+    // to a trickle per address so it cannot be used to mint accounts.
+    if (!(await checkRateLimit(`onboard:ip:${getClientIp(req)}`, 3, 3600))) {
+      return NextResponse.json({ error: 'Too many sign-ups from this connection. Please try again later.' }, { status: 429 });
+    }
     const { name, prefix, subdomain, location, website, pastor, email, password } = await req.json();
 
     if (!name || !prefix || !email || !password || !pastor) {
@@ -88,11 +96,11 @@ export async function POST(req: Request) {
           <div style="background:#1a6b4a;padding:32px;text-align:center">
             <div style="font-size:36px;color:#f5a623;margin-bottom:8px">✝</div>
             <h1 style="font-family:Georgia,serif;font-size:24px;color:#fff;margin:0;font-weight:400">Welcome to Prayer Bands</h1>
-            <p style="color:rgba(255,255,255,0.7);font-size:14px;margin:8px 0 0">${name} is now on the map</p>
+            <p style="color:rgba(255,255,255,0.7);font-size:14px;margin:8px 0 0">${escapeHtml(name)} is now on the map</p>
           </div>
           <div style="padding:32px">
             <p style="font-size:16px;color:#4a5568;line-height:1.7;margin:0 0 24px">
-              Hi ${pastor}, welcome to Prayer Bands! Your ministry account has been created and your bands are ready to start traveling the world. ✝
+              Hi ${escapeHtml(pastor)}, welcome to Prayer Bands! Your ministry account has been created and your bands are ready to start traveling the world. ✝
             </p>
 
             <div style="background:#f0f7f3;border-radius:10px;padding:20px 24px;margin:0 0 24px">
@@ -100,19 +108,19 @@ export async function POST(req: Request) {
               <table style="width:100%;border-collapse:collapse">
                 <tr>
                   <td style="font-size:13px;color:#8a7c6a;padding:6px 0;width:40%">Church</td>
-                  <td style="font-size:14px;color:#2c2416;font-weight:600">${name}</td>
+                  <td style="font-size:14px;color:#2c2416;font-weight:600">${escapeHtml(name)}</td>
                 </tr>
                 <tr>
                   <td style="font-size:13px;color:#8a7c6a;padding:6px 0">Band Prefix</td>
-                  <td style="font-size:14px;color:#1a6b4a;font-family:monospace;font-weight:700">${prefix.toUpperCase()}-XXXXX</td>
+                  <td style="font-size:14px;color:#1a6b4a;font-family:monospace;font-weight:700">${escapeHtml(prefix.toUpperCase())}-XXXXX</td>
                 </tr>
                 <tr>
                   <td style="font-size:13px;color:#8a7c6a;padding:6px 0">Dashboard</td>
-                  <td style="font-size:14px;color:#1a6b4a;font-family:monospace">${subdomain.toLowerCase()}.prayerbands.com</td>
+                  <td style="font-size:14px;color:#1a6b4a;font-family:monospace">${escapeHtml(subdomain.toLowerCase())}.prayerbands.com</td>
                 </tr>
                 <tr>
                   <td style="font-size:13px;color:#8a7c6a;padding:6px 0">Login Email</td>
-                  <td style="font-size:14px;color:#2c2416">${email}</td>
+                  <td style="font-size:14px;color:#2c2416">${escapeHtml(email)}</td>
                 </tr>
               </table>
             </div>
@@ -122,7 +130,7 @@ export async function POST(req: Request) {
               <div style="font-size:14px;color:#4a5568;line-height:2">
                 1. Sign in at <a href="https://prayerbands.com/signin" style="color:#1a6b4a">prayerbands.com/signin</a><br>
                 2. Order your first batch of bands from your dashboard<br>
-                3. Bands ship laser-engraved with your ${prefix.toUpperCase()} prefix and NFC chips<br>
+                3. Bands ship laser-engraved with your ${escapeHtml(prefix.toUpperCase())} prefix and NFC chips<br>
                 4. Give bands as prayers — watch them travel the world ✝
               </div>
             </div>
@@ -151,14 +159,14 @@ export async function POST(req: Request) {
     await resend.emails.send({
       from: 'Prayer Bands <bands@prayerbands.com>',
       to: ['dshipps941@gmail.com'],
-      subject: `✝ New Church Account — ${name} (${prefix.toUpperCase()})`,
+      subject: `✝ New Church Account — ${escapeHtml(name)} (${escapeHtml(prefix.toUpperCase())})`,
       html: `
         <div style="font-family:sans-serif;max-width:400px;margin:0 auto;padding:24px">
           <h2 style="color:#1a6b4a">New Church Account ✝</h2>
-          <p><strong>Church:</strong> ${name}</p>
-          <p><strong>Pastor:</strong> ${pastor}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Prefix:</strong> ${prefix.toUpperCase()}</p>
+          <p><strong>Church:</strong> ${escapeHtml(name)}</p>
+          <p><strong>Pastor:</strong> ${escapeHtml(pastor)}</p>
+          <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+          <p><strong>Prefix:</strong> ${escapeHtml(prefix.toUpperCase())}</p>
           <p><strong>Subdomain:</strong> ${subdomain}.prayerbands.com</p>
           <p><strong>Location:</strong> ${location || 'Not provided'}</p>
         </div>

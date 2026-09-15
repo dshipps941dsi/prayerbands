@@ -1,3 +1,4 @@
+import { likeLiteral } from '@/lib/like'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
@@ -18,7 +19,7 @@ export async function POST(_req: NextRequest) {
   const { data: orders } = await admin
     .from('orders')
     .select('assigned_band_ids')
-    .ilike('customer_email', user.email)
+    .ilike('customer_email', likeLiteral(user.email))
     .not('assigned_band_ids', 'is', null)
 
   const bandIds = Array.from(new Set(
@@ -27,12 +28,20 @@ export async function POST(_req: NextRequest) {
 
   if (bandIds.length === 0) return NextResponse.json({ linked: 0 })
 
+  // A band from an order that someone has already tapped is theirs, not the
+  // buyer's: the buyer handed it over. Only bands nobody has touched can be
+  // linked back to the buyer.
+  const { data: touched } = await admin.from('registrations').select('band_id').in('band_id', bandIds)
+  const touchedSet = new Set((touched || []).map((r: any) => r.band_id))
+  const untouched = bandIds.filter(id => !touchedSet.has(id))
+  if (untouched.length === 0) return NextResponse.json({ linked: 0 })
+
   // Only claim bands that nobody owns yet — never reassign a band already linked
   // to another account.
   const { data: linked, error } = await admin
     .from('bands')
     .update({ owner_id: user.id })
-    .in('band_id', bandIds)
+    .in('band_id', untouched)
     .is('owner_id', null)
     .select('band_id')
 

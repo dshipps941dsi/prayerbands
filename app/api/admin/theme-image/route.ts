@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 const BUCKET = 'theme-images'
 const MAX_BYTES = 6 * 1024 * 1024 // 6MB — background images run larger
 const ALLOWED: Record<string, string> = {

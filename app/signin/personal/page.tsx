@@ -53,7 +53,9 @@ export default function SignInPersonal() {
   // Optional ?redirect=… (e.g. arriving from a circle link) — return there after auth.
   function redirectParam() {
     if (typeof window === 'undefined') return ''
-    return new URLSearchParams(window.location.search).get('redirect') || ''
+    const r = new URLSearchParams(window.location.search).get('redirect') || ''
+    // Same-origin paths only — never an absolute URL someone put in a link.
+    return r.startsWith('/') && !r.startsWith('//') && !r.startsWith('/\\') ? r : ''
   }
   function oauthCallback() {
     const next = redirectParam()

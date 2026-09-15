@@ -104,6 +104,14 @@ export async function POST(req: NextRequest) {
   // null), so this can never claim or overwrite a band that already belongs to
   // someone — the original threat was an anon caller passing any band_id + uid.
   const { userId: authUserId } = await getSessionOrg()
+  // Writing a blessing onto a band you don't hold a token for requires an
+  // account. Anonymous callers could otherwise pre-load text onto any
+  // still-unowned band on the shelf, and the first tapper would see it as a
+  // gift message. The token-gated single-band path above stays open for the
+  // shipping-email link.
+  if (!authUserId) {
+    return NextResponse.json({ error: 'Please sign in to add a message.' }, { status: 401 })
+  }
 
   // Bands this call did not touch — unknown ID, already owned, or already
   // dedicated. Skipping those is deliberate (see the filters below), but the

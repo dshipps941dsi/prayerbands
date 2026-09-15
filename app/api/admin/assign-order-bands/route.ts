@@ -3,7 +3,6 @@ import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { variantForSlug, parseOrderItems, matchesDesign, parseRecipients, matchRecipientsToBands } from '@/lib/fulfillment'
 
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 async function isAdmin(): Promise<boolean> {
   const supabase = await createClient()

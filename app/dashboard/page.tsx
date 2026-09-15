@@ -4,6 +4,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import LivingPrayerList from '@/components/LivingPrayerList'
 import Logo from '@/components/Logo'
 import { publicName } from '@/lib/public-name'
+import { escapeHtml } from '@/lib/escape-html'
 import Icon, { type IconName } from '@/components/Icon'
 import PrayerTabs from '@/components/PrayerTabs'
 import ShareSheet from '@/components/ShareSheet'
@@ -130,9 +131,9 @@ function BoundedMap({ points }: { points: MapPoint[] }) {
         })
         const m = L.marker([p.lat, p.lng], { icon: dot }).addTo(map)
         m.bindPopup(`<div style="font-family:Georgia,serif;font-size:13px">
-          <strong style="color:${AMBER}">${p.band_id}</strong><br/>
-          ${p.user_name ? `${publicName(p.user_name)}<br/>` : ""}
-          ${p.city || p.country ? `<span style="color:#5C6573">${[p.city, p.country].filter(Boolean).join(', ')}</span>` : ''}
+          <strong style="color:${AMBER}">${escapeHtml(p.band_id)}</strong><br/>
+          ${p.user_name ? `${escapeHtml(publicName(p.user_name))}<br/>` : ""}
+          ${p.city || p.country ? `<span style="color:#5C6573">${escapeHtml([p.city, p.country].filter(Boolean).join(', '))}</span>` : ''}
         </div>`)
         markers.push(m)
       })
@@ -389,10 +390,10 @@ function DashboardMap({ bands, points }: { bands: Band[]; points: MapPoint[] }) 
         })
         const m = L.marker([p.lat, p.lng], { icon: dot }).addTo(map)
         m.bindPopup(`<div style="font-family:Georgia,serif">
-          <div style="font-family:monospace;font-weight:bold;color:${AMBER}">${p.band_id}</div>
-          ${p.user_name ? `<div style="font-size:13px">${publicName(p.user_name)}</div>` : ""}
-          ${p.city || p.country ? `<div style="font-size:12px;color:#5C6573">${[p.city, p.country].filter(Boolean).join(', ')}</div>` : ''}
-          ${p.prayer ? `<div style="font-size:12px;font-style:italic;border-left:2px solid ${AMBER};padding-left:6px;margin-top:4px">"${p.prayer.slice(0, 80)}"</div>` : ''}
+          <div style="font-family:monospace;font-weight:bold;color:${AMBER}">${escapeHtml(p.band_id)}</div>
+          ${p.user_name ? `<div style="font-size:13px">${escapeHtml(publicName(p.user_name))}</div>` : ""}
+          ${p.city || p.country ? `<div style="font-size:12px;color:#5C6573">${escapeHtml([p.city, p.country].filter(Boolean).join(', '))}</div>` : ''}
+          ${p.prayer ? `<div style="font-size:12px;font-style:italic;border-left:2px solid ${AMBER};padding-left:6px;margin-top:4px">"${escapeHtml(p.prayer.slice(0, 80))}"</div>` : ''}
         </div>`)
         markers.push(m)
       })
@@ -625,7 +626,8 @@ export default function Dashboard() {
         // checkout, or purchases made before the account existed) before we read
         // the band list, so they show up in reach right away. Idempotent.
         if (!viewAs) {
-          try { await fetch('/api/link-purchased-bands', { method: 'POST' }) } catch {}
+          // (Bands from past orders are no longer linked on page load — a band a
+          // buyer already handed to someone must not snap back to the buyer.)
         }
 
         const { data: prof } = await supabase.from('profiles').select('*').eq('id', effectiveId).single()
@@ -1189,7 +1191,7 @@ export default function Dashboard() {
                 </div>
                 <div style={{ fontSize: 15, color: BODY_TEXT, lineHeight: 1.7, fontStyle: 'italic', marginBottom: 8, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>"{p.prayer}"</div>
                 <div style={{ fontSize: 11, color: GOLD_TEXT, fontFamily: 'monospace' }}>
-                  {p.band_id}{p.city || p.country ? ` · ${[p.city, p.country].filter(Boolean).join(', ')}` : ''}
+                  {p.band_id}{p.city || p.country ? ` · ${escapeHtml([p.city, p.country].filter(Boolean).join(', '))}` : ''}
                 </div>
               </div>
             ))}

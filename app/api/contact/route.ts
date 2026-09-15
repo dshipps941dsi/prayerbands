@@ -1,3 +1,5 @@
+import { escapeHtml } from '@/lib/escape-html';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
@@ -43,6 +45,13 @@ export async function POST(req: NextRequest) {
     // --- 2. Verify reCAPTCHA v3 ---
     let recaptchaScore = 1.0; // Default pass if no key configured
 
+    // With a secret configured, a missing token is a bypass attempt, not a pass.
+    if (RECAPTCHA_SECRET && !recaptchaToken) {
+      return NextResponse.json({ error: "Please retry — the spam check did not load." }, { status: 400 });
+    }
+    if (!(await checkRateLimit(`contact:ip:${getClientIp(req)}`, 5, 3600))) {
+      return NextResponse.json({ error: "Too many messages from this connection. Please try again later." }, { status: 429 });
+    }
     if (RECAPTCHA_SECRET && recaptchaToken) {
       const verifyRes = await fetch(
         `https://www.google.com/recaptcha/api/siteverify`,
@@ -116,15 +125,15 @@ export async function POST(req: NextRequest) {
             <div style="background: #fffdf7; border: 1px solid #e8d8b0; border-top: none; border-radius: 0 0 8px 8px; padding: 28px;">
               <table style="width: 100%; border-collapse: collapse;">
                 <tr><td style="padding: 6px 0; color: #7a6a52; width: 100px;"><strong>ID</strong></td><td style="padding: 6px 0;">#${submission?.id}</td></tr>
-                <tr><td style="padding: 6px 0; color: #7a6a52;"><strong>Name</strong></td><td style="padding: 6px 0;">${name}</td></tr>
-                <tr><td style="padding: 6px 0; color: #7a6a52;"><strong>Email</strong></td><td style="padding: 6px 0;"><a href="mailto:${email}">${email}</a></td></tr>
-                <tr><td style="padding: 6px 0; color: #7a6a52;"><strong>Topic</strong></td><td style="padding: 6px 0;">${category}</td></tr>
-                ${subject ? `<tr><td style="padding: 6px 0; color: #7a6a52;"><strong>Subject</strong></td><td style="padding: 6px 0;">${subject}</td></tr>` : ""}
+                <tr><td style="padding: 6px 0; color: #7a6a52;"><strong>Name</strong></td><td style="padding: 6px 0;">${escapeHtml(name)}</td></tr>
+                <tr><td style="padding: 6px 0; color: #7a6a52;"><strong>Email</strong></td><td style="padding: 6px 0;"><a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></td></tr>
+                <tr><td style="padding: 6px 0; color: #7a6a52;"><strong>Topic</strong></td><td style="padding: 6px 0;">${escapeHtml(category)}</td></tr>
+                ${subject ? `<tr><td style="padding: 6px 0; color: #7a6a52;"><strong>Subject</strong></td><td style="padding: 6px 0;">${escapeHtml(subject)}</td></tr>` : ""}
                 <tr><td style="padding: 6px 0; color: #7a6a52;"><strong>Score</strong></td><td style="padding: 6px 0;">${recaptchaScore.toFixed(2)}</td></tr>
               </table>
               <hr style="border: none; border-top: 1px solid #e8d8b0; margin: 20px 0;">
               <h3 style="color: #3a2f1e; margin: 0 0 10px;">Message</h3>
-              <p style="color: #3a2f1e; line-height: 1.65; white-space: pre-wrap; margin: 0;">${fullMessage}</p>
+              <p style="color: #3a2f1e; line-height: 1.65; white-space: pre-wrap; margin: 0;">${escapeHtml(fullMessage)}</p>
               <hr style="border: none; border-top: 1px solid #e8d8b0; margin: 20px 0;">
               <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://prayerbands.com"}/admin/contacts/${submission?.id}"
                  style="display: inline-block; background: #b8964a; color: #fffdf7; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-family: Georgia, serif; font-weight: 600;">
@@ -150,7 +159,7 @@ export async function POST(req: NextRequest) {
             <div style="text-align: center; padding: 32px 28px 0;">
               <div style="font-size: 28px; color: #b8964a; opacity: 0.7; margin-bottom: 8px;">✝</div>
               <h1 style="font-size: 1.5rem; margin: 0 0 8px;">Message Received</h1>
-              <p style="color: #7a6a52; margin: 0 0 24px; font-style: italic;">Thank you, ${name}.</p>
+              <p style="color: #7a6a52; margin: 0 0 24px; font-style: italic;">Thank you, ${escapeHtml(name)}.</p>
             </div>
             <div style="background: #fffdf7; border: 1px solid #e8d8b0; border-radius: 8px; padding: 24px 28px; margin: 0 16px;">
               <p style="margin: 0 0 16px; line-height: 1.65;">

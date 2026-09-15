@@ -152,8 +152,8 @@ function ClaimForm({ onSubmit, onBack, title, subtitle, submitLabel, claimName, 
   submitLabel: string
   claimName: string
   setClaimName: (v: string) => void
-  signedInName?: string | null
-  forOther?: boolean
+  signedInName?: string | null   // null/undefined = not signed in; '' = signed in, no name yet
+  forOther?: boolean | null
   setForOther?: (v: boolean) => void
   claimPrayer: string
   setClaimPrayer: (v: string) => void
@@ -178,12 +178,12 @@ function ClaimForm({ onSubmit, onBack, title, subtitle, submitLabel, claimName, 
           three times over. Defaults to "someone else" because that is what a
           different name almost always means, and the other way is the one
           that causes harm. */}
-      {signedInName && claimName.trim().length > 1 && !namesMatch(signedInName, claimName) && setForOther && (
+      {signedInName !== null && signedInName !== undefined && claimName.trim().length > 1 && (!signedInName || !namesMatch(signedInName, claimName)) && setForOther && (
         <div style={{ background: 'rgba(184,134,11,0.08)', border: `1px solid ${GOLD}`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
-          <div style={{ fontFamily: body, fontSize: 12.5, color: DARK, marginBottom: 8 }}>You&apos;re signed in as <strong>{signedInName}</strong>. Who is this band for?</div>
+          <div style={{ fontFamily: body, fontSize: 12.5, color: DARK, marginBottom: 8 }}>You&apos;re signed in{signedInName ? <> as <strong>{signedInName}</strong></> : null}. Who is this band for?</div>
           {([[true, `Someone else — I'm registering it for ${claimName.trim().split(' ')[0]}`], [false, `Me — it's my band`]] as const).map(([val, label]) => (
             <label key={String(val)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0', cursor: 'pointer', fontFamily: body, fontSize: 13.5, color: DARK }}>
-              <input type="radio" name="pb-for" checked={(forOther ?? true) === val} onChange={() => setForOther(val)} style={{ accentColor: GOLD, width: 16, height: 16 }} />
+              <input type="radio" name="pb-for" checked={(forOther ?? !!signedInName) === val} onChange={() => setForOther(val)} style={{ accentColor: GOLD, width: 16, height: 16 }} />
               {label}
             </label>
           ))}
@@ -247,7 +247,10 @@ export default function BandPage() {
   // The signed-in person's own name, so the form can tell "I'm registering
   // this for myself" from "for the person next to me" and behave accordingly.
   const [myName, setMyName] = useState<string | null>(null)
-  const [forOther, setForOther] = useState(false)
+  // null = untouched. The default depends on whether the account has a name:
+  // a named account typing a different name almost always means someone else;
+  // a nameless (emailed-code) account typing a name is usually naming itself.
+  const [forOther, setForOther] = useState<boolean | null>(null)
   const [registeredForOther, setRegisteredForOther] = useState<string | null>(null) // their name, once saved
   const [claimCity, setClaimCity] = useState('')
   const [claimState, setClaimState] = useState('')
@@ -394,7 +397,8 @@ export default function BandPage() {
       if (localStorage.getItem(`for_other_${bandId}`)) return
       if (localStorage.getItem(`not_mine_${bandId}`)) return
       const fromThisPhone = !!localStorage.getItem(`holder_${bandId}`)
-      if (fromThisPhone || namesMatch(myName, String(latest.user_name || ''))) setClaimOffer({ name: String(latest.user_name || 'you') })
+      // A nameless account matches nothing by name; only a stop made from this phone counts.
+      if (fromThisPhone || (!!myName && namesMatch(myName, String(latest.user_name || '')))) setClaimOffer({ name: String(latest.user_name || 'you') })
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, myName, status.band?.band_id, status.band?.owner_id, status.registrations?.length])
@@ -578,7 +582,7 @@ export default function BandPage() {
     if (!claimName.trim()) return
     setSubmitting(true)
     // Only meaningful when signed in and the typed name isn't the account's.
-    const forSomeoneElse = !!userId && forOther && !namesMatch(myName, claimName)
+    const forSomeoneElse = !!userId && (forOther ?? !!myName) && (!myName || !namesMatch(myName, claimName))
     try {
       const res = await fetch('/api/register-band', {
         method: 'POST',
@@ -592,6 +596,10 @@ export default function BandPage() {
       } else {
         localStorage.setItem(`holder_${bandId}`, 'true')
       }
+      // Signed in and registering as yourself: reload so the page comes back as
+      // your band. The account card it would otherwise show is for guests, and
+      // for a signed-in person it rendered nothing — a blank page after saving.
+      if (userId && !forSomeoneElse) { window.location.reload(); return }
       setClaimStep('done')
       // No auto-reload. This screen is where someone creates their account, and
       // an 8s timer tore them off it mid-signup — long before they could enter
@@ -694,7 +702,7 @@ export default function BandPage() {
     // on ("Emily" typed while signed in as Matt). Same rule as a first tap:
     // a different name means someone else, and the band must not land back
     // on the giver's account.
-    const forSomeoneElse = !!userId && forOther && !namesMatch(myName, claimName)
+    const forSomeoneElse = !!userId && (forOther ?? !!myName) && (!myName || !namesMatch(myName, claimName))
     try {
       // register-band completes the pending transfer server-side (atomic with
       // the new holder's registration) — no client-side band/transfer writes.
@@ -710,6 +718,10 @@ export default function BandPage() {
       } else {
         localStorage.setItem(`holder_${bandId}`, 'true')
       }
+      // Signed in and registering as yourself: reload so the page comes back as
+      // your band. The account card it would otherwise show is for guests, and
+      // for a signed-in person it rendered nothing — a blank page after saving.
+      if (userId && !forSomeoneElse) { window.location.reload(); return }
       setClaimStep('done')
       // No auto-reload. This screen is where someone creates their account, and
       // an 8s timer tore them off it mid-signup — long before they could enter
@@ -1319,7 +1331,7 @@ export default function BandPage() {
             <button onClick={() => { if (status.transfer?.recipient_name && !claimName) setClaimName(status.transfer.recipient_name); setClaimStep('form') }} style={{ display: 'inline-block', padding: '13px 28px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Accept this band →</button>
           </div>
         )}
-        {claimStep === 'form' && <ClaimForm title="You're joining the chain ✝︎" subtitle="Add your name and a prayer to complete the handoff." submitLabel="Accept & add my prayer ✝︎" onSubmit={handleAcceptTransfer} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} signedInName={myName} forOther={forOther} setForOther={setForOther} />}
+        {claimStep === 'form' && <ClaimForm title="You're joining the chain ✝︎" subtitle="Add your name and a prayer to complete the handoff." submitLabel="Accept & add my prayer ✝︎" onSubmit={handleAcceptTransfer} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} signedInName={userId ? (myName || '') : null} forOther={forOther} setForOther={setForOther} />}
         {claimStep === 'done' && registeredForOther && <ForOtherDone bandId={bandId} name={registeredForOther} />}
         {claimStep === 'done' && !registeredForOther && <SuccessCard bandId={bandId} userId={userId} title="The band is yours now" subtitle="You've been added to the prayer chain. Every time you tap this band, you'll see the full journey — and when you're ready, you can pass it on too." />}
         <PrayerChain regs={regs} />
@@ -1342,7 +1354,7 @@ export default function BandPage() {
           </div>
         )}
         <NetworkConnectPrompt bandId={bandId} />
-        {claimStep === 'form' && <ClaimForm title="Join the Journey" subtitle="Your prayer becomes part of this band's story forever." submitLabel="Add my prayer to this band ✝︎" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} signedInName={myName} forOther={forOther} setForOther={setForOther} />}
+        {claimStep === 'form' && <ClaimForm title="Join the Journey" subtitle="Your prayer becomes part of this band's story forever." submitLabel="Add my prayer to this band ✝︎" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} signedInName={userId ? (myName || '') : null} forOther={forOther} setForOther={setForOther} />}
         {claimStep === 'done' && registeredForOther && <ForOtherDone bandId={bandId} name={registeredForOther} />}
         {claimStep === 'done' && !registeredForOther && <SuccessCard bandId={bandId} userId={userId} title="You're part of this story" subtitle="Your prayer has been woven into this band's journey. When you pass it on, they'll see every prayer that came before — including yours." />}
         <div style={{ height: 40 }} />
@@ -1395,7 +1407,7 @@ export default function BandPage() {
             <button onClick={() => setClaimStep('form')} style={{ padding: '10px 24px', background: GOLD, color: INK, border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>I now have this band →</button>
           </div>
         )}
-        {claimStep === 'form' && <ClaimForm title="Join the Chain" subtitle="Add your name and prayer to continue this band's journey." submitLabel="Join the chain ✝︎" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} signedInName={myName} forOther={forOther} setForOther={setForOther} />}
+        {claimStep === 'form' && <ClaimForm title="Join the Chain" subtitle="Add your name and prayer to continue this band's journey." submitLabel="Join the chain ✝︎" onSubmit={handleClaim} onBack={() => setClaimStep('prompt')} claimName={claimName} setClaimName={setClaimName} claimPrayer={claimPrayer} setClaimPrayer={setClaimPrayer} claimCity={claimCity} setClaimCity={setClaimCity} claimState={claimState} setClaimState={setClaimState} claimCountry={claimCountry} setClaimCountry={setClaimCountry} submitting={submitting} signedInName={userId ? (myName || '') : null} forOther={forOther} setForOther={setForOther} />}
         {claimStep === 'done' && registeredForOther && <ForOtherDone bandId={bandId} name={registeredForOther} />}
         {claimStep === 'done' && !registeredForOther && <SuccessCard bandId={bandId} userId={userId} title="Welcome to the chain" subtitle="Your prayer has been added. Tap your band any time to see the full journey." />}
         <PrayerChain regs={regs} />
@@ -1567,7 +1579,7 @@ export default function BandPage() {
             claimCountry={claimCountry}
             setClaimCountry={setClaimCountry}
             submitting={submitting}
-            signedInName={myName}
+            signedInName={userId ? (myName || '') : null}
             forOther={forOther}
             setForOther={setForOther}
           />

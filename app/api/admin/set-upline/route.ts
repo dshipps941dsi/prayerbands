@@ -3,7 +3,6 @@ import { isAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { findAuthUserByEmail } from '@/lib/find-auth-user'
 
-const ADMIN_EMAIL = 'dshipps941@gmail.com'
 
 async function callerEmail(): Promise<string | null> {
   const supabase = await createClient()

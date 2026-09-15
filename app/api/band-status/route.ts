@@ -1,3 +1,4 @@
+import { likeLiteral } from '@/lib/like'
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
@@ -215,7 +216,7 @@ export async function GET(req: NextRequest) {
       const { data: myOrder } = await supabase
         .from('orders')
         .select('id')
-        .ilike('customer_email', prof.email)
+        .ilike('customer_email', likeLiteral(prof.email))
         .contains('assigned_band_ids', [bandId])
         .limit(1)
         .maybeSingle()

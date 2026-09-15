@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 // POST /api/report-prayer { id, reason? }
 //
@@ -13,6 +14,10 @@ import { createServiceClient } from '@/lib/supabase/server'
 // Moderation belongs on the server regardless — an update policy permissive
 // enough for an anonymous reporter would let anyone edit anyone's prayer.
 export async function POST(req: NextRequest) {
+  // Anyone can report, but nobody gets to empty the wall: 5 reports an hour per address.
+  if (!(await checkRateLimit(`report:ip:${getClientIp(req)}`, 5, 3600))) {
+    return NextResponse.json({ error: 'Too many reports from this connection. Please try again later.' }, { status: 429 })
+  }
   const body = await req.json().catch(() => ({}))
   const id = Number(body?.id)
   if (!Number.isInteger(id) || id <= 0) {
