@@ -1484,8 +1484,13 @@ export default function BandPage() {
               onClick={() => setTransferStep('sheet')}
               style={{ marginTop: 16, padding: '13px 30px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 22px rgba(184,134,11,0.3)' }}
             >
-              🎁 Pass this band on to someone →
+              🎁 I&apos;m giving this one to someone →
             </button>
+          )}
+          {userId && status.band && !status.band.owner_id && status.canHandOff && (
+            <div style={{ marginTop: 8, fontFamily: body, fontSize: 12, color: 'rgba(255,255,255,0.55)', maxWidth: 320 }}>
+              Add their name and a note now, or just hand it over &mdash; when they tap it, it becomes theirs and you stay the link above them.
+            </div>
           )}
           {userId && status.band && !status.band.owner_id && (
             <button
@@ -1493,7 +1498,7 @@ export default function BandPage() {
               disabled={claimingOwnership}
               style={{ marginTop: 12, padding: '12px 28px', background: 'transparent', color: GOLD, border: `1px solid ${GOLD}`, borderRadius: 10, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
             >
-              {claimingOwnership ? 'Claiming…' : '+ Claim this band to my account'}
+              {claimingOwnership ? 'Adding…' : "This one's mine — add it to my account"}
             </button>
           )}
 

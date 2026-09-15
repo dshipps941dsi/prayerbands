@@ -56,7 +56,10 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
     isBuyer = !!myOrder
   }
-  if (!isOwner && !isHolder && !isBuyer) {
+  // The credited giver of an unowned, unregistered band (handed a pile by an
+  // admin, or by the person above them) may pass it on too — same as a buyer.
+  const isCreditedGiver = !band.owner_id && !latest && !!band.upline_user_id && band.upline_user_id === user.id
+  if (!isOwner && !isHolder && !isBuyer && !isCreditedGiver) {
     return NextResponse.json({ error: 'You can only pass on a band you currently hold.' }, { status: 403 })
   }
 

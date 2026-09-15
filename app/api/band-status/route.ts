@@ -49,6 +49,7 @@ export async function GET(req: NextRequest) {
   // a display name is exposed — never the attribution email, which is an admin
   // detail and would leak an address to anyone tapping the band.
   let uplineName: string | null = null
+  const uplineUserId: string | null = (band.upline_user_id as string | null) ?? null
   if (band.upline_user_id) {
     const { data: upline } = await supabase
       .from('profiles')
@@ -204,7 +205,10 @@ export async function GET(req: NextRequest) {
   // from their profile, since userId here comes from the query string). This is
   // a UI hint only — initiate-transfer re-checks the same rule from the session.
   let canHandOff = false
-  if (userId && !band.owner_id) {
+  // Credited giver (handed the band by an admin, or by whoever gave it to
+  // them): it is theirs to pass on, no order required.
+  if (userId && !band.owner_id && uplineUserId && uplineUserId === userId) canHandOff = true
+  if (userId && !band.owner_id && !canHandOff) {
     const { data: prof } = await supabase.from('profiles').select('email').eq('id', userId).maybeSingle()
     if (prof?.email) {
       const { data: myOrder } = await supabase
