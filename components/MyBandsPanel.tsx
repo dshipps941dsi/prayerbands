@@ -17,9 +17,11 @@ const INK = 'var(--pb-text-on-primary, #0f0d09)'
 const serif = "'Playfair Display', Georgia, serif"
 const body = "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
 
-export default function MyBandsPanel({ userId, currentBandId, defaultBandId, openDedication = null }: { userId: string | null; currentBandId: string; defaultBandId: string | null; openDedication?: string | null }) {
+export default function MyBandsPanel({ userId, currentBandId, defaultBandId, openDedication = null, defaultOpen = true }: { userId: string | null; currentBandId: string; defaultBandId: string | null; openDedication?: string | null; defaultOpen?: boolean }) {
   const [bands, setBands] = useState<Band[] | null>(null)
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(defaultOpen)
+  // The account menu collapses this when it sends someone to the inbox below.
+  useEffect(() => { setOpen(defaultOpen) }, [defaultOpen])
 
   useEffect(() => {
     if (!userId) { setBands([]); return }

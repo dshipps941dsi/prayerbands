@@ -305,14 +305,20 @@ export default function BandPage() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const bandsRef = useRef<HTMLDivElement | null>(null)
   const msgsRef = useRef<HTMLDivElement | null>(null)
+  const [bandsOpen, setBandsOpen] = useState(true)
   function goAccount(section: 'inbox' | 'bands' | 'top') {
     setAccountMenuOpen(false)
     setActiveTab('account')
     if (section === 'inbox') setMsgsOpen(true)
-    setTimeout(() => {
+    // My Bands sits above the inbox and fills in after a fetch, which used to
+    // push the inbox back off screen after the scroll. Fold it when heading
+    // to the inbox, and scroll again as the panels finish loading.
+    setBandsOpen(section !== 'inbox')
+    const go = () => {
       if (section === 'top') window.scrollTo({ top: 0, behavior: 'smooth' })
       else (section === 'inbox' ? msgsRef : bandsRef).current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 80)
+    }
+    for (const ms of [80, 400, 900]) setTimeout(go, ms)
   }
   // First-tap entry screen: is the main call-to-action on screen? When it
   // isn't (scrolled past, or pushed down by a long gift note), a bar pinned to
@@ -1280,7 +1286,7 @@ export default function BandPage() {
                 {/* Subscription (plan, next shipment, billing) — nothing for non-subscribers. */}
                 <SubscriptionPanel userId={userId} />
                 <div ref={bandsRef} style={{ scrollMarginTop: 80 }}>
-                  <MyBandsPanel userId={userId} currentBandId={bandId} defaultBandId={defaultBandId} openDedication={dedicateOpen ? bandId : null} />
+                  <MyBandsPanel userId={userId} currentBandId={bandId} defaultBandId={defaultBandId} openDedication={dedicateOpen ? bandId : null} defaultOpen={bandsOpen} />
                 </div>
                 {/* My Messages — the same feed as the top mailbox, collapsed by
                     default. Expanding mounts the feed, which marks messages seen
