@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
   // ── Wave 1: everything keyed on the viewer alone ──────────────────────────
   const [
     { data: bands }, { data: giftBands }, { data: orders }, { data: subs }, { data: prs },
-    { data: mems }, { data: myReqs }, { data: conns }, { data: pend }, { data: encs }, { data: anns }, { data: profile },
+    { data: mems }, { data: myReqs }, { data: conns }, { data: pend }, { data: accepted }, { data: encs }, { data: anns }, { data: profile },
   ] = await Promise.all([
     admin.from('bands').select('band_id').eq('owner_id', effectiveId),
     admin.from('bands').select('band_id').eq('upline_user_id', effectiveId).neq('owner_id', effectiveId),
@@ -79,6 +79,9 @@ export async function GET(req: NextRequest) {
     admin.from('prayer_network_connections').select('id, requester_id, created_at')
       .eq('recipient_id', effectiveId).eq('status', 'pending').gte('created_at', since)
       .order('created_at', { ascending: false }).limit(20),
+    admin.from('prayer_network_connections').select('id, recipient_id, updated_at')
+      .eq('requester_id', effectiveId).eq('status', 'accepted').gte('updated_at', since)
+      .order('updated_at', { ascending: false }).limit(20),
     admin.from('prayer_encouragements').select('id, from_user_id, note, created_at')
       .eq('to_user_id', effectiveId).gte('created_at', since).order('created_at', { ascending: false }).limit(20),
     admin.from('announcements').select('id, title, body, cta_label, cta_href, created_at')
@@ -132,6 +135,7 @@ export async function GET(req: NextRequest) {
     ...(replies || []).map((r: any) => r.user_id),
     ...(shared || []).map((r: any) => r.user_id),
     ...(pend || []).map((c: any) => c.requester_id),
+    ...(accepted || []).map((c: any) => c.recipient_id),
     ...(encs || []).map((e: any) => e.from_user_id),
   ].filter(Boolean)
   const [{ data: mem }, { data: nameRows }] = await Promise.all([
@@ -239,6 +243,12 @@ export async function GET(req: NextRequest) {
   for (const c of pend || []) {
     items.push({ id: `conn-${c.id}`, type: 'connection', icon: '🤝', ts: c.created_at,
       title: `${names[c.requester_id] || 'Someone'} wants to connect in prayer`, detail: 'Open Partners to accept.' })
+  }
+
+  // 8b. Accepted — the person you asked said yes.
+  for (const c of accepted || []) {
+    items.push({ id: `conn-acc-${c.id}`, type: 'connection', icon: '🤝', ts: c.updated_at,
+      title: `${names[c.recipient_id] || 'Your partner'} accepted your prayer partner request`, detail: 'Open Partners to send them a prayer.' })
   }
 
   // 9. "Someone prayed for you" — peer encouragements.

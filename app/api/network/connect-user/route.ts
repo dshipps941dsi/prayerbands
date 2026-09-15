@@ -1,4 +1,5 @@
 import { sendEmail } from '@/lib/email'
+import { sendPush } from '@/lib/push'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
@@ -77,6 +78,12 @@ export async function POST(req: NextRequest) {
       ])
       const requesterName = nameFromProfile(sprofile)
       const eRequesterName = escapeHtml(requesterName)
+      await sendPush(recipientId, {
+        title: `${requesterName} wants to be your prayer partner`,
+        body: 'Open to accept the request.',
+        url: '/my-band',
+        tag: `partner-request-${user.id}`,
+      })
       if (rprofile?.email) {
         const resend = new Resend(process.env.RESEND_API_KEY!)
         await sendEmail({

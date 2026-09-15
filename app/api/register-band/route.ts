@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
     // over when nobody formally owned it.
     const { data: latestBefore } = await supabase
       .from('registrations')
-      .select('id, user_id, user_name, registered_by')
+      .select('id, user_id, user_name, registered_by, email')
       .eq('band_id', bandId)
       .neq('source', 'wall')
       .order('registered_at', { ascending: false })
@@ -366,7 +366,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    let alertEmails = (prevRegs || []).map((r: any) => r.email).filter(Boolean)
+    // "Your band just moved" goes to the person who just handed it over —
+    // the previous stop — not to everyone who ever held it. A five-stop band
+    // used to email five people on every tap.
+    let alertEmails: string[] = latestBefore?.email ? [String(latestBefore.email)] : []
     // Respect notification opt-outs: drop any prior holder whose account has
     // turned band emails off.
     if (alertEmails.length > 0) {
@@ -419,6 +422,7 @@ export async function POST(req: NextRequest) {
         console.error('Journey alert failed:', e)
       }
     }
+    const journeyAlerted = new Set(alertEmails.map(e => e.toLowerCase()))
 
     try {
       const { data: bandData } = await supabase
@@ -511,7 +515,10 @@ export async function POST(req: NextRequest) {
           .eq('id', notifyOwnerId)
           .single()
 
-        if (ownerProfile?.email && ownerProfile.email_notifications !== false) {
+        // The push always goes; the email only if the journey alert above did
+        // not already reach this same address (previous holder = owner is the
+        // common case, and it used to mean two emails for one tap).
+        if (ownerProfile?.email && ownerProfile.email_notifications !== false && !journeyAlerted.has(ownerProfile.email.toLowerCase())) {
           await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/send-band-passed-on`, {
             method: 'POST',
             headers: {
