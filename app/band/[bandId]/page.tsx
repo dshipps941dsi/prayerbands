@@ -276,6 +276,8 @@ export default function BandPage() {
   const [expandedPrayer, setExpandedPrayer] = useState<string | null>(null)
   const [verseCategory, setVerseCategory] = useState('all')
   const [activeTab, setActiveTab] = useState<'home' | 'journey' | 'purchase' | 'account'>('home')
+  // ?dedicate=1 (from the shipping email / dedicate page): open this band's gift message for editing.
+  const [dedicateOpen, setDedicateOpen] = useState(false)
   // Full-screen focus mode: meditate on the verse, or the journal with nothing else.
   const [focus, setFocus] = useState<null | 'verse' | 'prayer'>(null)
   // Auto-hiding bottom nav: hidden on load for a clean first view, revealed
@@ -438,7 +440,8 @@ export default function BandPage() {
     const tab = sp.get('tab')
     if (tab === 'account' || tab === 'journey' || tab === 'purchase') setActiveTab(tab as any)
     if (sp.get('action') === 'pass') setTransferStep('sheet')
-    if (tab || sp.get('action')) window.history.replaceState({}, '', window.location.pathname)
+    if (sp.get('dedicate')) { setActiveTab('account'); setDedicateOpen(true) }
+    if (tab || sp.get('action') || sp.get('dedicate')) window.history.replaceState({}, '', window.location.pathname)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -1221,7 +1224,7 @@ export default function BandPage() {
                 {/* My Bands — every band on the account, open / pass on, and
                     gift messages for unopened ones. Band management lives here
                     now, not only on the old dashboard. */}
-                <MyBandsPanel userId={userId} currentBandId={bandId} defaultBandId={defaultBandId} />
+                <MyBandsPanel userId={userId} currentBandId={bandId} defaultBandId={defaultBandId} openDedication={dedicateOpen ? bandId : null} />
                 {/* My Messages — the same feed as the top mailbox, collapsed by
                     default. Expanding mounts the feed, which marks messages seen
                     (clears the tab + mailbox badge). */}

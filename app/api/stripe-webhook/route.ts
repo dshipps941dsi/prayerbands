@@ -114,9 +114,9 @@ export async function POST(req: NextRequest) {
                   </div>
                 </div>
                 <div style="text-align:center;margin:28px 0">
-                  <a href="https://prayerbands.com/dashboard"
+                  <a href="https://prayerbands.com/my-band?tab=account"
                      style="display:inline-block;background:#2b7bc4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700">
-                    View Your Dashboard ✝
+                    Open My Bands ✝
                   </a>
                 </div>
                 <p style="font-size:13px;color:#8896a8;text-align:center;font-style:italic;margin:0">
@@ -455,9 +455,9 @@ async function sendSubscriptionEmails(session: Stripe.Checkout.Session, plan: an
                 </div>
               </div>
               <div style="text-align:center;margin:28px 0">
-                <a href="https://prayerbands.com/dashboard"
+                <a href="https://prayerbands.com/my-band?tab=account"
                    style="display:inline-block;background:#2b7bc4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700">
-                  View Your Dashboard ✝
+                  Open My Bands ✝
                 </a>
               </div>
               <p style="font-size:13px;color:#8896a8;text-align:center;font-style:italic;margin:0">

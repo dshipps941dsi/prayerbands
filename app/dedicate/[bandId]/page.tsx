@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
+import { createBrowserClient } from '@supabase/ssr'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '@/components/SiteFooter'
 
@@ -22,6 +23,20 @@ function DedicateInner() {
   useEffect(() => {
     (async () => {
       if (!bandId || !token) { setState('invalid'); return }
+      // Signed in and this band is on the account: the gift message lives on
+      // the band page's Account tab now, in the same UI as everything else.
+      // The token form below is for buyers without an account.
+      try {
+        const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        const { data: { session } } = await sb.auth.getSession()
+        if (session) {
+          const mine = await fetch('/api/my-dedications').then(r => r.ok ? r.json() : null).catch(() => null)
+          if (mine?.bands?.some((b: { band_id: string }) => b.band_id === bandId)) {
+            window.location.replace(`/band/${bandId}?tab=account&dedicate=1`)
+            return
+          }
+        }
+      } catch { /* fall through to the token form */ }
       try {
         const res = await fetch(`/api/validate-dedication-token?bandId=${encodeURIComponent(bandId)}&token=${encodeURIComponent(token)}`)
         if (!res.ok) { setState('invalid'); return }
@@ -123,7 +138,7 @@ function DedicateInner() {
             <p style={{ fontSize: 15, color: '#5C6573', lineHeight: 1.7 }}>
               When {recipient ? recipient : 'they'} taps this band for the first time, your dedication will be waiting. 🙏
             </p>
-            <a href="/my-band?tab=account" style={{ display: 'inline-block', marginTop: 8, background: '#C8A96E', color: '#0A1628', textDecoration: 'none', padding: '11px 22px', borderRadius: 8, fontFamily: "'Cinzel', serif", fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>
+            <a href={`/band/${bandId}?tab=account`} style={{ display: 'inline-block', marginTop: 8, background: '#C8A96E', color: '#0A1628', textDecoration: 'none', padding: '11px 22px', borderRadius: 8, fontFamily: "'Cinzel', serif", fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>
               See all my bands &rarr;
             </a>
           </div>

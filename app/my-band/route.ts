@@ -14,6 +14,8 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 // band (a band bought or claimed but not yet registered).
 export async function GET(req: Request) {
   const origin = new URL(req.url).origin
+  // Deep-link params (?tab=account, ?dedicate=1) ride through to the band page.
+  const qs = new URL(req.url).search
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -36,7 +38,7 @@ export async function GET(req: Request) {
       admin.from('bands').select('band_id').eq('owner_id', user.id).eq('band_id', pinned).limit(1).maybeSingle(),
     ])
     if (heldReg?.band_id || ownedPin?.band_id) {
-      return NextResponse.redirect(`${origin}/band/${pinned}`, { status: 307 })
+      return NextResponse.redirect(`${origin}/band/${pinned}${qs}`, { status: 307 })
     }
   }
 
@@ -67,5 +69,5 @@ export async function GET(req: Request) {
     return NextResponse.redirect(`${origin}/dashboard`, { status: 307 })
   }
 
-  return NextResponse.redirect(`${origin}/band/${bandId}`, { status: 307 })
+  return NextResponse.redirect(`${origin}/band/${bandId}${qs}`, { status: 307 })
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface Ded {
   band_id: string
@@ -23,13 +23,15 @@ const BORDER = 'rgba(10,22,40,0.12)'
 // Dashboard section: add/edit the gift dedication on any band you own that
 // hasn't been opened yet. Authorized by ownership server-side — no token link
 // needed. Renders nothing if you have no un-opened bands.
-export default function GiftDedications({ userId, readOnly = false }: { userId?: string; readOnly?: boolean }) {
+export default function GiftDedications({ userId, readOnly = false, autoOpen = null }: { userId?: string; readOnly?: boolean; autoOpen?: string | null }) {
   const [bands, setBands] = useState<Ded[] | null>(null)
   const [editing, setEditing] = useState<string | null>(null)
   const [recipient, setRecipient] = useState('')
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
+  const rootRef = useRef<HTMLDivElement | null>(null)
+  const autoOpened = useRef(false)
 
   async function load() {
     try {
@@ -39,6 +41,18 @@ export default function GiftDedications({ userId, readOnly = false }: { userId?:
     } catch { setBands([]) }
   }
   useEffect(() => { load() /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [userId])
+
+  // Arrived from the shipping email's "Send a message" link: open that band's
+  // editor straight away and bring it into view.
+  useEffect(() => {
+    if (!autoOpen || autoOpened.current || !bands) return
+    const b = bands.find(x => x.band_id === autoOpen)
+    if (!b) return
+    autoOpened.current = true
+    startEdit(b)
+    setTimeout(() => rootRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpen, bands])
 
   function startEdit(b: Ded) {
     setEditing(b.band_id)
@@ -74,7 +88,7 @@ export default function GiftDedications({ userId, readOnly = false }: { userId?:
   const input: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '10px 12px', fontSize: 14, border: `1px solid ${BORDER}`, borderRadius: 8, background: CREAM, color: NAVY, outline: 'none', fontFamily: 'Inter, sans-serif' }
 
   return (
-    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '18px 20px', marginBottom: 20, boxShadow: '0 1px 4px rgba(10,22,40,0.06)' }}>
+    <div ref={rootRef} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '18px 20px', marginBottom: 20, boxShadow: '0 1px 4px rgba(10,22,40,0.06)' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
         <span style={{ fontSize: 18 }}>🎁</span>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: NAVY, margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Gift Dedications</h2>

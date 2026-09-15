@@ -17,7 +17,7 @@ const INK = 'var(--pb-text-on-primary, #0f0d09)'
 const serif = "'Playfair Display', Georgia, serif"
 const body = "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
 
-export default function MyBandsPanel({ userId, currentBandId, defaultBandId }: { userId: string | null; currentBandId: string; defaultBandId: string | null }) {
+export default function MyBandsPanel({ userId, currentBandId, defaultBandId, openDedication = null }: { userId: string | null; currentBandId: string; defaultBandId: string | null; openDedication?: string | null }) {
   const [bands, setBands] = useState<Band[] | null>(null)
   const [open, setOpen] = useState(true)
 
@@ -68,7 +68,7 @@ export default function MyBandsPanel({ userId, currentBandId, defaultBandId }: {
 
           {/* Gift messages for bands bought but not yet opened by their
               recipient. Renders nothing when there are none. */}
-          <GiftDedications userId={userId} />
+          <GiftDedications userId={userId} autoOpen={openDedication} />
 
           <a href="/dashboard" style={{ display: 'inline-block', fontFamily: body, fontSize: 12.5, color: GRAY, textDecoration: 'none' }}>Full dashboard, subscription &amp; prayer map →</a>
         </div>
