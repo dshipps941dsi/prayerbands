@@ -714,9 +714,9 @@ export default function BandPage() {
   // entry screen without remounting — a nested component would recreate on
   // every keystroke and drop focus from the inputs.
   const accountMenu = accountMenuOpen ? (
-    <div onClick={() => setAccountMenuOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
+    <div onClick={() => setAccountMenuOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 250 /* above the fixed tab bar (200), which covered the last row */, display: 'flex', alignItems: 'flex-end' }}>
       <style>{`@keyframes pbRise { from { transform: translateY(100%) } to { transform: none } } @media (prefers-reduced-motion: reduce) { .pb-rise { animation: none !important } }`}</style>
-      <div onClick={e => e.stopPropagation()} className="pb-rise" style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '14px 16px calc(24px + env(safe-area-inset-bottom, 0px))', width: '100%', boxSizing: 'border-box', animation: 'pbRise 0.22s ease-out' }}>
+      <div onClick={e => e.stopPropagation()} className="pb-rise" style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '14px 16px calc(28px + env(safe-area-inset-bottom, 0px))', width: '100%', boxSizing: 'border-box', animation: 'pbRise 0.22s ease-out' }}>
         <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 14px' }} />
         {([
           { key: 'inbox', label: 'Inbox', hint: 'Prayers, requests and your ripple', glyph: <Icon name="mail" size={20} color={DARK} bg="white" />, badge: unread, onClick: () => goAccount('inbox') },
@@ -747,7 +747,7 @@ export default function BandPage() {
   ) : null
 
   const transferSheet = transferStep === 'sheet' ? (
-    <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
+    <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 250 /* above the fixed tab bar (200), which covered the last row */, display: 'flex', alignItems: 'flex-end' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
         <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
         <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Pass This Band On</div>
@@ -1325,7 +1325,7 @@ export default function BandPage() {
         )}
 
         {showSignup && (
-          <div onClick={() => setShowSignup(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
+          <div onClick={() => setShowSignup(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 250 /* above the fixed tab bar (200), which covered the last row */, display: 'flex', alignItems: 'flex-end' }}>
             <div onClick={e => e.stopPropagation()} style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '28px 24px 48px', width: '100%', boxSizing: 'border-box' }}>
               <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
               <SuccessCard bandId={bandId} userId={userId} title="Save your place" subtitle="Create a free account to get your daily verse every time you tap, track your prayers, and follow this band's story." showCountdown={false} />
@@ -1334,7 +1334,7 @@ export default function BandPage() {
         )}
 
         {transferStep === 'save_prompt' && (
-          <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 150, display: 'flex', alignItems: 'flex-end' }}>
+          <div onClick={() => setTransferStep('idle')} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 250 /* above the fixed tab bar (200), which covered the last row */, display: 'flex', alignItems: 'flex-end' }}>
             <div onClick={e => e.stopPropagation()} style={{ background: '#FDFAF5', borderRadius: '20px 20px 0 0', padding: '28px 24px 40px', width: '100%', boxSizing: 'border-box' }}>
               <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 20px' }} />
               <div style={{ fontSize: 40, textAlign: 'center', marginBottom: 12, color: GOLD }}>✝︎</div>
