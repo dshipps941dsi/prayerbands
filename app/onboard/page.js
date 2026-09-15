@@ -28,7 +28,7 @@ export default function OnboardPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({ name: '', location: '', website: '', pastor: '', email: '', password: '' });
+  const [form, setForm] = useState({ name: '', location: '', website: '', pastor: '', email: '' });
   const [preview, setPreview] = useState({ prefix: '', subdomain: '' });
 
   function handleNameChange(e) {
@@ -216,14 +216,6 @@ export default function OnboardPage() {
               />
             </div>
 
-            <div style={{ marginBottom: 24 }}>
-              <label style={labelStyle}>PASSWORD *</label>
-              <input
-                style={inputStyle} name="password" type="password"
-                value={form.password} onChange={handleChange}
-                placeholder="At least 8 characters"
-              />
-            </div>
 
             {error && (
               <div style={{
@@ -249,16 +241,16 @@ export default function OnboardPage() {
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={loading || !form.pastor || !form.email || !form.password}
+                disabled={loading || !form.pastor || !form.email}
                 style={{
                   flex: 2, padding: '13px', borderRadius: 8,
-                  background: (!loading && form.pastor && form.email && form.password) ? green : '#ccc',
+                  background: (!loading && form.pastor && form.email) ? green : '#ccc',
                   color: '#fff', border: 'none', fontSize: 15,
                   fontWeight: 'bold', cursor: 'pointer',
                   fontFamily: 'Georgia, serif',
                 }}
               >
-                {loading ? 'Creating account...' : 'Create Ministry Account'}
+                {loading ? 'Sending…' : 'Apply for a Ministry Account'}
               </button>
             </div>
           </div>
@@ -268,41 +260,15 @@ export default function OnboardPage() {
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🙏</div>
             <h2 style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 12, color: '#1a1208' }}>
-              Your ministry account is ready!
+              Application received
             </h2>
             <p style={{ color: '#5a4f42', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-              Welcome to Prayer Bands, <strong>{form.pastor}</strong>.<br />
-              Your church prefix is{' '}
-              <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: green }}>
-                {preview.prefix}-XXXXX
-              </span>{' '}
-              and your dashboard is at{' '}
-              <span style={{ fontFamily: 'monospace', color: green }}>
-                {preview.subdomain}.prayerbands.com
-              </span>.
+              Thanks, <strong>{form.pastor}</strong>. We review every ministry by hand, and you&rsquo;ll hear from us within a day at <strong>{form.email}</strong>.
+              When <strong>{form.name}</strong> is approved, you&rsquo;ll get a link to set your password and open your church dashboard.
             </p>
-            <button
-  onClick={async () => {
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    );
-    await supabase.auth.signInWithPassword({
-      email: form.email,
-      password: form.password,
-    });
-    router.push('/org/dashboard');
-  }}
-              style={{
-                width: '100%', padding: '13px', borderRadius: 8,
-                background: green, color: '#fff', border: 'none',
-                fontSize: 15, fontWeight: 'bold', cursor: 'pointer',
-                fontFamily: 'Georgia, serif',
-              }}
-            >
-              Go to My Dashboard →
-            </button>
+            <p style={{ color: '#5a4f42', fontSize: 13, lineHeight: 1.7 }}>
+              Questions in the meantime? Email <a href="mailto:hello@prayerbands.com" style={{ color: green }}>hello@prayerbands.com</a>.
+            </p>
           </div>
         )}
       </div>

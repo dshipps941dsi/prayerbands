@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
+import OrgApplications from '@/app/admin/_components/OrgApplications'
 import { THEME_OPTIONS, loadThemes, getThemeOptions } from '@/lib/themes'
 
 
@@ -139,6 +140,7 @@ export default function AdminOrgs() {
           <p style={{ color: C.secondary, fontSize: 14 }}>Manage organizations, generate and assign bands.</p>
         </div>
 
+        <OrgApplications />
         <div className="pb-orgs-main" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24 }}>
           {/* Org list */}
           <div style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 10px rgba(10,22,40,0.06)' }}>

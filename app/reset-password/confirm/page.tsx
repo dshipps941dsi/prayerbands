@@ -33,14 +33,18 @@ export default function ResetPasswordConfirm() {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
+    // Two ways to arrive: the reset link (PASSWORD_RECOVERY fires in the
+    // browser) or an invitation that the server callback already exchanged
+    // (the session simply exists). Both should see the form.
     supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setReady(true)
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') setReady(true)
     })
+    supabase.auth.getSession().then(({ data }) => { if (data.session) setReady(true) })
   }, [])
 
   async function handleUpdate() {
     if (password !== confirm) { setError('Passwords do not match'); return }
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return }
+    if (password.length < 8) { setError('Password must be at least 8 characters'); return }
     setLoading(true)
     setError('')
     const supabase = createBrowserClient(
@@ -94,7 +98,7 @@ export default function ResetPasswordConfirm() {
               <p style={{ color: BRAND.secondaryText, fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
                 Your password has been changed. You can now sign in with your new password.
               </p>
-              <a href="/signin" style={{
+              <a href={typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('welcome') === 'ministry' ? '/org/dashboard' : '/signin'} style={{
                 display: 'inline-block', background: BRAND.gold, color: BRAND.navy,
                 padding: '12px 28px', borderRadius: 8, textDecoration: 'none',
                 fontSize: 12, fontWeight: 700, fontFamily: "'Cinzel', serif",
