@@ -1415,7 +1415,40 @@ export default function BandPage() {
             Follow its journey, share prayers, and discover Scripture each day.
           </div>
 
-          {/* CTA — the main "what do I do now" action, placed right under the
+
+          {/* Pre-dedicated gift: the sender's blessing, shown inline on the entry
+              page rather than as a takeover screen. Gold-tinted so it reads as
+              personal next to the generic verse card below. `pre-line` keeps the
+              sender's own line breaks (they usually sign off on a new line). */}
+          {(status.dedicationRecipient || status.dedicationNote) && (
+            <div style={{ background: 'rgba(200,169,110,0.10)', border: `1px solid ${GOLD}`, borderRadius: 14, padding: '20px 22px', marginBottom: 32, maxWidth: 380, width: '100%' }}>
+              <div style={{ fontFamily: body, fontSize: 10, letterSpacing: '0.28em', textTransform: 'uppercase', color: GOLD, marginBottom: 10 }}>
+                A Gift of Prayer
+              </div>
+              {status.dedicationRecipient && (
+                <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: status.dedicationNote ? 10 : 0 }}>
+                  For {status.dedicationRecipient}
+                </div>
+              )}
+              {status.dedicationNote && (
+                <div style={{ fontFamily: serif, fontSize: 16, fontStyle: 'italic', lineHeight: 1.6, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-line' }}>
+                  &ldquo;{status.dedicationNote}&rdquo;
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Verse */}
+          <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 24px', marginBottom: 28, maxWidth: 380, border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ fontFamily: serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.7, marginBottom: 8, color: 'rgba(255,255,255,0.9)' }}>
+              "For we are God's handiwork, created in Christ Jesus to do good works, which God prepared in advance for us to do."
+            </div>
+            <div style={{ fontFamily: body, fontSize: 12, color: GOLD, letterSpacing: '0.1em' }}>EPHESIANS 2:10</div>
+          </div>
+          {/* CTA — the main "what do I do now" action. Sits BELOW the gift note and
+              the verse on purpose: people were tapping through before reading the
+              message. The pinned footer keeps the action on screen regardless.
+              Was: placed right under the
               message so it is on screen before anyone scrolls. It used to sit
               below the verse card, which on a phone put it under the fold every
               time; people read the verse and stopped. Pulses gently so a
@@ -1441,36 +1474,6 @@ export default function BandPage() {
           </button>
           <div style={{ marginTop: 10, marginBottom: 34, fontFamily: body, fontSize: 13, color: 'rgba(255,255,255,0.62)' }}>
             Takes about 30 seconds. No account needed.
-          </div>
-
-          {/* Pre-dedicated gift: the sender's blessing, shown inline on the entry
-              page rather than as a takeover screen. Gold-tinted so it reads as
-              personal next to the generic verse card below. `pre-line` keeps the
-              sender's own line breaks (they usually sign off on a new line). */}
-          {(status.dedicationRecipient || status.dedicationNote) && (
-            <div style={{ background: 'rgba(200,169,110,0.10)', border: `1px solid ${GOLD}`, borderRadius: 14, padding: '20px 22px', marginBottom: 32, maxWidth: 380, width: '100%' }}>
-              <div style={{ fontFamily: body, fontSize: 10, letterSpacing: '0.28em', textTransform: 'uppercase', color: GOLD, marginBottom: 10 }}>
-                A Gift of Prayer
-              </div>
-              {status.dedicationRecipient && (
-                <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: status.dedicationNote ? 10 : 0 }}>
-                  For {status.dedicationRecipient}
-                </div>
-              )}
-              {status.dedicationNote && (
-                <div style={{ fontFamily: serif, fontSize: 16, fontStyle: 'italic', lineHeight: 1.6, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-line' }}>
-                  &ldquo;{status.dedicationNote}&rdquo;
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Verse */}
-          <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 24px', marginBottom: 8, maxWidth: 380, border: '1px solid rgba(255,255,255,0.1)' }}>
-            <div style={{ fontFamily: serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.7, marginBottom: 8, color: 'rgba(255,255,255,0.9)' }}>
-              "For we are God's handiwork, created in Christ Jesus to do good works, which God prepared in advance for us to do."
-            </div>
-            <div style={{ fontFamily: body, fontSize: 12, color: GOLD, letterSpacing: '0.1em' }}>EPHESIANS 2:10</div>
           </div>
 
           {/* Shortcut for a bulk/gift buyer: they're the band's upline but never
