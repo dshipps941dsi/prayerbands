@@ -10,6 +10,7 @@ import { createClient as createServerClient } from '@/lib/supabase/server'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { titleCase, formatState, formatCountry } from '@/lib/text-format'
 import { sendPush } from '@/lib/push'
+import { hasTapProof, NEEDS_TAP_MESSAGE } from '@/lib/tap-proof'
 
 export async function POST(req: NextRequest) {
   const supabase = createClient(
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
     // and the helper is remembered as the giver rather than becoming the
     // holder. Three real bands ended up on the wrong account before this.
     const helperUserId = forSomeoneElse === true ? holderUserId : null
+    const callerId = holderUserId
     if (helperUserId) holderUserId = null
 
     // Normalize + bound user text (the endpoint is public, so validate here).
@@ -165,6 +167,18 @@ export async function POST(req: NextRequest) {
       .order('registered_at', { ascending: false })
       .limit(1)
       .maybeSingle()
+
+    // Proof of possession. Bands made from September 2026 on carry a secret
+    // in the chip, and a stop on one of them — which is how ownership moves —
+    // is only accepted from a phone that actually tapped it. The one
+    // exception: the person who already owns or holds the band, adding to
+    // their own journey from any device. Older bands have no secret and are
+    // never gated.
+    const { data: gateBand } = await supabase.from('bands').select('owner_id, tap_secret_hash').eq('band_id', bandId).maybeSingle()
+    if (gateBand?.tap_secret_hash && !hasTapProof(bandId, req)) {
+      const ownsIt = !!callerId && (gateBand.owner_id === callerId || latestBefore?.user_id === callerId)
+      if (!ownsIt) return NextResponse.json({ error: NEEDS_TAP_MESSAGE, needsTap: true }, { status: 403 })
+    }
 
     // Same person, second time: someone who registered as a guest and is now
     // signed in (or reached the journey's "I now have this band" while their

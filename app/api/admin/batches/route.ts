@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { decryptTapSecret, tapUrl } from '@/lib/tap-proof'
 
 
 async function isAdmin(): Promise<boolean> {
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
     for (let from = 0; ; from += PAGE) {
       const { data, error } = await admin
         .from('bands')
-        .select('band_id, theme, color, size, nfc_url, outside_text, inside_text, created_at')
+        .select('band_id, theme, color, size, nfc_url, outside_text, inside_text, created_at, tap_secret_enc')
         .eq('batch', batch)
         .order('created_at', { ascending: true })
         .order('band_id', { ascending: true })
@@ -42,7 +43,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       batch,
       total: bands.length,
-      bands: bands.map(b => ({ band_id: b.band_id, theme: b.theme, color: b.color || '', size: b.size || '', nfc_url: b.nfc_url, outside_text: b.outside_text, inside_text: b.inside_text })),
+      // Rebuild the programmed URL, secret included, for batches that have one.
+      bands: bands.map(b => ({ band_id: b.band_id, theme: b.theme, color: b.color || '', size: b.size || '', nfc_url: b.tap_secret_enc ? tapUrl(b.band_id, decryptTapSecret(b.tap_secret_enc)) : b.nfc_url, outside_text: b.outside_text, inside_text: b.inside_text })),
     })
   }
 

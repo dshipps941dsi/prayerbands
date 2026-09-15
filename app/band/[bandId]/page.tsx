@@ -39,6 +39,9 @@ type Registration = {
 type BandStatus = {
   screen: 'personal_space' | 'incoming_transfer' | 'incoming_gift' | 'first_tap_gift' | 'journey' | 'first_tap_blank' | 'not_found' | 'loading' | 'error'
   reason?: string
+  // Bands made from September 2026 on need a real tap to be taken.
+  tapRequired?: boolean
+  tapProven?: boolean
   band?: any
   registrations?: Registration[]
   currentHolder?: Registration
@@ -589,7 +592,11 @@ export default function BandPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bandId, name: claimName, city: claimCity, state: claimState, country: claimCountry, prayer: claimPrayer, userId: userId ?? null, forSomeoneElse }),
       })
-      if (!res.ok) throw new Error('register-band failed')
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        if (data?.needsTap) { alert(data.error); return }
+        throw new Error('register-band failed')
+      }
       if (forSomeoneElse) {
         try { localStorage.setItem(`for_other_${bandId}`, claimName.trim()) } catch {}
         setRegisteredForOther(claimName.trim())
@@ -711,7 +718,11 @@ export default function BandPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bandId, name: claimName, city: claimCity, state: claimState, country: claimCountry, prayer: claimPrayer, forSomeoneElse }),
       })
-      if (!res.ok) throw new Error('register-band failed')
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        if (data?.needsTap) { alert(data.error); return }
+        throw new Error('register-band failed')
+      }
       if (forSomeoneElse) {
         try { localStorage.setItem(`for_other_${bandId}`, claimName.trim()) } catch {}
         setRegisteredForOther(claimName.trim())
@@ -1403,7 +1414,7 @@ export default function BandPage() {
         {claimStep === 'prompt' && !claimOffer && (
           <div style={{ margin: '20px 20px 0', background: 'white', borderRadius: 14, padding: '18px 20px', border: `1px solid ${GOLD}`, textAlign: 'center' }}>
             <div style={{ fontFamily: serif, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Do you now have this band?</div>
-            <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14 }}>If this band was passed to you, join the chain.</div>
+            <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14 }}>{status.tapRequired && !status.tapProven ? 'If this band was passed to you, hold it to the top of your phone and join the chain from there.' : 'If this band was passed to you, join the chain.'}</div>
             <button onClick={() => setClaimStep('form')} style={{ padding: '10px 24px', background: GOLD, color: INK, border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>I now have this band →</button>
           </div>
         )}

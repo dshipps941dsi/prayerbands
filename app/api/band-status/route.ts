@@ -2,6 +2,7 @@ import { likeLiteral } from '@/lib/like'
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { hasTapProof } from '@/lib/tap-proof'
 
 export async function GET(req: NextRequest) {
   const supabase = createClient(
@@ -62,6 +63,16 @@ export async function GET(req: NextRequest) {
   delete (band as { upline_email?: string }).upline_email
   delete (band as { upline_user_id?: string }).upline_user_id
 
+  // Bands made from September 2026 on carry a secret in the chip; taking one
+  // (a new stop, a claim, accepting a hand-off) needs the tap cookie /r sets.
+  // Surfaced so the page can say "tap your band" before the form, not after.
+  const tapGate = {
+    tapRequired: !!(band as { tap_secret_hash?: string | null }).tap_secret_hash,
+    tapProven: !!(band as { tap_secret_hash?: string | null }).tap_secret_hash && hasTapProof(bandId, req),
+  }
+  delete (band as { tap_secret_hash?: string }).tap_secret_hash
+  delete (band as { tap_secret_enc?: string }).tap_secret_enc
+
   // The private blessing is only ever surfaced through the one screen that needs
   // it (incoming_gift, below). Capture it, then strip it — along with the token —
   // from the public `band` object so it isn't echoed in every other screen's
@@ -91,6 +102,7 @@ export async function GET(req: NextRequest) {
   if (localHolder === 'true') {
     return NextResponse.json({
       screen: 'personal_space',
+      ...tapGate,
       reason: 'local_holder',
       band,
       registrations: regs,
@@ -102,6 +114,7 @@ export async function GET(req: NextRequest) {
   if (band.owner_id && userId && band.owner_id === userId && regs.length === 0) {
     return NextResponse.json({
       screen: 'personal_space',
+      ...tapGate,
       reason: 'pre_linked_owner',
       band,
       registrations: regs,
@@ -113,6 +126,7 @@ export async function GET(req: NextRequest) {
   if (userId && currentHolderUserId && userId === currentHolderUserId) {
     return NextResponse.json({
       screen: 'personal_space',
+      ...tapGate,
       reason: 'current_holder',
       band,
       registrations: regs,
@@ -131,6 +145,7 @@ export async function GET(req: NextRequest) {
   if (regs.length === 0 && dedicationNote && !band.dedication_viewed) {
     return NextResponse.json({
       screen: 'incoming_gift',
+      ...tapGate,
       band,
       registrations: regs,
       uplineName,
@@ -164,6 +179,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       screen: 'incoming_transfer',
+      ...tapGate,
       band,
       registrations: regs,
       uplineName,
@@ -182,6 +198,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       screen: 'first_tap_gift',
+      ...tapGate,
       band,
       registrations: regs,
       uplineName,
@@ -193,6 +210,7 @@ export async function GET(req: NextRequest) {
   if (regs.length > 0) {
     return NextResponse.json({
       screen: 'journey',
+      ...tapGate,
       band,
       registrations: regs,
       uplineName,
@@ -225,6 +243,7 @@ export async function GET(req: NextRequest) {
   }
   return NextResponse.json({
     screen: 'first_tap_blank',
+    ...tapGate,
     band,
     registrations: regs,
     uplineName,

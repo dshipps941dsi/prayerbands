@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { adoptNameFromRegistration } from '@/lib/adopt-name'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { hasTapProof, NEEDS_TAP_MESSAGE } from '@/lib/tap-proof'
 
 // Attach an UNOWNED band to the signed-in user's account (sets bands.owner_id).
 // Refuses if the band is already owned by someone else.
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
     const admin = createServiceClient()
     const { data: band } = await admin
       .from('bands')
-      .select('id, band_id, owner_id, upline_user_id')
+      .select('id, band_id, owner_id, upline_user_id, tap_secret_hash')
       .eq('band_id', bandId)
       .maybeSingle()
 
@@ -66,6 +67,11 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
     if (latest?.user_id && latest.user_id !== user.id) {
       return NextResponse.json({ error: 'This band is currently held by someone else.' }, { status: 403 })
+    }
+    // Bands made from September 2026 on carry a secret in the chip: claiming
+    // one needs the tap cookie /r sets, unless this account already holds it.
+    if (band.tap_secret_hash && !hasTapProof(bandId, req) && latest?.user_id !== user.id) {
+      return NextResponse.json({ error: NEEDS_TAP_MESSAGE, needsTap: true }, { status: 403 })
     }
     // The latest stop was made by this very account on someone else's behalf
     // ("I'm registering it for Kathy"). Opening the page again must not quietly

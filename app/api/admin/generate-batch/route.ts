@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { newTapSecret, hashTapSecret, encryptTapSecret, tapSecretsConfigured, tapUrl } from '@/lib/tap-proof'
 import { isTeamAdmin } from '@/lib/team';
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
@@ -67,10 +68,19 @@ export async function POST(req: NextRequest) {
   const now = new Date()
   const suffix = now.toISOString().slice(11, 19).replace(/:/g, '') // HHMMSS (UTC)
   const batch = `PB-BATCH-${now.toISOString().slice(0, 10)}-${suffix}`
+  // Every band made from here on carries its own secret in the chip URL —
+  // proof, when tapped, that the phone was actually touching the band. Only
+  // the hash and an encrypted copy are stored; the plain URL column is public.
+  if (!tapSecretsConfigured()) {
+    return NextResponse.json({ error: 'TAP_SECRET_KEY is not configured on the server, so band secrets could not be generated. Nothing was created.' }, { status: 500 })
+  }
   const rows: any[] = []
+  const secrets = new Map<string, string>()
   for (const it of clean) {
     for (let i = 0; i < it.quantity; i++) {
       const id = genId(existing)
+      const secret = newTapSecret()
+      secrets.set(id, secret)
       rows.push({
         band_id: id,
         // Solid-color rows are the classic ('default') design in a physical color.
@@ -78,7 +88,9 @@ export async function POST(req: NextRequest) {
         color: it.color || null,
         size: it.size || null,
         status: 'unregistered',
-        nfc_url: `https://prayerbands.com/r/${id}`,
+        nfc_url: tapUrl(id, null),
+        tap_secret_hash: hashTapSecret(secret),
+        tap_secret_enc: encryptTapSecret(secret),
         outside_text: 'PrayerBands.com ✝',
         inside_text: id,
         batch,
@@ -96,6 +108,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     batch,
     total: rows.length,
-    bands: rows.map(r => ({ band_id: r.band_id, theme: r.theme, color: r.color || '', size: r.size || '', nfc_url: r.nfc_url, outside_text: r.outside_text, inside_text: r.inside_text })),
+    // The CSV gets the full chip URL, secret included — that is what gets programmed.
+    bands: rows.map(r => ({ band_id: r.band_id, theme: r.theme, color: r.color || '', size: r.size || '', nfc_url: tapUrl(r.band_id, secrets.get(r.band_id)), outside_text: r.outside_text, inside_text: r.inside_text })),
   })
 }
