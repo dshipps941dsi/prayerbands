@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
   // ── Wave 1: everything keyed on the viewer alone ──────────────────────────
   const [
     { data: bands }, { data: giftBands }, { data: orders }, { data: subs }, { data: prs },
-    { data: mems }, { data: myReqs }, { data: conns }, { data: pend }, { data: accepted }, { data: encs }, { data: anns }, { data: profile },
+    { data: mems }, { data: myReqs }, { data: conns }, { data: pend }, { data: accepted }, { data: encs }, { data: anns }, { data: profile }, { data: myStops },
   ] = await Promise.all([
     admin.from('bands').select('band_id').eq('owner_id', effectiveId),
     admin.from('bands').select('band_id').eq('upline_user_id', effectiveId).neq('owner_id', effectiveId),
@@ -88,6 +88,8 @@ export async function GET(req: NextRequest) {
       .eq('active', true).or(`target_user_id.is.null,target_user_id.eq.${effectiveId}`)
       .gte('created_at', since).order('created_at', { ascending: false }).limit(10),
     admin.from('profiles').select('notifications_last_seen, dismissed_notifications, referral_code').eq('id', effectiveId).maybeSingle(),
+    // Every band this person has ever held — the ripple below follows them on.
+    admin.from('registrations').select('band_id, registered_at').eq('user_id', effectiveId).neq('source', 'wall'),
   ])
 
   const bandIds = (bands || []).map((b: any) => b.band_id)
@@ -96,10 +98,21 @@ export async function GET(req: NextRequest) {
   const circleIds = [...new Set((mems || []).map((m: any) => m.circle_id))]
   const myReqIds = (myReqs || []).map((r: any) => r.id)
   const partnerIds = [...new Set((conns || []).map((c: any) => c.requester_id === effectiveId ? c.recipient_id : c.requester_id))]
+  // Bands I held and passed on (not the ones I still own — those are covered
+  // as band events). Keyed to my latest stop so only what happened after me
+  // counts.
+  const owned = new Set(bandIds)
+  const heldCutoff = new Map<string, string>()
+  for (const s of myStops || []) {
+    if (owned.has(s.band_id)) continue
+    const prev = heldCutoff.get(s.band_id)
+    if (!prev || s.registered_at > prev) heldCutoff.set(s.band_id, s.registered_at)
+  }
+  const heldIds = [...heldCutoff.keys()]
 
   // ── Wave 2: keyed on wave-1 ids ───────────────────────────────────────────
   const none = Promise.resolve({ data: [] as any[] })
-  const [{ data: regs }, { data: giftRegs }, { data: ships }, { data: circles }, { data: creqs }, { data: replies }, { data: shared }] = await Promise.all([
+  const [{ data: regs }, { data: giftRegs }, { data: ships }, { data: circles }, { data: creqs }, { data: replies }, { data: shared }, { data: heldRegs }] = await Promise.all([
     bandIds.length
       ? admin.from('registrations').select('id, band_id, user_name, city, country, prayer, registered_at')
           .in('band_id', bandIds).gte('registered_at', since).order('registered_at', { ascending: false }).limit(40)
@@ -125,6 +138,10 @@ export async function GET(req: NextRequest) {
       ? admin.from('prayer_network_requests').select('id, user_id, request_text, audience, created_at')
           .in('user_id', partnerIds).eq('is_answered', false).neq('visibility', 'public')
           .not('excluded_user_ids', 'cs', `{${effectiveId}}`).gte('created_at', since).order('created_at', { ascending: false }).limit(40)
+      : none,
+    heldIds.length
+      ? admin.from('registrations').select('id, band_id, user_id, user_name, city, state, country, registered_at')
+          .in('band_id', heldIds).neq('source', 'wall').order('registered_at', { ascending: true }).limit(400)
       : none,
   ])
 
@@ -158,6 +175,26 @@ export async function GET(req: NextRequest) {
     } else {
       items.push({ id: `reg-${r.id}`, type: 'registration', icon: '✦', ts: r.registered_at, band_id: r.band_id,
         title: `${r.band_id} reached ${who}`, detail: where ? `in ${where}` : '' })
+    }
+  }
+
+  // 1c. The ripple — a band I once held reached someone new further down the
+  // chain. Owning it is not required: once you have passed a band on, every
+  // person it reaches after you is part of your ripple. Not emailed; the bell
+  // is the right weight for it.
+  {
+    const sinceMe = new Map<string, number>()
+    for (const r of heldRegs || []) {
+      const cutoff = heldCutoff.get(r.band_id)
+      if (!cutoff || r.registered_at <= cutoff || r.user_id === effectiveId) continue
+      const n = (sinceMe.get(r.band_id) || 0) + 1
+      sinceMe.set(r.band_id, n)
+      if (new Date(r.registered_at) < new Date(since)) continue
+      const who = r.user_name || 'Someone'
+      const where = [r.city, r.state, isUS(r.country) ? null : r.country].filter(Boolean).join(', ')
+      items.push({ id: `ripple-${r.id}`, type: 'ripple', icon: '🌍', ts: r.registered_at, band_id: r.band_id,
+        title: `Your ripple reached ${who}`,
+        detail: `${r.band_id}, the band you passed on, ${where ? `is now in ${where}` : 'reached its next person'}. ${n === 1 ? 'The first hands after yours.' : `${n} people have carried it since you.`}` })
     }
   }
 
