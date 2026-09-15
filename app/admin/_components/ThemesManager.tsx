@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { deriveTheme } from '@/lib/themes'
 import ColorPicker from './ColorPicker'
+import Icon from '@/components/Icon'
 
 // Band theme editor. Built-in themes (from lib/themes.ts) are editable here as
 // DB overrides; admins can also create brand-new themes. Self-contained; the
@@ -247,6 +248,18 @@ export default function ThemesManager() {
                 <div style={{ flex: 1, background: t.primary, color: t.textOnPrimary, borderRadius: 10, padding: '11px 14px', fontSize: 12.5, fontWeight: 700, textAlign: 'center' }}>Pass it on</div>
                 <div style={{ background: 'transparent', border: `1px solid ${t.accent}`, color: t.accent, borderRadius: 10, padding: '11px 14px', fontSize: 12.5, fontWeight: 700, textAlign: 'center' }}>Share</div>
               </div>
+            </div>
+            {/* Bottom bar — the same icons and tokens the real page uses
+                (tabBar = background, tabActive = the lit tab; the others sit
+                at 46% of it), so the footer colours can be judged here. */}
+            <div style={{ display: 'flex', background: t.tabBar, borderTop: `1px solid ${hexA(t.tabActive, 0.22)}`, padding: '8px 0 10px' }}>
+              {([['church-home', 'Home', true], ['map-pin', 'Journey', false], ['shop-bag', 'Purchase', false], ['user', 'Account', false]] as const).map(([icon, lbl, active]) => (
+                <div key={lbl} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                  <Icon name={icon} size={20} color={active ? t.tabActive : hexA(t.tabActive, 0.46)} bg={t.tabBar} />
+                  <span style={{ fontSize: 8, letterSpacing: '0.08em', textTransform: 'uppercase', color: active ? t.tabActive : hexA(t.tabActive, 0.46), fontWeight: active ? 700 : 400 }}>{lbl}</span>
+                  <div style={{ width: 18, height: 2, borderRadius: 1, background: active ? t.tabActive : 'transparent' }} />
+                </div>
+              ))}
             </div>
           </div>
         </div>
