@@ -289,9 +289,13 @@ export async function GET(req: NextRequest) {
         // The account the band ended up on — what you filter by when someone
         // says "my band isn't showing".
         email: to,
+        // Three different things, labelled as such. A release is not an action
+        // by the old owner: it is the band leaving their account when the
+        // recipient added their name before signing in.
+        label: to ? (from ? 'Moved' : 'Claimed') : 'Released',
         detail: to
-          ? (from ? `reassigned from ${from}` : 'claimed to account')
-          : `released from ${from ?? 'unknown'}`,
+          ? (from ? `from ${from} to ${to}` : 'claimed to account')
+          : `left ${from ?? 'unknown'} · unowned until the recipient signs in`,
       }
     }),
   ]
