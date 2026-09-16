@@ -1,3 +1,4 @@
+import { trackingUrl as carrierTrackingUrl } from '@/lib/tracking'
 import { sendEmail } from '@/lib/email'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
@@ -29,8 +30,9 @@ export async function sendShippingConfirmation(input: ShippingConfirmationInput)
     const resend = new Resend(process.env.RESEND_API_KEY)
     const firstName = escapeHtml(String(customerName || 'Friend').trim().split(/\s+/)[0] || 'Friend')
     const tracking = trackingNumber ? escapeHtml(String(trackingNumber)) : ''
+    // UPS or USPS depending on the label bought; read off the number.
     const trackingUrl = trackingNumber
-      ? `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(String(trackingNumber))}`
+      ? (carrierTrackingUrl(String(trackingNumber)) || `https://www.google.com/search?q=${encodeURIComponent(String(trackingNumber) + ' tracking')}`)
       : 'https://tools.usps.com/go/TrackConfirmAction'
 
     let bandRows: { band_id: string; dedication_token: string | null; description: string; forName: string }[] = []

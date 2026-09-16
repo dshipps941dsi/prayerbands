@@ -1,4 +1,5 @@
 'use client'
+import { trackingUrl, carrierLabel } from '@/lib/tracking'
 import { useEffect, useState, type CSSProperties } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import PrayerBandsLogo from '@/components/PrayerBandsLogo'
@@ -769,7 +770,7 @@ export default function AdminPage() {
                       {/* Tracking number (shipped) */}
                       {isShipped && order.tracking_number && (
                         <div style={{ padding: '10px 14px', background: C.greenBg, border: `1px solid rgba(74,138,106,0.28)`, borderRadius: '6px', fontSize: '13px', color: C.green }}>
-                          <strong>Tracking:</strong> {order.tracking_number}
+                          <strong>Tracking:</strong>{' '}<a href={trackingUrl(order.tracking_number) || '#'} target="_blank" rel="noopener noreferrer" style={{ color: C.green, fontWeight: 700, textDecoration: 'underline' }}>{order.tracking_number}</a> <span style={{ opacity: 0.8 }}>· {carrierLabel(order.tracking_number)} ↗</span>
                         </div>
                       )}
 
@@ -1057,7 +1058,7 @@ export default function AdminPage() {
         {activeTab === 'shipments' && (
           <div>
             {shipments.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px', color: C.secondary, fontStyle: 'italic' }}>No subscription shipments yet.</div>
+              <div style={{ textAlign: 'center', padding: '30px', color: C.secondary, fontStyle: 'italic' }}>No subscription shipments yet.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {shipments.map(s => {
@@ -1102,7 +1103,7 @@ export default function AdminPage() {
 
                       {isShipped && s.tracking_number && (
                         <div style={{ padding: '10px 14px', background: C.greenBg, border: '1px solid rgba(74,138,106,0.28)', borderRadius: '6px', fontSize: '13px', color: C.green }}>
-                          <strong>Tracking:</strong> {s.tracking_number}
+                          <strong>Tracking:</strong>{' '}<a href={trackingUrl(s.tracking_number) || '#'} target="_blank" rel="noopener noreferrer" style={{ color: C.green, fontWeight: 700, textDecoration: 'underline' }}>{s.tracking_number}</a> <span style={{ opacity: 0.8 }}>· {carrierLabel(s.tracking_number)} ↗</span>
                         </div>
                       )}
 
@@ -1129,6 +1130,48 @@ export default function AdminPage() {
                 })}
               </div>
             )}
+
+            {/* Every shipped store order, newest first, so this tab is the one
+                place to see everything that has gone out — not only the
+                subscription shipments above. */}
+            {(() => {
+              const shipped = orders.filter(o => o.status === 'shipped')
+              return (
+                <div style={{ marginTop: 28 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.goldText, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10, fontFamily: 'Cinzel, serif' }}>Shipped orders · {shipped.length}</div>
+                  {shipped.length === 0 ? (
+                    <div style={{ color: C.secondary, fontStyle: 'italic', fontSize: 13 }}>Nothing shipped yet.</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {shipped.map(o => {
+                        const bands = (o.assigned_band_ids || []) as string[]
+                        return (
+                          <div key={o.id} className="pb-admin-card" style={{ background: C.card, border: `1px solid ${C.borderNavy}`, borderLeft: `4px solid ${C.green}`, borderRadius: 10, padding: '14px 18px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'baseline' }}>
+                              <div>
+                                <span style={{ fontWeight: 600, fontSize: 15, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{o.customer_name || 'Customer'}</span>
+                                <span style={{ fontSize: 13, color: C.goldText, marginLeft: 8 }}>{o.customer_email}</span>
+                              </div>
+                              <span style={{ fontSize: 12, color: C.secondary }}>#{o.id} · {new Date(o.created_at).toLocaleDateString()}</span>
+                            </div>
+                            {bands.length > 0 && (
+                              <div style={{ marginTop: 8, fontSize: 13 }}>
+                                {bands.map(b => <span key={b} style={{ display: 'inline-block', margin: '2px 4px 2px 0', padding: '2px 8px', background: 'rgba(200,169,110,0.14)', border: `1px solid ${C.borderGold}`, borderRadius: 4, fontFamily: 'monospace', fontSize: 12, color: C.heading }}>{b}</span>)}
+                              </div>
+                            )}
+                            <div style={{ marginTop: 8, fontSize: 13, color: o.tracking_number ? C.green : C.secondary }}>
+                              {o.tracking_number
+                                ? <><strong>Tracking:</strong>{' '}<a href={trackingUrl(o.tracking_number) || '#'} target="_blank" rel="noopener noreferrer" style={{ color: C.green, fontWeight: 700, textDecoration: 'underline' }}>{o.tracking_number}</a> <span style={{ opacity: 0.8 }}>· {carrierLabel(o.tracking_number)} ↗</span></>
+                                : <em>No tracking number recorded.</em>}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
           </div>
         )}
 

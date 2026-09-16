@@ -1,4 +1,5 @@
 'use client'
+import { trackingUrl, carrierLabel } from '@/lib/tracking'
 import { useEffect, useState } from 'react'
 import { parseOrderItems, orderItemLabel } from '@/lib/fulfillment'
 
@@ -108,7 +109,7 @@ export default function CustomerDetail({ userId, onClose }: { userId: string; on
                         </div>
                         {items.length > 0 && <div style={{ fontSize: 12.5, color: C.secondary, marginTop: 5 }}>{items.map(orderItemLabel).join(' · ')}</div>}
                         {assigned.length > 0 && <div style={{ fontSize: 12, color: C.goldText, marginTop: 5, fontFamily: 'monospace' }}>Bands: {assigned.join(', ')}</div>}
-                        {o.tracking_number && <div style={{ fontSize: 12, color: C.secondary, marginTop: 4 }}>Tracking: {o.tracking_number}</div>}
+                        {o.tracking_number && <div style={{ fontSize: 12, color: C.secondary, marginTop: 4 }}>Tracking: <a href={trackingUrl(o.tracking_number) || '#'} target="_blank" rel="noopener noreferrer" style={{ color: C.goldText, textDecoration: 'underline' }}>{o.tracking_number}</a> · {carrierLabel(o.tracking_number)} ↗</div>}
                       </div>
                     )
                   })}
