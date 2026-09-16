@@ -25,6 +25,9 @@ export const viewport: Viewport = {
 }
 export const metadata: Metadata = {
   metadataBase: new URL("https://prayerbands.com"),
+  // Every page names itself as its own canonical (path only — ?ref= and
+  // other query variants resolve to the plain address), unless it sets one.
+  alternates: { canonical: "./" },
   title: "Prayer Bands — Carry His Word Around the World",
   description: "A global prayer movement. Every band carries a prayer. Track your band's journey, leave prayers, and watch intercession travel the world.",
   openGraph: {
