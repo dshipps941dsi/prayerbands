@@ -152,7 +152,7 @@ export async function GET(req: NextRequest) {
       .select('id, band_id, user_id, user_name, email, city, state, country, latitude, longitude, registered_at')
       .order('registered_at', { ascending: false }).limit(limit),
     transfers: admin.from('band_transfers')
-      .select('id, band_id, from_user_id, note, status, created_at')
+      .select('id, band_id, from_user_id, note, status, created_at, completed_at')
       .order('created_at', { ascending: false }).limit(limit),
     owners: admin.from('band_ownership_events')
       .select('id, band_id, old_owner_id, new_owner_id, changed_at')
@@ -240,9 +240,20 @@ export async function GET(req: NextRequest) {
 
   // Inferred rather than annotated: the three mappers return different shapes
   // and the intersection annotation fights the union rather than checking it.
+  // A stop that completed a hand-off (transfer finished within a minute of
+  // it) is the recipient accepting the band; any other stop is someone
+  // joining the chain. "Registered" read as "made an account", which is
+  // exactly what it is not.
+  const acceptedAt = new Map<string, number[]>()
+  for (const t of transfers ?? []) {
+    const c = (t as { completed_at?: string | null }).completed_at
+    if (c) acceptedAt.set(t.band_id as string, [...(acceptedAt.get(t.band_id as string) ?? []), Date.parse(c)])
+  }
+  const isAccept = (bandId: string, at: string) => (acceptedAt.get(bandId) ?? []).some(c => Math.abs(c - Date.parse(at)) < 60_000)
   const events = [
     ...(regs ?? []).map(r => ({
       kind: 'registration' as const,
+      label: isAccept(r.band_id as string, r.registered_at as string) ? 'Accepted' : 'Joined',
       at: r.registered_at as string,
       band_id: r.band_id as string,
       style: styles.get(r.band_id as string) ?? null,
@@ -252,7 +263,7 @@ export async function GET(req: NextRequest) {
       email: (r.user_id ? emails.get(r.user_id) : null) ?? r.email ?? null,
       detail: [
         [r.city, r.state, r.country].filter(Boolean).join(', ') || 'no location',
-        r.user_id ? null : 'GUEST — not linked to an account',
+        r.user_id ? null : 'guest — no account yet',
         r.latitude == null ? 'no map pin' : null,
       ].filter(Boolean).join(' · '),
     })),
@@ -292,9 +303,9 @@ export async function GET(req: NextRequest) {
         // Three different things, labelled as such. A release is not an action
         // by the old owner: it is the band leaving their account when the
         // recipient added their name before signing in.
-        label: to ? (from ? 'Moved' : 'Claimed') : 'Released',
+        label: to ? (from ? 'Moved' : 'Linked') : 'Released',
         detail: to
-          ? (from ? `from ${from} to ${to}` : 'claimed to account')
+          ? (from ? `from ${from} to ${to}` : 'linked to their account')
           : `left ${from ?? 'unknown'} · unowned until the recipient signs in`,
       }
     }),

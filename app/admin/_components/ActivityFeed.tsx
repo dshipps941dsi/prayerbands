@@ -188,7 +188,7 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
             {history.ownership?.map((o: any) => (
               <div key={`own-${o.id}`} style={{ borderTop: `1px solid ${C.borderSilver}`, padding: '10px 0', color: C.secondary }}>
                 ⚑ {o.new_email
-                  ? (o.old_email ? <>ownership moved from <strong style={{ color: C.heading }}>{o.old_email}</strong> to <strong style={{ color: C.heading }}>{o.new_email}</strong></> : <>claimed by <strong style={{ color: C.heading }}>{o.new_email}</strong></>)
+                  ? (o.old_email ? <>ownership moved from <strong style={{ color: C.heading }}>{o.old_email}</strong> to <strong style={{ color: C.heading }}>{o.new_email}</strong></> : <>linked to <strong style={{ color: C.heading }}>{o.new_email}</strong></>)
                   : <>left <strong style={{ color: C.heading }}>{o.old_email || 'unknown'}</strong> · unowned until the recipient signs in</>}
                 {' · '}{new Date(o.changed_at).toLocaleString()}
               </div>
@@ -260,7 +260,7 @@ export default function ActivityFeed({ C, show = 'feed' }: { C: C; show?: 'feed'
             <div key={i} style={{ borderTop: i === 0 ? 'none' : `1px solid ${C.borderSilver}`, padding: '10px 0', fontSize: 13, fontFamily: 'Inter, sans-serif' }}>
               <div>
                 <span style={{ display: 'inline-block', minWidth: 74, fontSize: 10, fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em', color: e.kind === 'registration' ? C.secondary : C.goldText }}>
-                  {e.kind === 'transfer' ? 'Passed on' : e.kind === 'ownership' ? (e.label || 'Claimed') : 'Registered'}
+                  {e.label || (e.kind === 'transfer' ? 'Passed on' : e.kind === 'ownership' ? 'Linked' : 'Joined')}
                 </span>
                 <button
                   onClick={() => { setSearch(e.band_id); setHistory(null); setHistoryError('') }}
