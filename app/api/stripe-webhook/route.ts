@@ -5,6 +5,7 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { recordCredit, creditExpiresAt } from '@/lib/credit'
 import { getSiteConfig } from '@/lib/getSiteConfig'
+import { parseOrderItems, orderItemLabel } from '@/lib/fulfillment'
 
 export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
@@ -128,20 +129,42 @@ export async function POST(req: NextRequest) {
         })
       }
 
+      // What was actually ordered, who it ships to, and any gift note — the
+      // things needed to pack it, without opening Stripe or the admin panel.
+      const lines = parseOrderItems(session.metadata).map(orderItemLabel)
+      const ship = sessionShipping(session)
+      const shipName = (session.metadata?.recipient_name || '').trim() || ship.name || name
+      const shipAddr = ship.address
+        ? [ship.address.line1, ship.address.line2, [ship.address.city, ship.address.state, ship.address.postal_code].filter(Boolean).join(' '), ship.address.country && ship.address.country !== 'US' ? ship.address.country : null].filter(Boolean)
+        : []
+      const giftNote = (session.metadata?.customMessage || session.metadata?.dedication_note || '').trim()
+      const giftFor = (session.metadata?.dedication_recipient || '').trim()
+      const row = (k: string, v: string) => `<tr><td style="padding:6px 10px 6px 0;color:#5C6573;font-size:13px;vertical-align:top;white-space:nowrap">${k}</td><td style="padding:6px 0;color:#15223B;font-size:14px">${v}</td></tr>`
       await sendEmail({
         from: 'Prayer Bands <bands@prayerbands.com>',
         to: ['dshipps941@gmail.com'],
-        subject: `✝ New Order — ${qty}x ${type} band — $${amount}`,
+        subject: `✝ New Order — ${lines.length ? lines.join(', ') : `${qty}x ${type} band`} — ${amount}`,
         html: `
-          <div style="font-family:sans-serif;max-width:400px;margin:0 auto;padding:24px">
-            <h2 style="color:#1a5fa0">New Prayer Bands Order ✝</h2>
-            <p><strong>Customer:</strong> ${escapeHtml(name)}</p>
-            <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-            <p><strong>Type:</strong> ${type}</p>
-            <p><strong>Quantity:</strong> ${qty}</p>
-            <p><strong>Amount:</strong> $${amount}</p>
-            <p><strong>Message:</strong> ${escapeHtml(session.metadata?.customMessage || 'None')}</p>
-            <p><strong>Verse:</strong> ${escapeHtml(session.metadata?.verse || 'None')}</p>
+          <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#15223B">
+            <h2 style="color:#15223B;margin:0 0 4px">New order · ${amount}</h2>
+            <div style="color:#5C6573;font-size:13px;margin-bottom:16px">${escapeHtml(name)} · <a href="mailto:${escapeHtml(email)}" style="color:#9A7A35">${escapeHtml(email)}</a></div>
+            <div style="background:#FFFDF8;border:1px solid rgba(200,169,110,0.4);border-radius:10px;padding:14px 16px;margin-bottom:14px">
+              <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#9A7A35;margin-bottom:8px">Items</div>
+              ${lines.length ? lines.map(l => `<div style="font-size:15px;padding:3px 0">${escapeHtml(l)}</div>`).join('') : `<div style="font-size:15px">${qty}× ${escapeHtml(type)} band</div>`}
+            </div>
+            <div style="background:#FFFDF8;border:1px solid rgba(200,169,110,0.4);border-radius:10px;padding:14px 16px;margin-bottom:14px">
+              <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#9A7A35;margin-bottom:8px">Ship to</div>
+              <div style="font-size:15px;font-weight:bold">${escapeHtml(shipName)}</div>
+              ${shipAddr.length ? shipAddr.map(l => `<div style="font-size:14px">${escapeHtml(String(l))}</div>`).join('') : '<div style="font-size:13px;color:#B4441F">No address captured — check Stripe.</div>'}
+            </div>
+            <table style="border-collapse:collapse;margin-bottom:16px">
+              ${row('Order', escapeHtml(session.id.slice(-8)))}
+              ${giftFor ? row('Gift for', escapeHtml(giftFor)) : ''}
+              ${giftNote ? row('Message', '<em>' + escapeHtml(giftNote) + '</em>') : ''}
+              ${session.metadata?.verse ? row('Verse', escapeHtml(session.metadata.verse)) : ''}
+              ${session.metadata?.referral_code || session.metadata?.ref ? row('Referral', escapeHtml(String(session.metadata.referral_code || session.metadata.ref))) : ''}
+            </table>
+            <a href="https://prayerbands.com/admin?view=orders" style="background:#C8A96E;color:#0A1628;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:bold;margin-right:8px">Pack it in admin →</a>
             <a href="https://dashboard.stripe.com/payments" style="background:#2b7bc4;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px">View in Stripe →</a>
           </div>
         `
