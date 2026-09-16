@@ -19,6 +19,12 @@ export default function BandsManager() {
   const [uplineIds, setUplineIds] = useState('')
   const [uplineMsg, setUplineMsg] = useState('')
   const [uplineSaving, setUplineSaving] = useState(false)
+  // Put a band into transfer on the holder's behalf.
+  const [xferId, setXferId] = useState('')
+  const [xferTo, setXferTo] = useState('')
+  const [xferNote, setXferNote] = useState('')
+  const [xferMsg, setXferMsg] = useState('')
+  const [xferBusy, setXferBusy] = useState(false)
 
   const [oldId, setOldId] = useState('')
   const [newId, setNewId] = useState('')
@@ -89,6 +95,22 @@ export default function BandsManager() {
       setAssignMsg('❌ ' + (data.error || 'Failed to assign bands.'))
     }
     setAssigning(false)
+  }
+
+  async function startTransfer() {
+    setXferBusy(true); setXferMsg('')
+    const res = await fetch('/api/admin/start-transfer', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ band_id: xferId, recipient_name: xferTo, note: xferNote }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok) {
+      setXferMsg(`✅ ${data.band_id} is in transfer${data.from ? ` from ${data.from}` : ''}${data.recipient_name ? ` to ${data.recipient_name}` : ''}. The next person to tap it gets the hand-off screen.`)
+      setXferId(''); setXferTo(''); setXferNote('')
+    } else {
+      setXferMsg('❌ ' + (data.error || 'Could not start the transfer.'))
+    }
+    setXferBusy(false)
   }
 
   async function setUpline() {
@@ -223,6 +245,20 @@ export default function BandsManager() {
         <textarea value={uplineIds} onChange={e => setUplineIds(e.target.value)} placeholder={'PB-AB12C\nPB-XY34Z'} rows={4} style={{ ...input, resize: 'vertical', minHeight: 90 }} />
         <button onClick={setUpline} disabled={uplineSaving || !uplineEmail.trim() || !uplineIds.trim()} style={btn(uplineSaving || !uplineEmail.trim() || !uplineIds.trim())}>{uplineSaving ? 'Saving…' : 'Credit Bands'}</button>
         {uplineMsg && <div style={{ marginTop: 14, fontSize: 13, color: uplineMsg.startsWith('❌') ? C.red : C.green, lineHeight: 1.5 }}>{uplineMsg}</div>}
+      </div>
+
+      {/* Put a band into transfer for someone who handed it over without pressing the button */}
+      <div style={card}>
+        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 6, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Put a Band into Transfer</h2>
+        <p style={{ fontSize: 13, color: C.secondary, marginBottom: 18, lineHeight: 1.5 }}>The same as the holder pressing &ldquo;Pass this band on&rdquo;: the band waits in transfer from its current owner, and whoever taps it next gets the hand-off screen and becomes its holder. Name and note are optional.</p>
+        <label style={label}>Band ID</label>
+        <input value={xferId} onChange={e => setXferId(e.target.value)} placeholder="PB-AB12C" style={input} />
+        <label style={label}>Recipient&rsquo;s name (optional)</label>
+        <input value={xferTo} onChange={e => setXferTo(e.target.value)} placeholder="Who it is going to" style={input} />
+        <label style={label}>Note for them (optional)</label>
+        <textarea value={xferNote} onChange={e => setXferNote(e.target.value)} placeholder="A prayer or a few words from the giver" rows={3} style={{ ...input, resize: 'vertical', minHeight: 70 }} />
+        <button onClick={startTransfer} disabled={xferBusy || !xferId.trim()} style={btn(xferBusy || !xferId.trim())}>{xferBusy ? 'Working…' : 'Put into Transfer'}</button>
+        {xferMsg && <div style={{ marginTop: 14, fontSize: 13, color: xferMsg.startsWith('❌') ? C.red : C.green, lineHeight: 1.5 }}>{xferMsg}</div>}
       </div>
 
       {/* Replace a lost band */}
