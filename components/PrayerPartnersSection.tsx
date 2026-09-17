@@ -25,15 +25,17 @@ type IconName = 'tap' | 'qr' | 'link' | 'family' | 'friends' | 'baseball' | 'boo
 
 function Icon({ name }: { name: IconName }) {
   const c = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  // The supplied set: a 64-unit box with a 3.25 stroke.
+  const g = { fill: 'none', stroke: 'currentColor', strokeWidth: 3.25, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (name) {
-    case 'tap': return <svg viewBox="0 0 24 24" aria-hidden="true"><path {...c} d="M8.5 4.5 3.9 6.2a1.6 1.6 0 0 0-1 2.1l4 10.4a1.6 1.6 0 0 0 2.1.9l4.6-1.7M15.5 4.5l4.6 1.7a1.6 1.6 0 0 1 1 2.1l-4 10.4a1.6 1.6 0 0 1-2.1.9l-4.6-1.7M12 2.5v3M8.6 3.4l1 2.4M15.4 3.4l-1 2.4" /></svg>
-    case 'qr': return <svg viewBox="0 0 24 24" aria-hidden="true"><path {...c} d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM6 6h2v2H6zM16 6h2v2h-2zM6 16h2v2H6zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z" /></svg>
-    case 'link': return <svg viewBox="0 0 24 24" aria-hidden="true"><path {...c} d="m9.5 14.5 5-5M7.2 17.8l-1 .9a3.5 3.5 0 0 1-5-5l3-3a3.5 3.5 0 0 1 5 0M16.8 6.2l1-.9a3.5 3.5 0 0 1 5 5l-3 3a3.5 3.5 0 0 1-5 0" /></svg>
+    case 'tap': return <svg viewBox="0 0 64 64" aria-hidden="true"><g {...g}><rect x="10.5" y="27" width="17" height="27" rx="4" transform="rotate(17 10.5 27)" /><rect x="36.5" y="31.8" width="17" height="27" rx="4" transform="rotate(-17 36.5 31.8)" /><path d="M22.2 49.3h.1M41.7 49.3h.1" /><path d="M32 6v9M20.5 10.1l5.2 7.2M43.5 10.1l-5.2 7.2" /><path d="M26.8 27.2c1.4-2 3.1-3 5.2-3s3.8 1 5.2 3" /></g></svg>
+    case 'qr': return <svg viewBox="0 0 64 64" aria-hidden="true"><g {...g}><path d="M8 22V10h12M44 10h12v12M56 44v12H44M20 56H8V44" /><rect x="18" y="18" width="12" height="12" rx="1.5" /><rect x="36" y="18" width="10" height="10" rx="1.5" /><rect x="18" y="36" width="12" height="12" rx="1.5" /><path d="M37 36h5v5h-5zM47 36v6h-5M36 47h6v7M48 48h6v6h-6z" /></g></svg>
+    case 'link': return <svg viewBox="0 0 64 64" aria-hidden="true"><g {...g}><path d="M27.2 41.2l-4.6 4.6a10 10 0 0 1-14.1-14.1l8.2-8.2a10 10 0 0 1 14.1 0" /><path d="M36.8 22.8l4.6-4.6a10 10 0 0 1 14.1 14.1l-8.2 8.2a10 10 0 0 1-14.1 0" /><path d="M23.5 40.5l17-17" /></g></svg>
     case 'family': return <svg viewBox="0 0 24 24" aria-hidden="true"><path {...c} d="M12 8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM5 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM19 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM8 20v-4a4 4 0 0 1 8 0v4M2 19v-3a3 3 0 0 1 4-2.8M22 19v-3a3 3 0 0 0-4-2.8" /></svg>
     case 'friends': return <svg viewBox="0 0 24 24" aria-hidden="true"><path {...c} d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM2 20v-1.5a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4V20M17 4.5a3.5 3.5 0 0 1 0 6.6M22 20v-1.5a4 4 0 0 0-3-3.8" /></svg>
     case 'baseball': return <svg viewBox="0 0 24 24" aria-hidden="true"><circle {...c} cx="12" cy="12" r="9" /><path {...c} d="M5.5 5.5c2.2 1.6 3.5 4 3.5 6.5s-1.3 4.9-3.5 6.5M18.5 5.5c-2.2 1.6-3.5 4-3.5 6.5s1.3 4.9 3.5 6.5M8 9.5l1.4.6M8 14.5l1.4-.6M16 9.5l-1.4.6M16 14.5l-1.4-.6" /></svg>
     case 'book': return <svg viewBox="0 0 24 24" aria-hidden="true"><path {...c} d="M12 6c-1.6-1.4-4-2-8-2v14c4 0 6.4.6 8 2 1.6-1.4 4-2 8-2V4c-4 0-6.4.6-8 2ZM12 6v14" /></svg>
-    case 'hands': return <svg viewBox="0 0 24 24" aria-hidden="true"><path {...c} d="M12 3v6M12 9 8.5 5.5a1.6 1.6 0 0 0-2.3 2.2L9 11.5 7 18a2.5 2.5 0 0 0 2.3 3H12M12 9l3.5-3.5a1.6 1.6 0 0 1 2.3 2.2L15 11.5l2 6.5a2.5 2.5 0 0 1-2.3 3H12M9.5 21v-4M14.5 21v-4" /></svg>
+    case 'hands': return <svg viewBox="0 0 64 64" aria-hidden="true"><g {...g}><path d="M31.9 47.5c-4.7 5.1-9.7 8-15 10.5L7.5 48.4l9.3-7.8c3.4-5.7 5.8-11.7 7.1-18.1l2.5-12.3c.5-2.5 3.9-2.8 4.9-.5.4.9.6 1.9.6 2.9v34.9Z" /><path d="M32.1 47.5c4.7 5.1 9.7 8 15 10.5l9.4-9.6-9.3-7.8c-3.4-5.7-5.8-11.7-7.1-18.1l-2.5-12.3c-.5-2.5-3.9-2.8-4.9-.5-.4.9-.6 1.9-.6 2.9v34.9Z" /><path d="M25.5 25.8c1.7-2.4 3.8-3.6 6.4-3.6M38.5 25.8c-1.7-2.4-3.8-3.6-6.4-3.6" /><path d="m7.5 48.4 9.4 9.6M56.5 48.4 47.1 58" /></g></svg>
     case 'chat': return <svg viewBox="0 0 24 24" aria-hidden="true"><path {...c} d="M4 5h16v11h-9l-4 3v-3H4z" /></svg>
     default: return <svg viewBox="0 0 24 24" aria-hidden="true"><path {...c} d="m9 18 6-6-6-6" /></svg>
   }
