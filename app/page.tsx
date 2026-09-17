@@ -381,40 +381,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Prayer partners ── */}
-      <PrayerPartnersSection />
-
-      {/* ── Prayer circles ── */}
-      <section id="circles" className="circles">
-        <div className="circles-inner">
-          <Reveal className="circles-copy">
-            <div className="eyebrow gold">Prayer Circles</div>
-            <h2 className="h2 light">No One Should <em>Pray Alone.</em></h2>
-            <p className="lead">Create private prayer circles for anything you're going through. Invite family, friends, or your community to pray with you and receive real-time updates.</p>
-            <div className="circ-cta">
-              <Link href="/circles" className="btn-primary sm">Create a Prayer Circle</Link>
-              <Link href="/prayer-circles" className="circ-learn">Learn more →</Link>
-            </div>
-          </Reveal>
-          <Reveal delay={120} className="circles-diagram">
-            <img className="circles-infographic" src="/home/prayer-circle-infographic.webp" alt="Mike's Prayer Circle — 12 members, 8 prayers, updated 2 hours ago" />
-          </Reveal>
-          <Reveal delay={200} className="circles-feats">
-            {[
-              { img: "/home/paper-airplane-icon.png", t: "Share your request", d: "Invite others to pray" },
-              { img: "/home/bell-icon.png", t: "Get notified", d: "When someone prays" },
-              { img: "/home/speech-bubble-icon.png", t: "Encourage each other", d: "Leave messages of hope" },
-              { img: "/home/praying-hands-icon.png", t: "Celebrate answered prayers", d: "Praise reports & milestones" },
-            ].map(f => (
-              <div key={f.t} className="circ-feat">
-                <div className="circ-feat-ico"><img src={f.img} alt="" className="circ-feat-img" /></div>
-                <div><div className="circ-feat-t">{f.t}</div><div className="circ-feat-d">{f.d}</div></div>
-              </div>
-            ))}
-          </Reveal>
-        </div>
-      </section>
-
       {/* ── Prayer feed (live) ── */}
       <section id="feed" className="feed">
         <div className="container">
@@ -448,6 +414,85 @@ export default function HomePage() {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* ── Prayer partners ── */}
+      <PrayerPartnersSection />
+
+      {/* ── Scripture band — a breath between partners and circles ── */}
+      <section className="verseband" aria-label="Matthew 18:20">
+        <Reveal className="container verseband-inner">
+          <div className="verseband-mark">✝︎</div>
+          <blockquote className="verseband-q">“For where two or three gather in my name, there am I with them.”</blockquote>
+          <div className="verseband-ref">Matthew 18:20</div>
+        </Reveal>
+      </section>
+
+      {/* ── Prayer circles ── */}
+      <section id="circles" className="circles">
+        <div className="circles-inner">
+          <Reveal className="circles-copy">
+            <div className="eyebrow gold">Prayer Circles</div>
+            <h2 className="h2 light">No One Should <em>Pray Alone.</em></h2>
+            <p className="lead">Create private prayer circles for anything you're going through. Invite family, friends, or your community to pray with you and receive real-time updates.</p>
+            <div className="circ-cta">
+              <Link href="/circles" className="btn-primary sm">Create a Prayer Circle</Link>
+              <Link href="/prayer-circles" className="circ-learn">Learn more →</Link>
+            </div>
+          </Reveal>
+          <Reveal delay={120} className="circles-diagram">
+            <img className="circles-infographic" src="/home/prayer-circle-infographic.webp" alt="Mike's Prayer Circle — 12 members, 8 prayers, updated 2 hours ago" />
+          </Reveal>
+          <Reveal delay={200} className="circles-feats">
+            {[
+              { img: "/home/paper-airplane-icon.png", t: "Share your request", d: "Invite others to pray" },
+              { img: "/home/bell-icon.png", t: "Get notified", d: "When someone prays" },
+              { img: "/home/speech-bubble-icon.png", t: "Encourage each other", d: "Leave messages of hope" },
+              { img: "/home/praying-hands-icon.png", t: "Celebrate answered prayers", d: "Praise reports & milestones" },
+            ].map(f => (
+              <div key={f.t} className="circ-feat">
+                <div className="circ-feat-ico"><img src={f.img} alt="" className="circ-feat-img" /></div>
+                <div><div className="circ-feat-t">{f.t}</div><div className="circ-feat-d">{f.d}</div></div>
+              </div>
+            ))}
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── See the impact ── */}
+      <section id="impact" className="impact">
+        <div className="container impact-inner">
+          <Reveal className="impact-copy">
+            <div className="eyebrow">Your Impact</div>
+            <h2 className="h2">See the Impact of <em>Every Prayer.</em></h2>
+            <p className="lead dark">From the moment your band is activated, you can see its journey, prayers, and the lives it's touched.</p>
+            <Link href="/store" className="btn-dark" style={{ marginTop: 24 }}>Track Your Band</Link>
+          </Reveal>
+          <Reveal delay={120} className="impact-card">
+            <div className="impact-timeline">
+              {[
+                { d: "Jan 5", t: "Band activated by David" },
+                { d: "Jan 8", t: "Given to John in Florida" },
+                { d: "Jan 12", t: "Prayer request submitted" },
+                { d: "Jan 14", t: "17 people prayed" },
+                { d: "Feb 2", t: "Prayer answered — praise report" },
+                { d: "Mar 1", t: "John gifted the band to his brother" },
+              ].map((e, i) => (
+                <Reveal key={i} delay={i * 150}>
+                  <div className="impact-row"><span className="impact-dot" /><span className="impact-date">{e.d}</span><span className="impact-event">{e.t}</span></div>
+                </Reveal>
+              ))}
+            </div>
+          </Reveal>
+          <Reveal delay={220} className="impact-stats-card">
+            <div className="impact-stats-head">This band so far</div>
+            <div className="impact-stats">
+              {[{ n: "18", l: "Times Prayed" }, { n: "4", l: "States" }, { n: "11", l: "Encouraged" }, { n: "3", l: "Circles" }].map(s => (
+                <div key={s.l} className="impact-stat"><div className="impact-stat-n">{s.n}</div><div className="impact-stat-l">{s.l}</div></div>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -498,42 +543,6 @@ export default function HomePage() {
               ))}
             </div>
             <Link href="/store" className="btn-primary sm" style={{ marginTop: 28 }}>Send a Band</Link>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── See the impact ── */}
-      <section id="impact" className="impact">
-        <div className="container impact-inner">
-          <Reveal className="impact-copy">
-            <div className="eyebrow">Your Impact</div>
-            <h2 className="h2">See the Impact of <em>Every Prayer.</em></h2>
-            <p className="lead dark">From the moment your band is activated, you can see its journey, prayers, and the lives it's touched.</p>
-            <Link href="/store" className="btn-dark" style={{ marginTop: 24 }}>Track Your Band</Link>
-          </Reveal>
-          <Reveal delay={120} className="impact-card">
-            <div className="impact-timeline">
-              {[
-                { d: "Jan 5", t: "Band activated by David" },
-                { d: "Jan 8", t: "Given to John in Florida" },
-                { d: "Jan 12", t: "Prayer request submitted" },
-                { d: "Jan 14", t: "17 people prayed" },
-                { d: "Feb 2", t: "Prayer answered — praise report" },
-                { d: "Mar 1", t: "John gifted the band to his brother" },
-              ].map((e, i) => (
-                <Reveal key={i} delay={i * 150}>
-                  <div className="impact-row"><span className="impact-dot" /><span className="impact-date">{e.d}</span><span className="impact-event">{e.t}</span></div>
-                </Reveal>
-              ))}
-            </div>
-          </Reveal>
-          <Reveal delay={220} className="impact-stats-card">
-            <div className="impact-stats-head">This band so far</div>
-            <div className="impact-stats">
-              {[{ n: "18", l: "Times Prayed" }, { n: "4", l: "States" }, { n: "11", l: "Encouraged" }, { n: "3", l: "Circles" }].map(s => (
-                <div key={s.l} className="impact-stat"><div className="impact-stat-n">{s.n}</div><div className="impact-stat-l">{s.l}</div></div>
-              ))}
-            </div>
           </Reveal>
         </div>
       </section>
@@ -744,6 +753,13 @@ const styles = `
     .circles-feats { max-width:420px; margin:0 auto; }
   }
 
+  /* Scripture band */
+  .verseband { background:var(--cream); border-top:1px solid var(--lineG); border-bottom:1px solid var(--lineG); padding:64px 0; }
+  .verseband-inner { text-align:center; max-width:820px; }
+  .verseband-mark { color:var(--gold); font-size:1.4rem; margin-bottom:14px; }
+  .verseband-q { margin:0; font-family:'Cormorant Garamond',serif; font-style:italic; font-weight:500; font-size:clamp(1.5rem,2.6vw,2.15rem); line-height:1.35; color:var(--ink); }
+  .verseband-ref { margin-top:16px; font-family:'Cinzel',serif; font-size:0.68rem; font-weight:600; letter-spacing:0.24em; text-transform:uppercase; color:var(--goldT); }
+
   /* Feed */
   .feed { background:var(--paper2); padding:90px 0; }
   .feed-head { display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:48px; flex-wrap:wrap; }
@@ -756,7 +772,7 @@ const styles = `
   .feed-avatar { width:40px; height:40px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,var(--gold2),var(--gold)); color:var(--navy); font-family:'Cinzel',serif; font-size:0.7rem; font-weight:700; display:flex; align-items:center; justify-content:center; }
   .feed-name { font-weight:600; font-size:0.92rem; color:var(--ink); }
   .feed-meta { font-size:0.72rem; color:var(--ink2); }
-  .feed-text { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.08rem; color:var(--ink); line-height:1.55; min-height:84px; }
+  .feed-text { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.08rem; color:var(--ink); line-height:1.55; min-height:84px; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden; }
   .feed-foot { display:flex; align-items:center; gap:7px; margin-top:14px; padding-top:14px; border-top:1px solid var(--line); font-size:0.74rem; letter-spacing:0.04em; color:var(--goldT); }
   @media (max-width:980px){ .feed-grid { grid-template-columns:repeat(2,1fr); } }
   @media (max-width:520px){ .feed-grid { grid-template-columns:1fr; } }
