@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sendPush } from '@/lib/push'
+import { hasHeldBand } from '@/lib/band-holder'
 
 // POST — add a topic to a circle's Prayer Wall: a prayer request, or an
 // update on how things are going. { title?, kind?, request_text? } — a title
@@ -30,6 +31,10 @@ export async function POST(
 
     if (!membership) {
       return NextResponse.json({ error: 'Not a member of this circle' }, { status: 403 })
+    }
+
+    if (!(await hasHeldBand(admin, user.id))) {
+      return NextResponse.json({ error: 'Posting on the wall takes a Prayer Band.', needsBand: true }, { status: 403 })
     }
 
     const payload = await req.json().catch(() => ({}))

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { hasHeldBand } from '@/lib/band-holder'
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -40,8 +41,12 @@ export async function GET(
       return NextResponse.json({ error: 'Circle not found' }, { status: 404 })
     }
 
-    // Access: a signed-in member, OR anyone presenting the correct join code
-    // (read-only — they can view but must sign in to post or pray).
+    // Access: an account, always. A member sees their circle; someone signed
+    // in with the correct join code can look before joining. The code alone,
+    // with no account, shows nothing — a wall is personal.
+    if (!user) {
+      return NextResponse.json({ error: 'Sign in to view this circle' }, { status: 401 })
+    }
     let membership: { role: string } | null = null
     if (user) {
       const { data } = await admin
@@ -67,17 +72,15 @@ export async function GET(
     }
 
     if (!membership && !codeValid) {
-      return NextResponse.json(
-        { error: user ? 'Not a member of this circle' : 'Sign in or use a join code to view this circle' },
-        { status: user ? 403 : 401 }
-      )
+      return NextResponse.json({ error: 'Not a member of this circle' }, { status: 403 })
     }
 
     // Members and topics. `*` on the topics so the wall columns (title, kind)
     // ride along once the migration has run and are simply absent before it.
-    const [{ data: members }, { data: requests }] = await Promise.all([
+    const [{ data: members }, { data: requests }, hasBand] = await Promise.all([
       admin.from('circle_members').select('id, role, joined_at, user_id').eq('circle_id', circleId).order('joined_at', { ascending: true }),
       admin.from('circle_prayer_requests').select('*').eq('circle_id', circleId).order('created_at', { ascending: false }),
+      hasHeldBand(admin, user.id),
     ])
 
     const requestIds = (requests ?? []).map(r => r.id)
@@ -133,8 +136,11 @@ export async function GET(
       members: membersEnriched,
       requests: topics,
       my_role: membership?.role ?? null,
-      my_user_id: user?.id ?? null,
-      is_member: !!membership
+      my_user_id: user.id,
+      is_member: !!membership,
+      // Posting a topic or writing a prayer takes a band; following and
+      // tapping Pray only take an account.
+      has_band: hasBand,
     })
   } catch (err) {
     console.error('Circle GET error:', err)

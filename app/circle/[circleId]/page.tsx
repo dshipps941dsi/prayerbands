@@ -125,7 +125,7 @@ export default async function PublicCirclePage({ params }: { params: Promise<{ c
                 <div style={{ fontFamily: 'Inter, sans-serif', color: '#9a8a6a', fontSize: 13, marginBottom: 8 }}>Join code</div>
                 <div style={{ fontFamily: 'monospace', fontSize: 24, letterSpacing: '0.18em', color: NAVY, fontWeight: 700, marginBottom: 22 }}>{c.join_code}</div>
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <Link href={viewUrl} style={{ background: NAVY, color: '#F5EDD8', padding: '13px 28px', borderRadius: 10, fontFamily: 'Cinzel, serif', fontWeight: 700, textDecoration: 'none', letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: 13 }}>View this circle</Link>
+                  <Link href={viewUrl} style={{ background: NAVY, color: '#F5EDD8', padding: '13px 28px', borderRadius: 10, fontFamily: 'Cinzel, serif', fontWeight: 700, textDecoration: 'none', letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: 13 }}>Join this circle</Link>
                   <ShareSheet url={url} title={c.name} text={shareText} label="Share" variant="gold" />
                 </div>
               </>
@@ -133,7 +133,7 @@ export default async function PublicCirclePage({ params }: { params: Promise<{ c
           </div>
 
           <div style={{ textAlign: 'center', marginTop: 36 }}>
-            <p style={{ fontFamily: 'Georgia, serif', color: NAVY, fontSize: 16, marginBottom: 16 }}>Prayer Circles are unlocked with a Prayer Band.</p>
+            <p style={{ fontFamily: 'Georgia, serif', color: NAVY, fontSize: 16, marginBottom: 16, lineHeight: 1.5 }}>A free account lets you follow along and tap to pray. Posting and writing prayers takes a Prayer Band.</p>
             <Link href="/store" style={{ background: GOLD, color: NAVY, padding: '12px 26px', borderRadius: 10, fontFamily: 'Cinzel, serif', fontWeight: 700, textDecoration: 'none', letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: 13 }}>Get a Prayer Band</Link>
           </div>
         </div>

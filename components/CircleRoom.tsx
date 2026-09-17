@@ -97,6 +97,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
   const [myRole, setMyRole] = useState<Role>(null)
   const [myUserId, setMyUserId] = useState<string | null>(null)
   const [isMember, setIsMember] = useState(false)
+  const [hasBand, setHasBand] = useState(false)
   const [loading, setLoading] = useState(true)
   const [problem, setProblem] = useState<'' | 'signin' | 'notmember' | 'notfound' | 'busy'>('')
   const [toast, setToast] = useState('')
@@ -136,6 +137,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
     setMyRole(d.my_role ?? null)
     setMyUserId(d.my_user_id ?? null)
     setIsMember(!!d.is_member)
+    setHasBand(!!d.has_band)
     setEditName(d.circle?.name ?? '')
     setEditDesc(d.circle?.description ?? '')
     setProblem('')
@@ -310,7 +312,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
   }
   if (problem || !circle) {
     const copyFor = {
-      signin: 'Sign in to open this circle.',
+      signin: 'Create a free account or sign in to see this circle.',
       notmember: 'You’re not in this circle. Ask its leader for the join code or an invite link.',
       notfound: 'This circle could not be found. It may have been closed.',
       busy: 'Too many attempts for now. Give it a minute and try again.',
@@ -408,7 +410,8 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
       </Section>
 
       {/* ── Prayer Wall ────────────────────────────────────────── */}
-      <Section refObj={wallRef} label="Prayer Wall" action={isMember && !composing ? <Btn kind="primary" small onClick={() => setComposing(true)}>+ New topic</Btn> : null}>
+      <Section refObj={wallRef} label="Prayer Wall" action={isMember && hasBand && !composing ? <Btn kind="primary" small onClick={() => setComposing(true)}>+ New topic</Btn> : null}>
+        {isMember && !hasBand && <BandNote what="post a topic or write a prayer" />}
         {composing && (
           <div style={{ background: SURFACE_ALT, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 14px 12px', marginBottom: 14 }}>
             <div style={{ display: 'flex', gap: 4, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3, marginBottom: 12 }}>
@@ -432,12 +435,12 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
         {open.length === 0 && !composing && (
           <div style={{ textAlign: 'center', padding: '22px 12px', color: MUTED }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>🕊️</div>
-            <p style={{ fontSize: 14, margin: 0, lineHeight: 1.5 }}>Nothing on the wall yet.{isMember ? ' Start a topic — a request or an update — and the circle prays underneath it.' : ''}</p>
+            <p style={{ fontSize: 14, margin: 0, lineHeight: 1.5 }}>Nothing on the wall yet.{isMember && hasBand ? ' Start a topic — a request or an update — and the circle prays underneath it.' : ''}</p>
           </div>
         )}
 
         {open.map(t => (
-          <TopicCard key={t.id} t={t} isLeader={isLeader} isMember={isMember} myUserId={myUserId}
+          <TopicCard key={t.id} t={t} isLeader={isLeader} isMember={isMember} hasBand={hasBand} myUserId={myUserId}
             repliesOpen={openReplies.has(t.id)} onToggleReplies={() => setOpenReplies(prev => { const n = new Set(prev); if (n.has(t.id)) n.delete(t.id); else n.add(t.id); return n })}
             onPray={() => pray(t.id)} onAnswered={() => setAnswered(t.id, true)} onDelete={() => deleteTopic(t.id)}
             confirmingDelete={confirmTopic === t.id} setConfirmDelete={v => setConfirmTopic(v ? t.id : null)}
@@ -452,7 +455,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
               {showAnswered ? '▾' : '▸'} Answered · {answered.length}
             </button>
             {showAnswered && answered.map(t => (
-              <TopicCard key={t.id} t={t} isLeader={isLeader} isMember={isMember} myUserId={myUserId}
+              <TopicCard key={t.id} t={t} isLeader={isLeader} isMember={isMember} hasBand={hasBand} myUserId={myUserId}
                 repliesOpen={openReplies.has(t.id)} onToggleReplies={() => setOpenReplies(prev => { const n = new Set(prev); if (n.has(t.id)) n.delete(t.id); else n.add(t.id); return n })}
                 onPray={() => pray(t.id)} onAnswered={() => setAnswered(t.id, false)} onDelete={() => deleteTopic(t.id)}
                 confirmingDelete={confirmTopic === t.id} setConfirmDelete={v => setConfirmTopic(v ? t.id : null)}
@@ -561,6 +564,15 @@ function Section({ refObj, label: text, action, children }: { refObj: React.RefO
   )
 }
 
+// Shown to a member who has never held a band, where the compose box would be.
+function BandNote({ what }: { what: string }) {
+  return (
+    <div style={{ background: SURFACE_ALT, border: `1px dashed ${BORDER}`, borderRadius: 9, padding: '10px 12px', marginBottom: 12, fontSize: 12.5, color: MUTED, lineHeight: 1.5 }}>
+      You can follow along and tap Pray. To {what}, you’ll need a Prayer Band. <a href="/store" style={{ color: ACCENT, fontWeight: 600 }}>Get a Prayer Band →</a>
+    </div>
+  )
+}
+
 function ShareIcon() {
   return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
 }
@@ -568,7 +580,7 @@ function ShareIcon() {
 // One topic on the wall: the header (a request or an update), who posted
 // it, the pray count, and — opened underneath — the prayers people wrote.
 function TopicCard(p: {
-  t: Topic; isLeader: boolean; isMember: boolean; myUserId: string | null
+  t: Topic; isLeader: boolean; isMember: boolean; hasBand: boolean; myUserId: string | null
   repliesOpen: boolean; onToggleReplies: () => void
   onPray: () => void; onAnswered: () => void; onDelete: () => void
   confirmingDelete: boolean; setConfirmDelete: (v: boolean) => void
@@ -646,7 +658,9 @@ function TopicCard(p: {
               </div>
             )
           })}
-          {p.isMember ? (
+          {p.isMember && !p.hasBand ? (
+            <BandNote what="write a prayer here" />
+          ) : p.isMember ? (
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
               <textarea value={p.draft} onChange={e => p.setDraft(e.target.value.slice(0, 1000))} rows={2} placeholder={n === 0 ? 'Write the first prayer under this…' : 'Add your prayer…'} style={{ ...inputStyle, flex: 1, fontSize: 14, resize: 'none', padding: '9px 12px' }} />
               <Btn kind="primary" onClick={p.onReply} disabled={p.busy || !p.draft.trim()} style={{ padding: '10px 14px' }}>{p.busy ? '…' : 'Post'}</Btn>

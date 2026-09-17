@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sendPush } from '@/lib/push'
+import { hasHeldBand } from '@/lib/band-holder'
 
 // A prayer written underneath a topic on a circle's Prayer Wall.
 //
@@ -30,6 +31,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cir
     const admin = createServiceClient()
     if (!(await memberOf(admin, circleId, user.id))) {
       return NextResponse.json({ error: 'Not a member of this circle' }, { status: 403 })
+    }
+    if (!(await hasHeldBand(admin, user.id))) {
+      return NextResponse.json({ error: 'Writing a prayer takes a Prayer Band.', needsBand: true }, { status: 403 })
     }
 
     // The topic must belong to THIS circle (service role bypasses RLS).

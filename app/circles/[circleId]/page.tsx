@@ -16,7 +16,12 @@ export default async function CirclePage({ params, searchParams }: {
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (user) {
+  // A wall is personal: the invite code lets you look only once you have an
+  // account. Sign in (or make one — an email code) and come straight back.
+  if (!user) {
+    redirect(`/signin/personal?redirect=${encodeURIComponent(`/circles/${circleId}${code ? `?code=${code}` : ''}`)}`)
+  }
+  {
     const admin = createServiceClient()
     const [{ data: reg }, { data: owned }] = await Promise.all([
       admin.from('registrations').select('band_id').eq('user_id', user.id).limit(1).maybeSingle(),
