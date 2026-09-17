@@ -13,10 +13,26 @@ export async function GET() {
 
   const admin = createServiceClient()
 
-  const [owned, registered] = await Promise.all([
+  const [owned, registered, credited] = await Promise.all([
     admin.from('bands').select('band_id, theme, color, created_at').eq('owner_id', user.id),
     admin.from('registrations').select('band_id, registered_at').eq('user_id', user.id).order('registered_at', { ascending: false }),
+    // Bands credited to this person as the giver that nobody owns: a purchase
+    // (the buyer is upline, never owner, so the recipient can claim it), or a
+    // pile an admin handed them.
+    admin.from('bands').select('band_id').eq('upline_user_id', user.id).is('owner_id', null),
   ])
+
+  // Of the credited bands, only the untaken ones are still theirs to give.
+  // One that already carries a stop has been handed on; it is not in their
+  // drawer any more, and listing it made a giver's whole history look like
+  // stock.
+  const creditedIds = (credited.data ?? []).map(b => b.band_id as string)
+  let untaken: string[] = []
+  if (creditedIds.length) {
+    const { data: stops } = await admin.from('registrations').select('band_id').in('band_id', creditedIds).neq('source', 'wall')
+    const taken = new Set((stops ?? []).map(r => r.band_id as string))
+    untaken = creditedIds.filter(id => !taken.has(id))
+  }
 
   const ids = new Set<string>()
   const ordered: string[] = []
@@ -27,12 +43,18 @@ export async function GET() {
   for (const b of owned.data ?? []) {
     if (b.band_id && !ids.has(b.band_id)) { ids.add(b.band_id); ordered.push(b.band_id) }
   }
-  // A band you own but have never put your own name on is one you are
-  // holding to give away — a bulk order, or a pile handed to you. (Being the
-  // giver of an unowned band is NOT that: those are bands already given,
-  // waiting for the recipient's first tap, and they are not yours any more.)
+  for (const id of untaken) {
+    if (!ids.has(id)) { ids.add(id); ordered.push(id) }
+  }
+  // "To give away": a band you own but have never put your own name on, or
+  // one credited to you that nobody has taken yet — a bulk order still in
+  // the box, a pile handed to you. A credited band that already has a stop
+  // is not that: it has been given, and it is not yours any more.
   const mine = new Set((registered.data ?? []).map(r => r.band_id as string))
-  const giving = new Set((owned.data ?? []).map(b => b.band_id as string).filter(id => !mine.has(id)))
+  const giving = new Set([
+    ...(owned.data ?? []).map(b => b.band_id as string).filter(id => !mine.has(id)),
+    ...untaken,
+  ])
 
   // Bands they hold but do not own are not in `owned`, so fetch styling for
   // everything in the list — otherwise a held band shows as a bare code.
