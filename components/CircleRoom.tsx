@@ -12,15 +12,20 @@ import AvatarBadge from './AvatarBadge'
 // Everything that used to need the standalone /circles/[id] page happens
 // here, so a person never leaves the band view.
 
-// Theme tokens (fall back to the brand palette) — the room wears the band's theme.
-const PRIMARY = 'var(--pb-primary, #B8860B)'
+// Palette: ink on paper. Text and surfaces come from the band's theme; the
+// secondary text, hairlines and tints are mixes of the theme's text colour,
+// so they stay legible on every theme instead of drifting to tan-on-cream.
+// The theme's gold is kept for small accents only.
+const TEXT = 'var(--pb-text, #15223B)'
+const SURFACE = 'var(--pb-surface, #FFFDF8)'
+const MUTED = 'color-mix(in srgb, var(--pb-text, #15223B) 64%, transparent)'
+const BORDER = 'color-mix(in srgb, var(--pb-text, #15223B) 14%, transparent)'
+const SURFACE_ALT = 'color-mix(in srgb, var(--pb-text, #15223B) 5%, var(--pb-surface, #FFFDF8))'
+const PRIMARY = 'var(--pb-primary, #C8A96E)'
 const ACCENT = 'var(--pb-accent, #9A7A35)'
-const TEXT = 'var(--pb-text, #2C1810)'
-const MUTED = 'var(--pb-text-muted, #8B7355)'
-const BORDER = 'var(--pb-border, #D4C5B0)'
-const SURFACE = 'var(--pb-surface, #ffffff)'
-const SURFACE_ALT = 'var(--pb-surface-alt, #FFF8E7)'
-const ON_PRIMARY = 'var(--pb-text-on-primary, #ffffff)'
+// Primary buttons are ink with paper text — highest contrast, works on dark themes too.
+const INK = TEXT
+const ON_INK = SURFACE
 const ANSWERED = '#4A8A6A'
 const DANGER = '#B4441F'
 const CINZEL = "'Cinzel', Georgia, serif"
@@ -57,7 +62,7 @@ async function copyText(value: string): Promise<boolean> {
 }
 
 const btn = {
-  primary: { background: PRIMARY, color: ON_PRIMARY, border: 'none' } as React.CSSProperties,
+  primary: { background: INK, color: ON_INK, border: 'none' } as React.CSSProperties,
   ghost: { background: 'transparent', color: TEXT, border: `1px solid ${BORDER}` } as React.CSSProperties,
   danger: { background: 'transparent', color: DANGER, border: `1px solid ${DANGER}55` } as React.CSSProperties,
 }
@@ -69,13 +74,14 @@ function Btn({ kind = 'ghost', block, small, children, ...rest }: { kind?: keyof
   )
 }
 
-const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 13px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 15, fontFamily: 'Georgia, serif', color: TEXT, background: '#fff', outline: 'none' }
+const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 13px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 15, fontFamily: 'Georgia, serif', color: TEXT, background: SURFACE, outline: 'none' }
+const linkBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, fontSize: 12.5, color: ACCENT, fontFamily: BODY, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }
 const label: React.CSSProperties = { display: 'block', fontSize: 11, fontFamily: CINZEL, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, marginBottom: 5 }
 
 // Inline "are you sure" — replaces the control that asked, never a browser dialog.
 function Confirm({ text, yes, onYes, onNo, busy }: { text: string; yes: string; onYes: () => void; onNo: () => void; busy?: boolean }) {
   return (
-    <div style={{ background: '#FDF0EE', border: `1px solid ${DANGER}40`, borderRadius: 9, padding: '12px 14px' }}>
+    <div style={{ background: SURFACE_ALT, border: `1px solid ${DANGER}55`, borderRadius: 9, padding: '12px 14px' }}>
       <p style={{ fontSize: 13, color: TEXT, margin: '0 0 10px', fontFamily: BODY, lineHeight: 1.55 }}>{text}</p>
       <div style={{ display: 'flex', gap: 8 }}>
         <Btn small onClick={onNo} disabled={busy}>Cancel</Btn>
@@ -108,12 +114,17 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
     toastTimer.current = setTimeout(() => setToast(''), 2400)
   }
 
-  // Sections the jump links scroll to.
-  const shareRef = useRef<HTMLDivElement>(null)
+  // Sections the jump links scroll to. Tapping the top card folds them all
+  // away (and back); a jump link unfolds and scrolls.
+  const [expanded, setExpanded] = useState(true)
   const wallRef = useRef<HTMLDivElement>(null)
   const membersRef = useRef<HTMLDivElement>(null)
   const settingsRef = useRef<HTMLDivElement>(null)
-  const jump = (r: React.RefObject<HTMLDivElement | null>) => r.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const jump = (r: React.RefObject<HTMLDivElement | null>) => {
+    const go = () => r.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (expanded) go()
+    else { setExpanded(true); setTimeout(go, 60) }
+  }
 
   // Settings form — seeded from the circle when it loads.
   const [editName, setEditName] = useState('')
@@ -333,82 +344,76 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
   const answered = topics.filter(t => t.is_answered)
   const isLeader = myRole === 'leader'
   const roleLabel = isLeader ? 'Leader' : isMember ? 'Member' : 'Guest'
-  const pill = (active: boolean): React.CSSProperties => ({ flexShrink: 0, background: active ? PRIMARY : 'transparent', color: active ? ON_PRIMARY : TEXT, border: `1px solid ${active ? PRIMARY : BORDER}`, borderRadius: 20, padding: '7px 13px', fontSize: 11, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', whiteSpace: 'nowrap' })
+  const pill = (active: boolean): React.CSSProperties => ({ flex: 1, background: active ? INK : SURFACE, color: active ? ON_INK : TEXT, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '7px 13px', fontSize: 11, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', whiteSpace: 'nowrap' })
 
   return (
     <div style={{ marginBottom: 32, fontFamily: BODY }}>
       <BackRow onBack={onBack} />
 
-      {/* ── Top card: what this circle is for, and how to bring people in ── */}
-      <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderTop: `3px solid ${PRIMARY}`, borderRadius: 14, padding: '16px 18px 18px', marginBottom: 14, boxShadow: '0 2px 12px rgba(10,22,40,0.05)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span style={{ fontSize: 10, fontFamily: CINZEL, letterSpacing: '0.14em', textTransform: 'uppercase', color: MUTED }}>Prayer Circle</span>
-          <span style={{ fontSize: 10, fontFamily: CINZEL, letterSpacing: '0.08em', textTransform: 'uppercase', color: isLeader ? ACCENT : MUTED, border: `1px solid ${isLeader ? ACCENT : BORDER}`, borderRadius: 10, padding: '2px 8px' }}>{roleLabel}</span>
-        </div>
-        <h2 style={{ fontFamily: DISPLAY, fontSize: 26, fontWeight: 700, color: TEXT, margin: '0 0 6px', lineHeight: 1.15 }}>{circle.name}</h2>
-        {circle.description ? (
-          <p style={{ fontSize: 16, color: TEXT, opacity: 0.85, margin: '0 0 14px', lineHeight: 1.5, fontStyle: 'italic', fontFamily: DISPLAY }}>{circle.description}</p>
-        ) : isLeader ? (
-          <button onClick={() => jump(settingsRef)} style={{ background: 'none', border: 'none', padding: 0, margin: '0 0 14px', color: ACCENT, fontSize: 13, fontFamily: BODY, cursor: 'pointer', textDecoration: 'underline' }}>Say what this circle is praying for →</button>
-        ) : <div style={{ height: 8 }} />}
+      {/* ── Top card: what this circle is for, who is in it, and how to
+          bring people in. Tap the name to fold the rest of the room away. ── */}
+      <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 14, marginBottom: 12, boxShadow: '0 2px 12px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
+        <button onClick={() => setExpanded(v => !v)} aria-expanded={expanded} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '14px 18px 0', cursor: 'pointer', color: TEXT }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 10, fontFamily: CINZEL, letterSpacing: '0.14em', textTransform: 'uppercase', color: MUTED }}>Prayer Circle · {roleLabel}</span>
+            <span aria-hidden style={{ fontSize: 12, color: MUTED, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</span>
+          </div>
+          <h2 style={{ fontFamily: DISPLAY, fontSize: 26, fontWeight: 700, color: TEXT, margin: '0 0 6px', lineHeight: 1.15 }}>{circle.name}</h2>
+        </button>
+        <div style={{ padding: '0 18px 16px' }}>
+          {circle.description ? (
+            <p style={{ fontSize: 16, color: TEXT, margin: '0 0 12px', lineHeight: 1.5, fontStyle: 'italic', fontFamily: DISPLAY }}>{circle.description}</p>
+          ) : isLeader ? (
+            <button onClick={() => jump(settingsRef)} style={{ background: 'none', border: 'none', padding: 0, margin: '0 0 12px', color: ACCENT, fontSize: 13, fontFamily: BODY, cursor: 'pointer', textDecoration: 'underline' }}>Say what this circle is praying for →</button>
+          ) : null}
 
-        {members.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <div style={{ display: 'flex' }}>
-              {members.slice(0, 7).map((m, i) => (
-                <div key={m.id} style={{ marginLeft: i === 0 ? 0 : -8 }}><AvatarBadge {...(m.avatar || {})} name={m.name} size={28} ring /></div>
-              ))}
+          {members.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <div style={{ display: 'flex' }}>
+                {members.slice(0, 7).map((m, i) => (
+                  <div key={m.id} style={{ marginLeft: i === 0 ? 0 : -8 }}><AvatarBadge {...(m.avatar || {})} name={m.name} size={28} ring /></div>
+                ))}
+              </div>
+              <button onClick={() => jump(membersRef)} style={{ background: 'none', border: 'none', padding: 0, fontSize: 13, color: MUTED, fontFamily: BODY, cursor: 'pointer' }}>
+                {members.length} {members.length === 1 ? 'person' : 'people'} praying together
+              </button>
             </div>
-            <button onClick={() => jump(membersRef)} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12.5, color: MUTED, fontFamily: BODY, cursor: 'pointer' }}>
-              {members.length} {members.length === 1 ? 'person' : 'people'} praying together
-            </button>
-          </div>
-        )}
+          )}
 
-        {isMember ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={() => copy('code')} title="Tap to copy the join code" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: SURFACE_ALT, border: `1px solid ${BORDER}`, borderRadius: 9, padding: '8px 12px', cursor: 'pointer', textAlign: 'left' }}>
-              <span style={{ fontSize: 10, fontFamily: CINZEL, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED }}>Join code</span>
-              <span style={{ fontFamily: 'monospace', fontSize: 15, fontWeight: 700, letterSpacing: '0.16em', color: ACCENT }}>{copied === 'code' ? 'Copied' : circle.join_code}</span>
-            </button>
-            <Btn kind="primary" onClick={share} style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-              <ShareIcon /> Share
-            </Btn>
-          </div>
-        ) : (
-          <div>
-            <Btn kind="primary" block onClick={ensureMember} disabled={joining}>{joining ? 'Joining…' : myUserId ? 'Join this circle' : 'Sign in to join'}</Btn>
-            <p style={{ fontSize: 12, color: MUTED, margin: '8px 0 0', textAlign: 'center', lineHeight: 1.5 }}>You’re looking in as a guest. Join to post and pray with the circle.</p>
-          </div>
-        )}
+          {isMember ? (
+            <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button onClick={() => copy('code')} title="Tap to copy the join code" style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: SURFACE_ALT, border: `1px solid ${BORDER}`, borderRadius: 9, padding: '9px 12px', cursor: 'pointer', textAlign: 'left' }}>
+                  <span style={{ fontSize: 10, fontFamily: CINZEL, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED }}>Join code</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 16, fontWeight: 700, letterSpacing: '0.16em', color: TEXT }}>{copied === 'code' ? 'Copied' : circle.join_code}</span>
+                </button>
+                <Btn kind="primary" onClick={share} style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                  <ShareIcon /> Share
+                </Btn>
+              </div>
+              <div style={{ display: 'flex', gap: 14, marginTop: 10 }}>
+                <button onClick={() => copy('link')} style={linkBtn}>{copied === 'link' ? 'Link copied' : 'Copy invite link'}</button>
+                <button onClick={() => setShowQR(v => !v)} style={linkBtn}>{showQR ? 'Hide QR code' : 'QR code for a flyer'}</button>
+              </div>
+              {showQR && <div style={{ marginTop: 12 }}><CircleQR url={inviteUrl} name={circle.name} /></div>}
+            </div>
+          ) : (
+            <div>
+              <Btn kind="primary" block onClick={ensureMember} disabled={joining}>{joining ? 'Joining…' : myUserId ? 'Join this circle' : 'Sign in to join'}</Btn>
+              <p style={{ fontSize: 12.5, color: MUTED, margin: '8px 0 0', textAlign: 'center', lineHeight: 1.5 }}>You’re looking in as a guest. Join to follow along and pray with the circle.</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Jump links ─────────────────────────────────────────── */}
-      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, marginBottom: 14, scrollbarWidth: 'none' }}>
-        <button style={pill(false)} onClick={() => jump(shareRef)}>Share</button>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
         <button style={pill(false)} onClick={() => jump(wallRef)}>Prayer Wall{open.length ? ` · ${open.length}` : ''}</button>
         <button style={pill(false)} onClick={() => jump(membersRef)}>Members · {members.length}</button>
         {isMember && <button style={pill(false)} onClick={() => jump(settingsRef)}>Settings</button>}
       </div>
 
-      {/* ── Share ──────────────────────────────────────────────── */}
-      <Section refObj={shareRef} label="Share">
-        <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: 13, color: MUTED, margin: '0 0 8px', lineHeight: 1.5 }}>Invite people to pray with you. They land on a private invite page and join in one tap.</p>
-          <button onClick={() => copy('code')} style={{ background: SURFACE_ALT, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '12px 24px', margin: '4px 0 12px', cursor: 'pointer' }}>
-            <div style={{ fontFamily: CINZEL, fontSize: 28, fontWeight: 700, letterSpacing: '0.28em', color: TEXT, paddingLeft: '0.28em' }}>{circle.join_code}</div>
-            <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{copied === 'code' ? 'Copied!' : 'Join code · tap to copy'}</div>
-          </button>
-          <Btn kind="primary" block onClick={share} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><ShareIcon /> Share an invite</Btn>
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <Btn block onClick={() => copy('link')}>{copied === 'link' ? 'Link copied' : 'Copy link'}</Btn>
-            <Btn block onClick={() => setShowQR(v => !v)}>{showQR ? 'Hide QR' : 'QR code'}</Btn>
-          </div>
-          {showQR && <div style={{ marginTop: 12 }}><CircleQR url={inviteUrl} name={circle.name} /></div>}
-          <p style={{ fontSize: 12, color: MUTED, margin: '12px 0 0', lineHeight: 1.5 }}>The code is handy for reading aloud, a bulletin, or a flyer.</p>
-        </div>
-      </Section>
-
+      {expanded && <>
       {/* ── Prayer Wall ────────────────────────────────────────── */}
       <Section refObj={wallRef} label="Prayer Wall" action={isMember && hasBand && !composing ? <Btn kind="primary" small onClick={() => setComposing(true)}>+ New topic</Btn> : null}>
         {isMember && !hasBand && <BandNote what="post a topic or write a prayer" />}
@@ -416,7 +421,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
           <div style={{ background: SURFACE_ALT, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 14px 12px', marginBottom: 14 }}>
             <div style={{ display: 'flex', gap: 4, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3, marginBottom: 12 }}>
               {(['request', 'update'] as const).map(k => (
-                <button key={k} onClick={() => setKind(k)} style={{ flex: 1, padding: '8px 4px', border: 'none', borderRadius: 8, background: kind === k ? PRIMARY : 'transparent', color: kind === k ? ON_PRIMARY : MUTED, fontSize: 11, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                <button key={k} onClick={() => setKind(k)} style={{ flex: 1, padding: '8px 4px', border: 'none', borderRadius: 8, background: kind === k ? INK : 'transparent', color: kind === k ? ON_INK : MUTED, fontSize: 11, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer' }}>
                   {k === 'request' ? 'Prayer request' : 'Update'}
                 </button>
               ))}
@@ -535,6 +540,8 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
         </Section>
       )}
 
+      </>}
+
       {toast && (
         <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 'calc(84px + env(safe-area-inset-bottom, 0px))', zIndex: 260, background: '#0E1E38', color: '#F6F1E4', padding: '10px 20px', borderRadius: 40, fontSize: 13, fontFamily: BODY, boxShadow: '0 6px 24px rgba(10,22,40,0.3)', pointerEvents: 'none', maxWidth: 'calc(100vw - 32px)', textAlign: 'center' }}>
           {toast}
@@ -556,7 +563,7 @@ function Section({ refObj, label: text, action, children }: { refObj: React.RefO
   return (
     <div ref={refObj} style={{ scrollMarginTop: 76, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px 16px', marginBottom: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
-        <span style={{ fontSize: 11, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: ACCENT }}>{text}</span>
+        <span style={{ fontSize: 11, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT }}>{text}</span>
         {action}
       </div>
       {children}
@@ -594,26 +601,26 @@ function TopicCard(p: {
   const body = t.title ? (t.request_text && t.request_text !== t.title ? t.request_text : null) : t.request_text
   const n = t.replies.length
   return (
-    <div style={{ background: t.is_answered ? SURFACE_ALT : SURFACE, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${t.is_answered ? ANSWERED : isUpdate ? ACCENT : PRIMARY}`, borderRadius: 10, padding: '12px 14px', marginBottom: 10 }}>
+    <div style={{ background: t.is_answered ? SURFACE_ALT : SURFACE, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${t.is_answered ? ANSWERED : isUpdate ? ACCENT : INK}`, borderRadius: 10, padding: '12px 14px', marginBottom: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <span style={{ fontSize: 9.5, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: t.is_answered ? ANSWERED : isUpdate ? ACCENT : MUTED }}>
+        <span style={{ fontSize: 9.5, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: t.is_answered ? ANSWERED : isUpdate ? ACCENT : TEXT }}>
           {t.is_answered ? '✓ Answered' : isUpdate ? 'Update' : 'Prayer request'}
         </span>
         <span style={{ flex: 1 }} />
         <span style={{ fontSize: 11, color: MUTED }}>{timeAgo(t.created_at)}</span>
       </div>
-      {t.title && <h4 style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: 700, color: TEXT, margin: '0 0 6px', lineHeight: 1.2 }}>{t.title}</h4>}
-      {body && <p style={{ fontSize: 14, color: TEXT, opacity: 0.9, lineHeight: 1.6, margin: '0 0 10px', whiteSpace: 'pre-wrap', fontStyle: t.title ? 'normal' : 'italic', fontFamily: t.title ? BODY : DISPLAY, ...(t.title ? {} : { fontSize: 15.5 }) }}>{t.title ? body : `“${body}”`}</p>}
+      {t.title && <h4 style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: 700, color: TEXT, margin: '0 0 6px', lineHeight: 1.2 }}>{t.title}</h4>}
+      {body && <p style={{ fontSize: 14.5, color: TEXT, lineHeight: 1.6, margin: '0 0 10px', whiteSpace: 'pre-wrap', fontStyle: t.title ? 'normal' : 'italic', fontFamily: t.title ? BODY : DISPLAY, ...(t.title ? {} : { fontSize: 15.5 }) }}>{t.title ? body : `“${body}”`}</p>}
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
         <AvatarBadge {...(t.avatar || {})} name={t.name} size={20} />
-        <span style={{ fontSize: 12, color: MUTED }}>{t.is_mine ? 'You' : t.name || 'A member'}</span>
+        <span style={{ fontSize: 12.5, color: TEXT, fontWeight: 600 }}>{t.is_mine ? 'You' : t.name || 'A member'}</span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <button onClick={p.onPray} style={{ background: t.i_prayed ? SURFACE_ALT : 'transparent', border: `1px solid ${t.i_prayed ? PRIMARY : BORDER}`, borderRadius: 20, padding: '6px 12px', fontSize: 12, fontFamily: 'Georgia, serif', color: t.i_prayed ? ACCENT : MUTED, cursor: 'pointer', fontWeight: t.i_prayed ? 700 : 400 }}>
+        <button onClick={p.onPray} style={{ background: t.i_prayed ? INK : 'transparent', border: `1px solid ${t.i_prayed ? INK : BORDER}`, borderRadius: 20, padding: '6px 12px', fontSize: 12, fontFamily: 'Georgia, serif', color: t.i_prayed ? ON_INK : TEXT, cursor: 'pointer', fontWeight: t.i_prayed ? 700 : 500 }}>
           🙏 {t.i_prayed ? 'Praying' : 'Pray'} · {t.intercession_count}
         </button>
-        <button onClick={p.onToggleReplies} style={{ background: 'transparent', border: `1px solid ${p.repliesOpen ? ACCENT : BORDER}`, borderRadius: 20, padding: '6px 12px', fontSize: 12, fontFamily: 'Georgia, serif', color: p.repliesOpen ? ACCENT : MUTED, cursor: 'pointer' }}>
+        <button onClick={p.onToggleReplies} style={{ background: p.repliesOpen ? SURFACE_ALT : 'transparent', border: `1px solid ${p.repliesOpen ? TEXT : BORDER}`, borderRadius: 20, padding: '6px 12px', fontSize: 12, fontFamily: 'Georgia, serif', color: TEXT, cursor: 'pointer', fontWeight: 500 }}>
           💬 {n === 0 ? 'Write a prayer' : `${n} ${n === 1 ? 'prayer' : 'prayers'}`}
         </button>
         <span style={{ flex: 1 }} />
