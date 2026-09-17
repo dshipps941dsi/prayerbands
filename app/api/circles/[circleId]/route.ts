@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { hasHeldBand } from '@/lib/band-holder'
+import { circleStanding } from '@/lib/circle-role'
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -138,6 +139,9 @@ export async function GET(
       my_role: membership?.role ?? null,
       my_user_id: user.id,
       is_member: !!membership,
+      // The creator leads; co-leaders help run the wall.
+      is_leader: circle.created_by === user.id,
+      can_lead: circle.created_by === user.id || membership?.role === 'co_leader',
       // Posting a topic or writing a prayer takes a band; following and
       // tapping Pray only take an account.
       has_band: hasBand,
@@ -164,19 +168,18 @@ export async function PATCH(
     const { circleId } = await params
     const admin = createServiceClient()
 
-    // Verify leader
-    const { data: circle } = await admin
-      .from('prayer_circles')
-      .select('id, created_by')
-      .eq('id', circleId)
-      .single()
-
-    if (!circle || circle.created_by !== user.id) {
-      return NextResponse.json({ error: 'Only the circle leader can make changes' }, { status: 403 })
-    }
-
     const body = await req.json()
     const updates: Record<string, unknown> = {}
+
+    // Leaders and co-leaders can rename and describe the circle; the join
+    // code and closing the circle are the leader's alone.
+    const standing = await circleStanding(admin, circleId, user.id)
+    if (!standing.canLead) {
+      return NextResponse.json({ error: 'Only the circle’s leaders can make changes' }, { status: 403 })
+    }
+    if ((body.regenerate_code || body.is_closed !== undefined) && !standing.isLeader) {
+      return NextResponse.json({ error: 'Only the circle leader can do that' }, { status: 403 })
+    }
 
     if (body.name !== undefined) {
       const name = String(body.name).trim().slice(0, 80)

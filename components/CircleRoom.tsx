@@ -38,14 +38,13 @@ const BODY = "'Inter', system-ui, sans-serif"
 
 type Avatar = { icon: string | null; initials: string | null; font: string | null }
 type Circle = { id: string; name: string; description: string | null; join_code: string; is_closed: boolean; created_by: string; created_at: string }
-type Member = { id: string; user_id: string; role: 'leader' | 'member'; joined_at: string; name: string | null; avatar?: Avatar }
+type Member = { id: string; user_id: string; role: 'leader' | 'co_leader' | 'member'; joined_at: string; name: string | null; avatar?: Avatar }
 type Reply = { id: string; user_id: string; body: string; created_at: string; name: string | null; avatar?: Avatar }
 type Topic = {
   id: string; user_id: string; title: string | null; kind: 'request' | 'update'; request_text: string
   is_answered: boolean; created_at: string; intercession_count: number; i_prayed: boolean; is_mine: boolean
   name: string | null; avatar?: Avatar; replies: Reply[]
 }
-type Role = 'leader' | 'member' | null
 
 function timeAgo(ts: string): string {
   const then = new Date(ts).getTime()
@@ -103,10 +102,11 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
   const [circle, setCircle] = useState<Circle | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [topics, setTopics] = useState<Topic[]>([])
-  const [myRole, setMyRole] = useState<Role>(null)
   const [myUserId, setMyUserId] = useState<string | null>(null)
   const [isMember, setIsMember] = useState(false)
   const [hasBand, setHasBand] = useState(false)
+  const [isLeader, setIsLeader] = useState(false)   // the creator
+  const [canLead, setCanLead] = useState(false)     // leader or co-leader
   const [loading, setLoading] = useState(true)
   const [problem, setProblem] = useState<'' | 'signin' | 'notmember' | 'notfound' | 'busy'>('')
   const [toast, setToast] = useState('')
@@ -148,10 +148,11 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
     setCircle(d.circle)
     setMembers(d.members ?? [])
     setTopics(d.requests ?? [])
-    setMyRole(d.my_role ?? null)
     setMyUserId(d.my_user_id ?? null)
     setIsMember(!!d.is_member)
     setHasBand(!!d.has_band)
+    setIsLeader(!!d.is_leader)
+    setCanLead(!!d.can_lead)
     setEditName(d.circle?.name ?? '')
     setEditDesc(d.circle?.description ?? '')
     setProblem('')
@@ -288,6 +289,18 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
     say('Member removed')
   }
 
+  const [confirmRole, setConfirmRole] = useState<string | null>(null)
+  const [roleBusy, setRoleBusy] = useState(false)
+  async function setRole(userId: string, role: 'co_leader' | 'member') {
+    setRoleBusy(true)
+    const res = await fetch(`/api/circles/${circleId}/role`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId, role }) })
+    const d = await res.json().catch(() => ({}))
+    setRoleBusy(false); setConfirmRole(null)
+    if (!res.ok) { say(d.error || 'Could not change their role.'); return }
+    setMembers(prev => prev.map(m => m.user_id === userId ? { ...m, role } : m))
+    say(role === 'co_leader' ? 'They’re a co-leader now' : 'They’re a member again')
+  }
+
   // ── Settings ──────────────────────────────────────────────────
   const [saving, setSaving] = useState(false)
   const [confirmCode, setConfirmCode] = useState(false)
@@ -345,8 +358,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
 
   const open = topics.filter(t => !t.is_answered)
   const answered = topics.filter(t => t.is_answered)
-  const isLeader = myRole === 'leader'
-  const roleLabel = isLeader ? 'Leader' : isMember ? 'Member' : 'Guest'
+  const roleLabel = isLeader ? 'Leader' : canLead ? 'Co-leader' : isMember ? 'Member' : 'Guest'
   const pill = (active: boolean): React.CSSProperties => ({ flex: 1, background: active ? PRIMARY : TINT, color: active ? ON_PRIMARY : TEXT, border: `1px solid color-mix(in srgb, ${PRIMARY} 45%, transparent)`, borderRadius: 20, padding: '7px 13px', fontSize: 11, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', whiteSpace: 'nowrap' })
 
   return (
@@ -378,7 +390,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
         <div style={{ padding: '0 18px 16px' }}>
           {circle.description ? (
             <p style={{ fontSize: 16, color: TEXT, margin: '0 0 12px', lineHeight: 1.5, fontStyle: 'italic', fontFamily: DISPLAY }}>{circle.description}</p>
-          ) : isLeader ? (
+          ) : canLead ? (
             <button onClick={() => jump(settingsRef)} style={{ background: 'none', border: 'none', padding: 0, margin: '0 0 12px', color: ACCENT, fontSize: 13, fontFamily: BODY, cursor: 'pointer', textDecoration: 'underline' }}>Say what this circle is praying for →</button>
           ) : null}
 
@@ -427,8 +439,8 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
 
       {expanded && <>
       {/* ── Prayer Wall ────────────────────────────────────────── */}
-      <Section refObj={wallRef} label="Prayer Wall" action={isMember && hasBand && !composing ? <Btn kind="primary" small onClick={() => setComposing(true)}>+ New topic</Btn> : null}>
-        {isMember && !hasBand && <BandNote what="post a topic or write a prayer" />}
+      <Section refObj={wallRef} label="Prayer Wall" action={canLead && hasBand && !composing ? <Btn kind="primary" small onClick={() => setComposing(true)}>+ New topic</Btn> : null}>
+        {isMember && !hasBand && <BandNote what={canLead ? 'post a topic or write a prayer' : 'write a prayer'} />}
         {composing && (
           <div style={{ background: SURFACE_ALT, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 14px 12px', marginBottom: 14 }}>
             <div style={{ display: 'flex', gap: 4, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3, marginBottom: 12 }}>
@@ -452,12 +464,12 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
         {open.length === 0 && !composing && (
           <div style={{ textAlign: 'center', padding: '22px 12px', color: MUTED }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>🕊️</div>
-            <p style={{ fontSize: 14, margin: 0, lineHeight: 1.5 }}>Nothing on the wall yet.{isMember && hasBand ? ' Start a topic — a request or an update — and the circle prays underneath it.' : ''}</p>
+            <p style={{ fontSize: 14, margin: 0, lineHeight: 1.5 }}>Nothing on the wall yet.{canLead && hasBand ? ' Start a topic — a request or an update — and the circle prays underneath it.' : isMember ? ' The circle’s leaders post topics here; you’ll be able to write prayers under them.' : ''}</p>
           </div>
         )}
 
         {open.map(t => (
-          <TopicCard key={t.id} t={t} isLeader={isLeader} isMember={isMember} hasBand={hasBand} myUserId={myUserId}
+          <TopicCard key={t.id} t={t} isLeader={canLead} isMember={isMember} hasBand={hasBand} myUserId={myUserId}
             repliesOpen={openReplies.has(t.id)} onToggleReplies={() => setOpenReplies(prev => { const n = new Set(prev); if (n.has(t.id)) n.delete(t.id); else n.add(t.id); return n })}
             onPray={() => pray(t.id)} onAnswered={() => setAnswered(t.id, true)} onDelete={() => deleteTopic(t.id)}
             confirmingDelete={confirmTopic === t.id} setConfirmDelete={v => setConfirmTopic(v ? t.id : null)}
@@ -472,7 +484,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
               {showAnswered ? '▾' : '▸'} Answered · {answered.length}
             </button>
             {showAnswered && answered.map(t => (
-              <TopicCard key={t.id} t={t} isLeader={isLeader} isMember={isMember} hasBand={hasBand} myUserId={myUserId}
+              <TopicCard key={t.id} t={t} isLeader={canLead} isMember={isMember} hasBand={hasBand} myUserId={myUserId}
                 repliesOpen={openReplies.has(t.id)} onToggleReplies={() => setOpenReplies(prev => { const n = new Set(prev); if (n.has(t.id)) n.delete(t.id); else n.add(t.id); return n })}
                 onPray={() => pray(t.id)} onAnswered={() => setAnswered(t.id, false)} onDelete={() => deleteTopic(t.id)}
                 confirmingDelete={confirmTopic === t.id} setConfirmDelete={v => setConfirmTopic(v ? t.id : null)}
@@ -495,14 +507,24 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: TEXT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {m.name || 'A member'}{me ? <span style={{ color: MUTED, fontWeight: 400 }}> (you)</span> : ''}
-                    {m.role === 'leader' && <span style={{ marginLeft: 8, fontSize: 9.5, fontFamily: CINZEL, letterSpacing: '0.08em', textTransform: 'uppercase', color: ACCENT, background: TINT, border: `1px solid ${PRIMARY}`, borderRadius: 8, padding: '1px 7px', verticalAlign: 'middle' }}>Leader</span>}
+                    {m.role !== 'member' && <span style={{ marginLeft: 8, fontSize: 9.5, fontFamily: CINZEL, letterSpacing: '0.08em', textTransform: 'uppercase', color: ACCENT, background: TINT, border: `1px solid ${PRIMARY}`, borderRadius: 8, padding: '1px 7px', verticalAlign: 'middle' }}>{m.role === 'leader' ? 'Leader' : 'Co-leader'}</span>}
                   </div>
                   <div style={{ fontSize: 12, color: MUTED, marginTop: 1 }}>Joined {new Date(m.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                 </div>
-                {isLeader && m.role !== 'leader' && confirmRemove !== m.user_id && (
-                  <Btn kind="danger" small onClick={() => setConfirmRemove(m.user_id)}>Remove</Btn>
+                {m.role !== 'leader' && confirmRemove !== m.user_id && confirmRole !== m.user_id && (
+                  <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                    {isLeader && <Btn small onClick={() => setConfirmRole(m.user_id)}>{m.role === 'co_leader' ? 'Step down' : 'Co-leader'}</Btn>}
+                    {(isLeader || (canLead && m.role === 'member')) && <Btn kind="danger" small onClick={() => setConfirmRemove(m.user_id)}>Remove</Btn>}
+                  </div>
                 )}
               </div>
+              {confirmRole === m.user_id && (
+                <div style={{ marginTop: 10 }}>
+                  {m.role === 'co_leader'
+                    ? <Confirm text={`Step ${m.name || 'this member'} down to a member? They will no longer post topics.`} yes="Step down" busy={roleBusy} onYes={() => setRole(m.user_id, 'member')} onNo={() => setConfirmRole(null)} />
+                    : <Confirm text={`Make ${m.name || 'this member'} a co-leader? They can post topics and updates, mark them answered, and remove members.`} yes="Make co-leader" busy={roleBusy} onYes={() => setRole(m.user_id, 'co_leader')} onNo={() => setConfirmRole(null)} />}
+                </div>
+              )}
               {confirmRemove === m.user_id && (
                 <div style={{ marginTop: 10 }}>
                   <Confirm text={`Remove ${m.name || 'this member'} from the circle? They can rejoin with the code.`} yes="Remove" busy={removing} onYes={() => removeMember(m.user_id)} onNo={() => setConfirmRemove(null)} />
@@ -517,7 +539,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
       {/* ── Settings ───────────────────────────────────────────── */}
       {isMember && (
         <Section refObj={settingsRef} label="Settings">
-          {isLeader ? (
+          {canLead ? (
             <div>
               <label style={label}>Circle name</label>
               <input value={editName} onChange={e => setEditName(e.target.value.slice(0, 80))} style={inputStyle} />
@@ -526,6 +548,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
               <div style={{ textAlign: 'right', fontSize: 11, color: MUTED, marginTop: 3 }}>{editDesc.length}/300</div>
               <Btn kind="primary" block onClick={saveSettings} disabled={saving || (editName === circle.name && editDesc === (circle.description || ''))} style={{ marginTop: 8 }}>{saving ? 'Saving…' : 'Save changes'}</Btn>
 
+              {isLeader && <>
               <div style={{ borderTop: `1px solid ${BORDER}`, margin: '18px 0 14px' }} />
               {confirmCode ? (
                 <Confirm text={`Make a new join code? The current code (${circle.join_code}) will stop working, and anyone you have already sent it to will need the new one.`} yes="New code" onYes={newCode} onNo={() => setConfirmCode(false)} />
@@ -538,10 +561,12 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
               ) : (
                 <Btn kind="danger" block onClick={() => setConfirmClose(true)}>Close circle</Btn>
               )}
+              </>}
+              {!isLeader && <p style={{ fontSize: 12.5, color: MUTED, margin: '14px 0 0', lineHeight: 1.5 }}>Only the leader can change the join code or close the circle.</p>}
             </div>
           ) : (
             <div>
-              <p style={{ fontSize: 13, color: MUTED, margin: '0 0 12px', lineHeight: 1.5 }}>Only the leader can rename the circle or change its code. You can step out at any time.</p>
+              <p style={{ fontSize: 13, color: MUTED, margin: '0 0 12px', lineHeight: 1.5 }}>The circle’s leaders post topics and manage the circle. You can step out at any time.</p>
               {confirmLeave ? (
                 <Confirm text="Leave this circle? You can rejoin later with the code." yes="Leave" busy={removing} onYes={() => myUserId && removeMember(myUserId)} onNo={() => setConfirmLeave(false)} />
               ) : (

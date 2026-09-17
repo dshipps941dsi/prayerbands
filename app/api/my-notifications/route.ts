@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
   const giftIds = (giftBands || []).map((b: any) => b.band_id)
   const subIds = (subs || []).map((s: any) => s.id)
   const circleIds = [...new Set((mems || []).map((m: any) => m.circle_id))]
-  const ledIds = [...new Set((mems || []).filter((m: any) => m.role === 'leader').map((m: any) => m.circle_id))]
+  const ledIds = [...new Set((mems || []).filter((m: any) => m.role === 'leader' || m.role === 'co_leader').map((m: any) => m.circle_id))]
   const myReqIds = (myReqs || []).map((r: any) => r.id)
   const partnerIds = [...new Set((conns || []).map((c: any) => c.requester_id === effectiveId ? c.recipient_id : c.requester_id))]
   // Bands I held and passed on (not the ones I still own — those are covered

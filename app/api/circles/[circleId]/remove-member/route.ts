@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { circleStanding } from '@/lib/circle-role'
 
 // DELETE — remove a member (leader action) or leave a circle (self)
 export async function DELETE(
@@ -26,20 +27,17 @@ export async function DELETE(
     const admin = createServiceClient()
 
     if (!isSelf) {
-      // Must be leader to remove others
-      const { data: circle } = await admin
-        .from('prayer_circles')
-        .select('created_by')
-        .eq('id', circleId)
-        .maybeSingle()
-
-      if (!circle || circle.created_by !== user.id) {
-        return NextResponse.json({ error: 'Only the leader can remove members' }, { status: 403 })
+      const me = await circleStanding(admin, circleId, user.id)
+      if (!me.canLead) {
+        return NextResponse.json({ error: 'Only the circle’s leaders can remove members' }, { status: 403 })
       }
-
-      // Leader cannot remove themselves via this endpoint
-      if (target_user_id === circle.created_by) {
-        return NextResponse.json({ error: 'Leader cannot be removed — close the circle instead' }, { status: 400 })
+      if (target_user_id === me.createdBy) {
+        return NextResponse.json({ error: 'The leader cannot be removed — close the circle instead' }, { status: 400 })
+      }
+      // A co-leader can only be removed by the leader.
+      const { data: target } = await admin.from('circle_members').select('role').eq('circle_id', circleId).eq('user_id', target_user_id).maybeSingle()
+      if (target?.role === 'co_leader' && !me.isLeader) {
+        return NextResponse.json({ error: 'Only the leader can remove a co-leader' }, { status: 403 })
       }
     }
 

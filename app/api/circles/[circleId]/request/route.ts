@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sendPush } from '@/lib/push'
 import { hasHeldBand } from '@/lib/band-holder'
+import { circleStanding } from '@/lib/circle-role'
 
 // POST — add a topic to a circle's Prayer Wall: a prayer request, or an
 // update on how things are going. { title?, kind?, request_text? } — a title
@@ -21,16 +22,14 @@ export async function POST(
     const { circleId } = await params
     const admin = createServiceClient()
 
-    // Verify membership
-    const { data: membership } = await admin
-      .from('circle_members')
-      .select('id')
-      .eq('circle_id', circleId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (!membership) {
+    // Topics come from the people running the circle. Members write prayers
+    // under them and tap Pray.
+    const standing = await circleStanding(admin, circleId, user.id)
+    if (!standing.isMember) {
       return NextResponse.json({ error: 'Not a member of this circle' }, { status: 403 })
+    }
+    if (!standing.canLead) {
+      return NextResponse.json({ error: 'Only the circle’s leaders post topics.' }, { status: 403 })
     }
 
     if (!(await hasHeldBand(admin, user.id))) {
@@ -130,24 +129,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Request not found' }, { status: 404 })
     }
 
-    const { data: circle } = await admin
-      .from('prayer_circles')
-      .select('created_by')
-      .eq('id', circleId)
-      .maybeSingle()
-
-    const { data: actorMembership } = await admin
-      .from('circle_members')
-      .select('id')
-      .eq('circle_id', circleId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
+    const standing = await circleStanding(admin, circleId, user.id)
     const isAuthor = existingReq.user_id === user.id
-    const isLeader = circle?.created_by === user.id
     // Author rights require still being in the circle — a removed/departed member
     // can't keep editing content in a circle they're no longer part of.
-    if (!((isAuthor && actorMembership) || isLeader)) {
+    if (!((isAuthor && standing.isMember) || standing.canLead)) {
       return NextResponse.json({ error: 'Not allowed to update this request' }, { status: 403 })
     }
 
@@ -207,22 +193,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Request not found' }, { status: 404 })
     }
 
-    const { data: circle } = await admin
-      .from('prayer_circles')
-      .select('created_by')
-      .eq('id', circleId)
-      .maybeSingle()
-
-    const { data: actorMembership } = await admin
-      .from('circle_members')
-      .select('id')
-      .eq('circle_id', circleId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
+    const standing = await circleStanding(admin, circleId, user.id)
     const isAuthor = existingReq.user_id === user.id
-    const isLeader = circle?.created_by === user.id
-    if (!((isAuthor && actorMembership) || isLeader)) {
+    if (!((isAuthor && standing.isMember) || standing.canLead)) {
       return NextResponse.json({ error: 'Not allowed to delete this request' }, { status: 403 })
     }
 

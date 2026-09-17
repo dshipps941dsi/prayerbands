@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sendPush } from '@/lib/push'
 import { hasHeldBand } from '@/lib/band-holder'
+import { circleStanding } from '@/lib/circle-role'
 
 // A prayer written underneath a topic on a circle's Prayer Wall.
 //
@@ -107,10 +108,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ c
     const { data: topic } = await admin.from('circle_prayer_requests').select('circle_id').eq('id', reply.request_id).maybeSingle()
     if (!topic || topic.circle_id !== circleId) return NextResponse.json({ error: 'Reply not found in this circle' }, { status: 404 })
 
-    const { data: circle } = await admin.from('prayer_circles').select('created_by').eq('id', circleId).maybeSingle()
+    const standing = await circleStanding(admin, circleId, user.id)
     const isAuthor = reply.user_id === user.id
-    const isLeader = circle?.created_by === user.id
-    if (!isAuthor && !isLeader) return NextResponse.json({ error: 'Not allowed to remove this prayer' }, { status: 403 })
+    if (!isAuthor && !standing.canLead) return NextResponse.json({ error: 'Not allowed to remove this prayer' }, { status: 403 })
 
     const { error } = await admin.from('circle_prayer_replies').delete().eq('id', replyId)
     if (error) return NextResponse.json({ error: 'Could not remove the prayer' }, { status: 500 })
