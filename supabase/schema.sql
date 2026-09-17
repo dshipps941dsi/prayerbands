@@ -1,4 +1,4 @@
--- Prayer Bands: public schema, rendered by public.schema_dump() at 2026-09-15 09:52:32.621027+00
+-- Prayer Bands: public schema, rendered by public.schema_dump() at 2026-09-17 09:58:27.870963+00
 -- Regenerate with `npm run db:schema` after every migration. Do not hand-edit.
 
 -- Applied migrations
@@ -192,6 +192,14 @@ create table public.circle_members (
   joined_at timestamp with time zone default now()
 );
 
+create table public.circle_prayer_replies (
+  id uuid default gen_random_uuid() not null,
+  request_id uuid not null,
+  user_id uuid not null,
+  body text not null,
+  created_at timestamp with time zone default now() not null
+);
+
 create table public.circle_prayer_requests (
   id uuid default gen_random_uuid() not null,
   circle_id uuid not null,
@@ -199,7 +207,9 @@ create table public.circle_prayer_requests (
   request_text text not null,
   is_answered boolean default false,
   answered_at timestamp with time zone,
-  created_at timestamp with time zone default now()
+  created_at timestamp with time zone default now(),
+  title text,
+  kind text default 'request'::text not null
 );
 
 create table public.contact_submissions (
@@ -663,7 +673,11 @@ alter table public.circle_intercessions add constraint circle_intercessions_requ
 alter table public.circle_members add constraint circle_members_circle_id_user_id_key UNIQUE (circle_id, user_id);
 alter table public.circle_members add constraint circle_members_pkey PRIMARY KEY (id);
 alter table public.circle_members add constraint circle_members_role_check CHECK ((role = ANY (ARRAY['leader'::text, 'member'::text])));
+alter table public.circle_prayer_replies add constraint circle_prayer_replies_body_check CHECK (((char_length(TRIM(BOTH FROM body)) >= 1) AND (char_length(TRIM(BOTH FROM body)) <= 1000)));
+alter table public.circle_prayer_replies add constraint circle_prayer_replies_pkey PRIMARY KEY (id);
+alter table public.circle_prayer_requests add constraint circle_prayer_requests_kind_check CHECK ((kind = ANY (ARRAY['request'::text, 'update'::text])));
 alter table public.circle_prayer_requests add constraint circle_prayer_requests_pkey PRIMARY KEY (id);
+alter table public.circle_prayer_requests add constraint circle_prayer_requests_title_check CHECK (((title IS NULL) OR (char_length(title) <= 120)));
 alter table public.contact_submissions add constraint contact_submissions_category_check CHECK ((category = ANY (ARRAY['order'::text, 'ministry'::text, 'technical'::text, 'partnership'::text, 'subscription'::text, 'other'::text])));
 alter table public.contact_submissions add constraint contact_submissions_pkey PRIMARY KEY (id);
 alter table public.contact_submissions add constraint contact_submissions_status_check CHECK ((status = ANY (ARRAY['new'::text, 'in_progress'::text, 'resolved'::text, 'spam'::text])));
@@ -741,6 +755,8 @@ alter table public.circle_intercessions add constraint circle_intercessions_requ
 alter table public.circle_intercessions add constraint circle_intercessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 alter table public.circle_members add constraint circle_members_circle_id_fkey FOREIGN KEY (circle_id) REFERENCES prayer_circles(id) ON DELETE CASCADE;
 alter table public.circle_members add constraint circle_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+alter table public.circle_prayer_replies add constraint circle_prayer_replies_request_id_fkey FOREIGN KEY (request_id) REFERENCES circle_prayer_requests(id) ON DELETE CASCADE;
+alter table public.circle_prayer_replies add constraint circle_prayer_replies_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 alter table public.circle_prayer_requests add constraint circle_prayer_requests_circle_id_fkey FOREIGN KEY (circle_id) REFERENCES prayer_circles(id) ON DELETE CASCADE;
 alter table public.circle_prayer_requests add constraint circle_prayer_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 alter table public.credit_ledger add constraint credit_ledger_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES credit_ledger(id) ON DELETE CASCADE;
@@ -813,6 +829,8 @@ CREATE INDEX idx_circle_intercessions_request_id ON public.circle_intercessions 
 CREATE INDEX idx_circle_intercessions_user_id ON public.circle_intercessions USING btree (user_id);
 CREATE INDEX idx_circle_members_circle_id ON public.circle_members USING btree (circle_id);
 CREATE INDEX idx_circle_members_user_id ON public.circle_members USING btree (user_id);
+CREATE INDEX circle_prayer_replies_req_idx ON public.circle_prayer_replies USING btree (request_id, created_at);
+CREATE INDEX circle_prayer_replies_user_idx ON public.circle_prayer_replies USING btree (user_id);
 CREATE INDEX idx_circle_prayer_requests_circle_id ON public.circle_prayer_requests USING btree (circle_id);
 CREATE INDEX idx_circle_prayer_requests_user_id ON public.circle_prayer_requests USING btree (user_id);
 CREATE INDEX idx_contact_submissions_category ON public.contact_submissions USING btree (category);
@@ -1415,6 +1433,7 @@ alter table public.bands enable row level security;
 alter table public.chain_prayers enable row level security;
 alter table public.circle_intercessions enable row level security;
 alter table public.circle_members enable row level security;
+alter table public.circle_prayer_replies enable row level security;
 alter table public.circle_prayer_requests enable row level security;
 alter table public.contact_submissions enable row level security;
 alter table public.credit_ledger enable row level security;
@@ -1484,6 +1503,20 @@ create policy "Leader can remove members" on public.circle_members as permissive
    FROM prayer_circles
   WHERE (prayer_circles.created_by = auth.uid())))));
 create policy "Members can see who is in their circles" on public.circle_members as permissive for select to public using (is_circle_member(circle_id));
+create policy "Author or leader can delete a reply" on public.circle_prayer_replies as permissive for delete to authenticated using (((auth.uid() = user_id) OR (request_id IN ( SELECT r.id
+   FROM (circle_prayer_requests r
+     JOIN prayer_circles c ON ((c.id = r.circle_id)))
+  WHERE (c.created_by = auth.uid())))));
+create policy "Circle members can reply" on public.circle_prayer_replies as permissive for insert to authenticated with check (((auth.uid() = user_id) AND (request_id IN ( SELECT r.id
+   FROM circle_prayer_requests r
+  WHERE (r.circle_id IN ( SELECT m.circle_id
+           FROM circle_members m
+          WHERE (m.user_id = auth.uid())))))));
+create policy "Circle members can view replies" on public.circle_prayer_replies as permissive for select to authenticated using ((request_id IN ( SELECT r.id
+   FROM circle_prayer_requests r
+  WHERE (r.circle_id IN ( SELECT m.circle_id
+           FROM circle_members m
+          WHERE (m.user_id = auth.uid()))))));
 create policy "Circle members can post prayer requests" on public.circle_prayer_requests as permissive for insert to public with check (((auth.uid() = user_id) AND (circle_id IN ( SELECT circle_members.circle_id
    FROM circle_members
   WHERE (circle_members.user_id = auth.uid())))));
@@ -1601,6 +1634,9 @@ grant delete, insert, references, select, trigger, truncate, update on public.ci
 grant delete, insert, references, select, trigger, truncate, update on public.circle_members to anon;
 grant delete, insert, references, select, trigger, truncate, update on public.circle_members to authenticated;
 grant delete, insert, references, select, trigger, truncate, update on public.circle_members to service_role;
+grant delete, insert, references, select, trigger, truncate, update on public.circle_prayer_replies to anon;
+grant delete, insert, references, select, trigger, truncate, update on public.circle_prayer_replies to authenticated;
+grant delete, insert, references, select, trigger, truncate, update on public.circle_prayer_replies to service_role;
 grant delete, insert, references, select, trigger, truncate, update on public.circle_prayer_requests to anon;
 grant delete, insert, references, select, trigger, truncate, update on public.circle_prayer_requests to authenticated;
 grant delete, insert, references, select, trigger, truncate, update on public.circle_prayer_requests to service_role;
