@@ -159,10 +159,10 @@ export default function CirclesSection({ userId, initialCircle = null }: { userI
               )}
             </p>
           </div>
-          <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: BORDER, marginLeft: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: MUTED, marginLeft: '12px' }}>
             {circle.join_code}
           </div>
-          <span style={{ marginLeft: '8px', color: BORDER, fontSize: '16px' }}>›</span>
+          <span style={{ marginLeft: '8px', color: MUTED, fontSize: '16px' }}>›</span>
         </div>
       ))}
     </div>
