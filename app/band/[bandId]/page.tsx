@@ -443,6 +443,14 @@ export default function BandPage() {
   // as the account, or made from this phone — a one-tap "make it mine"
   // appears. Nothing happens until they tap it.
   const [claimOffer, setClaimOffer] = useState<{ name: string } | null>(null)
+  // The one case that needs no question: this phone registered the band as a
+  // guest minutes ago, and the account that just came back from sign-up
+  // carries the same name. That is one person finishing what they started
+  // (Dave Brower signed up with Google from the success card and landed with
+  // an account holding nothing), not Matt tapping Emily's band. Attach it
+  // once, quietly, and say so. Everything else still asks.
+  const autoClaimTried = useRef(false)
+  const [autoClaimed, setAutoClaimed] = useState(false)
   useEffect(() => {
     setClaimOffer(null)
     if (!userId || !status.band || status.band.owner_id) return
@@ -453,11 +461,24 @@ export default function BandPage() {
       if (localStorage.getItem(`for_other_${bandId}`)) return
       if (localStorage.getItem(`not_mine_${bandId}`)) return
       const fromThisPhone = !!localStorage.getItem(`holder_${bandId}`)
+      const sameName = !!myName && namesMatch(myName, String(latest.user_name || ''))
+      const minutesAgo = latest.registered_at ? (Date.now() - new Date(latest.registered_at).getTime()) / 60000 : Infinity
+      if (fromThisPhone && sameName && minutesAgo >= 0 && minutesAgo <= 30 && !autoClaimTried.current) {
+        autoClaimTried.current = true
+        claimToAccount(true)
+        return
+      }
       // A nameless account matches nothing by name; only a stop made from this phone counts.
-      if (fromThisPhone || (!!myName && namesMatch(myName, String(latest.user_name || '')))) setClaimOffer({ name: String(latest.user_name || 'you') })
+      if (fromThisPhone || sameName) setClaimOffer({ name: String(latest.user_name || 'you') })
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, myName, status.band?.band_id, status.band?.owner_id, status.registrations?.length])
+
+  const autoClaimedNote = autoClaimed && (
+    <div style={{ margin: '14px 20px 0', background: 'rgba(74,138,106,0.10)', border: '1px solid #4A8A6A', borderRadius: 12, padding: '12px 14px', fontFamily: body, fontSize: 13.5, color: DARK, lineHeight: 1.45 }}>
+      ✓ This band is saved to your account.
+    </div>
+  )
 
   const claimOfferCard = claimOffer && (
     <div style={{ margin: '14px 20px 0', background: 'rgba(184,134,11,0.10)', border: `1px solid ${GOLD}`, borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -465,7 +486,7 @@ export default function BandPage() {
         This band was registered as <strong>{claimOffer.name}</strong>. Is it yours?
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={claimToAccount} disabled={claimingOwnership} style={{ padding: '9px 14px', background: GOLD, color: INK, border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+        <button onClick={() => claimToAccount()} disabled={claimingOwnership} style={{ padding: '9px 14px', background: GOLD, color: INK, border: 'none', borderRadius: 8, fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
           {claimingOwnership ? 'Saving…' : 'Yes, make it mine'}
         </button>
         <button onClick={() => { try { localStorage.setItem(`not_mine_${bandId}`, '1') } catch {}; setClaimOffer(null) }} style={{ padding: '9px 12px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, fontFamily: body, fontSize: 13, cursor: 'pointer' }}>
@@ -679,8 +700,10 @@ export default function BandPage() {
     }
   }
 
-  // Attach this (unowned) band to the signed-in user's account.
-  async function claimToAccount() {
+  // Attach this (unowned) band to the signed-in user's account. `quiet` is
+  // the finish-your-sign-up case above: no alerts, a note on success, and
+  // if anything refuses, fall back to the question.
+  async function claimToAccount(quiet = false) {
     setClaimingOwnership(true)
     try {
       const res = await fetch('/api/claim-band', {
@@ -689,14 +712,18 @@ export default function BandPage() {
         body: JSON.stringify({ bandId, explicit: true }),
       })
       const data = await res.json()
-      if (res.status === 401) { router.push(`/signin?redirect=/band/${bandId}`); return }
-      if (!res.ok) { alert(data.error || 'Could not claim this band.'); return }
+      if (res.status === 401) { if (!quiet) router.push(`/signin?redirect=/band/${bandId}`); return }
+      if (!res.ok) {
+        if (quiet) { const regs = (status.registrations || []) as any[]; setClaimOffer({ name: String(regs[regs.length - 1]?.user_name || 'you') }); return }
+        alert(data.error || 'Could not claim this band.'); return
+      }
       const url = `/api/band-status?id=${bandId}${userId ? `&userId=${userId}` : ''}`
       const fresh = await fetch(url).then(r => r.json())
       statusSeq.current++
       setStatus(fresh)
+      if (quiet) { setAutoClaimed(true); setTimeout(() => setAutoClaimed(false), 6000) }
     } catch {
-      alert('Something went wrong. Please try again.')
+      if (!quiet) alert('Something went wrong. Please try again.')
     } finally {
       setClaimingOwnership(false)
     }
@@ -1265,7 +1292,7 @@ export default function BandPage() {
           </>
         )}
 
-        {claimOfferCard}
+        {autoClaimedNote}{claimOfferCard}
         {activeTab === 'journey' && (
           <div>
             <div style={{ display: 'flex', gap: 4, background: 'white', border: '1px solid rgba(44,24,16,0.1)', borderRadius: 12, padding: 4, margin: '20px 20px 0' }}>
@@ -1530,7 +1557,7 @@ export default function BandPage() {
       <div style={{ minHeight: '100vh', fontFamily: body, color: DARK }}>
         <Nav />
         <StatsStrip regs={regs} />
-        {claimOfferCard}
+        {autoClaimedNote}{claimOfferCard}
         <div style={{ padding: '24px 20px 0', textAlign: 'center' }}>
           <div style={{ fontFamily: body, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, marginBottom: 8 }}>✝︎ Prayer Band Journey</div>
           <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{bandId}</div>
