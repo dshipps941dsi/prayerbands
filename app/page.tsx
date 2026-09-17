@@ -239,6 +239,72 @@ function GlobalPrayerMap({ points }: { points: MapPoint[] }) {
   return <div ref={mapRef} className="prayer-map" />;
 }
 
+// ─── Prayer feed carousel ────────────────────────────────────────────────────────
+// Four cards across on a desktop, two on a tablet, one on a phone. Advances a
+// page every six seconds; a hover or a touch holds it; dots jump to a page.
+function FeedCarousel({ feed, prayingCount }: { feed: FeedPrayer[]; prayingCount: (seed: string) => number }) {
+  const [perView, setPerView] = useState(4);
+  const [page, setPage] = useState(0);
+  const [held, setHeld] = useState(false);
+  const [still, setStill] = useState(false);
+  useEffect(() => {
+    const mq = [window.matchMedia("(max-width:520px)"), window.matchMedia("(max-width:980px)")];
+    const rm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => { setPerView(mq[0].matches ? 1 : mq[1].matches ? 2 : 4); setStill(rm.matches); };
+    apply();
+    mq.forEach(m => m.addEventListener("change", apply)); rm.addEventListener("change", apply);
+    return () => { mq.forEach(m => m.removeEventListener("change", apply)); rm.removeEventListener("change", apply); };
+  }, []);
+  const pages = Math.max(1, Math.ceil(feed.length / perView));
+  const current = Math.min(page, pages - 1);
+  useEffect(() => {
+    if (held || still || pages < 2) return;
+    const t = setInterval(() => setPage(p => (p + 1) % pages), 6000);
+    return () => clearInterval(t);
+  }, [held, still, pages]);
+  // Touch: a swipe moves a page; a finger resting on it holds it.
+  const touchX = useRef<number | null>(null);
+  return (
+    <div className="feed-carousel"
+      onMouseEnter={() => setHeld(true)} onMouseLeave={() => setHeld(false)}
+      onTouchStart={e => { setHeld(true); touchX.current = e.touches[0].clientX; }}
+      onTouchEnd={e => {
+        setHeld(false);
+        const x0 = touchX.current; touchX.current = null;
+        if (x0 == null) return;
+        const dx = e.changedTouches[0].clientX - x0;
+        if (dx < -40) setPage(p => (p + 1) % pages); else if (dx > 40) setPage(p => (p - 1 + pages) % pages);
+      }}>
+      <div className="feed-viewport">
+        <div className="feed-track" style={{ transform: `translateX(-${current * 100}%)` }}>
+          {feed.map((p, i) => {
+            const count = prayingCount(p.key);
+            return (
+              <div key={p.key + i} className="feed-slide" style={{ flex: `0 0 ${100 / perView}%` }}>
+                <div className="feed-card">
+                  <div className="feed-top">
+                    <div className="feed-avatar">{p.initials}</div>
+                    <div><div className="feed-name">{p.name}</div><div className="feed-meta">requested prayer · {p.time}</div></div>
+                  </div>
+                  <div className="feed-text">{p.text}</div>
+                  <div className="feed-foot"><Ico name="people" size={15} /> <strong>{count}</strong>&nbsp;praying</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {pages > 1 && (
+        <div className="feed-dots" role="tablist" aria-label="More prayers">
+          {Array.from({ length: pages }, (_, i) => (
+            <button key={i} role="tab" aria-selected={i === current} aria-label={`Prayers, page ${i + 1}`} className={`feed-dot${i === current ? " on" : ""}`} onClick={() => setPage(i)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ────────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [live, setLive] = useState<any>(null);
@@ -282,7 +348,7 @@ export default function HomePage() {
 
   const feed: FeedPrayer[] = useMemo(() => (
     ((live?.prayers || []) as any[]).length >= 4
-      ? (live.prayers as any[]).slice(0, 4).map(p => ({ initials: p.initials, name: p.name, location: p.location, text: p.prayer, key: p.key, time: timeAgo(p.registered_at) }))
+      ? (live.prayers as any[]).slice(0, 12).map(p => ({ initials: p.initials, name: p.name, location: p.location, text: p.prayer, key: p.key, time: timeAgo(p.registered_at) }))
       : SAMPLE_FEED
   ), [live]);
 
@@ -392,28 +458,7 @@ export default function HomePage() {
             </div>
             <Link href="/prayer-wall" className="link-arrow">View all prayers →</Link>
           </Reveal>
-          <div className="feed-grid">
-            {feed.map((p, i) => {
-              // Parked until a real answered prayer drives it — hard-coding the
-              // 3rd card as "answered" mislabeled whatever prayer/verse landed
-              // there. Feature (badge + styling below) kept for that day.
-              const answered = false;
-              const count = prayingCount(p.key);
-              return (
-                <Reveal key={p.key + i} delay={i * 80} className={`feed-card${answered ? " answered" : ""}`}>
-                  {answered && (
-                    <div className="feed-answered"><Ico name="check" size={13} /> Prayer Answered</div>
-                  )}
-                  <div className="feed-top">
-                    <div className="feed-avatar">{p.initials}</div>
-                    <div><div className="feed-name">{p.name}</div><div className="feed-meta">{answered ? "marked answered" : "requested prayer"} · {p.time}</div></div>
-                  </div>
-                  <div className="feed-text">{p.text}</div>
-                  <div className="feed-foot"><Ico name="people" size={15} /> <strong>{count}</strong>&nbsp;praying</div>
-                </Reveal>
-              );
-            })}
-          </div>
+          <FeedCarousel feed={feed} prayingCount={prayingCount} />
         </div>
       </section>
 
@@ -763,7 +808,16 @@ const styles = `
   /* Feed */
   .feed { background:var(--paper2); padding:90px 0; }
   .feed-head { display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:48px; flex-wrap:wrap; }
-  .feed-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+  .feed-carousel { position:relative; }
+  .feed-viewport { overflow:hidden; margin:0 -10px; }
+  .feed-track { display:flex; align-items:stretch; transition:transform .7s cubic-bezier(.22,.61,.36,1); will-change:transform; }
+  .feed-slide { padding:0 10px; box-sizing:border-box; display:flex; }
+  .feed-slide .feed-card { flex:1; display:flex; flex-direction:column; }
+  .feed-slide .feed-text { flex:1; }
+  .feed-dots { display:flex; justify-content:center; gap:8px; margin-top:26px; }
+  .feed-dot { width:8px; height:8px; border-radius:50%; border:1px solid var(--goldT); background:transparent; padding:0; cursor:pointer; transition:background .25s, transform .25s; }
+  .feed-dot.on { background:var(--gold); border-color:var(--gold); transform:scale(1.25); }
+  @media (prefers-reduced-motion: reduce){ .feed-track { transition:none; } }
   .feed-card { position:relative; background:#fff; border:1px solid var(--line); border-radius:12px; padding:22px; box-shadow:0 6px 20px rgba(10,22,40,0.04); }
   .feed-card.answered { border-color:rgba(43,140,90,0.45); box-shadow:0 8px 26px rgba(43,140,90,0.12); }
   .feed-answered { display:inline-flex; align-items:center; gap:6px; margin-bottom:14px; padding:5px 11px; border-radius:999px; background:rgba(43,140,90,0.10); border:1px solid rgba(43,140,90,0.30); color:#1F7A4D; font-family:'Cinzel',serif; font-size:0.62rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; }
@@ -774,8 +828,7 @@ const styles = `
   .feed-meta { font-size:0.72rem; color:var(--ink2); }
   .feed-text { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.08rem; color:var(--ink); line-height:1.55; min-height:84px; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden; }
   .feed-foot { display:flex; align-items:center; gap:7px; margin-top:14px; padding-top:14px; border-top:1px solid var(--line); font-size:0.74rem; letter-spacing:0.04em; color:var(--goldT); }
-  @media (max-width:980px){ .feed-grid { grid-template-columns:repeat(2,1fr); } }
-  @media (max-width:520px){ .feed-grid { grid-template-columns:1fr; } }
+
 
   /* Map */
   .mapsec { background:linear-gradient(180deg,var(--navy),var(--navy2)); padding:96px 0; }
