@@ -31,7 +31,7 @@
 
 /* Photograph, right, fading into the ink on its left and bottom edges. */
 .photo { position: relative; grid-column: 3; min-height: 100%; }
-.photoImage { object-fit: cover; object-position: 60% center; }
+.photoImage { object-fit: cover; object-position: 28% center; }
 .photoShade { position: absolute; inset: 0; background: linear-gradient(90deg, var(--ink) 0%, rgba(11,13,14,0.55) 22%, transparent 55%), linear-gradient(0deg, rgba(11,13,14,0.6), transparent 40%); }
 
 .copy { grid-column: 1; align-self: center; padding: clamp(56px, 6vw, 96px) 0 clamp(56px, 6vw, 96px) clamp(24px, 3.5vw, 56px); }
