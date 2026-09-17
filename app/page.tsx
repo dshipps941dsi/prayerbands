@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
+import PrayerPartnersSection from "@/components/PrayerPartnersSection";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
 import { escapeHtml as esc } from "@/lib/escape-html";
@@ -380,6 +381,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Prayer partners ── */}
+      <PrayerPartnersSection />
+
       {/* ── Prayer circles ── */}
       <section id="circles" className="circles">
         <div className="circles-inner">
@@ -407,57 +411,6 @@ export default function HomePage() {
                 <div><div className="circ-feat-t">{f.t}</div><div className="circ-feat-d">{f.d}</div></div>
               </div>
             ))}
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── Prayer partners — and how they differ from circles ── */}
-      <section id="partners" className="partners">
-        <div className="container partners-inner">
-          <Reveal className="partners-copy">
-            <div className="eyebrow">Prayer Partners</div>
-            <h2 className="h2">Pray With the People <em>Who Know You.</em></h2>
-            <p className="lead dark">A prayer partner is one person you stay connected to in prayer: the friend who gave you your band, the person you passed it to, someone from your small group. Share a prayer from your journal and your partners see it, tap to pray, and let you know they did.</p>
-            <div className="pt-feats">
-              {[
-                { ico: "tap", t: "Connect in person", d: "Read them the code on your band, or show your QR." },
-                { ico: "people", t: "Lineage partners", d: "Everyone a band has actually passed between is already linked to you." },
-                { ico: "book", t: "Share what you choose", d: "Each journal entry is private until you send it to partners, a group, or your whole network." },
-              ].map(f => (
-                <div key={f.t} className="pt-feat">
-                  <div className="pt-feat-ico"><Ico name={f.ico} size={22} /></div>
-                  <div><div className="pt-feat-t">{f.t}</div><div className="pt-feat-d">{f.d}</div></div>
-                </div>
-              ))}
-            </div>
-            <div className="circ-cta">
-              <Link href="/my-band?open=partners" className="btn-primary sm">Connect a Partner</Link>
-              <Link href="/how-it-works#network" className="pt-learn">Learn more →</Link>
-            </div>
-          </Reveal>
-
-          <Reveal delay={140} className="cmp-wrap">
-            <div className="cmp">
-              <div className="cmp-head">
-                <div className="cmp-corner">Which one?</div>
-                <div className="cmp-col-h"><Ico name="heart" size={18} /> Partners</div>
-                <div className="cmp-col-h"><Ico name="people" size={18} /> Circles</div>
-              </div>
-              {[
-                { k: "Who", a: "One person at a time", b: "A group gathered around one need" },
-                { k: "How you connect", a: "A band code between two people, or a band that passed between you", b: "A join code or invite link the leader shares" },
-                { k: "What gets shared", a: "Prayers from your own journal, sent to the partners you pick", b: "A Prayer Wall of topics the leaders post, with prayers written underneath" },
-                { k: "Who sees it", a: "Only the people you sent it to", b: "Everyone in the circle" },
-                { k: "Best for", a: "A friend, a mentor, the person who gave you your band", b: "A surgery, a family, a small group, a season of need" },
-              ].map(r => (
-                <div key={r.k} className="cmp-row">
-                  <div className="cmp-k">{r.k}</div>
-                  <div className="cmp-a">{r.a}</div>
-                  <div className="cmp-b">{r.b}</div>
-                </div>
-              ))}
-              <div className="cmp-foot">Most people have both: a few partners they pray with every week, and a circle when something big comes up.</div>
-            </div>
           </Reveal>
         </div>
       </section>
@@ -789,41 +742,6 @@ const styles = `
     .circles { background:linear-gradient(180deg,rgba(0,0,0,0.5),rgba(0,0,0,0.58)),url('/home/prayer-circles-bg.jpg') center/cover no-repeat,#101114; background-attachment:scroll; }
     .circles-inner { grid-template-columns:1fr; gap:48px; }
     .circles-feats { max-width:420px; margin:0 auto; }
-  }
-
-  /* Partners */
-  .partners { background:var(--paper); padding:96px 0; border-top:1px solid var(--line); }
-  .partners-inner { display:grid; grid-template-columns:1fr 1.05fr; gap:56px; align-items:center; }
-  .pt-feats { margin:26px 0 30px; display:grid; gap:14px; max-width:480px; }
-  .pt-feat { display:flex; gap:13px; align-items:flex-start; }
-  .pt-feat-ico { flex-shrink:0; width:40px; height:40px; border-radius:10px; border:1px solid var(--lineG); background:#fff; color:var(--goldT); display:flex; align-items:center; justify-content:center; }
-  .pt-feat-t { font-family:'Inter',sans-serif; font-size:0.9rem; font-weight:600; letter-spacing:0.03em; color:var(--ink); }
-  .pt-feat-d { font-size:0.9rem; line-height:1.55; color:var(--ink2); }
-  .pt-learn { font-family:'Cinzel',serif; font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--goldT); text-decoration:none; transition:color .2s; }
-  .pt-learn:hover { color:var(--gold); }
-  .cmp { background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:0 14px 40px rgba(10,22,40,0.07); }
-  .cmp-head, .cmp-row { display:grid; grid-template-columns:118px 1fr 1fr; }
-  .cmp-head { background:var(--navy); color:#fff; }
-  .cmp-corner { padding:14px 16px; font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase; color:rgba(245,237,216,0.6); align-self:center; }
-  .cmp-col-h { padding:14px 16px; font-family:'Cinzel',serif; font-size:0.74rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold2); display:flex; align-items:center; gap:8px; border-left:1px solid rgba(255,255,255,0.08); }
-  .cmp-row { border-top:1px solid var(--line); }
-  .cmp-row:nth-child(odd) { background:var(--paper); }
-  .cmp-k { padding:14px 16px; font-family:'Cinzel',serif; font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--goldT); }
-  .cmp-a, .cmp-b { padding:14px 16px; font-size:0.88rem; line-height:1.55; color:var(--ink); border-left:1px solid var(--line); }
-  .cmp-foot { padding:14px 16px; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.02rem; color:var(--ink2); border-top:1px solid var(--line); background:var(--cream); }
-  @media (max-width:980px){
-    .partners-inner { grid-template-columns:1fr; gap:44px; }
-    .cmp-head, .cmp-row { grid-template-columns:96px 1fr 1fr; }
-    .cmp-a, .cmp-b { font-size:0.82rem; padding:12px 12px; }
-    .cmp-k { padding:12px 12px; }
-  }
-  @media (max-width:520px){
-    .cmp-head { grid-template-columns:1fr 1fr; }
-    .cmp-corner { display:none; }
-    .cmp-col-h { border-left:none; justify-content:center; }
-    .cmp-row { grid-template-columns:1fr 1fr; }
-    .cmp-k { grid-column:1 / -1; padding:10px 12px 0; }
-    .cmp-a { border-left:none; }
   }
 
   /* Feed */

@@ -1,0 +1,86 @@
+/* Prayer Partners — home page section. Photo left, content right, on ink.
+   Layout and panels from the supplied design; type mapped to the site's
+   faces (Cormorant Garamond display, Cinzel labels, Inter body). */
+
+.section {
+  --gold: #d5aa62;
+  --gold-dark: #b88943;
+  --ink: #080b0c;
+  --panel: rgba(17, 20, 21, 0.88);
+  --display: 'Cormorant Garamond', Georgia, serif;
+  --label: 'Cinzel', Georgia, serif;
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(580px, 1.08fr);
+  min-height: 720px;
+  overflow: hidden;
+  color: #f8f6f1;
+  background: var(--ink);
+}
+
+.photo { position: relative; min-height: 100%; }
+.photoImage { object-fit: cover; object-position: 42% center; }
+.photoShade { position: absolute; inset: 0; background: linear-gradient(90deg, transparent 58%, var(--ink) 100%), linear-gradient(0deg, rgba(5,7,8,.35), transparent 45%); }
+
+.content { position: relative; z-index: 1; padding: clamp(56px, 6vw, 96px) clamp(28px, 5.5vw, 96px) clamp(56px, 6vw, 90px) clamp(24px, 3vw, 52px); background: radial-gradient(circle at 100% 0%, rgba(213,170,98,.07), transparent 38%); }
+.eyebrow { margin: 0 0 14px; color: var(--gold); font-family: var(--label); font-size: 0.66rem; font-weight: 600; letter-spacing: .28em; text-transform: uppercase; }
+.content h2 { margin: 0; max-width: 690px; font-family: var(--display); font-weight: 600; font-size: clamp(2.4rem, 4.6vw, 4rem); line-height: 1.08; letter-spacing: -.01em; color: #fff; }
+.content h2 em { font-style: italic; font-weight: 500; color: #E2C98A; }
+.intro { max-width: 690px; margin: 22px 0 0; color: #d8d8d5; font-size: clamp(1rem, 1.2vw, 1.12rem); line-height: 1.7; font-weight: 300; }
+.contrast { max-width: 690px; margin: 14px 0 0; padding-left: 14px; border-left: 2px solid var(--gold); color: #bdbdb8; font-family: var(--display); font-style: italic; font-size: 1.12rem; line-height: 1.5; }
+.contrast b { color: #f8f6f1; font-weight: 700; }
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: 26px; margin: 30px 0; }
+.primaryButton { display: inline-flex; align-items: center; min-height: 52px; padding: 0 28px; border: 1px solid #deb871; border-radius: 3px; color: #0A1628; background: linear-gradient(135deg, #E2C98A, #C8A96E); font-family: var(--label); font-size: 0.74rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; text-decoration: none; }
+.primaryButton:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.textButton { color: #fff; font-family: var(--label); font-size: 0.72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; text-decoration: none; }
+.textButton span { margin-left: 8px; color: var(--gold); }
+.textButton:hover { color: var(--gold); }
+
+.panel { margin-top: 14px; padding: 20px 24px 22px; border: 1px solid rgba(213,170,98,.55); border-radius: 16px; background: var(--panel); box-shadow: 0 18px 50px rgba(0,0,0,.18); backdrop-filter: blur(10px); }
+.panel h3 { margin: 0 0 18px; color: var(--gold); font-family: var(--label); font-size: 0.82rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.panel > h3 { display: flex; align-items: center; gap: 16px; }
+.panel > h3::before, .panel > h3::after { height: 1px; flex: 1; content: ""; background: rgba(213,170,98,.65); }
+.methods { display: grid; grid-template-columns: repeat(3, 1fr); }
+.method { display: grid; place-items: center; padding: 2px 16px; text-align: center; }
+.method + .method { border-left: 1px solid rgba(213,170,98,.35); }
+.methodIcon { width: 38px; height: 38px; margin-bottom: 8px; color: var(--gold); }
+.methodIcon svg { width: 100%; height: 100%; }
+.method strong { font-family: var(--label); font-size: 0.74rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #fff; }
+.method small { margin-top: 5px; color: #bdbdb8; font-size: .8rem; line-height: 1.45; }
+.panelHeader { display: flex; justify-content: space-between; gap: 24px; align-items: end; }
+.panelHeader h3 { margin-bottom: 3px; }
+.panelHeader p { margin: 0; color: #c7c7c3; font-size: .9rem; }
+.panelHeader a { padding: 9px 13px; border: 1px solid var(--gold); border-radius: 5px; color: var(--gold); background: transparent; font-family: var(--label); font-size: .66rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; text-decoration: none; white-space: nowrap; }
+.panelHeader a:hover { background: rgba(213,170,98,.1); }
+.listGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 16px; }
+.listItem { display: grid; grid-template-columns: 24px 1fr 18px; gap: 10px; align-items: center; min-height: 46px; padding: 0 13px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; color: #f4f2ed; text-align: left; background: rgba(255,255,255,.045); text-decoration: none; font-size: .92rem; }
+.listItem:hover { border-color: rgba(213,170,98,.5); background: rgba(213,170,98,.08); }
+.listItem svg { width: 22px; color: var(--gold); }
+.listItem svg:last-child { width: 16px; justify-self: end; color: #aaa; }
+
+@media (max-width: 1100px) {
+  .section { grid-template-columns: .8fr 1.2fr; }
+  .content { padding-left: 22px; padding-right: 36px; }
+}
+
+@media (max-width: 860px) {
+  .section { display: flex; min-height: 0; flex-direction: column; }
+  .photo { min-height: 430px; order: 0; }
+  .photoImage { object-position: 35% center; }
+  .photoShade { background: linear-gradient(0deg, var(--ink) 0%, transparent 45%); }
+  .content { order: 1; margin-top: -70px; padding: 30px 22px 56px; }
+  .content h2 { font-size: clamp(2.2rem, 9vw, 3.4rem); }
+}
+
+@media (max-width: 600px) {
+  .photo { min-height: 345px; }
+  .methods { grid-template-columns: 1fr; }
+  .method { grid-template-columns: 40px 1fr; place-items: start; column-gap: 12px; padding: 12px 2px; text-align: left; }
+  .method + .method { border-top: 1px solid rgba(213,170,98,.25); border-left: 0; }
+  .methodIcon { grid-row: 1 / span 2; margin: 0; }
+  .listGrid { grid-template-columns: 1fr; }
+  .panelHeader { align-items: start; flex-direction: column; gap: 14px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .primaryButton, .listItem { transition: transform .2s ease, filter .2s ease, border-color .2s ease, background .2s ease; }
+}
