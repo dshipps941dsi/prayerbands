@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     admin.from('prayer_requests_with_counts').select('id, title, body, total_intercessions, created_at, user_id')
       .eq('visibility', 'public').eq('status', 'active').neq('user_id', effectiveId).gte('created_at', since)
       .order('created_at', { ascending: false }).limit(6),
-    admin.from('circle_members').select('circle_id').eq('user_id', effectiveId),
+    admin.from('circle_members').select('circle_id, role').eq('user_id', effectiveId),
     admin.from('prayer_network_requests').select('id').eq('user_id', effectiveId),
     admin.from('prayer_network_connections').select('requester_id, recipient_id').eq('status', 'accepted')
       .or(`requester_id.eq.${effectiveId},recipient_id.eq.${effectiveId}`),
@@ -102,6 +102,7 @@ export async function GET(req: NextRequest) {
   const giftIds = (giftBands || []).map((b: any) => b.band_id)
   const subIds = (subs || []).map((s: any) => s.id)
   const circleIds = [...new Set((mems || []).map((m: any) => m.circle_id))]
+  const ledIds = [...new Set((mems || []).filter((m: any) => m.role === 'leader').map((m: any) => m.circle_id))]
   const myReqIds = (myReqs || []).map((r: any) => r.id)
   const partnerIds = [...new Set((conns || []).map((c: any) => c.requester_id === effectiveId ? c.recipient_id : c.requester_id))]
   // Bands I held and passed on (not the ones I still own — those are covered
@@ -119,7 +120,7 @@ export async function GET(req: NextRequest) {
 
   // ── Wave 2: keyed on wave-1 ids ───────────────────────────────────────────
   const none = Promise.resolve({ data: [] as any[] })
-  const [{ data: regs }, { data: giftRegs }, { data: ships }, { data: circles }, { data: creqs }, { data: replies }, { data: shared }, { data: heldRegs }, { data: dedBands }, { data: cReplies }] = await Promise.all([
+  const [{ data: regs }, { data: giftRegs }, { data: ships }, { data: circles }, { data: creqs }, { data: replies }, { data: shared }, { data: heldRegs }, { data: dedBands }, { data: cReplies }, { data: joined }] = await Promise.all([
     bandIds.length
       ? admin.from('registrations').select('id, band_id, user_name, city, country, prayer, registered_at')
           .in('band_id', bandIds).gte('registered_at', since).order('registered_at', { ascending: false }).limit(40)
@@ -161,6 +162,11 @@ export async function GET(req: NextRequest) {
           .in('request_id', myTopicIds).neq('user_id', effectiveId).gte('created_at', since).order('created_at', { ascending: false }).limit(30)
           .then(r => (r.error ? { data: [] as any[] } : r))
       : none,
+    // New members in circles I lead.
+    ledIds.length
+      ? admin.from('circle_members').select('id, circle_id, user_id, joined_at')
+          .in('circle_id', ledIds).neq('user_id', effectiveId).gte('joined_at', since).order('joined_at', { ascending: false }).limit(30)
+      : none,
   ])
   const dedIds = (dedBands || []).map((b: any) => b.band_id)
 
@@ -170,6 +176,7 @@ export async function GET(req: NextRequest) {
   const nameIds = [
     ...(replies || []).map((r: any) => r.user_id),
     ...(cReplies || []).map((r: any) => r.user_id),
+    ...(joined || []).map((j: any) => j.user_id),
     ...(shared || []).map((r: any) => r.user_id),
     ...(pend || []).map((c: any) => c.requester_id),
     ...(accepted || []).map((c: any) => c.recipient_id),
@@ -298,6 +305,15 @@ export async function GET(req: NextRequest) {
       items.push({ id: `cgrp-${cid}-${latest.id}`, type: 'circle_request', icon: '✦', ts: latest.created_at, circleId: cid,
         title: count === 1 ? `New prayer request in ${name}` : `${count} new prayer requests in ${name}`,
         detail: count === 1 ? (latest.request_text || '') : '' })
+    }
+  }
+
+  // 5a. Someone joined a circle you lead.
+  {
+    const nameById: Record<string, string> = Object.fromEntries((circles || []).map((c: any) => [c.id, c.name]))
+    for (const j of joined || []) {
+      items.push({ id: `cjoin-${j.id}`, type: 'circle_join', icon: '✦', ts: j.joined_at, circleId: j.circle_id,
+        title: `${names[j.user_id] || 'Someone'} joined ${nameById[j.circle_id] || 'your circle'}`, detail: 'They can follow along and tap to pray.' })
     }
   }
 

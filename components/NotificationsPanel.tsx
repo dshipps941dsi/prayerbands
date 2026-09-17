@@ -185,7 +185,7 @@ export default function NotificationsPanel({
                       </div>
                       {n.detail && <div style={{ fontSize: 13, color: isPrayerLike ? BODY : GRAY, fontStyle: isPrayerLike ? 'italic' : 'normal', marginTop: 2, fontFamily: isPrayerLike ? serif : sans }}>{isPrayerLike ? `“${n.detail}”` : n.detail}</div>}
                       {n.band_id && <div style={{ fontSize: 11, color: GOLD_TEXT, fontFamily: 'monospace', marginTop: 3 }}>{n.band_id}</div>}
-                      {(n.type === 'prayer_request' || n.type === 'circle_request' || n.type === 'circle_reply' || n.type === 'promo' || (n.type === 'announcement' && n.ctaHref)) && (
+                      {(n.type === 'prayer_request' || n.type === 'circle_request' || n.type === 'circle_reply' || n.type === 'circle_join' || n.type === 'promo' || (n.type === 'announcement' && n.ctaHref)) && (
                         <div style={{ marginTop: 9, display: 'flex', gap: 8 }}>
                           {n.type === 'prayer_request' && (
                             <button onClick={() => pray(n.requestId)} disabled={!!n.requestId && prayed.has(n.requestId)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: n.requestId && prayed.has(n.requestId) ? `${GOLD}22` : GOLD, color: n.requestId && prayed.has(n.requestId) ? GOLD_TEXT : NAVY, fontSize: 11, fontWeight: 700, cursor: n.requestId && prayed.has(n.requestId) ? 'default' : 'pointer', fontFamily: cinzel, letterSpacing: '0.04em' }}>{n.requestId && prayed.has(n.requestId) ? '✓ Prayed' : '🙏 Pray'}</button>
@@ -193,7 +193,7 @@ export default function NotificationsPanel({
                           {n.type === 'prayer_request' && n.requestId && prayed.has(n.requestId) && (
                             <button onClick={() => letThemKnow(n.requestId)} disabled={told.has(n.requestId)} style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${GOLD_BORDER}`, background: CARD, color: GOLD_TEXT, fontSize: 11, fontWeight: 700, cursor: told.has(n.requestId) ? 'default' : 'pointer', fontFamily: cinzel, letterSpacing: '0.04em' }}>{told.has(n.requestId) ? '✓ They know' : 'Let them know 🙏'}</button>
                           )}
-                          {(n.type === 'circle_request' || n.type === 'circle_reply') && (
+                          {(n.type === 'circle_request' || n.type === 'circle_reply' || n.type === 'circle_join') && (
                             <a href={`/my-band?open=circles&circle=${n.circleId}`} style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${GOLD_BORDER}`, background: CARD, color: GOLD_TEXT, fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: cinzel, letterSpacing: '0.04em' }}>Open circle →</a>
                           )}
                           {n.type === 'promo' && (
