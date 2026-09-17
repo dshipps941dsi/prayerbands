@@ -79,7 +79,6 @@ function Btn({ kind = 'ghost', block, small, children, ...rest }: { kind?: keyof
 }
 
 const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 13px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 15, fontFamily: 'Georgia, serif', color: TEXT, background: SURFACE, outline: 'none' }
-const linkBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, fontSize: 12.5, color: ACCENT, fontFamily: BODY, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }
 const label: React.CSSProperties = { display: 'block', fontSize: 11, fontFamily: CINZEL, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, marginBottom: 5 }
 
 // Inline "are you sure" — replaces the control that asked, never a browser dialog.
@@ -357,13 +356,25 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
       {/* ── Top card: what this circle is for, who is in it, and how to
           bring people in. Tap the name to fold the rest of the room away. ── */}
       <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderTop: `4px solid ${PRIMARY}`, borderRadius: 14, marginBottom: 12, boxShadow: '0 2px 12px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
-        <button onClick={() => setExpanded(v => !v)} aria-expanded={expanded} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '14px 18px 0', cursor: 'pointer', color: TEXT }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ fontSize: 10, fontFamily: CINZEL, letterSpacing: '0.14em', textTransform: 'uppercase', color: ACCENT }}>Prayer Circle · <span style={{ color: MUTED }}>{roleLabel}</span></span>
+        {/* Header row is the fold control (a div, not a button, so no user-agent
+            button styling ever paints it). The join code sits top-right; tapping
+            it copies the code. */}
+        <div role="button" tabIndex={0} aria-expanded={expanded} onClick={() => setExpanded(v => !v)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(v => !v) } }}
+          style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '14px 18px 0', cursor: 'pointer', color: TEXT, background: 'transparent' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, fontFamily: CINZEL, letterSpacing: '0.14em', textTransform: 'uppercase', color: ACCENT, marginBottom: 6 }}>Prayer Circle · <span style={{ color: MUTED }}>{roleLabel}</span></div>
+            <h2 style={{ fontFamily: DISPLAY, fontSize: 26, fontWeight: 700, color: TEXT, margin: '0 0 6px', lineHeight: 1.15 }}>{circle.name}</h2>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            {isMember && (
+              <button onClick={e => { e.stopPropagation(); copy('code') }} title="Tap to copy the join code" style={{ background: TINT, border: `1px solid color-mix(in srgb, ${PRIMARY} 45%, transparent)`, borderRadius: 8, padding: '5px 9px', cursor: 'pointer', textAlign: 'center' }}>
+                <div style={{ fontSize: 8.5, fontFamily: CINZEL, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED }}>{copied === 'code' ? 'Copied' : 'Join code'}</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 700, letterSpacing: '0.14em', color: ACCENT }}>{circle.join_code}</div>
+              </button>
+            )}
             <span aria-hidden style={{ fontSize: 12, color: MUTED, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</span>
           </div>
-          <h2 style={{ fontFamily: DISPLAY, fontSize: 26, fontWeight: 700, color: TEXT, margin: '0 0 6px', lineHeight: 1.15 }}>{circle.name}</h2>
-        </button>
+        </div>
         <div style={{ padding: '0 18px 16px' }}>
           {circle.description ? (
             <p style={{ fontSize: 16, color: TEXT, margin: '0 0 12px', lineHeight: 1.5, fontStyle: 'italic', fontFamily: DISPLAY }}>{circle.description}</p>
@@ -386,18 +397,15 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
 
           {isMember ? (
             <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button onClick={() => copy('code')} title="Tap to copy the join code" style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: SURFACE_ALT, border: `1px solid ${BORDER}`, borderRadius: 9, padding: '9px 12px', cursor: 'pointer', textAlign: 'left' }}>
-                  <span style={{ fontSize: 10, fontFamily: CINZEL, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED }}>Join code</span>
-                  <span style={{ fontFamily: 'monospace', fontSize: 16, fontWeight: 700, letterSpacing: '0.16em', color: ACCENT }}>{copied === 'code' ? 'Copied' : circle.join_code}</span>
-                </button>
-                <Btn kind="primary" onClick={share} style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-                  <ShareIcon /> Share
+              {/* Share opens the phone's share sheet with the invite link written in
+                  (copies it on a desktop); QR is for a flyer or a screen. */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Btn kind="primary" block onClick={share} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <ShareIcon /> Share invite
                 </Btn>
-              </div>
-              <div style={{ display: 'flex', gap: 14, marginTop: 10 }}>
-                <button onClick={() => copy('link')} style={linkBtn}>{copied === 'link' ? 'Link copied' : 'Copy invite link'}</button>
-                <button onClick={() => setShowQR(v => !v)} style={linkBtn}>{showQR ? 'Hide QR code' : 'QR code for a flyer'}</button>
+                <Btn block onClick={() => setShowQR(v => !v)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, ...(showQR ? { background: TINT, borderColor: PRIMARY } : {}) }}>
+                  <QRIcon /> QR code
+                </Btn>
               </div>
               {showQR && <div style={{ marginTop: 12 }}><CircleQR url={inviteUrl} name={circle.name} /></div>}
             </div>
@@ -582,6 +590,10 @@ function BandNote({ what }: { what: string }) {
       You can follow along and tap Pray. To {what}, you’ll need a Prayer Band. <a href="/store" style={{ color: ACCENT, fontWeight: 600 }}>Get a Prayer Band →</a>
     </div>
   )
+}
+
+function QRIcon() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14h1M14 20h1M20 20h1M17 17v3"/></svg>
 }
 
 function ShareIcon() {
