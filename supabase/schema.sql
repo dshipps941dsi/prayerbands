@@ -1,4 +1,4 @@
--- Prayer Bands: public schema, rendered by public.schema_dump() at 2026-09-17 09:58:27.870963+00
+-- Prayer Bands: public schema, rendered by public.schema_dump() at 2026-09-17 18:36:16.461395+00
 -- Regenerate with `npm run db:schema` after every migration. Do not hand-edit.
 
 -- Applied migrations
@@ -672,7 +672,7 @@ alter table public.circle_intercessions add constraint circle_intercessions_pkey
 alter table public.circle_intercessions add constraint circle_intercessions_request_id_user_id_key UNIQUE (request_id, user_id);
 alter table public.circle_members add constraint circle_members_circle_id_user_id_key UNIQUE (circle_id, user_id);
 alter table public.circle_members add constraint circle_members_pkey PRIMARY KEY (id);
-alter table public.circle_members add constraint circle_members_role_check CHECK ((role = ANY (ARRAY['leader'::text, 'member'::text])));
+alter table public.circle_members add constraint circle_members_role_check CHECK ((role = ANY (ARRAY['leader'::text, 'co_leader'::text, 'member'::text])));
 alter table public.circle_prayer_replies add constraint circle_prayer_replies_body_check CHECK (((char_length(TRIM(BOTH FROM body)) >= 1) AND (char_length(TRIM(BOTH FROM body)) <= 1000)));
 alter table public.circle_prayer_replies add constraint circle_prayer_replies_pkey PRIMARY KEY (id);
 alter table public.circle_prayer_requests add constraint circle_prayer_requests_kind_check CHECK ((kind = ANY (ARRAY['request'::text, 'update'::text])));
