@@ -9,9 +9,9 @@ import styles from './PrayerPartnersSection.module.css'
 const PARTNERS = '/my-band?open=partners'
 
 const methods = [
-  { icon: 'tap', title: 'Read your code', detail: 'Every band carries a code. Read it to them, or enter theirs.' },
-  { icon: 'qr', title: 'Show your QR', detail: 'They point their camera and you are connected.' },
-  { icon: 'link', title: 'Pass a band', detail: 'Anyone a band has passed between is already linked to you.' },
+  { icon: 'tap', title: 'Tap a band', detail: 'Tap your phone to their band, or theirs to yours, and connect on the spot.' },
+  { icon: 'qr', title: 'Scan a QR', detail: 'Show yours, they point their camera. Done.' },
+  { icon: 'link', title: 'Enter a code', detail: 'Every band carries a code. Type theirs from anywhere.' },
 ] as const
 
 const groups = ['Family', 'Close Friends', 'Baseball Team', 'Men’s Group']
