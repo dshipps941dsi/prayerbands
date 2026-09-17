@@ -18,14 +18,18 @@ import AvatarBadge from './AvatarBadge'
 // The theme's gold is kept for small accents only.
 const TEXT = 'var(--pb-text, #15223B)'
 const SURFACE = 'var(--pb-surface, #FFFDF8)'
-const MUTED = 'color-mix(in srgb, var(--pb-text, #15223B) 64%, transparent)'
+const MUTED = 'var(--pb-text-muted, #5A6A85)'
 const BORDER = 'color-mix(in srgb, var(--pb-text, #15223B) 14%, transparent)'
-const SURFACE_ALT = 'color-mix(in srgb, var(--pb-text, #15223B) 5%, var(--pb-surface, #FFFDF8))'
 const PRIMARY = 'var(--pb-primary, #C8A96E)'
+const ON_PRIMARY = 'var(--pb-text-on-primary, #0A1628)'
 const ACCENT = 'var(--pb-accent, #9A7A35)'
-// Primary buttons are ink with paper text — highest contrast, works on dark themes too.
-const INK = TEXT
-const ON_INK = SURFACE
+const ACCENT_ALT = 'var(--pb-accent-alt, #5A7BA8)'
+// A wash of the theme's primary on the surface: chips, the compose box, the open prayers.
+const TINT = 'color-mix(in srgb, var(--pb-primary, #C8A96E) 12%, var(--pb-surface, #FFFDF8))'
+const SURFACE_ALT = TINT
+// Buttons in the theme's primary; the fold/answer controls in ink.
+const INK = PRIMARY
+const ON_INK = ON_PRIMARY
 const ANSWERED = '#4A8A6A'
 const DANGER = '#B4441F'
 const CINZEL = "'Cinzel', Georgia, serif"
@@ -344,7 +348,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
   const answered = topics.filter(t => t.is_answered)
   const isLeader = myRole === 'leader'
   const roleLabel = isLeader ? 'Leader' : isMember ? 'Member' : 'Guest'
-  const pill = (active: boolean): React.CSSProperties => ({ flex: 1, background: active ? INK : SURFACE, color: active ? ON_INK : TEXT, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '7px 13px', fontSize: 11, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', whiteSpace: 'nowrap' })
+  const pill = (active: boolean): React.CSSProperties => ({ flex: 1, background: active ? PRIMARY : TINT, color: active ? ON_PRIMARY : TEXT, border: `1px solid color-mix(in srgb, ${PRIMARY} 45%, transparent)`, borderRadius: 20, padding: '7px 13px', fontSize: 11, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', whiteSpace: 'nowrap' })
 
   return (
     <div style={{ marginBottom: 32, fontFamily: BODY }}>
@@ -352,10 +356,10 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
 
       {/* ── Top card: what this circle is for, who is in it, and how to
           bring people in. Tap the name to fold the rest of the room away. ── */}
-      <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 14, marginBottom: 12, boxShadow: '0 2px 12px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
+      <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderTop: `4px solid ${PRIMARY}`, borderRadius: 14, marginBottom: 12, boxShadow: '0 2px 12px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
         <button onClick={() => setExpanded(v => !v)} aria-expanded={expanded} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '14px 18px 0', cursor: 'pointer', color: TEXT }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ fontSize: 10, fontFamily: CINZEL, letterSpacing: '0.14em', textTransform: 'uppercase', color: MUTED }}>Prayer Circle · {roleLabel}</span>
+            <span style={{ fontSize: 10, fontFamily: CINZEL, letterSpacing: '0.14em', textTransform: 'uppercase', color: ACCENT }}>Prayer Circle · <span style={{ color: MUTED }}>{roleLabel}</span></span>
             <span aria-hidden style={{ fontSize: 12, color: MUTED, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</span>
           </div>
           <h2 style={{ fontFamily: DISPLAY, fontSize: 26, fontWeight: 700, color: TEXT, margin: '0 0 6px', lineHeight: 1.15 }}>{circle.name}</h2>
@@ -385,7 +389,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <button onClick={() => copy('code')} title="Tap to copy the join code" style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: SURFACE_ALT, border: `1px solid ${BORDER}`, borderRadius: 9, padding: '9px 12px', cursor: 'pointer', textAlign: 'left' }}>
                   <span style={{ fontSize: 10, fontFamily: CINZEL, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED }}>Join code</span>
-                  <span style={{ fontFamily: 'monospace', fontSize: 16, fontWeight: 700, letterSpacing: '0.16em', color: TEXT }}>{copied === 'code' ? 'Copied' : circle.join_code}</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 16, fontWeight: 700, letterSpacing: '0.16em', color: ACCENT }}>{copied === 'code' ? 'Copied' : circle.join_code}</span>
                 </button>
                 <Btn kind="primary" onClick={share} style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
                   <ShareIcon /> Share
@@ -421,7 +425,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
           <div style={{ background: SURFACE_ALT, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 14px 12px', marginBottom: 14 }}>
             <div style={{ display: 'flex', gap: 4, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3, marginBottom: 12 }}>
               {(['request', 'update'] as const).map(k => (
-                <button key={k} onClick={() => setKind(k)} style={{ flex: 1, padding: '8px 4px', border: 'none', borderRadius: 8, background: kind === k ? INK : 'transparent', color: kind === k ? ON_INK : MUTED, fontSize: 11, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                <button key={k} onClick={() => setKind(k)} style={{ flex: 1, padding: '8px 4px', border: 'none', borderRadius: 8, background: kind === k ? PRIMARY : 'transparent', color: kind === k ? ON_PRIMARY : MUTED, fontSize: 11, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer' }}>
                   {k === 'request' ? 'Prayer request' : 'Update'}
                 </button>
               ))}
@@ -483,7 +487,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: TEXT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {m.name || 'A member'}{me ? <span style={{ color: MUTED, fontWeight: 400 }}> (you)</span> : ''}
-                    {m.role === 'leader' && <span style={{ marginLeft: 8, fontSize: 9.5, fontFamily: CINZEL, letterSpacing: '0.08em', textTransform: 'uppercase', color: ACCENT, border: `1px solid ${ACCENT}`, borderRadius: 8, padding: '1px 6px', verticalAlign: 'middle' }}>Leader</span>}
+                    {m.role === 'leader' && <span style={{ marginLeft: 8, fontSize: 9.5, fontFamily: CINZEL, letterSpacing: '0.08em', textTransform: 'uppercase', color: ACCENT, background: TINT, border: `1px solid ${PRIMARY}`, borderRadius: 8, padding: '1px 7px', verticalAlign: 'middle' }}>Leader</span>}
                   </div>
                   <div style={{ fontSize: 12, color: MUTED, marginTop: 1 }}>Joined {new Date(m.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                 </div>
@@ -563,7 +567,7 @@ function Section({ refObj, label: text, action, children }: { refObj: React.RefO
   return (
     <div ref={refObj} style={{ scrollMarginTop: 76, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px 16px', marginBottom: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
-        <span style={{ fontSize: 11, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT }}>{text}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 11, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: ACCENT }}><span aria-hidden style={{ width: 14, height: 3, borderRadius: 2, background: PRIMARY }} />{text}</span>
         {action}
       </div>
       {children}
@@ -601,9 +605,9 @@ function TopicCard(p: {
   const body = t.title ? (t.request_text && t.request_text !== t.title ? t.request_text : null) : t.request_text
   const n = t.replies.length
   return (
-    <div style={{ background: t.is_answered ? SURFACE_ALT : SURFACE, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${t.is_answered ? ANSWERED : isUpdate ? ACCENT : INK}`, borderRadius: 10, padding: '12px 14px', marginBottom: 10 }}>
+    <div style={{ background: t.is_answered ? SURFACE_ALT : SURFACE, border: `1px solid ${BORDER}`, borderLeft: `4px solid ${t.is_answered ? ANSWERED : isUpdate ? ACCENT_ALT : PRIMARY}`, borderRadius: 10, padding: '12px 14px', marginBottom: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <span style={{ fontSize: 9.5, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: t.is_answered ? ANSWERED : isUpdate ? ACCENT : TEXT }}>
+        <span style={{ fontSize: 9.5, fontFamily: CINZEL, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: t.is_answered ? ANSWERED : isUpdate ? ACCENT_ALT : ACCENT }}>
           {t.is_answered ? '✓ Answered' : isUpdate ? 'Update' : 'Prayer request'}
         </span>
         <span style={{ flex: 1 }} />
@@ -613,14 +617,14 @@ function TopicCard(p: {
       {body && <p style={{ fontSize: 14.5, color: TEXT, lineHeight: 1.6, margin: '0 0 10px', whiteSpace: 'pre-wrap', fontStyle: t.title ? 'normal' : 'italic', fontFamily: t.title ? BODY : DISPLAY, ...(t.title ? {} : { fontSize: 15.5 }) }}>{t.title ? body : `“${body}”`}</p>}
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
         <AvatarBadge {...(t.avatar || {})} name={t.name} size={20} />
-        <span style={{ fontSize: 12.5, color: TEXT, fontWeight: 600 }}>{t.is_mine ? 'You' : t.name || 'A member'}</span>
+        <span style={{ fontSize: 12.5, color: MUTED, fontWeight: 600 }}>{t.is_mine ? 'You' : t.name || 'A member'}</span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <button onClick={p.onPray} style={{ background: t.i_prayed ? INK : 'transparent', border: `1px solid ${t.i_prayed ? INK : BORDER}`, borderRadius: 20, padding: '6px 12px', fontSize: 12, fontFamily: 'Georgia, serif', color: t.i_prayed ? ON_INK : TEXT, cursor: 'pointer', fontWeight: t.i_prayed ? 700 : 500 }}>
           🙏 {t.i_prayed ? 'Praying' : 'Pray'} · {t.intercession_count}
         </button>
-        <button onClick={p.onToggleReplies} style={{ background: p.repliesOpen ? SURFACE_ALT : 'transparent', border: `1px solid ${p.repliesOpen ? TEXT : BORDER}`, borderRadius: 20, padding: '6px 12px', fontSize: 12, fontFamily: 'Georgia, serif', color: TEXT, cursor: 'pointer', fontWeight: 500 }}>
+        <button onClick={p.onToggleReplies} style={{ background: p.repliesOpen ? TINT : 'transparent', border: `1px solid ${p.repliesOpen ? PRIMARY : BORDER}`, borderRadius: 20, padding: '6px 12px', fontSize: 12, fontFamily: 'Georgia, serif', color: p.repliesOpen ? ACCENT : MUTED, cursor: 'pointer', fontWeight: 600 }}>
           💬 {n === 0 ? 'Write a prayer' : `${n} ${n === 1 ? 'prayer' : 'prayers'}`}
         </button>
         <span style={{ flex: 1 }} />
