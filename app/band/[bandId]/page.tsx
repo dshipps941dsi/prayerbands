@@ -287,6 +287,26 @@ export default function BandPage() {
   const [transferComplete, setTransferComplete] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [expandedPrayer, setExpandedPrayer] = useState<string | null>(null)
+  // Editing the prayer on one of your own stops: which stop, the draft, and
+  // whether a save is in flight. People often leave it blank in the moment.
+  const [editingStop, setEditingStop] = useState<string | null>(null)
+  const [stopDraft, setStopDraft] = useState('')
+  const [savingStop, setSavingStop] = useState(false)
+  async function saveStopPrayer(regId: string) {
+    setSavingStop(true)
+    try {
+      const res = await fetch('/api/my-stop', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ registration_id: regId, prayer: stopDraft }) })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { alert(d.error || 'Could not save your prayer.'); return }
+      setStatus(prev => ({ ...prev, registrations: (prev.registrations || []).map((r: any) => String(r.id) === String(regId) ? { ...r, prayer: d.prayer } : r) }))
+      setEditingStop(null)
+      setExpandedPrayer(regId)
+    } catch {
+      alert('Something went wrong. Please try again.')
+    } finally {
+      setSavingStop(false)
+    }
+  }
   const [verseCategory, setVerseCategory] = useState('all')
   const [activeTab, setActiveTab] = useState<'home' | 'journey' | 'purchase' | 'account'>('home')
   // ?dedicate=1 (from the shipping email / dedicate page): open this band's gift message for editing.
@@ -1126,12 +1146,31 @@ export default function BandPage() {
                   <span style={{ fontFamily: body, fontSize: 11, color: '#9A8A7A' }}>{new Date(reg.registered_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                 </div>
                 {(reg.city || reg.country) && <div style={{ fontFamily: body, fontSize: 12, color: GRAY, marginBottom: 6 }}>📍 {[reg.city, reg.country].filter(Boolean).join(', ')}</div>}
-                {reg.prayer && (
+                {editingStop === reg.id ? (
+                  <div style={{ marginTop: 4 }}>
+                    <textarea value={stopDraft} onChange={e => setStopDraft(e.target.value.slice(0, 2000))} rows={4} autoFocus placeholder="Your prayer for this band's journey…"
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 9, border: `1px solid ${GOLD}`, fontFamily: body, fontSize: 14, color: DARK, background: 'white', outline: 'none', resize: 'vertical', lineHeight: 1.5 }} />
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <button onClick={() => setEditingStop(null)} disabled={savingStop} style={{ background: 'transparent', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, padding: '8px 14px', fontFamily: body, fontSize: 13, color: GRAY, cursor: 'pointer' }}>Cancel</button>
+                      <button onClick={() => saveStopPrayer(reg.id)} disabled={savingStop} style={{ flex: 1, background: GOLD, border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, color: INK, cursor: 'pointer' }}>{savingStop ? 'Saving…' : 'Save prayer'}</button>
+                    </div>
+                  </div>
+                ) : (
                   <>
-                    <div style={{ fontFamily: body, fontSize: 13, color: '#3C2C1C', lineHeight: 1.6, fontStyle: 'italic', ...(expandedPrayer !== reg.id ? { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}) }}>"{reg.prayer}"</div>
-                    <button onClick={() => setExpandedPrayer(expandedPrayer === reg.id ? null : reg.id)} style={{ background: 'none', border: 'none', color: GOLD, fontFamily: body, fontSize: 12, cursor: 'pointer', padding: '4px 0' }}>
-                      {expandedPrayer === reg.id ? 'Show less' : 'Read full prayer'}
-                    </button>
+                    {reg.prayer && (
+                      <>
+                        <div style={{ fontFamily: body, fontSize: 13, color: '#3C2C1C', lineHeight: 1.6, fontStyle: 'italic', ...(expandedPrayer !== reg.id ? { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}) }}>"{reg.prayer}"</div>
+                        <button onClick={() => setExpandedPrayer(expandedPrayer === reg.id ? null : reg.id)} style={{ background: 'none', border: 'none', color: GOLD, fontFamily: body, fontSize: 12, cursor: 'pointer', padding: '4px 0' }}>
+                          {expandedPrayer === reg.id ? 'Show less' : 'Read full prayer'}
+                        </button>
+                      </>
+                    )}
+                    {/* Your own stop: change the prayer, or add one you left blank. */}
+                    {userId && reg.user_id === userId && (
+                      <button onClick={() => { setStopDraft(reg.prayer || ''); setEditingStop(reg.id) }} style={{ display: 'block', background: 'none', border: 'none', color: GRAY, fontFamily: body, fontSize: 12, cursor: 'pointer', padding: '2px 0', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                        {reg.prayer ? 'Edit your prayer' : '+ Add your prayer'}
+                      </button>
+                    )}
                   </>
                 )}
               </div>
