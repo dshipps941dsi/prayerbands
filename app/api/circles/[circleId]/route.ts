@@ -11,7 +11,11 @@ function generateJoinCode(): string {
   return code
 }
 
-// GET /api/circles/[circleId] — full circle data for members
+type Person = { name: string | null; avatar: { icon: string | null; initials: string | null; font: string | null } }
+
+// GET /api/circles/[circleId] — the whole circle for its members: who is in
+// it, the Prayer Wall (topics, each with its prayers underneath and its pray
+// count), and the viewer's standing in it.
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ circleId: string }> }
@@ -69,69 +73,65 @@ export async function GET(
       )
     }
 
-    // Get members
-    const { data: members } = await admin
-      .from('circle_members')
-      .select(`
-        id,
-        role,
-        joined_at,
-        user_id
-      `)
-      .eq('circle_id', circleId)
-      .order('joined_at', { ascending: true })
+    // Members and topics. `*` on the topics so the wall columns (title, kind)
+    // ride along once the migration has run and are simply absent before it.
+    const [{ data: members }, { data: requests }] = await Promise.all([
+      admin.from('circle_members').select('id, role, joined_at, user_id').eq('circle_id', circleId).order('joined_at', { ascending: true }),
+      admin.from('circle_prayer_requests').select('*').eq('circle_id', circleId).order('created_at', { ascending: false }),
+    ])
 
-    // Get prayer requests
-    const { data: requests } = await admin
-      .from('circle_prayer_requests')
-      .select(`
-        id,
-        user_id,
-        request_text,
-        is_answered,
-        answered_at,
-        created_at
-      `)
-      .eq('circle_id', circleId)
-      .order('created_at', { ascending: false })
-
-    // Get intercessions for this circle's requests
     const requestIds = (requests ?? []).map(r => r.id)
     let intercessions: { request_id: string; user_id: string }[] = []
+    let replies: { id: string; request_id: string; user_id: string; body: string; created_at: string }[] = []
     if (requestIds.length > 0) {
-      const { data: intercessionData } = await admin
-        .from('circle_intercessions')
-        .select('request_id, user_id')
-        .in('request_id', requestIds)
+      const [{ data: intercessionData }, repliesRes] = await Promise.all([
+        admin.from('circle_intercessions').select('request_id, user_id').in('request_id', requestIds),
+        admin.from('circle_prayer_replies').select('id, request_id, user_id, body, created_at').in('request_id', requestIds).order('created_at', { ascending: true }),
+      ])
       intercessions = intercessionData ?? []
+      // No replies table yet (migration pending): the wall simply has no prayers under its topics.
+      if (!repliesRes.error) replies = (repliesRes.data ?? []) as typeof replies
     }
 
-    // Attach intercession count + whether current user has prayed
-    const requestsWithCounts = (requests ?? []).map(r => ({
+    // One identity lookup for everyone on the page: members, topic authors,
+    // and the people who wrote prayers. The wall reads like a conversation,
+    // so a topic and each prayer under it carry a name and a face.
+    const ids = new Set<string>()
+    for (const m of members ?? []) if (m.user_id) ids.add(m.user_id)
+    for (const r of requests ?? []) if (r.user_id) ids.add(r.user_id)
+    for (const r of replies) if (r.user_id) ids.add(r.user_id)
+    const profById: Record<string, Person> = {}
+    if (ids.size > 0) {
+      const { data: profs } = await admin.from('profiles').select('id, full_name, avatar_icon, avatar_initials, avatar_font').in('id', [...ids])
+      for (const p of (profs ?? []) as any[]) {
+        profById[p.id] = { name: p.full_name ?? null, avatar: { icon: p.avatar_icon ?? null, initials: p.avatar_initials ?? null, font: p.avatar_font ?? null } }
+      }
+    }
+    const person = (id: string | null | undefined): Person => (id && profById[id]) || { name: null, avatar: { icon: null, initials: null, font: null } }
+
+    const repliesByReq = new Map<string, any[]>()
+    for (const r of replies) {
+      if (!repliesByReq.has(r.request_id)) repliesByReq.set(r.request_id, [])
+      repliesByReq.get(r.request_id)!.push({ ...r, ...person(r.user_id) })
+    }
+
+    const topics = (requests ?? []).map((r: any) => ({
       ...r,
+      title: r.title ?? null,
+      kind: r.kind === 'update' ? 'update' : 'request',
       intercession_count: intercessions.filter(i => i.request_id === r.id).length,
-      i_prayed: !!user && intercessions.some(i => i.request_id === r.id && i.user_id === user.id)
+      i_prayed: !!user && intercessions.some(i => i.request_id === r.id && i.user_id === user.id),
+      is_mine: !!user && r.user_id === user.id,
+      replies: repliesByReq.get(r.id) ?? [],
+      ...person(r.user_id),
     }))
 
-    // Resolve member identity (name + avatar) so the circle can show who's
-    // praying together. Request authors stay unattributed — a circle prayer is
-    // shown to everyone but not tied to a face.
-    const memberIds = (members ?? []).map((m: any) => m.user_id).filter(Boolean)
-    const profById: Record<string, any> = {}
-    if (memberIds.length > 0) {
-      const { data: profs } = await admin.from('profiles').select('id, full_name, avatar_icon, avatar_initials, avatar_font').in('id', memberIds)
-      ;(profs ?? []).forEach((p: any) => { profById[p.id] = p })
-    }
-    const membersEnriched = (members ?? []).map((m: any) => ({
-      ...m,
-      name: profById[m.user_id]?.full_name ?? null,
-      avatar: { icon: profById[m.user_id]?.avatar_icon ?? null, initials: profById[m.user_id]?.avatar_initials ?? null, font: profById[m.user_id]?.avatar_font ?? null },
-    }))
+    const membersEnriched = (members ?? []).map((m: any) => ({ ...m, ...person(m.user_id) }))
 
     return NextResponse.json({
       circle,
       members: membersEnriched,
-      requests: requestsWithCounts,
+      requests: topics,
       my_role: membership?.role ?? null,
       my_user_id: user?.id ?? null,
       is_member: !!membership
@@ -172,9 +172,13 @@ export async function PATCH(
     const body = await req.json()
     const updates: Record<string, unknown> = {}
 
-    if (body.name !== undefined) updates.name = body.name.trim()
-    if (body.description !== undefined) updates.description = body.description?.trim() || null
-    if (body.is_closed !== undefined) updates.is_closed = body.is_closed
+    if (body.name !== undefined) {
+      const name = String(body.name).trim().slice(0, 80)
+      if (!name) return NextResponse.json({ error: 'The circle needs a name.' }, { status: 400 })
+      updates.name = name
+    }
+    if (body.description !== undefined) updates.description = String(body.description ?? '').trim().slice(0, 300) || null
+    if (body.is_closed !== undefined) updates.is_closed = !!body.is_closed
 
     if (body.regenerate_code) {
       let join_code = ''

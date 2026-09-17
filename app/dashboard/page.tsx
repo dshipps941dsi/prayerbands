@@ -856,7 +856,7 @@ export default function Dashboard() {
                         <button onClick={() => prayForRequest(n.requestId)} disabled={prayedReq.has(n.requestId)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: prayedReq.has(n.requestId) ? `${GOLD}22` : GOLD, color: prayedReq.has(n.requestId) ? GOLD_TEXT : NAVY, fontSize: 11, fontWeight: 700, cursor: prayedReq.has(n.requestId) ? 'default' : 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>{prayedReq.has(n.requestId) ? '✓ Prayed' : '🙏 Pray'}</button>
                       )}
                       {n.type === 'circle_request' && (
-                        <a href={`/circles/${n.circleId}`} style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${GOLD_BORDER}`, background: CARD_BG, color: GOLD_TEXT, fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>Open circle →</a>
+                        <a href={`/my-band?open=circles&circle=${n.circleId}`} style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${GOLD_BORDER}`, background: CARD_BG, color: GOLD_TEXT, fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: 'Cinzel, serif', letterSpacing: '0.04em' }}>Open circle →</a>
                       )}
                     </div>
                   )}

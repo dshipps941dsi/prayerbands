@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
-import AvatarBadge from './AvatarBadge'
+import CircleRoom from './CircleRoom'
 
 interface CircleSummary {
   id: string
@@ -42,13 +42,16 @@ async function copyText(value: string): Promise<boolean> {
   }
 }
 
-export default function CirclesSection({ userId }: { userId: string }) {
+export type CircleLink = { id: string; code?: string | null }
+export default function CirclesSection({ userId, initialCircle = null }: { userId: string; initialCircle?: CircleLink | null }) {
   const [circles, setCircles] = useState<CircleSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [isBandHolder, setIsBandHolder] = useState(false)
   const [mode, setMode] = useState<Mode>('list')
-  // A circle opened inline (its prayer feed), instead of navigating away.
-  const [viewingId, setViewingId] = useState<string | null>(null)
+  // A circle opened in place — the whole room, never a separate page. A deep
+  // link (?open=circles&circle=ID[&code=]) lands straight in one.
+  const [viewingId, setViewingId] = useState<string | null>(initialCircle?.id ?? null)
+  const [viewCode, setViewCode] = useState<string | null>(initialCircle?.code ?? null)
 
   const reloadSeq = useRef(0)
   const reload = useCallback(async () => {
@@ -81,7 +84,8 @@ export default function CirclesSection({ userId }: { userId: string }) {
 
   // ── Inline panels ─────────────────────────────────────────────
   if (viewingId) {
-    return <CircleView circleId={viewingId} onBack={async () => { setViewingId(null); await reload() }} />
+    const back = async () => { setViewingId(null); setViewCode(null); await reload() }
+    return <CircleRoom circleId={viewingId} code={viewCode} onBack={back} onLeft={back} />
   }
   if (mode === 'join') {
     return <JoinPanel onCancel={() => setMode('list')} onJoined={async () => { await reload(); setMode('list') }} />
@@ -396,156 +400,6 @@ function PanelHeader({ title, onBack, backLabel = 'Back' }: { title: string; onB
       <button onClick={onBack} style={{ background: 'transparent', border: 'none', color: MUTED, fontSize: '13px', fontFamily: 'Georgia, serif', cursor: 'pointer', padding: '4px' }}>
         {backLabel === 'Back' ? '← Back' : backLabel}
       </button>
-    </div>
-  )
-}
-
-// ── A circle opened inline: its prayer feed, add-a-request, and pray taps.
-// Heavier leader tools (rename, members, close) stay on the full page via
-// "Manage".
-interface CircleReq { id: string; request_text: string; is_answered: boolean; intercession_count: number; i_prayed: boolean }
-function CircleView({ circleId, onBack }: { circleId: string; onBack: () => void | Promise<void> }) {
-  const [circle, setCircle] = useState<{ name: string; description: string | null; join_code: string } | null>(null)
-  const [requests, setRequests] = useState<CircleReq[]>([])
-  const [members, setMembers] = useState<{ id: string; user_id: string; name: string | null; avatar?: { icon: string | null; initials: string | null; font: string | null } }[]>([])
-  const [isMember, setIsMember] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [text, setText] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [shareCopied, setShareCopied] = useState(false)
-  const [showQR, setShowQR] = useState(false)
-
-  const circleShareUrl = circle ? `${typeof window !== 'undefined' ? window.location.origin : ''}/circles?code=${circle.join_code}` : ''
-  async function shareThisCircle() {
-    if (!circle) return
-    const msg = `Join me in prayer in "${circle.name}" on Prayer Bands 🙏 Tap to join: ${circleShareUrl}`
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      try { await navigator.share({ title: 'Join my prayer circle', text: msg }) } catch {}
-      return
-    }
-    if (await copyText(msg)) { setShareCopied(true); setTimeout(() => setShareCopied(false), 1500) }
-  }
-
-  const circleSeq = useRef(0)
-  const loadCircle = useCallback(async () => {
-    const seq = ++circleSeq.current
-    const res = await fetch(`/api/circles/${circleId}`)
-    if (seq !== circleSeq.current) return
-    if (!res.ok) { setError('Could not open this circle.'); setLoading(false); return }
-    const d = await res.json()
-    if (seq !== circleSeq.current) return
-    setCircle(d.circle)
-    setRequests(d.requests ?? [])
-    setMembers(d.members ?? [])
-    setIsMember(!!d.is_member)
-    setLoading(false)
-  }, [circleId])
-  useEffect(() => { loadCircle() }, [loadCircle])
-
-  async function addRequest() {
-    if (!text.trim()) return
-    setSubmitting(true)
-    const res = await fetch(`/api/circles/${circleId}/request`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ request_text: text.trim() }),
-    })
-    if (res.ok) {
-      const d = await res.json()
-      setRequests(prev => [{ ...d.request, intercession_count: 0, i_prayed: false }, ...prev])
-      setText('')
-    }
-    setSubmitting(false)
-  }
-
-  async function intercede(requestId: string) {
-    const res = await fetch(`/api/circles/${circleId}/intercede`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ request_id: requestId }),
-    })
-    if (!res.ok) return
-    const d = await res.json()
-    setRequests(prev => prev.map(r => r.id === requestId
-      ? { ...r, i_prayed: d.praying, intercession_count: d.count ?? (d.praying ? r.intercession_count + 1 : r.intercession_count - 1) }
-      : r))
-  }
-
-  if (loading) {
-    return <div style={{ padding: '20px 0', color: MUTED, fontSize: '14px', textAlign: 'center' }}>Loading circle…</div>
-  }
-  if (error || !circle) {
-    return (
-      <div style={{ marginBottom: '32px' }}>
-        <PanelHeader title="Circle" onBack={onBack} />
-        <p style={{ color: MUTED, fontSize: '14px' }}>{error || 'Not found.'}</p>
-      </div>
-    )
-  }
-
-  return (
-    <div style={{ marginBottom: '32px' }}>
-      <PanelHeader title={circle.name} onBack={onBack} />
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-        <button
-          onClick={async () => { if (await copyText(circle.join_code)) { setCopied(true); setTimeout(() => setCopied(false), 1500) } }}
-          style={{ background: '#FFF8E7', border: `1px solid #F0D080`, borderRadius: 20, padding: '5px 12px', fontSize: 12, fontFamily: 'monospace', letterSpacing: '0.1em', color: PRIMARY, fontWeight: 700, cursor: 'pointer' }}
-        >
-          {circle.join_code}{copied ? ' · Copied' : ''}
-        </button>
-        <button onClick={shareThisCircle} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: PRIMARY, color: ON_PRIMARY, border: 'none', borderRadius: 20, padding: '6px 13px', fontSize: 12, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, cursor: 'pointer' }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          {shareCopied ? 'Copied' : 'Share'}
-        </button>
-        <button onClick={() => setShowQR(v => !v)} style={{ background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 20, padding: '6px 12px', fontSize: 12, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, color: TEXT, cursor: 'pointer' }}>
-          {showQR ? 'Hide QR' : 'QR'}
-        </button>
-        <div style={{ flex: 1 }} />
-        <a href={`/circles/${circleId}`} style={{ fontSize: '11.5px', color: MUTED, fontFamily: 'Georgia, serif', textDecoration: 'none' }}>Manage &#8599;</a>
-      </div>
-      {showQR && <div style={{ marginBottom: 12 }}><CircleQR url={circleShareUrl} name={circle.name} /></div>}
-
-      {circle.description && <p style={{ fontSize: '13px', color: MUTED, margin: '0 0 14px', lineHeight: 1.5 }}>{circle.description}</p>}
-
-      {members.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <div style={{ display: 'flex' }}>
-            {members.slice(0, 7).map((m, i) => (
-              <div key={m.id} style={{ marginLeft: i === 0 ? 0 : -8 }}>
-                <AvatarBadge {...(m.avatar || {})} name={m.name} size={30} ring />
-              </div>
-            ))}
-          </div>
-          <span style={{ fontSize: 12, color: MUTED }}>{members.length} {members.length === 1 ? 'person' : 'people'} praying together</span>
-        </div>
-      )}
-
-      {isMember && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          <input
-            value={text}
-            onChange={e => setText(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') addRequest() }}
-            placeholder="Add a prayer request…"
-            maxLength={500}
-            style={{ flex: 1, minWidth: 0, padding: '10px 12px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 14, fontFamily: 'Georgia, serif', color: TEXT, background: '#fff', outline: 'none' }}
-          />
-          <button onClick={addRequest} disabled={submitting || !text.trim()} style={{ flexShrink: 0, background: text.trim() ? PRIMARY : BORDER, color: ON_PRIMARY, border: 'none', borderRadius: 9, padding: '0 16px', fontSize: 12, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: text.trim() ? 'pointer' : 'default' }}>Add</button>
-        </div>
-      )}
-
-      {requests.length === 0 ? (
-        <p style={{ fontSize: '13px', color: MUTED, fontStyle: 'italic', margin: 0 }}>No prayer requests yet. {isMember ? 'Add the first one above.' : ''}</p>
-      ) : requests.map(r => (
-        <div key={r.id} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '12px 14px', marginBottom: 10, opacity: r.is_answered ? 0.8 : 1 }}>
-          {r.is_answered && <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#4A8A6A', marginBottom: 5 }}>✓ Answered</div>}
-          <p style={{ fontSize: '14px', color: TEXT, lineHeight: 1.5, margin: '0 0 10px', fontStyle: 'italic' }}>&ldquo;{r.request_text}&rdquo;</p>
-          <button onClick={() => intercede(r.id)} style={{ background: r.i_prayed ? '#FFF8E7' : 'transparent', border: `1px solid ${r.i_prayed ? PRIMARY : BORDER}`, borderRadius: 20, padding: '5px 12px', fontSize: 12, fontFamily: 'Georgia, serif', color: r.i_prayed ? PRIMARY : MUTED, cursor: 'pointer', fontWeight: r.i_prayed ? 600 : 400 }}>
-            🙏 {r.i_prayed ? 'Praying' : 'Pray'} · {r.intercession_count}
-          </button>
-        </div>
-      ))}
     </div>
   )
 }

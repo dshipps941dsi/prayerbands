@@ -172,7 +172,7 @@ export default function NotificationsPanel({
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {notifs.map((n) => {
-                const isPrayerLike = n.type === 'prayer' || n.type === 'prayer_request' || n.type === 'encouragement' || n.type === 'dedication'
+                const isPrayerLike = n.type === 'prayer' || n.type === 'prayer_request' || n.type === 'encouragement' || n.type === 'dedication' || n.type === 'circle_reply'
                 const isNew = !!n.ts && new Date(n.ts).getTime() > seenTs
                 const isPromo = n.type === 'promo'
                 return (
@@ -185,7 +185,7 @@ export default function NotificationsPanel({
                       </div>
                       {n.detail && <div style={{ fontSize: 13, color: isPrayerLike ? BODY : GRAY, fontStyle: isPrayerLike ? 'italic' : 'normal', marginTop: 2, fontFamily: isPrayerLike ? serif : sans }}>{isPrayerLike ? `“${n.detail}”` : n.detail}</div>}
                       {n.band_id && <div style={{ fontSize: 11, color: GOLD_TEXT, fontFamily: 'monospace', marginTop: 3 }}>{n.band_id}</div>}
-                      {(n.type === 'prayer_request' || n.type === 'circle_request' || n.type === 'promo' || (n.type === 'announcement' && n.ctaHref)) && (
+                      {(n.type === 'prayer_request' || n.type === 'circle_request' || n.type === 'circle_reply' || n.type === 'promo' || (n.type === 'announcement' && n.ctaHref)) && (
                         <div style={{ marginTop: 9, display: 'flex', gap: 8 }}>
                           {n.type === 'prayer_request' && (
                             <button onClick={() => pray(n.requestId)} disabled={!!n.requestId && prayed.has(n.requestId)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: n.requestId && prayed.has(n.requestId) ? `${GOLD}22` : GOLD, color: n.requestId && prayed.has(n.requestId) ? GOLD_TEXT : NAVY, fontSize: 11, fontWeight: 700, cursor: n.requestId && prayed.has(n.requestId) ? 'default' : 'pointer', fontFamily: cinzel, letterSpacing: '0.04em' }}>{n.requestId && prayed.has(n.requestId) ? '✓ Prayed' : '🙏 Pray'}</button>
@@ -193,8 +193,8 @@ export default function NotificationsPanel({
                           {n.type === 'prayer_request' && n.requestId && prayed.has(n.requestId) && (
                             <button onClick={() => letThemKnow(n.requestId)} disabled={told.has(n.requestId)} style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${GOLD_BORDER}`, background: CARD, color: GOLD_TEXT, fontSize: 11, fontWeight: 700, cursor: told.has(n.requestId) ? 'default' : 'pointer', fontFamily: cinzel, letterSpacing: '0.04em' }}>{told.has(n.requestId) ? '✓ They know' : 'Let them know 🙏'}</button>
                           )}
-                          {n.type === 'circle_request' && (
-                            <a href={`/circles/${n.circleId}`} style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${GOLD_BORDER}`, background: CARD, color: GOLD_TEXT, fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: cinzel, letterSpacing: '0.04em' }}>Open circle →</a>
+                          {(n.type === 'circle_request' || n.type === 'circle_reply') && (
+                            <a href={`/my-band?open=circles&circle=${n.circleId}`} style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${GOLD_BORDER}`, background: CARD, color: GOLD_TEXT, fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: cinzel, letterSpacing: '0.04em' }}>Open circle →</a>
                           )}
                           {n.type === 'promo' && (
                             <button onClick={() => sharePromo(n)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: GOLD, color: NAVY, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: cinzel, letterSpacing: '0.04em' }}>{shared ? '✓ Copied' : 'Share your link'}</button>

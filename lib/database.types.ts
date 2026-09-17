@@ -415,6 +415,38 @@ export type Database = {
           },
         ]
       }
+      circle_prayer_replies: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          request_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          request_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_prayer_replies_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "circle_prayer_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       circle_prayer_requests: {
         Row: {
           answered_at: string | null
@@ -422,7 +454,9 @@ export type Database = {
           created_at: string | null
           id: string
           is_answered: boolean | null
+          kind: string
           request_text: string
+          title: string | null
           user_id: string
         }
         Insert: {
@@ -431,7 +465,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_answered?: boolean | null
+          kind?: string
           request_text: string
+          title?: string | null
           user_id: string
         }
         Update: {
@@ -440,7 +476,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_answered?: boolean | null
+          kind?: string
           request_text?: string
+          title?: string | null
           user_id?: string
         }
         Relationships: [

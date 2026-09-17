@@ -63,6 +63,7 @@ export async function GET(req: NextRequest) {
   const [
     { data: bands }, { data: giftBands }, { data: orders }, { data: subs }, { data: prs },
     { data: mems }, { data: myReqs }, { data: conns }, { data: pend }, { data: accepted }, { data: encs }, { data: anns }, { data: profile }, { data: myStops },
+    { data: myTopics },
   ] = await Promise.all([
     admin.from('bands').select('band_id').eq('owner_id', effectiveId),
     admin.from('bands').select('band_id').eq('upline_user_id', effectiveId).neq('owner_id', effectiveId),
@@ -92,7 +93,10 @@ export async function GET(req: NextRequest) {
     admin.from('profiles').select('notifications_last_seen, dismissed_notifications, referral_code').eq('id', effectiveId).maybeSingle(),
     // Every band this person has ever held — the ripple below follows them on.
     admin.from('registrations').select('band_id, registered_at').eq('user_id', effectiveId).neq('source', 'wall'),
+    // Topics I posted on circle walls — prayers written under them come to me.
+    admin.from('circle_prayer_requests').select('id, circle_id, title, request_text').eq('user_id', effectiveId).order('created_at', { ascending: false }).limit(60),
   ])
+  const myTopicIds = (myTopics || []).map((t: any) => t.id)
 
   const bandIds = (bands || []).map((b: any) => b.band_id)
   const giftIds = (giftBands || []).map((b: any) => b.band_id)
@@ -115,7 +119,7 @@ export async function GET(req: NextRequest) {
 
   // ── Wave 2: keyed on wave-1 ids ───────────────────────────────────────────
   const none = Promise.resolve({ data: [] as any[] })
-  const [{ data: regs }, { data: giftRegs }, { data: ships }, { data: circles }, { data: creqs }, { data: replies }, { data: shared }, { data: heldRegs }, { data: dedBands }] = await Promise.all([
+  const [{ data: regs }, { data: giftRegs }, { data: ships }, { data: circles }, { data: creqs }, { data: replies }, { data: shared }, { data: heldRegs }, { data: dedBands }, { data: cReplies }] = await Promise.all([
     bandIds.length
       ? admin.from('registrations').select('id, band_id, user_name, city, country, prayer, registered_at')
           .in('band_id', bandIds).gte('registered_at', since).order('registered_at', { ascending: false }).limit(40)
@@ -150,6 +154,13 @@ export async function GET(req: NextRequest) {
     myStopIds.length
       ? admin.from('bands').select('band_id, dedication_note, dedication_recipient, upline_user_id').in('band_id', myStopIds).not('dedication_note', 'is', null)
       : none,
+    // Prayers written under my circle topics. Tolerant of the wall migration
+    // not having run yet (no table → no items).
+    myTopicIds.length
+      ? admin.from('circle_prayer_replies').select('id, request_id, user_id, body, created_at')
+          .in('request_id', myTopicIds).neq('user_id', effectiveId).gte('created_at', since).order('created_at', { ascending: false }).limit(30)
+          .then(r => (r.error ? { data: [] as any[] } : r))
+      : none,
   ])
   const dedIds = (dedBands || []).map((b: any) => b.band_id)
 
@@ -158,6 +169,7 @@ export async function GET(req: NextRequest) {
   const gids = [...new Set(groupReqs.map((r: any) => r.audience.slice(6)))]
   const nameIds = [
     ...(replies || []).map((r: any) => r.user_id),
+    ...(cReplies || []).map((r: any) => r.user_id),
     ...(shared || []).map((r: any) => r.user_id),
     ...(pend || []).map((c: any) => c.requester_id),
     ...(accepted || []).map((c: any) => c.recipient_id),
@@ -286,6 +298,18 @@ export async function GET(req: NextRequest) {
       items.push({ id: `cgrp-${cid}-${latest.id}`, type: 'circle_request', icon: '✦', ts: latest.created_at, circleId: cid,
         title: count === 1 ? `New prayer request in ${name}` : `${count} new prayer requests in ${name}`,
         detail: count === 1 ? (latest.request_text || '') : '' })
+    }
+  }
+
+  // 5b. Prayers written under a topic you posted on a circle's wall.
+  {
+    const topicById: Record<string, any> = Object.fromEntries((myTopics || []).map((t: any) => [t.id, t]))
+    for (const r of cReplies || []) {
+      const t = topicById[r.request_id]
+      if (!t) continue
+      const what = t.title || String(t.request_text || '').slice(0, 50)
+      items.push({ id: `creply-${r.id}`, type: 'circle_reply', icon: '🙏', ts: r.created_at, circleId: t.circle_id,
+        title: `${names[r.user_id] || 'Someone'} prayed over “${what}”`, detail: r.body || '' })
     }
   }
 

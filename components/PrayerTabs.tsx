@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import NetworkSection from './NetworkSection'
-import CirclesSection from './CirclesSection'
+import CirclesSection, { type CircleLink } from './CirclesSection'
 
 // Colors follow the band's theme via --pb-* tokens (fallbacks = brand palette).
 const GOLD = 'var(--pb-primary, #C8A96E)'
@@ -56,7 +56,7 @@ function readSeen(): Set<Sub> {
 }
 
 export type PrayerSub = Sub
-export default function PrayerTabs({ userId, onExpand, initialSub = 'requests' }: { userId: string; onExpand?: () => void; initialSub?: Sub }) {
+export default function PrayerTabs({ userId, onExpand, initialSub = 'requests', initialCircle = null }: { userId: string; onExpand?: () => void; initialSub?: Sub; initialCircle?: CircleLink | null }) {
   const [sub, setSub] = useState<Sub>(initialSub)
   // Explicitly opened with the ⓘ, per tab.
   const [opened, setOpened] = useState<Set<Sub>>(new Set())
@@ -152,7 +152,7 @@ export default function PrayerTabs({ userId, onExpand, initialSub = 'requests' }
 
       {sub === 'requests' && <NetworkSection userId={userId} section="requests" />}
       {sub === 'partners' && <NetworkSection userId={userId} section="partners" />}
-      {sub === 'circles' && <CirclesSection userId={userId} />}
+      {sub === 'circles' && <CirclesSection userId={userId} initialCircle={initialCircle} />}
     </div>
   )
 }

@@ -32,6 +32,7 @@ import { recordVerseView, type VerseWalk } from '@/lib/verseWalk'
 import WalkLine from '@/components/band/WalkLine'
 import SubscriptionPanel from '@/components/SubscriptionPanel'
 import type { PrayerSub } from '@/components/PrayerTabs'
+import type { CircleLink } from '@/components/CirclesSection'
 
 type Registration = {
   id: string
@@ -292,6 +293,8 @@ export default function BandPage() {
   const [dedicateOpen, setDedicateOpen] = useState(false)
   // ?open=partners (emails, circle pages): the prayer panel, on that sub-tab.
   const [prayerSub, setPrayerSub] = useState<PrayerSub>('requests')
+  // ?open=circles&circle=ID (inbox, pushes, the old circle page): straight into that circle.
+  const [prayerCircle, setPrayerCircle] = useState<CircleLink | null>(null)
   // Full-screen focus mode: meditate on the verse, or the journal with nothing else.
   const [focus, setFocus] = useState<null | 'verse' | 'prayer'>(null)
   // Auto-hiding bottom nav: hidden on load for a clean first view, revealed
@@ -486,6 +489,7 @@ export default function BandPage() {
     if (sp.get('settings')) { setActiveTab('account'); setSettingsOpen(true); for (const ms of [300, 900]) setTimeout(() => settingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), ms) }
     const open = sp.get('open')
     if (open === 'requests' || open === 'partners' || open === 'circles') { setPrayerSub(open); setActiveTab('home'); setFocus('prayer') }
+    if (open === 'circles' && sp.get('circle')) setPrayerCircle({ id: sp.get('circle')!, code: sp.get('code') })
     if (tab || sp.get('action') || sp.get('dedicate') || sp.get('settings') || open) window.history.replaceState({}, '', window.location.pathname)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -1248,7 +1252,7 @@ export default function BandPage() {
 
             <div style={{ padding: '20px 20px 40px' }}>
               {userId ? (
-                <PrayerTabs userId={userId} onExpand={() => setFocus('prayer')} initialSub={prayerSub} />
+                <PrayerTabs userId={userId} onExpand={() => setFocus('prayer')} initialSub={prayerSub} initialCircle={prayerCircle} />
               ) : (
                 <div style={{ background: 'white', borderRadius: 14, padding: '20px', border: '1px solid rgba(44,24,16,0.1)', textAlign: 'center' }}>
                   <div style={{ fontSize: 32, marginBottom: 12 }}>🙏</div>
@@ -1455,7 +1459,7 @@ export default function BandPage() {
         {focus === 'prayer' && userId && (
           <FocusOverlay onClose={() => setFocus(null)}>
             <div style={{ maxWidth: 640, margin: '0 auto', padding: '68px 20px 48px' }}>
-              <PrayerTabs userId={userId} initialSub={prayerSub} />
+              <PrayerTabs userId={userId} initialSub={prayerSub} initialCircle={prayerCircle} />
             </div>
           </FocusOverlay>
         )}
