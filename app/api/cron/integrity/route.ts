@@ -6,6 +6,7 @@ import { isTeamAdmin } from '@/lib/team'
 import { runIntegrityChecks, type Finding } from '@/lib/integrity'
 import { sendPush } from '@/lib/push'
 import { escapeHtml } from '@/lib/escape-html'
+import { sendHandoffReminders } from '@/lib/handoff-reminders'
 
 // Runs the integrity check. Two callers:
 //   - Vercel Cron (Authorization: Bearer CRON_SECRET) — records findings,
@@ -71,5 +72,8 @@ export async function GET(req: NextRequest) {
     notified = toNotify.length
   }
 
-  return NextResponse.json({ ran_at: now, findings, new: fresh.length, cleared: cleared.length, notified })
+  // Givers whose hand-off has sat a week hear about it once.
+  const reminders = cron ? await sendHandoffReminders(svc) : { sent: 0 }
+
+  return NextResponse.json({ ran_at: now, findings, new: fresh.length, cleared: cleared.length, notified, reminders })
 }

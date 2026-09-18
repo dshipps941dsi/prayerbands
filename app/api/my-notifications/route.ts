@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
   const [
     { data: bands }, { data: giftBands }, { data: orders }, { data: subs }, { data: prs },
     { data: mems }, { data: myReqs }, { data: conns }, { data: pend }, { data: accepted }, { data: encs }, { data: anns }, { data: profile }, { data: myStops },
-    { data: myTopics },
+    { data: myTopics }, { data: waiting },
   ] = await Promise.all([
     admin.from('bands').select('band_id').eq('owner_id', effectiveId),
     admin.from('bands').select('band_id').eq('upline_user_id', effectiveId).neq('owner_id', effectiveId),
@@ -95,6 +95,9 @@ export async function GET(req: NextRequest) {
     admin.from('registrations').select('band_id, registered_at').eq('user_id', effectiveId).neq('source', 'wall'),
     // Topics I posted on circle walls — prayers written under them come to me.
     admin.from('circle_prayer_requests').select('id, circle_id, title, request_text').eq('user_id', effectiveId).order('created_at', { ascending: false }).limit(60),
+    // Hand-offs I started that nobody has accepted in a week.
+    admin.from('band_transfers').select('id, band_id, recipient_name, created_at').eq('from_user_id', effectiveId).eq('status', 'pending')
+      .lte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()).order('created_at', { ascending: false }).limit(10),
   ])
   const myTopicIds = (myTopics || []).map((t: any) => t.id)
 
@@ -306,6 +309,15 @@ export async function GET(req: NextRequest) {
         title: count === 1 ? `New prayer request in ${name}` : `${count} new prayer requests in ${name}`,
         detail: count === 1 ? (latest.request_text || '') : '' })
     }
+  }
+
+  // 4b. A hand-off of yours that has sat a week: they never tapped.
+  for (const t of waiting || []) {
+    const days = Math.floor((Date.now() - new Date(t.created_at).getTime()) / 86400000)
+    items.push({ id: `handoff-wait-${t.id}`, type: 'handoff_wait', icon: '⏳', ts: t.created_at, band_id: t.band_id,
+      title: `${t.recipient_name || 'The person you passed it to'} hasn’t tapped ${t.band_id} yet`,
+      detail: `You passed it on ${days} days ago. If they have the band, ask them to tap it. If plans changed, open the band to cancel.`,
+      ctaHref: `/band/${t.band_id}`, ctaLabel: 'Open band' })
   }
 
   // 5a. Someone joined a circle you lead.

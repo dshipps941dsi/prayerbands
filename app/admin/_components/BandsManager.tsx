@@ -113,6 +113,38 @@ export default function BandsManager() {
     setXferBusy(false)
   }
 
+  // Merge two accounts: preview what each holds, then move everything from
+  // the dropped one onto the kept one.
+  const [mergeKeep, setMergeKeep] = useState('')
+  const [mergeDrop, setMergeDrop] = useState('')
+  const [mergePreview, setMergePreview] = useState<{ keep: any; drop: any } | null>(null)
+  const [mergeBusy, setMergeBusy] = useState(false)
+  const [mergeMsg, setMergeMsg] = useState('')
+  async function previewMerge() {
+    setMergeBusy(true); setMergeMsg(''); setMergePreview(null)
+    const res = await fetch(`/api/admin/merge-accounts?keep=${encodeURIComponent(mergeKeep.trim())}&drop=${encodeURIComponent(mergeDrop.trim())}`)
+    const data = await res.json().catch(() => ({}))
+    if (res.ok) setMergePreview(data); else setMergeMsg('❌ ' + (data.error || 'Could not look those up.'))
+    setMergeBusy(false)
+  }
+  async function doMerge() {
+    if (!mergePreview) return
+    setMergeBusy(true); setMergeMsg('')
+    const res = await fetch('/api/admin/merge-accounts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keep_email: mergeKeep.trim(), drop_email: mergeDrop.trim(), confirm: true }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok) {
+      const moved = Object.entries(data.moved || {}).map(([k, v]) => `${k} ${v}`).join(', ')
+      setMergeMsg(`✅ ${data.dropped} was merged into ${data.kept}.${moved ? ' Moved: ' + moved + '.' : ' Nothing to move.'} Their Google or Apple login now opens the kept account.`)
+      setMergePreview(null); setMergeKeep(''); setMergeDrop('')
+    } else {
+      setMergeMsg('❌ ' + (data.error || 'The merge did not run.'))
+    }
+    setMergeBusy(false)
+  }
+
   async function setUpline() {
     setUplineSaving(true); setUplineMsg('')
     const band_ids = uplineIds.split(/[\s,]+/).map(s => s.trim()).filter(Boolean)
@@ -259,6 +291,38 @@ export default function BandsManager() {
         <textarea value={xferNote} onChange={e => setXferNote(e.target.value)} placeholder="A prayer or a few words from the giver" rows={3} style={{ ...input, resize: 'vertical', minHeight: 70 }} />
         <button onClick={startTransfer} disabled={xferBusy || !xferId.trim()} style={btn(xferBusy || !xferId.trim())}>{xferBusy ? 'Working…' : 'Put into Transfer'}</button>
         {xferMsg && <div style={{ marginTop: 14, fontSize: 13, color: xferMsg.startsWith('❌') ? C.red : C.green, lineHeight: 1.5 }}>{xferMsg}</div>}
+      </div>
+
+      {/* Merge two accounts belonging to one person */}
+      <div style={card}>
+        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 6, color: C.heading, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Merge Two Accounts</h2>
+        <p style={{ fontSize: 13, color: C.secondary, marginBottom: 18, lineHeight: 1.5 }}>One person signed up twice (Google once, an email code another time). Everything on the dropped account &mdash; bands, stops, partners, circles, journal, credit &mdash; moves to the kept one, its Google or Apple login moves too, and the empty account is deleted. Preview first; it shows what each holds so you keep the right one.</p>
+        <label style={label}>Keep (email)</label>
+        <input value={mergeKeep} onChange={e => { setMergeKeep(e.target.value); setMergePreview(null) }} placeholder="the account with their history" style={input} />
+        <label style={label}>Drop (email)</label>
+        <input value={mergeDrop} onChange={e => { setMergeDrop(e.target.value); setMergePreview(null) }} placeholder="the extra one" style={input} />
+        {!mergePreview ? (
+          <button onClick={previewMerge} disabled={mergeBusy || !mergeKeep.trim() || !mergeDrop.trim()} style={btn(mergeBusy || !mergeKeep.trim() || !mergeDrop.trim())}>{mergeBusy ? 'Looking…' : 'Preview'}</button>
+        ) : (
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+              {(['keep', 'drop'] as const).map(side => { const a = mergePreview[side]; return (
+                <div key={side} style={{ border: `1px solid ${side === 'keep' ? C.gold : C.silver}`, borderRadius: 8, padding: '10px 12px', fontSize: 12.5, lineHeight: 1.6, color: C.body }}>
+                  <div style={{ fontFamily: 'Cinzel, serif', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: side === 'keep' ? C.goldText : C.secondary }}>{side === 'keep' ? 'Keep' : 'Drop'}</div>
+                  <div style={{ fontWeight: 600 }}>{a.name || '(no name)'} &middot; {a.email}</div>
+                  <div>since {String(a.created_at).slice(0, 10)}</div>
+                  <div>{a.stops} stops &middot; {a.owned} owned &middot; {a.credited} credited &middot; {a.partners} partners &middot; {a.circles} circles</div>
+                  <div>{a.journal} journal &middot; {a.push} devices &middot; sponsors {a.sponsored}</div>
+                </div>
+              ) })}
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setMergePreview(null)} disabled={mergeBusy} style={{ ...btn(mergeBusy), background: 'transparent', color: C.secondary, border: `1px solid ${C.silver}` }}>Cancel</button>
+              <button onClick={doMerge} disabled={mergeBusy} style={btn(mergeBusy)}>{mergeBusy ? 'Merging…' : `Merge ${mergePreview.drop.email} into ${mergePreview.keep.email}`}</button>
+            </div>
+          </div>
+        )}
+        {mergeMsg && <div style={{ marginTop: 14, fontSize: 13, color: mergeMsg.startsWith('❌') ? C.red : C.green, lineHeight: 1.5 }}>{mergeMsg}</div>}
       </div>
 
       {/* Replace a lost band */}
