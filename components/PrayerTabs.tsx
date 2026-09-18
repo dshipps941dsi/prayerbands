@@ -25,7 +25,7 @@ const SUBTABS: { id: Sub; label: string }[] = [
 const INFO: Record<Sub, { title: string; body: string }> = {
   requests: {
     title: 'My Prayer Journal',
-    body: 'Your journal is your own prayer list. Add what you’re praying for, mark it answered when God moves, and file entries into lists like Family or Health. Every entry is private by default — only you can see it, and no one is notified — until you tap to share it: with your Direct partners, your Lineage, one of your groups, your whole network, or the public wall. A shared prayer shows the people you sent it to how many are praying — not a chat, just a quiet count.',
+    body: 'Your journal is yours: prayers, notes, and verses, each dated as you write it. Add an update under a prayer as things change, and mark it answered when God moves — the whole story stays together. File entries into lists like Family or Health. Everything is private by default; a prayer can be shared with all your partners or one group, and then shows a quiet count of how many are praying.',
   },
   partners: {
     title: 'Prayer Partners',

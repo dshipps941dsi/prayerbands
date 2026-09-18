@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
 import AvatarBadge from './AvatarBadge'
+import { getDailyVerse } from '@/lib/verses'
 type AvatarSpec = { icon: string | null; initials: string | null; font: string | null }
 
 // Turn whatever someone types into a band code into PB-XXXXX. The code is
@@ -27,7 +28,20 @@ interface NetworkRequest {
   list_id?: string | null
   allow_comments?: boolean
   reply_count?: number
+  // A journal entry is a prayer (the only kind that can be shared), a note, or
+  // a saved verse; updates are dated follow-ups written under it.
+  kind?: EntryKind
+  verse_ref?: string | null
+  updates?: JournalUpdate[]
 }
+type EntryKind = 'prayer' | 'note' | 'verse'
+interface JournalUpdate { id: string; body: string; kind: 'update' | 'answered'; created_at: string }
+const ENTRY_KINDS: { id: EntryKind; label: string; glyph: string; color: string; placeholder: string }[] = [
+  { id: 'prayer', label: 'Prayer', glyph: '🙏', color: 'var(--pb-primary, #B8860B)', placeholder: 'What are you praying for?' },
+  { id: 'note', label: 'Note', glyph: '📝', color: '#8B7355', placeholder: 'A thought, a thank-you, something God showed you today…' },
+  { id: 'verse', label: 'Verse', glyph: '📖', color: '#2E7D8A', placeholder: 'The verse, and anything it stirred in you' },
+]
+const kindOf = (r: { kind?: EntryKind }) => ENTRY_KINDS.find(k => k.id === (r.kind ?? 'prayer')) ?? ENTRY_KINDS[0]
 
 // A named bucket a person files their own journal entries into (Family, Health).
 interface JournalList { id: string; name: string }
@@ -176,6 +190,16 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [audience, setAudience] = useState<string>('private')
+  const [entryKind, setEntryKind] = useState<EntryKind>('prayer')
+  const [verseRef, setVerseRef] = useState('')
+  // In-place edit of an entry, and the "+ Update" / "Mark answered" box under one.
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editText, setEditText] = useState('')
+  const [editRef, setEditRef] = useState('')
+  const [updateFor, setUpdateFor] = useState<string | null>(null)
+  const [updateDraft, setUpdateDraft] = useState('')
+  const [updateAnswering, setUpdateAnswering] = useState(false)
+  const [updateBusy, setUpdateBusy] = useState(false)
   const [excluded, setExcluded] = useState<string[]>([])   // partners left out of a "My Partners" share
   const [prayedFor, setPrayedFor] = useState<Set<string>>(new Set())  // partners you've told "I prayed for you"
   // The prayer chain: everything you've sent and everything that came back,
@@ -393,12 +417,14 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       const res = await fetch('/api/network/prayer-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_text: text.trim(), audience, anonymity, list_id: entryList, allow_comments: allowReplies && audience !== 'private', excluded_user_ids: audience === 'network' ? excluded : [] }),
+        body: JSON.stringify({ request_text: text.trim(), audience, anonymity, list_id: entryList, allow_comments: allowReplies && audience !== 'private', excluded_user_ids: audience === 'network' ? excluded : [], kind: entryKind, verse_ref: entryKind === 'verse' ? verseRef.trim() : undefined }),
       })
       if (res.ok) {
         const d = await res.json()
-        setMyRequests(prev => [{ ...d.request, intercession_count: 0, i_prayed: false }, ...prev])
+        setMyRequests(prev => [{ ...d.request, intercession_count: 0, i_prayed: false, updates: [] }, ...prev])
         setText('')
+        setVerseRef('')
+        setEntryKind('prayer')
         setShowForm(false)
         setAudience('private')
         setExcluded([]); setShowExclude(false)
@@ -441,9 +467,70 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       body: JSON.stringify({ request_id: requestId, is_answered: isAnswered }),
     })
     if (res.ok) {
-      setMyRequests(prev => prev.map(r => (r.id === requestId ? { ...r, is_answered: isAnswered } : r)))
+      const d = await res.json()
+      setMyRequests(prev => prev.map(r => (r.id === requestId ? { ...r, is_answered: isAnswered, answered_at: d.request?.answered_at ?? (isAnswered ? new Date().toISOString() : null) } : r)))
     }
   }
+
+  // ── Journal: updates, edits, removal ─────────────────────────────────────
+  function openUpdate(id: string, answering: boolean) {
+    setUpdateFor(id); setUpdateDraft(''); setUpdateAnswering(answering); setEditingId(null)
+  }
+  async function submitUpdate(r: NetworkRequest) {
+    const body = updateDraft.trim()
+    if (!updateAnswering && !body) return
+    setUpdateBusy(true)
+    try {
+      if (updateAnswering) await markAnswered(r.id, true)
+      if (body) {
+        const res = await fetch('/api/network/journal-update', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ entry_id: r.id, body, kind: updateAnswering ? 'answered' : 'update' }),
+        })
+        if (res.ok) {
+          const d = await res.json()
+          setMyRequests(prev => prev.map(x => x.id === r.id ? { ...x, updates: [...(x.updates ?? []), d.update] } : x))
+        }
+      }
+      setUpdateFor(null); setUpdateDraft(''); setUpdateAnswering(false)
+    } finally {
+      setUpdateBusy(false)
+    }
+  }
+  async function deleteUpdate(entryId: string, id: string) {
+    setMyRequests(prev => prev.map(x => x.id === entryId ? { ...x, updates: (x.updates ?? []).filter(u => u.id !== id) } : x))
+    await fetch(`/api/network/journal-update?id=${id}`, { method: 'DELETE' })
+  }
+  function startEdit(r: NetworkRequest) {
+    setEditingId(r.id); setEditText(r.request_text); setEditRef(r.verse_ref ?? ''); setUpdateFor(null)
+  }
+  async function saveEdit(r: NetworkRequest) {
+    const t = editText.trim()
+    if (!t) return
+    const isVerse = (r.kind ?? 'prayer') === 'verse'
+    const res = await fetch('/api/network/prayer-request', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ request_id: r.id, request_text: t, ...(isVerse ? { verse_ref: editRef } : {}) }),
+    })
+    if (res.ok) {
+      setMyRequests(prev => prev.map(x => x.id === r.id ? { ...x, request_text: t, verse_ref: isVerse ? (editRef.trim() || null) : x.verse_ref } : x))
+      setEditingId(null)
+    }
+  }
+  async function deleteEntry(id: string) {
+    if (!window.confirm('Remove this entry from your journal? Its updates go with it.')) return
+    setMyRequests(prev => prev.filter(x => x.id !== id))
+    await fetch(`/api/network/prayer-request?request_id=${id}`, { method: 'DELETE' })
+  }
+  // Date headings and time stamps that read like a journal, not a log.
+  const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString()
+  const dayLabel = (iso: string) => {
+    const d = new Date(iso), today = new Date(), yest = new Date(); yest.setDate(today.getDate() - 1)
+    const full = d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', ...(d.getFullYear() !== today.getFullYear() ? { year: 'numeric' as const } : {}) })
+    return sameDay(d, today) ? `Today · ${full}` : sameDay(d, yest) ? `Yesterday · ${full}` : full
+  }
+  const clock = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+  const stamp = (iso: string) => `${new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${clock(iso)}`
 
   // Mute a person's shared prayers (private to you; they're not told), or bring
   // them back. Muting hides their requests from the feed immediately.
@@ -1016,7 +1103,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <h4 style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0 }}>My Journal</h4>
           {!showForm && (
-            <button onClick={() => { setEntryList(activeList); setShowForm(true) }} style={{ backgroundColor: GOLD, color: 'var(--pb-text-on-primary, #fff)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>+ Prayer</button>
+            <button onClick={() => { setEntryList(activeList); setShowForm(true) }} style={{ backgroundColor: GOLD, color: 'var(--pb-text-on-primary, #fff)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>+ Write</button>
           )}
         </div>
 
@@ -1052,8 +1139,27 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
 
         {showForm && (
           <div style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, marginBottom: 10 }}>
-            <textarea value={text} onChange={e => setText(e.target.value)} placeholder="What would you like prayer for?" rows={3} maxLength={400} autoFocus style={{ width: '100%', padding: '10px 14px', fontSize: 14, fontFamily: 'Georgia, serif', color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', resize: 'none', boxSizing: 'border-box', lineHeight: 1.6 }} />
+            {/* What kind of entry: only a prayer can be shared; notes and verses
+                stay in the journal, so the audience row appears for prayers alone. */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+              {ENTRY_KINDS.map(k => {
+                const active = entryKind === k.id
+                return (
+                  <button key={k.id} onClick={() => { setEntryKind(k.id); if (k.id !== 'prayer') { setAudience('private'); setAllowReplies(false) } }} style={{ flex: 1, padding: '8px 6px', borderRadius: 8, border: `1px solid ${active ? k.color : BORDER}`, background: active ? `color-mix(in srgb, ${k.color} 12%, #fff)` : '#fff', color: active ? k.color : GRAY, fontSize: 12.5, fontFamily: 'Georgia, serif', fontWeight: active ? 700 : 400, cursor: 'pointer' }}>
+                    {k.glyph} {k.label}
+                  </button>
+                )
+              })}
+            </div>
+            {entryKind === 'verse' && (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                <input value={verseRef} onChange={e => setVerseRef(e.target.value.slice(0, 80))} placeholder="Reference (e.g. Psalm 46:1)" style={{ flex: 1, padding: '9px 12px', fontSize: 13.5, fontFamily: serif, fontWeight: 700, color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', boxSizing: 'border-box' }} />
+                <button onClick={() => { const v = getDailyVerse(); setVerseRef(v.ref); setText(v.text) }} title="Fill in today’s verse" style={{ padding: '9px 10px', borderRadius: 8, border: `1px solid ${BORDER}`, background: '#fff', color: '#2E7D8A', fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>Today’s verse</button>
+              </div>
+            )}
+            <textarea value={text} onChange={e => setText(e.target.value)} placeholder={kindOf({ kind: entryKind }).placeholder} rows={entryKind === 'prayer' ? 3 : 4} maxLength={entryKind === 'prayer' ? 400 : 2000} autoFocus style={{ width: '100%', padding: '10px 14px', fontSize: 14, fontFamily: 'Georgia, serif', color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', resize: 'none', boxSizing: 'border-box', lineHeight: 1.6 }} />
 
+            {entryKind === 'prayer' && (<>
             <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Who is this for?</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {AUDIENCES.map(a => {
@@ -1117,6 +1223,8 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
               )
             })()}
 
+            </>)}
+
             {lists.length > 0 && (
               <>
                 <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>File into a list <span style={{ textTransform: 'none', letterSpacing: 0 }}>(optional)</span></div>
@@ -1136,53 +1244,129 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             )}
 
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button onClick={() => { setShowForm(false); setText(''); setAudience('private'); setAllowReplies(false); setAnonymity('first_initial') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid var(--pb-border, #D4C5B0)`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={shareRequest} disabled={!text.trim() || submitting} style={{ flex: 2, backgroundColor: text.trim() ? GOLD : 'var(--pb-border, #D4C5B0)', border: 'none', borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: text.trim() ? 'pointer' : 'default' }}>{submitting ? (audience === 'private' ? 'Saving...' : 'Sharing...') : (audience === 'private' ? 'Add to Journal' : 'Share Request')}</button>
+              <button onClick={() => { setShowForm(false); setText(''); setVerseRef(''); setEntryKind('prayer'); setAudience('private'); setAllowReplies(false); setAnonymity('first_initial') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid var(--pb-border, #D4C5B0)`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={shareRequest} disabled={!text.trim() || submitting} style={{ flex: 2, backgroundColor: text.trim() ? GOLD : 'var(--pb-border, #D4C5B0)', border: 'none', borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: text.trim() ? 'pointer' : 'default' }}>{submitting ? (audience === 'private' ? 'Saving...' : 'Sharing...') : entryKind === 'note' ? 'Save note' : entryKind === 'verse' ? 'Save verse' : audience === 'private' ? 'Add to Journal' : 'Share Request'}</button>
             </div>
           </div>
         )}
 
         {myRequests.length === 0 && !showForm && (
-          <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: 0 }}>Your journal is empty. Add a prayer — it stays private to you unless you choose to share it.</p>
+          <p style={{ fontSize: 13, color: GRAY, fontStyle: 'italic', margin: 0 }}>Your journal is empty. Write a prayer, jot a note, or save a verse — it stays private to you unless you choose to share a prayer.</p>
         )}
 
-        {myRequests.filter(r => !activeList || r.list_id === activeList).map(r => (
-          <div key={r.id} style={{ backgroundColor: r.is_answered ? '#F5F5F0' : '#fff', border: `1px solid ${r.is_answered ? '#D4D0C8' : BORDER}`, borderRadius: 10, padding: 14, marginBottom: 10, opacity: r.is_answered ? 0.85 : 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-              {r.is_answered && <span style={{ fontSize: 11, fontWeight: 600, color: '#7BAE8E', letterSpacing: '0.08em', textTransform: 'uppercase' }}>✓ Answered</span>}
-              {r.audience && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: GRAY, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>{audienceLabel(r.audience)}</span>}
-              {r.list_id && lists.find(l => l.id === r.list_id) && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: CIRCLE, background: 'rgba(46,125,138,0.10)', border: `1px solid ${CIRCLE}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>{lists.find(l => l.id === r.list_id)?.name}</span>}
-            </div>
-            <p style={{ fontSize: 14, color: DARK, lineHeight: 1.5, margin: '0 0 10px 0', fontStyle: 'italic' }}>&ldquo;{r.request_text}&rdquo;</p>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 12, color: GRAY }}>🙏 {r.intercession_count} {r.intercession_count === 1 ? 'person praying' : 'praying'}</span>
-              <button onClick={() => markAnswered(r.id, !r.is_answered)} style={{ background: 'none', border: 'none', fontSize: 12, color: r.is_answered ? GRAY : '#7BAE8E', cursor: 'pointer', padding: 0 }}>
-                {r.is_answered ? 'Reopen' : 'Mark Answered ✓'}
-              </button>
-            </div>
-
-            {/* Private replies you've received on this prayer (only you see these). */}
-            {r.allow_comments && (
-              <div style={{ marginTop: 10, paddingTop: 8, borderTop: `1px solid ${BORDER}` }}>
-                <button onClick={() => toggleReplies(r.id)} style={{ background: 'none', border: 'none', color: CIRCLE, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
-                  💬 {r.reply_count ?? 0} {(r.reply_count ?? 0) === 1 ? 'reply' : 'replies'}{openReplyId === r.id ? ' ▴' : ' ▾'}
-                </button>
-                {openReplyId === r.id && (
-                  <div style={{ marginTop: 8 }}>
-                    {(repliesFor[r.id] ?? []).length === 0 ? (
-                      <p style={{ fontSize: 12, color: GRAY, fontStyle: 'italic', margin: 0 }}>No replies yet.</p>
-                    ) : (repliesFor[r.id] ?? []).map(c => (
-                      <div key={c.id} style={{ marginBottom: 8 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: DARK, fontFamily: serif }}>{c.author}</span>
-                        <p style={{ fontSize: 13, color: DARK, margin: '2px 0 0', lineHeight: 1.5 }}>{c.body}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+        {(() => {
+          // Group by day, newest first, so the page reads like a journal.
+          const shown = myRequests.filter(r => !activeList || r.list_id === activeList)
+          const days: { key: string; label: string; items: NetworkRequest[] }[] = []
+          for (const r of shown) {
+            const key = new Date(r.created_at).toDateString()
+            let d = days[days.length - 1]
+            if (!d || d.key !== key) { d = { key, label: dayLabel(r.created_at), items: [] }; days.push(d) }
+            d.items.push(r)
+          }
+          return days.map(d => (
+            <div key={d.key} style={{ marginBottom: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 8px' }}>
+                <span style={{ fontFamily: serif, fontSize: 12, fontWeight: 700, color: GOLD, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{d.label}</span>
+                <span style={{ flex: 1, height: 1, background: BORDER }} />
               </div>
-            )}
-          </div>
-        ))}
+              {d.items.map(r => {
+                const k = kindOf(r)
+                const isPrayer = k.id === 'prayer'
+                const editing = editingId === r.id
+                const listName = r.list_id ? lists.find(l => l.id === r.list_id)?.name : null
+                return (
+                  <div key={r.id} style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderLeft: `3px solid ${r.is_answered ? '#7BAE8E' : k.color}`, borderRadius: 10, padding: '12px 14px 12px 16px', marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 12, color: k.color, fontWeight: 700, fontFamily: serif }}>{k.glyph} {k.label}</span>
+                      <span style={{ fontSize: 11.5, color: GRAY }}>{clock(r.created_at)}</span>
+                      {r.is_answered && <span style={{ fontSize: 10, fontWeight: 700, color: '#5E9A72', letterSpacing: '0.06em', textTransform: 'uppercase', background: 'rgba(123,174,142,0.14)', border: '1px solid #7BAE8E', borderRadius: 20, padding: '2px 8px' }}>✓ Answered{r.answered_at ? ` · ${new Date(r.answered_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}</span>}
+                      {isPrayer && r.audience && r.audience !== 'private' && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: GRAY, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>Shared · {audienceLabel(r.audience)}</span>}
+                      {listName && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: CIRCLE, background: 'rgba(46,125,138,0.10)', border: `1px solid ${CIRCLE}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>{listName}</span>}
+                      {!editing && (
+                        <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 10 }}>
+                          <button onClick={() => startEdit(r)} style={{ background: 'none', border: 'none', color: GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: 0 }}>Edit</button>
+                          <button onClick={() => deleteEntry(r.id)} title="Remove" style={{ background: 'none', border: 'none', color: GRAY, fontSize: 13, cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+                        </span>
+                      )}
+                    </div>
+
+                    {editing ? (
+                      <div>
+                        {k.id === 'verse' && (
+                          <input value={editRef} onChange={e => setEditRef(e.target.value.slice(0, 80))} placeholder="Reference (e.g. Psalm 46:1)" style={{ width: '100%', padding: '8px 12px', fontSize: 13.5, fontFamily: serif, fontWeight: 700, color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
+                        )}
+                        <textarea autoFocus value={editText} onChange={e => setEditText(e.target.value)} rows={4} maxLength={2000} style={{ width: '100%', padding: '10px 14px', fontSize: 14, fontFamily: 'Georgia, serif', color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.6 }} />
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          <button onClick={() => setEditingId(null)} style={{ flex: 1, background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 8, padding: 8, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
+                          <button onClick={() => saveEdit(r)} disabled={!editText.trim()} style={{ flex: 2, background: editText.trim() ? GOLD : BORDER, border: 'none', borderRadius: 8, padding: 8, fontSize: 13, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: editText.trim() ? 'pointer' : 'default' }}>Save</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {k.id === 'verse' && r.verse_ref && <div style={{ fontFamily: serif, fontSize: 13.5, fontWeight: 700, color: DARK, marginBottom: 4 }}>{r.verse_ref}</div>}
+                        <p style={{ fontSize: 14, color: DARK, lineHeight: 1.6, margin: 0, fontStyle: k.id === 'verse' ? 'italic' : 'normal', whiteSpace: 'pre-wrap' }}>{k.id === 'verse' ? <>&ldquo;{r.request_text}&rdquo;</> : r.request_text}</p>
+                      </>
+                    )}
+
+                    {/* Dated follow-ups under the entry. */}
+                    {(r.updates ?? []).length > 0 && (
+                      <div style={{ marginTop: 10, paddingLeft: 12, borderLeft: `2px solid ${BORDER}` }}>
+                        {(r.updates ?? []).map(u => (
+                          <div key={u.id} style={{ marginBottom: 8 }}>
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                              <span style={{ fontSize: 10.5, color: u.kind === 'answered' ? '#5E9A72' : GRAY, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{u.kind === 'answered' ? '✓ Answered' : 'Update'}</span>
+                              <span style={{ fontSize: 11, color: GRAY }}>{stamp(u.created_at)}</span>
+                              <button onClick={() => deleteUpdate(r.id, u.id)} title="Remove this update" style={{ marginLeft: 'auto', background: 'none', border: 'none', color: GRAY, fontSize: 12, cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+                            </div>
+                            <p style={{ fontSize: 13.5, color: DARK, margin: '2px 0 0', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{u.body}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {updateFor === r.id ? (
+                      <div style={{ marginTop: 10 }}>
+                        <textarea autoFocus value={updateDraft} onChange={e => setUpdateDraft(e.target.value.slice(0, 1000))} rows={2} placeholder={updateAnswering ? 'How was it answered? (optional)' : 'What’s new? — “surgery went well”, “still waiting on the results”'} style={{ width: '100%', padding: '9px 12px', fontSize: 13.5, fontFamily: 'Georgia, serif', color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', resize: 'none', boxSizing: 'border-box', lineHeight: 1.55 }} />
+                        <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                          <button onClick={() => { setUpdateFor(null); setUpdateDraft(''); setUpdateAnswering(false) }} style={{ flex: 1, background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 8, padding: 7, fontSize: 12.5, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
+                          <button onClick={() => submitUpdate(r)} disabled={updateBusy || (!updateAnswering && !updateDraft.trim())} style={{ flex: 2, background: updateAnswering ? '#7BAE8E' : GOLD, border: 'none', borderRadius: 8, padding: 7, fontSize: 12.5, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: 'pointer', opacity: updateBusy || (!updateAnswering && !updateDraft.trim()) ? 0.6 : 1 }}>{updateBusy ? 'Saving…' : updateAnswering ? 'Mark answered ✓' : 'Add update'}</button>
+                        </div>
+                      </div>
+                    ) : !editing && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 10, flexWrap: 'wrap' }}>
+                        {isPrayer && r.audience !== 'private' && <span style={{ fontSize: 12, color: GRAY }}>🙏 {r.intercession_count} {r.intercession_count === 1 ? 'person praying' : 'praying'}</span>}
+                        <button onClick={() => openUpdate(r.id, false)} style={{ background: 'none', border: 'none', fontSize: 12, color: GOLD, fontWeight: 600, cursor: 'pointer', padding: 0, fontFamily: 'Georgia, serif' }}>+ Update</button>
+                        {isPrayer && (r.is_answered
+                          ? <button onClick={() => markAnswered(r.id, false)} style={{ background: 'none', border: 'none', fontSize: 12, color: GRAY, cursor: 'pointer', padding: 0, fontFamily: 'Georgia, serif' }}>Reopen</button>
+                          : <button onClick={() => openUpdate(r.id, true)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#5E9A72', fontWeight: 600, cursor: 'pointer', padding: 0, fontFamily: 'Georgia, serif' }}>Mark answered ✓</button>)}
+                        {r.allow_comments && (
+                          <button onClick={() => toggleReplies(r.id)} style={{ background: 'none', border: 'none', color: CIRCLE, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+                            💬 {r.reply_count ?? 0} {(r.reply_count ?? 0) === 1 ? 'reply' : 'replies'}{openReplyId === r.id ? ' ▴' : ' ▾'}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Private replies you've received on this prayer (only you see these). */}
+                    {r.allow_comments && openReplyId === r.id && (
+                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${BORDER}` }}>
+                        {(repliesFor[r.id] ?? []).length === 0 ? (
+                          <p style={{ fontSize: 12, color: GRAY, fontStyle: 'italic', margin: 0 }}>No replies yet.</p>
+                        ) : (repliesFor[r.id] ?? []).map(c => (
+                          <div key={c.id} style={{ marginBottom: 8 }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: DARK, fontFamily: serif }}>{c.author}</span>
+                            <p style={{ fontSize: 13, color: DARK, margin: '2px 0 0', lineHeight: 1.5 }}>{c.body}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          ))
+        })()}
       </div>
       )}
     </div>

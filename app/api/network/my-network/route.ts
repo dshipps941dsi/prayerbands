@@ -148,11 +148,30 @@ export async function GET(_req: NextRequest) {
           .order('created_at', { ascending: false })
       : { data: [] as any[] }
 
-    const { data: myRequests } = await admin
+    let { data: myRequests, error: myErr } = await admin
       .from('prayer_network_requests')
-      .select('id, user_id, request_text, is_answered, answered_at, created_at, visibility, audience, list_id, allow_comments')
+      .select('id, user_id, request_text, is_answered, answered_at, created_at, visibility, audience, list_id, allow_comments, kind, verse_ref')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
+    if (myErr && (myErr as any).code === '42703') {
+      // Journal migration not applied yet: read without the new columns.
+      ;({ data: myRequests } = await admin
+        .from('prayer_network_requests')
+        .select('id, user_id, request_text, is_answered, answered_at, created_at, visibility, audience, list_id, allow_comments')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false }))
+    }
+
+    // Dated follow-ups under the viewer's own entries.
+    const updatesByEntry: Record<string, { id: string; body: string; kind: string; created_at: string }[]> = {}
+    if ((myRequests ?? []).length) {
+      const { data: ups } = await admin
+        .from('journal_updates')
+        .select('id, entry_id, body, kind, created_at')
+        .in('entry_id', (myRequests ?? []).map((r: any) => r.id))
+        .order('created_at', { ascending: true })
+      ;(ups ?? []).forEach((u: any) => { (updatesByEntry[u.entry_id] ||= []).push({ id: u.id, body: u.body, kind: u.kind, created_at: u.created_at }) })
+    }
 
     // Intercession counts + whether the viewer has prayed, for all relevant requests.
     const reqIds = [
@@ -278,7 +297,7 @@ export async function GET(_req: NextRequest) {
       created_at: c.created_at,
     }))
 
-    const my_requests = ((myRequests ?? []) as any[]).map(r => ({ ...decorate(r), audience: r.audience ?? 'network', list_id: r.list_id ?? null, allow_comments: !!r.allow_comments, reply_count: replyCount[r.id] ?? 0 }))
+    const my_requests = ((myRequests ?? []) as any[]).map(r => ({ ...decorate(r), audience: r.audience ?? 'network', list_id: r.list_id ?? null, allow_comments: !!r.allow_comments, reply_count: replyCount[r.id] ?? 0, kind: r.kind ?? 'prayer', verse_ref: r.verse_ref ?? null, updates: updatesByEntry[r.id] ?? [] }))
 
     return NextResponse.json({
       connections,

@@ -19,6 +19,11 @@ export async function POST(req: NextRequest) {
     if (!request_text?.trim()) {
       return NextResponse.json({ error: 'Prayer request text is required' }, { status: 400 })
     }
+    // A journal entry is a prayer (shareable), a note, or a saved verse. Notes
+    // and verses are the person's own — they are always private.
+    const kind: 'prayer' | 'note' | 'verse' = body.kind === 'note' ? 'note' : body.kind === 'verse' ? 'verse' : 'prayer'
+    const verse_ref = kind === 'verse' ? String(body.verse_ref || '').trim().slice(0, 80) || null : null
+    if (kind !== 'prayer') body.audience = 'private'
 
     // Accept `audience`; tolerate the old `visibility` field for safety.
     // 'private' is a journal entry kept to yourself: saved, but the others-feed
@@ -89,11 +94,16 @@ export async function POST(req: NextRequest) {
       : []
     const excluded_user_ids = (audience === 'private' || audience === 'wall') ? [] : excludedIds
 
-    const { data: request, error } = await supabase
+    const row = { user_id: user.id, request_text: request_text.trim(), visibility: vis, audience, public_name, list_id, excluded_user_ids, allow_comments: body.allow_comments === true && audience !== 'private' }
+    let { data: request, error } = await supabase
       .from('prayer_network_requests')
-      .insert({ user_id: user.id, request_text: request_text.trim(), visibility: vis, audience, public_name, list_id, excluded_user_ids, allow_comments: body.allow_comments === true && audience !== 'private' })
+      .insert({ ...row, kind, verse_ref })
       .select()
       .single()
+    if (error && (error as any).code === '42703') {
+      // Journal migration not applied yet: save it as a plain entry.
+      ;({ data: request, error } = await supabase.from('prayer_network_requests').insert(row).select().single())
+    }
 
     if (error || !request) {
       console.error('Network prayer request insert error:', error)
@@ -107,8 +117,8 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PATCH /api/network/prayer-request  { request_id, is_answered }
-// Mark your own request answered / unanswered.
+// PATCH /api/network/prayer-request  { request_id, is_answered?, request_text?, verse_ref?, list_id? }
+// Mark your own request answered / unanswered, or edit what you wrote.
 export async function PATCH(req: NextRequest) {
   try {
     const supabase = await createClient()
@@ -117,15 +127,31 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { request_id, is_answered } = await req.json()
+    const body = await req.json()
+    const { request_id, is_answered } = body
     if (!request_id) {
       return NextResponse.json({ error: 'request_id is required' }, { status: 400 })
     }
 
+    const patch: Record<string, unknown> = {}
+    if (typeof is_answered === 'boolean') { patch.is_answered = is_answered; patch.answered_at = is_answered ? new Date().toISOString() : null }
+    if (typeof body.request_text === 'string') {
+      const t = body.request_text.trim()
+      if (!t) return NextResponse.json({ error: 'The entry cannot be empty' }, { status: 400 })
+      patch.request_text = t.slice(0, 2000)
+    }
+    if (typeof body.verse_ref === 'string') patch.verse_ref = body.verse_ref.trim().slice(0, 80) || null
+    if (body.list_id === null) patch.list_id = null
+    else if (typeof body.list_id === 'string' && /^[0-9a-fA-F-]{36}$/.test(body.list_id)) {
+      const { data: l } = await supabase.from('journal_lists').select('id').eq('id', body.list_id).eq('owner_id', user.id).maybeSingle()
+      if (l) patch.list_id = body.list_id
+    }
+    if (!Object.keys(patch).length) return NextResponse.json({ error: 'Nothing to change' }, { status: 400 })
+
     // RLS ("manage their own") restricts this to the owner.
     const { data: updated, error } = await supabase
       .from('prayer_network_requests')
-      .update({ is_answered, answered_at: is_answered ? new Date().toISOString() : null })
+      .update(patch)
       .eq('id', request_id)
       .eq('user_id', user.id)
       .select()
