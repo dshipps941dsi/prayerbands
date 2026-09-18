@@ -11,6 +11,7 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { titleCase, formatState, formatCountry } from '@/lib/text-format'
 import { sendPush } from '@/lib/push'
 import { hasTapProof, NEEDS_TAP_MESSAGE } from '@/lib/tap-proof'
+import { planStop } from '@/lib/band-stop'
 
 export async function POST(req: NextRequest) {
   const supabase = createClient(
@@ -180,20 +181,49 @@ export async function POST(req: NextRequest) {
       if (!ownsIt) return NextResponse.json({ error: NEEDS_TAP_MESSAGE, needsTap: true }, { status: 403 })
     }
 
-    // Same person, second time: someone who registered as a guest and is now
-    // signed in (or reached the journey's "I now have this band" while their
-    // own guest stop is the latest). Attach the existing stop to their account
-    // instead of writing "Kathy → Kathy". Only a guest stop nobody registered
-    // on someone else's behalf, and only on a first-name match.
-    if (holderUserId && !helperUserId && latestBefore && !latestBefore.user_id && !latestBefore.registered_by) {
-      const a = String(latestBefore.user_name || '').trim().toLowerCase().split(/\s+/)[0]
-      const b = cleanName.toLowerCase().split(/\s+/)[0]
-      if (a && b && (a === b || (a.length >= 3 && b.length >= 3 && (a.startsWith(b) || b.startsWith(a))))) {
-        await supabase.from('registrations').update({ user_id: holderUserId }).eq('id', latestBefore.id)
-        await supabase.from('bands').update({ owner_id: holderUserId, status: 'registered' }).eq('band_id', bandId).is('owner_id', null)
-        await adoptNameFromRegistration(supabase, holderUserId, cleanName)
-        return NextResponse.json({ success: true, registrationId: latestBefore.id, adopted: true })
+    // What this stop changes — owner, upline, sponsor, a waiting hand-off —
+    // is decided by one rule (lib/band-stop, tested against the real cases)
+    // and executed here. Nothing below decides; it only writes.
+    const { data: bandRow } = await supabase.from('bands').select('band_id, owner_id, upline_user_id, status').eq('band_id', bandId).maybeSingle()
+    if (!bandRow) return NextResponse.json({ error: 'Band not found' }, { status: 404 })
+    const { data: pendingT } = await supabase
+      .from('band_transfers').select('id, from_user_id').eq('band_id', bandId).eq('status', 'pending')
+      .order('created_at', { ascending: false }).limit(1).maybeSingle()
+    const plan = planStop({
+      band: { band_id: bandId, owner_id: bandRow.owner_id ?? null, upline_user_id: bandRow.upline_user_id ?? null, status: bandRow.status ?? null },
+      latestBefore: latestBefore ? { id: latestBefore.id, user_id: latestBefore.user_id ?? null, registered_by: latestBefore.registered_by ?? null, user_name: latestBefore.user_name ?? null } : null,
+      callerId,
+      forSomeoneElse: forSomeoneElse === true,
+      typedName: cleanName,
+      pendingTransferFrom: pendingT ? ((pendingT as any).from_user_id ?? null) : undefined,
+    })
+
+    // The upline's email rides along on the band for admin lookups.
+    const uplineEmailFor = async (id: string | undefined): Promise<string | null> => {
+      if (!id) return null
+      const { data: p } = await supabase.from('profiles').select('email').eq('id', id).maybeSingle()
+      return (p as any)?.email ?? null
+    }
+    // Sponsorship is what the reach tree traverses. First-wins: whoever gave
+    // someone their first band keeps them.
+    const sponsorFirstWins = async (sp: { userId: string; uplineUserId: string } | null) => {
+      if (!sp) return
+      const { data: rp } = await supabase.from('profiles').select('upline_user_id').eq('id', sp.userId).maybeSingle()
+      if (rp && !(rp as any).upline_user_id) {
+        await supabase.from('profiles').update({ upline_user_id: sp.uplineUserId, upline_band_id: bandId }).eq('id', sp.userId).is('upline_user_id', null)
       }
+    }
+
+    // Same person, second time: attach their own guest stop instead of
+    // writing "Kathy → Kathy".
+    if (plan.action === 'adopt' && latestBefore) {
+      await supabase.from('registrations').update({ user_id: plan.holderUserId }).eq('id', latestBefore.id)
+      if ('owner_id' in plan.bandPatch) {
+        await supabase.from('bands').update({ owner_id: plan.bandPatch.owner_id, status: 'registered' }).eq('band_id', bandId).is('owner_id', null)
+      }
+      await sponsorFirstWins(plan.sponsor)
+      if (plan.holderUserId) await adoptNameFromRegistration(supabase, plan.holderUserId, cleanName)
+      return NextResponse.json({ success: true, registrationId: latestBefore.id, adopted: true })
     }
 
     // Auto-flag prayers containing filtered language for admin review (hidden
@@ -211,8 +241,8 @@ export async function POST(req: NextRequest) {
       .insert({
         band_id: bandId,
         user_name: cleanName,
-        user_id: holderUserId,
-        registered_by: helperUserId,
+        user_id: plan.holderUserId,
+        registered_by: plan.helperUserId,
         city: geoCity,
         state: geoState,
         country: geoCountry,
@@ -233,138 +263,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    await supabase
-      .from('bands')
-      .update({ status: 'registered' })
-      .eq('band_id', bandId)
+    // The band's owner and upline, as the plan says. An owner set on a band
+    // nobody owned is guarded so two first taps in the same second cannot
+    // both take it.
+    const patch: Record<string, unknown> = { status: 'registered', ...plan.bandPatch }
+    if (plan.bandPatch.upline_user_id) patch.upline_email = await uplineEmailFor(plan.bandPatch.upline_user_id)
+    let bandUpdate = supabase.from('bands').update(patch).eq('band_id', bandId)
+    if (plan.bandPatch.owner_id && !bandRow.owner_id) bandUpdate = bandUpdate.is('owner_id', null)
+    const { error: patchError } = await bandUpdate
+    if (patchError) console.error('[register-band] band patch error:', patchError)
 
-    // Registered on someone's behalf: the helper is the giver if nobody else
-    // is yet, and the band must not sit on the helper's account.
-    if (helperUserId) {
-      const { data: bd } = await supabase.from('bands').select('owner_id, upline_user_id').eq('band_id', bandId).maybeSingle()
-      const patch: Record<string, unknown> = {}
-      if (bd && bd.owner_id === helperUserId) patch.owner_id = null
-      // The helper is the giver: always when they owned it (they are handing
-      // their own band over), otherwise only if nobody else is credited yet.
-      if (bd && (bd.owner_id === helperUserId || !bd.upline_user_id)) patch.upline_user_id = helperUserId
-      if (Object.keys(patch).length) await supabase.from('bands').update(patch).eq('band_id', bandId)
-    }
+    await sponsorFirstWins(plan.sponsor)
 
     // A signed-in person registering a stop has just given their name. If their
     // account has none — the emailed-code sign-up never asks — take it.
-    if (holderUserId) await adoptNameFromRegistration(supabase, holderUserId, cleanName)
+    if (plan.holderUserId) await adoptNameFromRegistration(supabase, plan.holderUserId, cleanName)
 
     // Mark a gift band's blessing as seen once the recipient actually registers
-    // (idempotent no-op for non-gift bands / later holders). This replaces the
-    // old unauthenticated mark-dedication-viewed POST — so closing the tab on the
-    // claim form no longer permanently suppresses the "sent especially for you"
-    // reveal; it persists until they genuinely claim the band.
+    // (idempotent no-op for non-gift bands / later holders).
     await supabase
       .from('bands')
       .update({ dedication_viewed: true })
       .eq('band_id', bandId)
       .eq('dedication_viewed', false)
 
-    // If this registration is the recipient accepting a hand-off, complete the
-    // pending transfer here — server-side and atomic with the registration —
-    // rather than via forgeable client writes that RLS now blocks anyway.
-    const { data: completedTransfers } = await supabase
-      .from('band_transfers')
-      .update({ status: 'completed', completed_at: new Date().toISOString() })
-      .eq('band_id', bandId)
-      .eq('status', 'pending')
-      .select('from_user_id')
-
-    // Handing a band over has to hand ownership over too. Completing the
-    // transfer used to leave owner_id on the giver forever, so a recipient who
-    // later made an account was refused by claim-band with "already linked to
-    // another account" — on the band in their own hand. A guest recipient has no
-    // account to receive ownership, so it is released instead, which leaves the
-    // band claimable if they sign up later.
-    if (completedTransfers && completedTransfers.length > 0) {
-      const giverId = (completedTransfers[0] as any).from_user_id as string | null
-      const giver = giverId && giverId !== holderUserId ? giverId : null
-
-      let giverEmail: string | null = null
-      if (giver) {
-        const { data: giverProfile } = await supabase
-          .from('profiles').select('email').eq('id', giver).maybeSingle()
-        giverEmail = (giverProfile as any)?.email ?? null
-      }
-
-      const { error: handoverError } = await supabase
-        .from('bands')
-        .update({
-          owner_id: holderUserId || null,
-          // The giver becomes the upline on every pass, so the tree gains a
-          // level each time instead of everyone hanging off whoever started it.
-          ...(giver ? { upline_user_id: giver, upline_email: giverEmail } : {}),
-        })
+    // The recipient accepting a hand-off completes it here — server-side and
+    // atomic with the registration.
+    if (plan.completeTransfer) {
+      await supabase
+        .from('band_transfers')
+        .update({ status: 'completed', completed_at: new Date().toISOString() })
         .eq('band_id', bandId)
-      if (handoverError) console.error('[register-band] handover error:', handoverError)
-
-      // Sponsorship is what the reach tree actually traverses (profiles.upline_
-      // user_id), and accepting a hand-off is exactly the moment one person
-      // introduces another. First-wins, matching claim-band: whoever gave
-      // someone their first band keeps them, so a later hand-off cannot take
-      // attribution from the person who actually introduced them.
-      if (giver && holderUserId) {
-        const { data: recipientProfile } = await supabase
-          .from('profiles').select('upline_user_id').eq('id', holderUserId).maybeSingle()
-        if (recipientProfile && !(recipientProfile as any).upline_user_id) {
-          await supabase
-            .from('profiles')
-            .update({ upline_user_id: giver, upline_band_id: bandId })
-            .eq('id', holderUserId)
-            .is('upline_user_id', null)
-        }
-      }
+        .eq('status', 'pending')
     }
 
-    // Implicit hand-off. Nobody pressed "Pass this band on": someone owned a
-    // band, physically handed it over, and the new person tapped it. That is
-    // how most bands will move — a coach with a pile of twenty, Jeff with his
-    // three — and it must work with zero steps for the giver. So the tap IS
-    // the hand-off: the new holder takes the band (or it is released for a
-    // guest to claim), and the previous owner becomes the link above them.
-    let implicitGiverId: string | null = null
-    if (!(completedTransfers && completedTransfers.length > 0) && !helperUserId) {
-      const { data: cur } = await supabase.from('bands').select('owner_id').eq('band_id', bandId).maybeSingle()
-      const prevOwner = (cur?.owner_id as string | null) ?? null
-      if (prevOwner && prevOwner !== holderUserId) {
-        implicitGiverId = prevOwner
-        const { data: giverProfile } = await supabase.from('profiles').select('email').eq('id', prevOwner).maybeSingle()
-        await supabase
-          .from('bands')
-          .update({ owner_id: holderUserId || null, upline_user_id: prevOwner, upline_email: (giverProfile as any)?.email ?? null })
-          .eq('band_id', bandId)
-        if (holderUserId) {
-          const { data: recipientProfile } = await supabase.from('profiles').select('upline_user_id').eq('id', holderUserId).maybeSingle()
-          if (recipientProfile && !(recipientProfile as any).upline_user_id) {
-            await supabase.from('profiles').update({ upline_user_id: prevOwner, upline_band_id: bandId }).eq('id', holderUserId).is('upline_user_id', null)
-          }
-        }
-      } else if (!prevOwner && holderUserId) {
-        // Nobody owned it (a gift band, a seeded band, or a band whose first
-        // holder never signed in). A signed-in registrant takes it — so a
-        // first tap while signed in leaves an owner WITH a stop, not just a
-        // holder — and if the previous stop was another account's, that
-        // person handed it on and becomes the link above.
-        const prevHolder = latestBefore?.user_id && latestBefore.user_id !== holderUserId ? (latestBefore.user_id as string) : null
-        await supabase
-          .from('bands')
-          .update({ owner_id: holderUserId, ...(prevHolder ? { upline_user_id: prevHolder } : {}) })
-          .eq('band_id', bandId)
-          .is('owner_id', null)
-        if (prevHolder) {
-          implicitGiverId = prevHolder
-          const { data: recipientProfile } = await supabase.from('profiles').select('upline_user_id').eq('id', holderUserId).maybeSingle()
-          if (recipientProfile && !(recipientProfile as any).upline_user_id) {
-            await supabase.from('profiles').update({ upline_user_id: prevHolder, upline_band_id: bandId }).eq('id', holderUserId).is('upline_user_id', null)
-          }
-        }
-      }
-    }
+    // Who to tell the band moved on: the previous owner or holder on an
+    // implicit hand-off. A formal hand-off's giver hears through the
+    // "received your band" notice instead.
+    const implicitGiverId: string | null = plan.completeTransfer ? null : plan.giverId
 
     // "Your band just moved" goes to the person who just handed it over —
     // the previous stop — not to everyone who ever held it. A five-stop band
