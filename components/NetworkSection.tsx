@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
 import AvatarBadge from './AvatarBadge'
@@ -41,6 +41,13 @@ const ENTRY_KINDS: { id: EntryKind; label: string; glyph: string; color: string;
   { id: 'note', label: 'Note', glyph: '📝', color: '#8B7355', placeholder: 'A thought, a thank-you, something God showed you today…' },
   { id: 'verse', label: 'Verse', glyph: '📖', color: '#2E7D8A', placeholder: 'The verse, and anything it stirred in you' },
 ]
+// Journal entry actions read as small outlined buttons, not links.
+const pill = (color: string, filled = false): React.CSSProperties => ({
+  display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 11px', borderRadius: 20,
+  border: `1px solid ${color}`, background: filled ? color : `color-mix(in srgb, ${color} 8%, #fff)`,
+  color: filled ? '#fff' : color, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: 600,
+  cursor: 'pointer', lineHeight: 1, whiteSpace: 'nowrap',
+})
 const kindOf = (r: { kind?: EntryKind }) => ENTRY_KINDS.find(k => k.id === (r.kind ?? 'prayer')) ?? ENTRY_KINDS[0]
 
 // A named bucket a person files their own journal entries into (Family, Health).
@@ -1284,9 +1291,9 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                       {isPrayer && r.audience && r.audience !== 'private' && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: GRAY, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>Shared · {audienceLabel(r.audience)}</span>}
                       {listName && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: CIRCLE, background: 'rgba(46,125,138,0.10)', border: `1px solid ${CIRCLE}`, borderRadius: 20, padding: '2px 8px', fontFamily: 'Georgia, serif' }}>{listName}</span>}
                       {!editing && (
-                        <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 10 }}>
-                          <button onClick={() => startEdit(r)} style={{ background: 'none', border: 'none', color: GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: 0 }}>Edit</button>
-                          <button onClick={() => deleteEntry(r.id)} title="Remove" style={{ background: 'none', border: 'none', color: GRAY, fontSize: 13, cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+                        <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 6 }}>
+                          <button onClick={() => startEdit(r)} style={{ ...pill(GRAY), padding: '5px 10px', fontSize: 11.5 }}>✎ Edit</button>
+                          <button onClick={() => deleteEntry(r.id)} title="Remove this entry" style={{ ...pill(GRAY), padding: '5px 10px', fontSize: 11.5 }}>Remove</button>
                         </span>
                       )}
                     </div>
@@ -1317,7 +1324,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                             <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
                               <span style={{ fontSize: 10.5, color: u.kind === 'answered' ? '#5E9A72' : GRAY, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{u.kind === 'answered' ? '✓ Answered' : 'Update'}</span>
                               <span style={{ fontSize: 11, color: GRAY }}>{stamp(u.created_at)}</span>
-                              <button onClick={() => deleteUpdate(r.id, u.id)} title="Remove this update" style={{ marginLeft: 'auto', background: 'none', border: 'none', color: GRAY, fontSize: 12, cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+                              <button onClick={() => deleteUpdate(r.id, u.id)} title="Remove this update" style={{ ...pill(GRAY), marginLeft: 'auto', padding: '3px 8px', fontSize: 10.5 }}>Remove</button>
                             </div>
                             <p style={{ fontSize: 13.5, color: DARK, margin: '2px 0 0', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{u.body}</p>
                           </div>
@@ -1334,17 +1341,17 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                         </div>
                       </div>
                     ) : !editing && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 10, flexWrap: 'wrap' }}>
-                        {isPrayer && r.audience !== 'private' && <span style={{ fontSize: 12, color: GRAY }}>🙏 {r.intercession_count} {r.intercession_count === 1 ? 'person praying' : 'praying'}</span>}
-                        <button onClick={() => openUpdate(r.id, false)} style={{ background: 'none', border: 'none', fontSize: 12, color: GOLD, fontWeight: 600, cursor: 'pointer', padding: 0, fontFamily: 'Georgia, serif' }}>+ Update</button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                        <button onClick={() => openUpdate(r.id, false)} style={pill(GOLD)}>+ Update</button>
                         {isPrayer && (r.is_answered
-                          ? <button onClick={() => markAnswered(r.id, false)} style={{ background: 'none', border: 'none', fontSize: 12, color: GRAY, cursor: 'pointer', padding: 0, fontFamily: 'Georgia, serif' }}>Reopen</button>
-                          : <button onClick={() => openUpdate(r.id, true)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#5E9A72', fontWeight: 600, cursor: 'pointer', padding: 0, fontFamily: 'Georgia, serif' }}>Mark answered ✓</button>)}
+                          ? <button onClick={() => markAnswered(r.id, false)} style={pill(GRAY)}>Reopen</button>
+                          : <button onClick={() => openUpdate(r.id, true)} style={pill('#5E9A72')}>✓ Mark answered</button>)}
                         {r.allow_comments && (
-                          <button onClick={() => toggleReplies(r.id)} style={{ background: 'none', border: 'none', color: CIRCLE, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+                          <button onClick={() => toggleReplies(r.id)} style={pill(CIRCLE)}>
                             💬 {r.reply_count ?? 0} {(r.reply_count ?? 0) === 1 ? 'reply' : 'replies'}{openReplyId === r.id ? ' ▴' : ' ▾'}
                           </button>
                         )}
+                        {isPrayer && r.audience !== 'private' && <span style={{ fontSize: 12, color: GRAY, marginLeft: 'auto' }}>🙏 {r.intercession_count} {r.intercession_count === 1 ? 'person praying' : 'praying'}</span>}
                       </div>
                     )}
 
