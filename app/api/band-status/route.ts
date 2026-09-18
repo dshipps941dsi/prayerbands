@@ -243,6 +243,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     screen: 'first_tap_blank',
     ...tapGate,
+    standing,
     band,
     registrations: regs,
     uplineName,
