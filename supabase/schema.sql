@@ -1,4 +1,4 @@
--- Prayer Bands: public schema, rendered by public.schema_dump() at 2026-09-18 02:23:40.654451+00
+-- Prayer Bands: public schema, rendered by public.schema_dump() at 2026-09-18 21:41:26.293629+00
 -- Regenerate with `npm run db:schema` after every migration. Do not hand-edit.
 
 -- Applied migrations
@@ -275,6 +275,15 @@ create table public.journal_lists (
   created_at timestamp with time zone default now() not null
 );
 
+create table public.journal_updates (
+  id uuid default gen_random_uuid() not null,
+  entry_id uuid not null,
+  user_id uuid not null,
+  body text not null,
+  kind text default 'update'::text not null,
+  created_at timestamp with time zone default now() not null
+);
+
 create table public.order_bands (
   id bigint default nextval('order_bands_id_seq'::regclass) not null,
   order_id bigint,
@@ -440,7 +449,9 @@ create table public.prayer_network_requests (
   audience text default 'network'::text not null,
   list_id uuid,
   allow_comments boolean default false not null,
-  excluded_user_ids uuid[] default '{}'::uuid[] not null
+  excluded_user_ids uuid[] default '{}'::uuid[] not null,
+  kind text default 'prayer'::text not null,
+  verse_ref text
 );
 
 create table public.prayer_request_comments (
@@ -689,6 +700,9 @@ alter table public.faq_entries add constraint faq_entries_pkey PRIMARY KEY (id);
 alter table public.integrity_alerts add constraint integrity_alerts_pkey PRIMARY KEY (key);
 alter table public.journal_lists add constraint journal_lists_name_check CHECK (((char_length(TRIM(BOTH FROM name)) >= 1) AND (char_length(TRIM(BOTH FROM name)) <= 60)));
 alter table public.journal_lists add constraint journal_lists_pkey PRIMARY KEY (id);
+alter table public.journal_updates add constraint journal_updates_body_check CHECK (((char_length(TRIM(BOTH FROM body)) >= 1) AND (char_length(TRIM(BOTH FROM body)) <= 1000)));
+alter table public.journal_updates add constraint journal_updates_kind_check CHECK ((kind = ANY (ARRAY['update'::text, 'answered'::text])));
+alter table public.journal_updates add constraint journal_updates_pkey PRIMARY KEY (id);
 alter table public.order_bands add constraint order_bands_pkey PRIMARY KEY (id);
 alter table public.orders add constraint orders_pkey PRIMARY KEY (id);
 alter table public.orders add constraint orders_stripe_session_id_key UNIQUE (stripe_session_id);
@@ -715,7 +729,9 @@ alter table public.prayer_network_connections add constraint prayer_network_conn
 alter table public.prayer_network_connections add constraint prayer_network_connections_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'accepted'::text, 'declined'::text])));
 alter table public.prayer_network_intercessions add constraint prayer_network_intercessions_pkey PRIMARY KEY (id);
 alter table public.prayer_network_intercessions add constraint prayer_network_intercessions_request_id_user_id_key UNIQUE (request_id, user_id);
+alter table public.prayer_network_requests add constraint prayer_network_requests_kind_check CHECK ((kind = ANY (ARRAY['prayer'::text, 'note'::text, 'verse'::text])));
 alter table public.prayer_network_requests add constraint prayer_network_requests_pkey PRIMARY KEY (id);
+alter table public.prayer_network_requests add constraint prayer_network_requests_verse_ref_check CHECK (((verse_ref IS NULL) OR (char_length(verse_ref) <= 80)));
 alter table public.prayer_network_requests add constraint prayer_network_requests_visibility_check CHECK ((visibility = ANY (ARRAY['private'::text, 'public'::text])));
 alter table public.prayer_request_comments add constraint prayer_request_comments_body_check CHECK (((char_length(TRIM(BOTH FROM body)) >= 1) AND (char_length(TRIM(BOTH FROM body)) <= 1000)));
 alter table public.prayer_request_comments add constraint prayer_request_comments_pkey PRIMARY KEY (id);
@@ -764,6 +780,8 @@ alter table public.credit_ledger add constraint credit_ledger_parent_id_fkey FOR
 alter table public.credit_ledger add constraint credit_ledger_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE;
 alter table public.faq_entries add constraint faq_entries_source_submission_id_fkey FOREIGN KEY (source_submission_id) REFERENCES contact_submissions(id) ON DELETE SET NULL;
 alter table public.journal_lists add constraint journal_lists_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES profiles(id) ON DELETE CASCADE;
+alter table public.journal_updates add constraint journal_updates_entry_id_fkey FOREIGN KEY (entry_id) REFERENCES prayer_network_requests(id) ON DELETE CASCADE;
+alter table public.journal_updates add constraint journal_updates_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 alter table public.order_bands add constraint order_bands_order_id_fkey FOREIGN KEY (order_id) REFERENCES orders(id);
 alter table public.orders add constraint orders_org_id_fkey FOREIGN KEY (org_id) REFERENCES organizations(id);
 alter table public.org_applications add constraint org_applications_org_id_fkey FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE SET NULL;
@@ -847,6 +865,7 @@ CREATE INDEX idx_faq_entries_published ON public.faq_entries USING btree (publis
 CREATE INDEX idx_faq_entries_sort ON public.faq_entries USING btree (sort_order);
 CREATE INDEX idx_faq_entries_source_submission_id ON public.faq_entries USING btree (source_submission_id);
 CREATE INDEX journal_lists_owner_idx ON public.journal_lists USING btree (owner_id);
+CREATE INDEX journal_updates_entry_idx ON public.journal_updates USING btree (entry_id, created_at);
 CREATE INDEX idx_order_bands_order_id ON public.order_bands USING btree (order_id);
 CREATE INDEX idx_orders_org_id ON public.orders USING btree (org_id);
 CREATE INDEX orders_assigned_band_ids_gin ON public.orders USING gin (assigned_band_ids);
@@ -1511,6 +1530,7 @@ alter table public.credit_ledger enable row level security;
 alter table public.faq_entries enable row level security;
 alter table public.integrity_alerts enable row level security;
 alter table public.journal_lists enable row level security;
+alter table public.journal_updates enable row level security;
 alter table public.order_bands enable row level security;
 alter table public.orders enable row level security;
 alter table public.org_applications enable row level security;
@@ -1604,6 +1624,7 @@ create policy "No public access to contact submissions" on public.contact_submis
 create policy "People read their own credit" on public.credit_ledger as permissive for select to public using ((user_id = auth.uid()));
 create policy "Published FAQs are publicly readable" on public.faq_entries as permissive for select to public using ((published = true));
 create policy "Owner manages their journal lists" on public.journal_lists as permissive for all to public using ((owner_id = auth.uid())) with check ((owner_id = auth.uid()));
+create policy "Owner manages their journal updates" on public.journal_updates as permissive for all to authenticated using ((user_id = auth.uid())) with check ((user_id = auth.uid()));
 create policy "Org admin can insert orders" on public.orders as permissive for insert to public with check ((org_id IN ( SELECT organizations.id
    FROM organizations
   WHERE (organizations.admin_id = auth.uid()))));
@@ -1723,6 +1744,9 @@ grant delete, insert, references, select, trigger, truncate, update on public.fa
 grant delete, insert, references, select, trigger, truncate, update on public.integrity_alerts to service_role;
 grant delete, insert, references, select, trigger, truncate, update on public.journal_lists to authenticated;
 grant delete, insert, references, select, trigger, truncate, update on public.journal_lists to service_role;
+grant delete, insert, references, select, trigger, truncate, update on public.journal_updates to anon;
+grant delete, insert, references, select, trigger, truncate, update on public.journal_updates to authenticated;
+grant delete, insert, references, select, trigger, truncate, update on public.journal_updates to service_role;
 grant delete, insert, references, select, trigger, truncate, update on public.order_bands to anon;
 grant delete, insert, references, select, trigger, truncate, update on public.order_bands to authenticated;
 grant delete, insert, references, select, trigger, truncate, update on public.order_bands to service_role;
