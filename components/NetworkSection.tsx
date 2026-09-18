@@ -1016,31 +1016,39 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <h4 style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0 }}>My Journal</h4>
           {!showForm && (
-            <button onClick={() => { setEntryList(activeList); setShowForm(true) }} style={{ backgroundColor: GOLD, color: '#fff', border: 'none', borderRadius: 16, padding: '5px 12px', fontSize: 12, fontFamily: 'Georgia, serif', cursor: 'pointer', fontWeight: 600 }}>+ Add</button>
+            <button onClick={() => { setEntryList(activeList); setShowForm(true) }} style={{ backgroundColor: GOLD, color: 'var(--pb-text-on-primary, #fff)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>+ Prayer</button>
           )}
         </div>
 
-        {/* Journal list filters — All + your named lists + create */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: activeList ? 8 : 12, flexWrap: 'wrap' }}>
-          {chip(!activeList, `All · ${myRequests.length}`, () => setActiveList(null))}
-          {lists.map(l => chip(activeList === l.id, `${l.name} · ${myRequests.filter(r => r.list_id === l.id).length}`, () => setActiveList(activeList === l.id ? null : l.id), CIRCLE))}
+        {/* Lists: a picker when there are any, and a way to make one. The
+            chips read as more buttons next to Add; a labelled dropdown and a
+            single "+ List" do not. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+          {lists.length > 0 && (
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: GRAY, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              List
+              <select value={activeList ?? ''} onChange={e => setActiveList(e.target.value || null)}
+                style={{ padding: '7px 10px', borderRadius: 8, border: `1px solid ${BORDER}`, background: '#fff', color: DARK, fontSize: 13, fontFamily: 'Georgia, serif', textTransform: 'none', letterSpacing: 0, maxWidth: 220 }}>
+                <option value="">All prayers ({myRequests.length})</option>
+                {lists.map(l => <option key={l.id} value={l.id}>{l.name} ({myRequests.filter(r => r.list_id === l.id).length})</option>)}
+              </select>
+            </label>
+          )}
           {showNewList ? (
-            <span style={{ display: 'inline-flex', gap: 4 }}>
+            <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
               <input autoFocus value={newListName} onChange={e => setNewListName(e.target.value.slice(0, 60))}
                 onKeyDown={async e => { if (e.key === 'Enter' && newListName.trim()) { const id = await createList(newListName.trim()); setNewListName(''); setShowNewList(false); if (id) setActiveList(id) } if (e.key === 'Escape') { setShowNewList(false); setNewListName('') } }}
-                placeholder="List name" style={{ padding: '4px 10px', borderRadius: 16, border: `1px solid ${GOLD}`, fontSize: 11.5, fontFamily: 'Georgia, serif', outline: 'none', width: 100 }} />
-              <button onClick={async () => { if (newListName.trim()) { const id = await createList(newListName.trim()); setNewListName(''); setShowNewList(false); if (id) setActiveList(id) } }} style={{ padding: '4px 10px', borderRadius: 16, border: 'none', background: GOLD, color: '#fff', fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: 700, cursor: 'pointer' }}>Add</button>
+                placeholder="Name the list (e.g. Family)" style={{ padding: '7px 10px', borderRadius: 8, border: `1px solid ${GOLD}`, fontSize: 13, fontFamily: 'Georgia, serif', outline: 'none', width: 170 }} />
+              <button onClick={async () => { if (newListName.trim()) { const id = await createList(newListName.trim()); setNewListName(''); setShowNewList(false); if (id) setActiveList(id) } }} style={{ padding: '7px 12px', borderRadius: 8, border: 'none', background: GOLD, color: 'var(--pb-text-on-primary, #fff)', fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>Save</button>
+              <button onClick={() => { setShowNewList(false); setNewListName('') }} style={{ background: 'none', border: 'none', color: GRAY, fontSize: 12, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: '4px 2px' }}>Cancel</button>
             </span>
           ) : (
-            <button onClick={() => setShowNewList(true)} style={{ padding: '5px 11px', borderRadius: 16, border: `1px dashed ${BORDER}`, background: '#fff', color: GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', cursor: 'pointer' }}>+ List</button>
+            <button onClick={() => setShowNewList(true)} style={{ padding: '7px 12px', borderRadius: 8, border: `1px solid ${BORDER}`, background: '#fff', color: GRAY, fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>+ List</button>
+          )}
+          {activeList && (
+            <button onClick={() => deleteList(activeList)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#B4441F', fontSize: 11.5, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: 0 }}>Delete this list</button>
           )}
         </div>
-        {activeList && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <span style={{ fontSize: 12, color: GRAY }}>Showing <strong style={{ color: DARK }}>{lists.find(l => l.id === activeList)?.name}</strong></span>
-            <button onClick={() => deleteList(activeList)} style={{ background: 'none', border: 'none', color: '#B4441F', fontSize: 11.5, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: 0 }}>Delete list</button>
-          </div>
-        )}
 
         {showForm && (
           <div style={{ backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, marginBottom: 10 }}>
@@ -1106,13 +1114,11 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             {lists.length > 0 && (
               <>
                 <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>File into a list <span style={{ textTransform: 'none', letterSpacing: 0 }}>(optional)</span></div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  <button onClick={() => setEntryList(null)} style={{ padding: '6px 12px', borderRadius: 16, border: `1px solid ${!entryList ? DARK : BORDER}`, background: !entryList ? '#F5F0E6' : '#fff', color: !entryList ? DARK : GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: !entryList ? 700 : 400, cursor: 'pointer' }}>None</button>
-                  {lists.map(l => {
-                    const active = entryList === l.id
-                    return <button key={l.id} onClick={() => setEntryList(l.id)} style={{ padding: '6px 12px', borderRadius: 16, border: `1px solid ${active ? CIRCLE : BORDER}`, background: active ? 'rgba(46,125,138,0.10)' : '#fff', color: active ? CIRCLE : GRAY, fontSize: 11.5, fontFamily: 'Georgia, serif', fontWeight: active ? 700 : 400, cursor: 'pointer' }}>{l.name}</button>
-                  })}
-                </div>
+                <select value={entryList ?? ''} onChange={e => setEntryList(e.target.value || null)}
+                  style={{ padding: '8px 10px', borderRadius: 8, border: `1px solid ${BORDER}`, background: '#fff', color: DARK, fontSize: 13, fontFamily: 'Georgia, serif', maxWidth: 260 }}>
+                  <option value="">No list</option>
+                  {lists.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                </select>
               </>
             )}
 
