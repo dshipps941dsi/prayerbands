@@ -123,11 +123,11 @@ const KIND_LABEL: Record<OtherKind, string> = { direct: 'Direct', lineage: 'Line
 // the dropdown). Direct/Lineage stay as feed FILTERS for browsing, not as
 // posting choices; the public wall is fed by band taps, not the journal.
 const AUDIENCES: { id: Audience; label: string; hint: string }[] = [
-  { id: 'private', label: '📔 My Journal', hint: 'Private — only you can see this, and no one is notified.' },
-  { id: 'network', label: '🙏 My Partners', hint: 'Everyone you’re connected with.' },
+  { id: 'private', label: '📔 Just me', hint: 'Stays in your journal. Only you can see it, and no one is notified.' },
+  { id: 'network', label: '🙏 All my partners', hint: 'Everyone you’re connected with sees it and can pray.' },
 ]
 // Full label map is kept so older posts (direct / lineage / wall) still render.
-const AUD_LABEL: Record<Audience, string> = { private: 'My Journal', network: 'My Partners', direct: 'Direct', lineage: 'Lineage', wall: 'Wall' }
+const AUD_LABEL: Record<Audience, string> = { private: 'Just me', network: 'All partners', direct: 'Direct', lineage: 'Lineage', wall: 'Wall' }
 
 export default function NetworkSection({ userId, section = 'all' }: { userId: string; section?: 'all' | 'partners' | 'requests' }) {
   const router = useRouter()
@@ -1068,16 +1068,22 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                   stays three simple choices no matter how many groups exist. */}
               {groups.length > 0 && (() => {
                 const active = audience.startsWith('group:')
+                const name = active ? groupName(audience.slice(6)) : ''
                 return (
-                  <select
-                    value={active ? audience : ''}
-                    onChange={e => { if (e.target.value) setAudience(e.target.value) }}
-                    title="Share with a specific group"
-                    style={{ flex: '1 1 30%', minWidth: 110, padding: '9px 8px', borderRadius: 8, border: `1px solid ${active ? CIRCLE : BORDER}`, background: active ? 'rgba(46,125,138,0.10)' : '#fff', color: active ? CIRCLE : GRAY, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'center', appearance: 'none', WebkitAppearance: 'none' }}
-                  >
-                    <option value="">🏷️ My Groups…</option>
-                    {groups.map(g => <option key={g.id} value={`group:${g.id}`}>{g.name}</option>)}
-                  </select>
+                  <label title="Share with one of your groups" style={{ position: 'relative', flex: '1 1 30%', minWidth: 96, display: 'block' }}>
+                    <span style={{ display: 'block', padding: '9px 8px', borderRadius: 8, border: `1px solid ${active ? CIRCLE : BORDER}`, background: active ? 'rgba(46,125,138,0.10)' : '#fff', color: active ? CIRCLE : GRAY, fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: active ? 600 : 400, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      🏷️ {active ? name : 'One group'}
+                    </span>
+                    <select
+                      value={active ? audience : ''}
+                      onChange={e => { if (e.target.value) setAudience(e.target.value) }}
+                      aria-label="Share with one of your groups"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                    >
+                      <option value="">Choose a group…</option>
+                      {groups.map(g => <option key={g.id} value={`group:${g.id}`}>{g.name}</option>)}
+                    </select>
+                  </label>
                 )
               })()}
             </div>
