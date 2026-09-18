@@ -75,9 +75,22 @@ export async function POST(req: NextRequest) {
   await admin.from('bands').update({ status: 'assigned' }).in('band_id', assigned)
 
   let ownerLinked = false
-  if (order.customer_email) {
-    const { data: prof } = await admin.from('profiles').select('id').ilike('email', order.customer_email).maybeSingle()
-    if (prof?.id) {
+  // The account that placed the order (checkout metadata) beats the email:
+  // a buyer signed in with Apple checks out under a relay address, and a
+  // parent may pay with a work email. Email is the fallback for older orders.
+  const metaBuyer = String((order.order_metadata as any)?.buyer_user_id || '').trim() || null
+  let buyerProfileId: string | null = null
+  if (metaBuyer) {
+    const { data: p } = await admin.from('profiles').select('id').eq('id', metaBuyer).maybeSingle()
+    buyerProfileId = p?.id ?? null
+  }
+  if (!buyerProfileId && order.customer_email) {
+    const { data: p } = await admin.from('profiles').select('id').ilike('email', order.customer_email).maybeSingle()
+    buyerProfileId = p?.id ?? null
+  }
+  if (buyerProfileId) {
+    const prof = { id: buyerProfileId }
+    {
       // The buyer is the UPLINE, not the owner. Reach compounds through
       // upline_user_id (claim-band sets the claimer's sponsor from it), so
       // leaving owner unset lets the gift recipient claim the band as their own

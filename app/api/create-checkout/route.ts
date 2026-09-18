@@ -257,6 +257,10 @@ export async function POST(req: NextRequest) {
           ? [{ shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: shippingCost, currency: 'usd' }, display_name: 'Standard Shipping', tax_behavior: 'exclusive', tax_code: 'txcd_92010001' } }]
           : undefined,
         metadata: {
+          // The account that placed the order, when signed in. Bands are
+          // credited to it at assignment; the email is only the fallback
+          // (Apple's relay addresses and work emails never match).
+          buyer_user_id: buyerId || '',
           type: hasCustom ? 'custom' : 'standard',
           quantity: String(totalBands),
           customMessage: customMessage || '',
