@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { createBrowserClient } from '@supabase/ssr'
@@ -376,6 +376,19 @@ export default function BandPage() {
   })
   // Bands this person owns or holds, for the header switcher.
   const [myBands, setMyBands] = useState<{ band_id: string; label: string | null; giving?: boolean; for_name?: string | null }[]>([])
+  // Options for a band switcher: the bands on a wrist, then the ones in the
+  // drawer to give (each named for its recipient when there is one).
+  function bandOptions() {
+    const wear = myBands.filter(b => !b.giving), give = myBands.filter(b => b.giving)
+    const opt = (b: typeof myBands[number]) => (
+      <option key={b.band_id} value={b.band_id}>{b.band_id}{b.label ? ` · ${b.label}` : ''}{b.giving ? (b.for_name ? ` · for ${b.for_name}` : '') : ''}</option>
+    )
+    if (!give.length) return wear.map(opt)
+    return (<>
+      {wear.length > 0 && <optgroup label="Wearing">{wear.map(opt)}</optgroup>}
+      <optgroup label={`To give away · ${give.length}`}>{give.map(opt)}</optgroup>
+    </>)
+  }
   const [defaultBandId, setDefaultBandId] = useState<string | null>(null)
   const [notifOpen, setNotifOpen] = useState(false)
   const [walk, setWalk] = useState<VerseWalk>({ total: 0, run: 0, returning: false })
@@ -836,11 +849,13 @@ export default function BandPage() {
         <button onClick={() => setTransferStep('idle')} aria-label="Close" style={{ position: 'absolute', top: 10, right: 12, width: 34, height: 34, borderRadius: 17, border: 'none', background: 'rgba(44,24,16,0.08)', color: DARK, fontSize: 16, cursor: 'pointer' }}>✕</button>
         <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Which band are you passing on?</div>
         <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14 }}>Check the ID printed inside the band.</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {myBands.map(b => {
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '60vh', overflowY: 'auto' }}>
+          {[...myBands.filter(b => b.giving), ...myBands.filter(b => !b.giving)].map((b, i, arr) => {
             const isThis = b.band_id === bandId
-            return (
-              <button key={b.band_id} onClick={() => { if (isThis) setTransferStep('sheet'); else window.location.assign(`/band/${b.band_id}?action=pass`) }}
+            const heading = i === 0 && b.giving ? `To give away · ${arr.filter(x => x.giving).length}` : (!b.giving && (i === 0 || arr[i - 1].giving)) ? 'Wearing' : null
+            return (<React.Fragment key={b.band_id}>
+              {heading && arr.some(x => x.giving) && <div style={{ fontFamily: body, fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: GRAY, margin: i === 0 ? '0 0 2px' : '8px 0 2px' }}>{heading}</div>}
+              <button onClick={() => { if (isThis) setTransferStep('sheet'); else window.location.assign(`/band/${b.band_id}?action=pass`) }}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', padding: '12px 14px', background: 'white', border: `1px solid ${isThis ? GOLD : 'rgba(44,24,16,0.12)'}`, borderRadius: 10, cursor: 'pointer' }}>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: 'block', fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.label || b.band_id}</span>
@@ -848,7 +863,7 @@ export default function BandPage() {
                 </span>
                 <span style={{ color: GRAY, fontSize: 18 }}>›</span>
               </button>
-            )
+            </React.Fragment>)
           })}
         </div>
       </div>
@@ -956,11 +971,7 @@ export default function BandPage() {
               onChange={e => { if (e.target.value !== bandId) window.location.href = `/band/${e.target.value}` }}
               style={{ fontFamily: serif, fontSize: 13, fontWeight: 700, color: DARK, background: 'white', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '6px 8px', cursor: 'pointer', maxWidth: 130 }}
             >
-              {myBands.map(b => (
-                <option key={b.band_id} value={b.band_id}>
-                  {b.band_id}{b.label ? ` · ${b.label}` : ''}
-                </option>
-              ))}
+              {bandOptions()}
             </select>
           )}
           {myBands.length > 1 && (
@@ -1356,9 +1367,7 @@ export default function BandPage() {
                   onChange={e => { if (e.target.value !== bandId) window.location.href = `/band/${e.target.value}` }}
                   style={{ fontFamily: serif, fontSize: 13, fontWeight: 700, color: DARK, background: 'white', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '5px 8px', cursor: 'pointer', maxWidth: 200 }}
                 >
-                  {myBands.map(b => (
-                    <option key={b.band_id} value={b.band_id}>{b.band_id}{b.label ? ` · ${b.label}` : ''}</option>
-                  ))}
+                  {bandOptions()}
                 </select>
               </div>
             )}

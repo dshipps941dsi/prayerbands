@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import GiftDedications from '@/components/GiftDedications'
 
 // "My Bands" on the Account tab: every band this person holds or owns, what
@@ -47,10 +47,17 @@ export default function MyBandsPanel({ userId, currentBandId, defaultBandId, ope
             <div style={{ fontFamily: body, fontSize: 13, color: GRAY, padding: '4px 0 10px' }}>No bands on your account yet. Tap a band and add it, or it lands here when you order one.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-              {bands.map(b => {
+              {[...bands.filter(b => !b.giving), ...bands.filter(b => b.giving)].map((b, i, arr) => {
                 const isThis = b.band_id === currentBandId
-                return (
-                  <div key={b.band_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: `1px solid ${isThis ? GOLD : 'rgba(44,24,16,0.12)'}`, borderRadius: 10, background: isThis ? 'rgba(184,134,11,0.06)' : 'white' }}>
+                const giveCount = arr.filter(x => x.giving).length
+                // Headings only when there is stock to give: "Wearing" above
+                // the worn bands, "To give away · n" above the drawer.
+                const heading = giveCount && giveCount < arr.length
+                  ? (i === 0 ? 'Wearing' : (b.giving && !arr[i - 1].giving) ? `To give away · ${giveCount}` : null)
+                  : (giveCount && i === 0 ? `To give away · ${giveCount}` : null)
+                return (<React.Fragment key={b.band_id}>
+                  {heading && <div style={{ fontFamily: body, fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: GRAY, margin: i === 0 ? '2px 0 0' : '10px 0 0' }}>{heading}</div>}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: `1px solid ${isThis ? GOLD : 'rgba(44,24,16,0.12)'}`, borderRadius: 10, background: isThis ? 'rgba(184,134,11,0.06)' : 'white' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontFamily: serif, fontSize: 14.5, fontWeight: 700, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {b.label || b.band_id}
@@ -63,7 +70,7 @@ export default function MyBandsPanel({ userId, currentBandId, defaultBandId, ope
                     )}
                     <a href={`/band/${b.band_id}?action=pass`} style={{ flexShrink: 0, fontFamily: serif, fontSize: 12.5, fontWeight: 700, color: INK, background: GOLD, textDecoration: 'none', borderRadius: 8, padding: '7px 12px' }}>Pass on →</a>
                   </div>
-                )
+                </React.Fragment>)
               })}
             </div>
           )}
