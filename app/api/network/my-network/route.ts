@@ -148,7 +148,8 @@ export async function GET(_req: NextRequest) {
           .order('created_at', { ascending: false })
       : { data: [] as any[] }
 
-    let { data: myRequests, error: myErr } = await admin
+    // eslint-disable-next-line prefer-const
+    let { data: myRequests, error: myErr }: { data: any[] | null; error: any } = await admin
       .from('prayer_network_requests')
       .select('id, user_id, request_text, is_answered, answered_at, created_at, visibility, audience, list_id, allow_comments, kind, verse_ref')
       .eq('user_id', user.id)
