@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { track } from '@/lib/analytics'
-import { signInWithAppleSheet } from '@/lib/apple-signin'
 
 // Post-registration sign-up panel.
 //
@@ -39,7 +38,9 @@ export default function SuccessCard({
   subtitle: string
   showCountdown?: boolean
 }) {
-  const [ageConsent, setAgeConsent] = useState(false)
+  // Google is a redirect: for a second or two after the tap nothing visibly
+  // happens, and people tapped again. Say what is happening and lock the button.
+  const [opening, setOpening] = useState<'google' | null>(null)
   const [authMode, setAuthMode] = useState<'email' | 'code' | 'password' | null>(null)
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
@@ -54,11 +55,6 @@ export default function SuccessCard({
   // and "confirm email" collapse into one step, and they never leave the page.
   async function handleSendCode() {
     if (!email.trim()) return
-    // Was `if (!ageConsent || !email.trim()) return` — a silent no-op. The
-    // button is only disabled on an empty email, so with consent unticked it
-    // looked live, did nothing, and said nothing: the person waits for a code
-    // that was never requested. Say so instead.
-    if (!ageConsent) { setAuthError('Please confirm you are 13 or older first.'); return }
     setAuthSubmitting(true)
     setAuthError('')
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -114,9 +110,12 @@ export default function SuccessCard({
   }
 
   async function handleGoogleSignIn() {
-    if (!ageConsent) return
+    if (opening) return
+    setOpening('google')
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(`/band/${bandId}`)}` } })
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(`/band/${bandId}`)}` } })
+    // On success the browser is already leaving; only a failure comes back here.
+    if (error) { setOpening(null); setAuthError(error.message || 'Google did not open. Try again, or use email.') }
   }
 
   if (userId) return null
@@ -131,63 +130,23 @@ export default function SuccessCard({
       <div style={{ margin: '0 20px 24px', background: 'white', borderRadius: 16, padding: '24px', border: '1px solid rgba(44,24,16,0.1)', boxShadow: '0 4px 20px rgba(44,24,16,0.06)' }}>
           <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Save your place in this journey</div>
           <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 20, lineHeight: 1.5 }}>Create a free account to get your daily verse every time you tap, track your prayers, and follow this band&apos;s story.</div>
-          <div onClick={() => setAgeConsent(!ageConsent)} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20, cursor: 'pointer' }}>
-            <div style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, marginTop: 1, border: `2px solid ${ageConsent ? GOLD : 'rgba(44,24,16,0.2)'}`, background: ageConsent ? GOLD : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {ageConsent && <span style={{ color: 'white', fontSize: 12, fontWeight: 700 }}>✓</span>}
-            </div>
-            <div style={{ fontFamily: body, fontSize: 13, color: DARK, lineHeight: 1.5 }}>I confirm that I am <strong>13 years of age or older</strong>, or I am a parent or guardian creating this account on behalf of a child.</div>
-          </div>
           {authMode === null && (
             <div>
-              <button onClick={handleGoogleSignIn} disabled={!ageConsent} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '13px', marginBottom: 10, background: ageConsent ? DARK : '#ccc', color: 'white', border: 'none', borderRadius: 10, fontFamily: body, fontSize: 15, fontWeight: 600, cursor: ageConsent ? 'pointer' : 'not-allowed', boxSizing: 'border-box' }}>
-                <span style={{ fontSize: 18 }}>G</span> Continue with Google
-              </button>
-              <button onClick={async () => {
-                if (!ageConsent) return
-                const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-                // Sheet first (Face ID, page stays put); reload so the band
-                // page's claim-on-sign-in runs exactly as it does after the
-                // redirect. Fall back to the redirect where the sheet can't.
-                try {
-                  await signInWithAppleSheet(supabase)
-                  window.location.reload()
-                  return
-                } catch (e: any) {
-                  if (/popup_closed|user_cancelled|cancel/i.test(String(e?.error || e?.message || ''))) return
-                }
-                await supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(`/band/${bandId}`)}` } })
-              }} disabled={!ageConsent} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                width: '100%', padding: '13px', marginBottom: 10,
-                background: ageConsent ? '#000' : '#ccc', color: 'white',
-                border: 'none', borderRadius: 10, fontFamily: body, fontSize: 15,
-                fontWeight: 600, cursor: ageConsent ? 'pointer' : 'not-allowed',
-                boxSizing: 'border-box',
-              }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.74-1.517.03-2.01-.9-3.71-.9-1.717 0-2.26.87-3.71.93-1.44.05-2.53-1.51-3.6-2.84-1.877-2.35-3.32-6.64-1.39-9.53.96-1.42 2.68-2.32 4.55-2.35 1.45-.03 2.83.98 3.71.98.87 0 2.53-1.21 4.26-1.03.72.03 2.75.29 4.06 2.18-.11.07-2.42 1.42-2.39 4.24.03 3.37 2.95 4.49 2.98 4.5z"/></svg> Continue with Apple
-              </button>
-              <button onClick={async () => {
-                if (!ageConsent) return
-                const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-                await supabase.auth.signInWithOAuth({ provider: 'facebook', options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(`/band/${bandId}`)}` } })
-              }} disabled={!ageConsent} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                width: '100%', padding: '13px', marginBottom: 10,
-                background: ageConsent ? '#1877F2' : '#ccc', color: 'white',
-                border: 'none', borderRadius: 10, fontFamily: body, fontSize: 15,
-                fontWeight: 600, cursor: ageConsent ? 'pointer' : 'not-allowed',
-                boxSizing: 'border-box',
-              }}>
-                <span style={{ fontSize: 18, fontWeight: 700 }}>f</span> Continue with Facebook
+              <button onClick={handleGoogleSignIn} disabled={!!opening} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '13px', marginBottom: 10, background: DARK, color: 'white', border: 'none', borderRadius: 10, fontFamily: body, fontSize: 15, fontWeight: 600, cursor: opening ? 'wait' : 'pointer', opacity: opening ? 0.75 : 1, boxSizing: 'border-box' }}>
+                <span style={{ fontSize: 18 }}>G</span> {opening === 'google' ? 'Opening Google…' : 'Continue with Google'}
               </button>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '14px 0' }}>
                 <span style={{ flex: 1, height: 1, background: 'rgba(44,24,16,0.12)' }} />
                 <span style={{ fontFamily: body, fontSize: 12, color: GRAY, letterSpacing: '0.06em' }}>or</span>
                 <span style={{ flex: 1, height: 1, background: 'rgba(44,24,16,0.12)' }} />
               </div>
-              <button onClick={() => { if (ageConsent) setAuthMode('email') }} disabled={!ageConsent} style={{ display: 'block', width: '100%', padding: '13px', marginBottom: 10, background: ageConsent ? GOLD : '#ccc', color: ageConsent ? INK : 'white', border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: ageConsent ? 'pointer' : 'not-allowed', boxSizing: 'border-box' }}>
+              <button onClick={() => setAuthMode('email')} disabled={!!opening} style={{ display: 'block', width: '100%', padding: '13px', marginBottom: 10, background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxSizing: 'border-box' }}>
                 Continue with email
               </button>
+              {authError && <div style={{ fontFamily: body, fontSize: 13, color: '#C0392B', marginBottom: 12 }}>{authError}</div>}
+              <div style={{ fontFamily: body, fontSize: 12, color: GRAY, lineHeight: 1.5, marginTop: 4 }}>
+                By continuing you confirm you&apos;re 13 or older, or a parent or guardian creating this account for your child. <a href="/privacy" style={{ color: GRAY }}>Privacy</a>
+              </div>
             </div>
           )}
           {authMode === 'email' && (
@@ -206,7 +165,7 @@ export default function SuccessCard({
                 Already signed up before? <a href="/signin" style={{ color: GOLD }}>Sign in instead</a>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={handleSendCode} disabled={authSubmitting || !email.trim() || !ageConsent} style={{ flex: 1, padding: '13px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>{authSubmitting ? 'Sending...' : 'Email me a code'}</button>
+                <button onClick={handleSendCode} disabled={authSubmitting || !email.trim()} style={{ flex: 1, padding: '13px', background: GOLD, color: INK, border: 'none', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>{authSubmitting ? 'Sending...' : 'Email me a code'}</button>
                 <button onClick={() => setAuthMode(null)} style={{ padding: '13px 16px', background: 'transparent', color: GRAY, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 10, fontFamily: body, fontSize: 14, cursor: 'pointer' }}>Back</button>
               </div>
             </div>
