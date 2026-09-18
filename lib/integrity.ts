@@ -55,7 +55,9 @@ export async function runIntegrityChecks(): Promise<Finding[]> {
     if (!namesTypedByAccount.has(r.user_id)) namesTypedByAccount.set(r.user_id, new Set())
     namesTypedByAccount.get(r.user_id)!.add(first(r.user_name))
   }
-  const looksLikeSamePerson = (a: string, b: string) => a === b || (a.length >= 3 && b.length >= 3 && (a.startsWith(b) || b.startsWith(a)))
+  // Candice and Candy, Jennifer and Jenny, Katherine and Kathy: a shared
+  // first four letters is the same person; a stranger's name rarely is.
+  const looksLikeSamePerson = (a: string, b: string) => a === b || (a.length >= 3 && b.length >= 3 && (a.startsWith(b) || b.startsWith(a))) || (a.length >= 4 && b.length >= 4 && a.slice(0, 4) === b.slice(0, 4))
 
   for (const [bandId, r] of latestByBand) {
     const b = bandById.get(bandId)
