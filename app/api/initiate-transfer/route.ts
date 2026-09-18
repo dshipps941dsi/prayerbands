@@ -1,4 +1,4 @@
-import { likeLiteral } from '@/lib/like'
+import { loadStanding } from '@/lib/band-standing-load'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServerClient, createServiceClient } from '@/lib/supabase/server'
 
@@ -31,36 +31,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'This band is already being passed on.' }, { status: 409 })
   }
 
-  // The caller must be the owner OR the current holder (latest registrant).
-  const { data: latest } = await admin
-    .from('registrations')
-    .select('user_id')
-    .eq('band_id', bandId)
-    .order('registered_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  const isOwner = !!band.owner_id && band.owner_id === user.id
-  const isHolder = !!latest?.user_id && latest.user_id === user.id
-  // A bulk/gift buyer never claimed or registered the band, so let them pass it
-  // on straight from the tap (no claim step) — but ONLY if the band is on an
-  // order THEY placed. Fulfillment records each packed band in
-  // orders.assigned_band_ids and the buyer in orders.customer_email, so this is
-  // the exact "matches an order that's been placed" check, not an upline proxy.
-  let isBuyer = false
-  if (!band.owner_id && user.email) {
-    const { data: myOrder } = await admin
-      .from('orders')
-      .select('id')
-      .ilike('customer_email', likeLiteral(user.email))
-      .contains('assigned_band_ids', [bandId])
-      .limit(1)
-      .maybeSingle()
-    isBuyer = !!myOrder
-  }
-  // The credited giver of an unowned, unregistered band (handed a pile by an
-  // admin, or by the person above them) may pass it on too — same as a buyer.
-  const isCreditedGiver = !band.owner_id && !latest && !!band.upline_user_id && band.upline_user_id === user.id
-  if (!isOwner && !isHolder && !isBuyer && !isCreditedGiver) {
+  // Owner, current holder, or the giver it is credited to while it is still
+  // untaken (a buyer, or someone handed a pile) — the one rule, lib/band-standing.
+  const standing = await loadStanding(admin, { band_id: bandId, owner_id: band.owner_id ?? null, upline_user_id: band.upline_user_id ?? null, status: band.status ?? null }, user.id)
+  if (!standing.canPassOn) {
     return NextResponse.json({ error: 'You can only pass on a band you currently hold.' }, { status: 403 })
   }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { bandLabel, themeLabelMap } from '@/lib/band-label'
+import { bandStanding, type StandingStop } from '@/lib/band-standing'
 
 // Every band the signed-in person can switch between: ones they own, plus ones
 // they currently hold (latest registrant). Someone matching bands to outfits
@@ -13,54 +14,45 @@ export async function GET() {
 
   const admin = createServiceClient()
 
+  // Every band this person might have standing in: ones attached to their
+  // account, ones they have registered, and ones credited to them as the
+  // giver. Which of those actually belong in the list is decided per band by
+  // the one rule (lib/band-standing) — the same rule the band page applies.
   const [owned, registered, credited] = await Promise.all([
-    admin.from('bands').select('band_id, theme, color, created_at').eq('owner_id', user.id),
+    admin.from('bands').select('band_id').eq('owner_id', user.id),
     admin.from('registrations').select('band_id, registered_at').eq('user_id', user.id).order('registered_at', { ascending: false }),
-    // Bands credited to this person as the giver that nobody owns: a purchase
-    // (the buyer is upline, never owner, so the recipient can claim it), or a
-    // pile an admin handed them.
     admin.from('bands').select('band_id').eq('upline_user_id', user.id).is('owner_id', null),
   ])
-
-  // Of the credited bands, only the untaken ones are still theirs to give.
-  // One that already carries a stop has been handed on; it is not in their
-  // drawer any more, and listing it made a giver's whole history look like
-  // stock.
-  const creditedIds = (credited.data ?? []).map(b => b.band_id as string)
-  let untaken: string[] = []
-  if (creditedIds.length) {
-    const { data: stops } = await admin.from('registrations').select('band_id').in('band_id', creditedIds).neq('source', 'wall')
-    const taken = new Set((stops ?? []).map(r => r.band_id as string))
-    untaken = creditedIds.filter(id => !taken.has(id))
-  }
-
   const ids = new Set<string>()
-  const ordered: string[] = []
+  const candidates: string[] = []
   // Most recently registered first — that is the band they most likely have on.
-  for (const r of registered.data ?? []) {
-    if (r.band_id && !ids.has(r.band_id)) { ids.add(r.band_id); ordered.push(r.band_id) }
-  }
-  for (const b of owned.data ?? []) {
-    if (b.band_id && !ids.has(b.band_id)) { ids.add(b.band_id); ordered.push(b.band_id) }
-  }
-  for (const id of untaken) {
-    if (!ids.has(id)) { ids.add(id); ordered.push(id) }
-  }
-  // "To give away": a band you own but have never put your own name on, or
-  // one credited to you that nobody has taken yet — a bulk order still in
-  // the box, a pile handed to you. A credited band that already has a stop
-  // is not that: it has been given, and it is not yours any more.
-  const mine = new Set((registered.data ?? []).map(r => r.band_id as string))
-  const giving = new Set([
-    ...(owned.data ?? []).map(b => b.band_id as string).filter(id => !mine.has(id)),
-    ...untaken,
-  ])
+  for (const r of registered.data ?? []) if (r.band_id && !ids.has(r.band_id)) { ids.add(r.band_id); candidates.push(r.band_id) }
+  for (const b of owned.data ?? []) if (b.band_id && !ids.has(b.band_id)) { ids.add(b.band_id); candidates.push(b.band_id) }
+  for (const b of credited.data ?? []) if (b.band_id && !ids.has(b.band_id)) { ids.add(b.band_id); candidates.push(b.band_id) }
 
-  // Bands they hold but do not own are not in `owned`, so fetch styling for
-  // everything in the list — otherwise a held band shows as a bare code.
-  const { data: styleRows } = ordered.length
-    ? await admin.from('bands').select('band_id, theme, color, size').in('band_id', ordered)
-    : { data: [] }
+  const [{ data: styleRows }, { data: stopRows }] = candidates.length
+    ? await Promise.all([
+        admin.from('bands').select('band_id, owner_id, upline_user_id, status, theme, color, size').in('band_id', candidates),
+        admin.from('registrations').select('band_id, user_id, registered_by, user_name, registered_at, source').in('band_id', candidates),
+      ])
+    : [{ data: [] }, { data: [] }]
+  const stopsByBand = new Map<string, StandingStop[]>()
+  for (const s of (stopRows ?? []) as any[]) {
+    if (!stopsByBand.has(s.band_id)) stopsByBand.set(s.band_id, [])
+    stopsByBand.get(s.band_id)!.push(s)
+  }
+  const rowById = new Map(((styleRows ?? []) as any[]).map(b => [b.band_id as string, b]))
+  const standings = new Map(candidates.map(id => {
+    const b = rowById.get(id)
+    return [id, b ? bandStanding({ band: { band_id: id, owner_id: b.owner_id ?? null, upline_user_id: b.upline_user_id ?? null, status: b.status ?? null }, stops: stopsByBand.get(id) ?? [], viewerId: user.id }) : null]
+  }))
+  // In the list: bands they hold, own, or have in the drawer to give. A band
+  // credited to them that someone else has taken is not theirs any more.
+  const ordered = candidates.filter(id => {
+    const st = standings.get(id)
+    return !!st && (st.role === 'holder' || st.role === 'owner' || st.role === 'giver_stock' || (st.role === 'giver_given' && rowById.get(id)?.owner_id === user.id) || st.role === 'helper' && rowById.get(id)?.owner_id === user.id)
+  })
+  const giving = new Set(ordered.filter(id => standings.get(id)?.giving))
 
   // Built-in theme names live in code; only overridden or custom themes reach
   // band_themes. Merge both, or a stock theme reads as its raw key.
@@ -69,9 +61,8 @@ export async function GET() {
 
   const { data: prof } = await admin.from('profiles').select('default_band_id').eq('id', user.id).maybeSingle()
 
-  const meta = new Map((styleRows ?? []).map(b => [b.band_id as string, b]))
   const bands = ordered.map(id => {
-    const b = meta.get(id)
+    const b = rowById.get(id)
     // Name every band by something human. A themed band carries no colour and
     // a plain band carries no distinctive theme, so whichever exists is the
     // identifying feature — previously only colour was used, which left themed

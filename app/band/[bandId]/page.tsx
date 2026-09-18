@@ -33,6 +33,7 @@ import WalkLine from '@/components/band/WalkLine'
 import SubscriptionPanel from '@/components/SubscriptionPanel'
 import type { PrayerSub } from '@/components/PrayerTabs'
 import type { CircleLink } from '@/components/CirclesSection'
+import type { Standing } from '@/lib/band-standing'
 
 type Registration = {
   id: string
@@ -59,6 +60,8 @@ type BandStatus = {
   // Viewer placed the order this band shipped on — entry screen may offer
   // "Pass this band on" with no claim step (server-computed).
   canHandOff?: boolean
+  // Whose band this is and what the viewer may do — lib/band-standing, sent with every screen.
+  standing?: Standing
   senderName?: string
   dedicatorName?: string
   // Sent top-level, NOT on `band` — /api/band-status strips the blessing from
@@ -473,26 +476,22 @@ export default function BandPage() {
   const [autoClaimed, setAutoClaimed] = useState(false)
   useEffect(() => {
     setClaimOffer(null)
-    if (!userId || !status.band || status.band.owner_id) return
-    const regs = (status.registrations || []) as any[]
-    const latest = regs[regs.length - 1]
-    if (!latest || latest.user_id) return
+    const st = status.standing
+    if (!userId || !st) return
+    // Two device-only memories the server cannot see: "I registered this for
+    // someone else" and "not mine, stop asking".
     try {
       if (localStorage.getItem(`for_other_${bandId}`)) return
       if (localStorage.getItem(`not_mine_${bandId}`)) return
-      const fromThisPhone = !!localStorage.getItem(`holder_${bandId}`)
-      const sameName = !!myName && namesMatch(myName, String(latest.user_name || ''))
-      const minutesAgo = latest.registered_at ? (Date.now() - new Date(latest.registered_at).getTime()) / 60000 : Infinity
-      if (fromThisPhone && sameName && minutesAgo >= 0 && minutesAgo <= 30 && !autoClaimTried.current) {
-        autoClaimTried.current = true
-        claimToAccount(true)
-        return
-      }
-      // A nameless account matches nothing by name; only a stop made from this phone counts.
-      if (fromThisPhone || sameName) setClaimOffer({ name: String(latest.user_name || 'you') })
     } catch {}
+    if (st.autoClaim && !autoClaimTried.current) {
+      autoClaimTried.current = true
+      claimToAccount(true)
+      return
+    }
+    if (st.offerClaim) setClaimOffer({ name: String(st.latestStop?.user_name || 'you') })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, myName, status.band?.band_id, status.band?.owner_id, status.registrations?.length])
+  }, [userId, status.band?.band_id, status.standing?.why, status.standing?.offerClaim, status.standing?.autoClaim])
 
   const autoClaimedNote = autoClaimed && (
     <div style={{ margin: '14px 20px 0', background: 'rgba(74,138,106,0.10)', border: '1px solid #4A8A6A', borderRadius: 12, padding: '12px 14px', fontFamily: body, fontSize: 13.5, color: DARK, lineHeight: 1.45 }}>
@@ -1751,9 +1750,16 @@ export default function BandPage() {
           >
             Add your name &amp; a prayer →
           </button>
-          <div style={{ marginTop: 10, marginBottom: 34, fontFamily: body, fontSize: 13, color: 'rgba(255,255,255,0.62)' }}>
+          <div style={{ marginTop: 10, marginBottom: userId ? 34 : 14, fontFamily: body, fontSize: 13, color: 'rgba(255,255,255,0.62)' }}>
             Takes about 30 seconds. No account needed.
           </div>
+          {/* A tap opens the browser, where the buyer is rarely signed in, so
+              the page cannot know this band is theirs to give. Say how. */}
+          {!userId && (
+            <div style={{ marginBottom: 34, fontFamily: body, fontSize: 13, color: 'rgba(255,255,255,0.62)', lineHeight: 1.5 }}>
+              Bought this band to give away? <a href={`/signin?redirect=${encodeURIComponent(`/band/${bandId}`)}`} style={{ color: GOLD, fontWeight: 600 }}>Sign in</a> and it will lead with that.
+            </div>
+          )}
 
           {userId && status.band && !status.band.owner_id && (
             <button

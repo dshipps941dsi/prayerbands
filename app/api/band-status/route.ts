@@ -1,8 +1,8 @@
-import { likeLiteral } from '@/lib/like'
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { hasTapProof } from '@/lib/tap-proof'
+import { loadStanding } from '@/lib/band-standing-load'
 
 export async function GET(req: NextRequest) {
   const supabase = createClient(
@@ -94,15 +94,26 @@ export async function GET(req: NextRequest) {
   const latestReg = regs.at(-1) ?? null
   const currentHolderUserId = latestReg?.user_id ?? null
 
+  // Whose band this is and what the viewer may do with it — the one rule
+  // (lib/band-standing), sent with every screen so the page never works it
+  // out for itself.
+  const localHolder = req.nextUrl.searchParams.get('localHolder')
+  const standing = await loadStanding(
+    supabase,
+    { band_id: bandId, owner_id: band.owner_id ?? null, upline_user_id: uplineUserId, status: band.status ?? null },
+    userId,
+    { onThisDevice: localHolder === 'true' },
+  )
+
   // ── DECISION TREE ────────────────────────────────────
 // ── DECISION TREE ────────────────────────────────────
 
   // 0. Device previously claimed this band (no account)
-  const localHolder = req.nextUrl.searchParams.get('localHolder')
   if (localHolder === 'true') {
     return NextResponse.json({
       screen: 'personal_space',
       ...tapGate,
+      standing,
       reason: 'local_holder',
       band,
       registrations: regs,
@@ -115,6 +126,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       screen: 'personal_space',
       ...tapGate,
+      standing,
       reason: 'pre_linked_owner',
       band,
       registrations: regs,
@@ -127,6 +139,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       screen: 'personal_space',
       ...tapGate,
+      standing,
       reason: 'current_holder',
       band,
       registrations: regs,
@@ -146,6 +159,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       screen: 'incoming_gift',
       ...tapGate,
+      standing,
       band,
       registrations: regs,
       uplineName,
@@ -180,6 +194,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       screen: 'incoming_transfer',
       ...tapGate,
+      standing,
       band,
       registrations: regs,
       uplineName,
@@ -199,6 +214,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       screen: 'first_tap_gift',
       ...tapGate,
+      standing,
       band,
       registrations: regs,
       uplineName,
@@ -211,6 +227,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       screen: 'journey',
       ...tapGate,
+      standing,
       band,
       registrations: regs,
       uplineName,
@@ -219,28 +236,10 @@ export async function GET(req: NextRequest) {
   }
 
   // 6. Band exists but was never purchased or touched.
-  // canHandOff: the viewer placed the order this band shipped on, so the entry
-  // screen can offer "Pass this band on" without a claim step. Matched exactly
-  // via orders.assigned_band_ids + customer_email (the buyer's email looked up
-  // from their profile, since userId here comes from the query string). This is
-  // a UI hint only — initiate-transfer re-checks the same rule from the session.
-  let canHandOff = false
-  // Credited giver (handed the band by an admin, or by whoever gave it to
-  // them): it is theirs to pass on, no order required.
-  if (userId && !band.owner_id && uplineUserId && uplineUserId === userId) canHandOff = true
-  if (userId && !band.owner_id && !canHandOff) {
-    const { data: prof } = await supabase.from('profiles').select('email').eq('id', userId).maybeSingle()
-    if (prof?.email) {
-      const { data: myOrder } = await supabase
-        .from('orders')
-        .select('id')
-        .ilike('customer_email', likeLiteral(prof.email))
-        .contains('assigned_band_ids', [bandId])
-        .limit(1)
-        .maybeSingle()
-      canHandOff = !!myOrder
-    }
-  }
+  // canHandOff: the entry screen leads with giving for the person this band
+  // is credited to (a buyer, or whoever was handed a pile). A UI hint only —
+  // initiate-transfer applies the same standing from the session.
+  const canHandOff = standing.leadWithGiving
   return NextResponse.json({
     screen: 'first_tap_blank',
     ...tapGate,
