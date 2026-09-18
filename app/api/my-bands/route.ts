@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { bandLabel, themeLabelMap } from '@/lib/band-label'
 import { bandStanding, type StandingStop } from '@/lib/band-standing'
+import { likeLiteral } from '@/lib/like'
 
 // Every band the signed-in person can switch between: ones they own, plus ones
 // they currently hold (latest registrant). Someone matching bands to outfits
@@ -18,10 +19,15 @@ export async function GET() {
   // account, ones they have registered, and ones credited to them as the
   // giver. Which of those actually belong in the list is decided per band by
   // the one rule (lib/band-standing) — the same rule the band page applies.
-  const [owned, registered, credited] = await Promise.all([
+  const email = user.email || ''
+  const [owned, registered, credited, byEmail, myOrders] = await Promise.all([
     admin.from('bands').select('band_id').eq('owner_id', user.id),
     admin.from('registrations').select('band_id, registered_at').eq('user_id', user.id).order('registered_at', { ascending: false }),
     admin.from('bands').select('band_id').eq('upline_user_id', user.id).is('owner_id', null),
+    // Credited by email before this account existed (an order placed as a
+    // guest, then a sign-up under the same address).
+    email ? admin.from('bands').select('band_id').ilike('upline_email', likeLiteral(email)).is('upline_user_id', null).is('owner_id', null) : Promise.resolve({ data: [] as any[] }),
+    email ? admin.from('orders').select('assigned_band_ids').ilike('customer_email', likeLiteral(email)).in('status', ['processing', 'shipped']) : Promise.resolve({ data: [] as any[] }),
   ])
   const ids = new Set<string>()
   const candidates: string[] = []
@@ -29,10 +35,13 @@ export async function GET() {
   for (const r of registered.data ?? []) if (r.band_id && !ids.has(r.band_id)) { ids.add(r.band_id); candidates.push(r.band_id) }
   for (const b of owned.data ?? []) if (b.band_id && !ids.has(b.band_id)) { ids.add(b.band_id); candidates.push(b.band_id) }
   for (const b of credited.data ?? []) if (b.band_id && !ids.has(b.band_id)) { ids.add(b.band_id); candidates.push(b.band_id) }
+  const viaEmail = new Set<string>((byEmail.data ?? []).map((b: any) => b.band_id as string))
+  for (const o of (myOrders.data ?? []) as any[]) for (const id of (o.assigned_band_ids || []) as string[]) viaEmail.add(id)
+  for (const id of viaEmail) if (!ids.has(id)) { ids.add(id); candidates.push(id) }
 
   const [{ data: styleRows }, { data: stopRows }] = candidates.length
     ? await Promise.all([
-        admin.from('bands').select('band_id, owner_id, upline_user_id, status, theme, color, size').in('band_id', candidates),
+        admin.from('bands').select('band_id, owner_id, upline_user_id, status, theme, color, size, dedication_recipient').in('band_id', candidates),
         admin.from('registrations').select('band_id, user_id, registered_by, user_name, registered_at, source').in('band_id', candidates),
       ])
     : [{ data: [] }, { data: [] }]
@@ -44,7 +53,7 @@ export async function GET() {
   const rowById = new Map(((styleRows ?? []) as any[]).map(b => [b.band_id as string, b]))
   const standings = new Map(candidates.map(id => {
     const b = rowById.get(id)
-    return [id, b ? bandStanding({ band: { band_id: id, owner_id: b.owner_id ?? null, upline_user_id: b.upline_user_id ?? null, status: b.status ?? null }, stops: stopsByBand.get(id) ?? [], viewerId: user.id }) : null]
+    return [id, b ? bandStanding({ band: { band_id: id, owner_id: b.owner_id ?? null, upline_user_id: b.upline_user_id ?? null, status: b.status ?? null }, stops: stopsByBand.get(id) ?? [], viewerId: user.id, orderedByViewer: viaEmail.has(id) }) : null]
   }))
   // In the list: bands they hold, own, or have in the drawer to give. A band
   // credited to them that someone else has taken is not theirs any more.
@@ -75,6 +84,8 @@ export async function GET() {
       size: b?.size ?? null,
       label,
       giving: giving.has(id),
+      // A gift already addressed to someone: "for Sarah", not "to give away".
+      for_name: giving.has(id) ? (b?.dedication_recipient ?? null) : null,
     }
   })
 

@@ -375,7 +375,7 @@ export default function BandPage() {
     return () => io.disconnect()
   })
   // Bands this person owns or holds, for the header switcher.
-  const [myBands, setMyBands] = useState<{ band_id: string; label: string | null; giving?: boolean }[]>([])
+  const [myBands, setMyBands] = useState<{ band_id: string; label: string | null; giving?: boolean; for_name?: string | null }[]>([])
   const [defaultBandId, setDefaultBandId] = useState<string | null>(null)
   const [notifOpen, setNotifOpen] = useState(false)
   const [walk, setWalk] = useState<VerseWalk>({ total: 0, run: 0, returning: false })
@@ -844,7 +844,7 @@ export default function BandPage() {
                 style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', padding: '12px 14px', background: 'white', border: `1px solid ${isThis ? GOLD : 'rgba(44,24,16,0.12)'}`, borderRadius: 10, cursor: 'pointer' }}>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: 'block', fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.label || b.band_id}</span>
-                  <span style={{ display: 'block', fontFamily: 'monospace', fontSize: 12, color: GRAY, marginTop: 2 }}>{b.band_id}{isThis ? ' · this band' : ''}{b.giving ? <span style={{ fontFamily: body, color: GOLD, fontWeight: 600 }}> · to give away</span> : ''}</span>
+                  <span style={{ display: 'block', fontFamily: 'monospace', fontSize: 12, color: GRAY, marginTop: 2 }}>{b.band_id}{isThis ? ' · this band' : ''}{b.giving ? <span style={{ fontFamily: body, color: GOLD, fontWeight: 600 }}> · {b.for_name ? `for ${b.for_name}` : 'to give away'}</span> : ''}</span>
                 </span>
                 <span style={{ color: GRAY, fontSize: 18 }}>›</span>
               </button>

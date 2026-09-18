@@ -89,10 +89,17 @@ test('the same case an hour later asks first', () => {
   assert.equal(s.offerClaim, true)
 })
 
-test('same phone but a different name asks first', () => {
+test('a shared phone: a spouse’s guest stop is not offered to the other spouse', () => {
   const s = standing(band(), [stop({ user_name: 'Pat Smith', registered_at: minutesAgo(1) })], DAVE,
     { viewerName: 'David Brower', onThisDevice: true })
   assert.equal(s.autoClaim, false)
+  assert.equal(s.offerClaim, false)
+  assert.equal(s.canClaim, true) // still possible on purpose, never suggested
+})
+
+test('a nameless account on the phone that made the stop is asked', () => {
+  const s = standing(band(), [stop({ user_name: 'Pat Smith', registered_at: minutesAgo(1) })], DAVE,
+    { viewerName: null, onThisDevice: true })
   assert.equal(s.offerClaim, true)
 })
 

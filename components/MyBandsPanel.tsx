@@ -8,7 +8,7 @@ import GiftDedications from '@/components/GiftDedications'
 // opened yet. This is the band management that used to live only on the old
 // dashboard.
 
-type Band = { band_id: string; label: string | null; giving?: boolean }
+type Band = { band_id: string; label: string | null; giving?: boolean; for_name?: string | null }
 
 const GOLD = 'var(--pb-primary, #B8860B)'
 const DARK = 'var(--pb-text, #2C1810)'
@@ -56,7 +56,7 @@ export default function MyBandsPanel({ userId, currentBandId, defaultBandId, ope
                         {b.label || b.band_id}
                         {defaultBandId === b.band_id && <span title="The app opens to this band" style={{ marginLeft: 6, color: GOLD, fontSize: 12 }}>★</span>}
                       </div>
-                      <div style={{ fontFamily: 'monospace', fontSize: 11.5, color: GRAY }}>{b.band_id}{isThis ? ' · this band' : ''}{b.giving ? <span style={{ fontFamily: body, color: GOLD, fontWeight: 600 }}> · to give away</span> : ''}</div>
+                      <div style={{ fontFamily: 'monospace', fontSize: 11.5, color: GRAY }}>{b.band_id}{isThis ? ' · this band' : ''}{b.giving ? <span style={{ fontFamily: body, color: GOLD, fontWeight: 600 }}> · {b.for_name ? `for ${b.for_name}` : 'to give away'}</span> : ''}</div>
                     </div>
                     {!isThis && (
                       <a href={`/band/${b.band_id}`} style={{ flexShrink: 0, fontFamily: body, fontSize: 12.5, fontWeight: 600, color: DARK, textDecoration: 'none', border: '1px solid rgba(44,24,16,0.15)', borderRadius: 8, padding: '7px 11px' }}>Open</a>

@@ -150,7 +150,11 @@ export function bandStanding(input: StandingInput): Standing {
     const ageMs = latest!.registered_at ? now - new Date(latest!.registered_at).getTime() : Infinity
     const fresh = ageMs >= 0 && ageMs <= AUTO_CLAIM_WINDOW_MS
     const autoClaim = fromDevice && sameName && fresh
-    return { canClaim: true, offerClaim: !autoClaim && (fromDevice || sameName), autoClaim }
+    // Offer when the name fits, or when this device made the stop and the
+    // account has no name to compare yet. The device alone is not enough:
+    // on a shared phone that would offer a spouse's stop to the other spouse.
+    const nameless = !(input.viewerName || '').trim()
+    return { canClaim: true, offerClaim: !autoClaim && (sameName || (fromDevice && nameless)), autoClaim }
   }
   const guestStop = !!latest && !latest.user_id
 

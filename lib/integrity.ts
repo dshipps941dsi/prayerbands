@@ -147,6 +147,27 @@ export async function runIntegrityChecks(): Promise<Finding[]> {
     }
   }
 
+  // 5b. Subscription shipments whose bands are credited to nobody.
+  const { data: ships } = await svc
+    .from('subscription_shipments')
+    .select('id, user_id, band_ids, status, created_at')
+    .in('status', ['processing', 'shipped'])
+    .gte('created_at', new Date(Date.now() - 90 * 86400000).toISOString())
+  const shipBandIds = [...new Set((ships || []).flatMap((s: any) => (s.band_ids || []) as string[]))]
+  const { data: shipBands } = shipBandIds.length
+    ? await svc.from('bands').select('band_id, owner_id, upline_user_id').in('band_id', shipBandIds)
+    : { data: [] as any[] }
+  const shipBandById = new Map((shipBands || []).map((b: any) => [b.band_id, b]))
+  for (const sh of (ships || []) as any[]) {
+    const bare = ((sh.band_ids || []) as string[]).filter(id => { const b = shipBandById.get(id); return b && !b.owner_id && !b.upline_user_id })
+    if (!bare.length) continue
+    findings.push({
+      key: `uncredited_shipment:${sh.id}`, kind: 'uncredited_order', severity: 'high',
+      summary: `Subscription shipment for ${profById.get(sh.user_id)?.full_name || profById.get(sh.user_id)?.email || 'a subscriber'}: ${bare.length} band${bare.length === 1 ? '' : 's'} credited to nobody — ${bare.join(', ')}.`,
+      detail: { shipment: sh.id, subscriber: sh.user_id, bands: bare },
+    })
+  }
+
   // 6. One person, two accounts (same full name, different emails). Credit
   //    and stops split across them — Susan's and Isla's case.
   const byName = new Map<string, any[]>()

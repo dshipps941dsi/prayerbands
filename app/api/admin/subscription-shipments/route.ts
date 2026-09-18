@@ -75,6 +75,17 @@ export async function POST(req: NextRequest) {
 
     await admin.from('bands').update({ status: 'assigned' }).in('band_id', bandIds)
 
+    // The subscriber is the giver: upline, never owner, so whoever receives
+    // the band can claim it while hanging under them. Same as an order.
+    {
+      const { data: shipRow } = await admin.from('subscription_shipments').select('user_id').eq('id', ship.id).maybeSingle()
+      const subscriberId = (shipRow as any)?.user_id as string | undefined
+      if (subscriberId) {
+        const { data: prof } = await admin.from('profiles').select('email').eq('id', subscriberId).maybeSingle()
+        await admin.from('bands').update({ owner_id: null, upline_user_id: subscriberId, upline_email: (prof as any)?.email ?? null }).in('band_id', bandIds)
+      }
+    }
+
     // Stamp the subscriber's per-cycle dedication onto the assigned bands so the
     // recipient sees the "sent especially for you" screen on first tap.
     if (ship.dedication_note || ship.dedication_recipient) {

@@ -16,11 +16,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Throttle claim attempts so a scraped wall of band IDs can't be mass-claimed
-    // by a script. Limit per signed-in user AND per IP (5 / minute each).
+    // by a script. Five a minute per account; thirty per IP, because a youth
+    // group signing up on one wifi is many accounts behind one address.
     const ip = getClientIp(req)
     const [userOk, ipOk] = await Promise.all([
       checkRateLimit(`claim:user:${user.id}`, 5, 60),
-      checkRateLimit(`claim:ip:${ip}`, 5, 60),
+      checkRateLimit(`claim:ip:${ip}`, 30, 60),
     ])
     if (!userOk || !ipOk) {
       return NextResponse.json({ error: 'Too many attempts. Please wait a minute and try again.' }, { status: 429 })
