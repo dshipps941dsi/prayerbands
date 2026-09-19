@@ -6,7 +6,7 @@ create table if not exists public.help_questions (
   answer text,
   link_href text,
   answered boolean not null default true,
-  user_id uuid references auth.users(id) on delete set null,
+  user_id uuid,
   place text,
   created_at timestamptz not null default now()
 );

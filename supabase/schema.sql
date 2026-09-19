@@ -1,4 +1,4 @@
--- Prayer Bands: public schema, rendered by public.schema_dump() at 2026-09-19 09:37:00.591561+00
+-- Prayer Bands: public schema, rendered by public.schema_dump() at 2026-09-19 12:47:55.514554+00
 -- Regenerate with `npm run db:schema` after every migration. Do not hand-edit.
 
 -- Applied migrations
@@ -255,6 +255,17 @@ create table public.faq_entries (
   source_submission_id uuid,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
+);
+
+create table public.help_questions (
+  id uuid default gen_random_uuid() not null,
+  question text not null,
+  answer text,
+  link_href text,
+  answered boolean default true not null,
+  user_id uuid,
+  place text,
+  created_at timestamp with time zone default now() not null
 );
 
 create table public.integrity_alerts (
@@ -698,6 +709,7 @@ alter table public.credit_ledger add constraint credit_ledger_pkey PRIMARY KEY (
 alter table public.credit_ledger add constraint credit_ledger_reason_check CHECK ((reason = ANY (ARRAY['referral'::text, 'redemption'::text, 'adjustment'::text, 'expiry'::text, 'subscription'::text])));
 alter table public.faq_entries add constraint faq_entries_category_check CHECK ((category = ANY (ARRAY['order'::text, 'ministry'::text, 'technical'::text, 'partnership'::text, 'subscription'::text, 'general'::text])));
 alter table public.faq_entries add constraint faq_entries_pkey PRIMARY KEY (id);
+alter table public.help_questions add constraint help_questions_pkey PRIMARY KEY (id);
 alter table public.integrity_alerts add constraint integrity_alerts_pkey PRIMARY KEY (key);
 alter table public.journal_lists add constraint journal_lists_name_check CHECK (((char_length(TRIM(BOTH FROM name)) >= 1) AND (char_length(TRIM(BOTH FROM name)) <= 60)));
 alter table public.journal_lists add constraint journal_lists_pkey PRIMARY KEY (id);
@@ -866,6 +878,7 @@ CREATE INDEX idx_faq_entries_category ON public.faq_entries USING btree (categor
 CREATE INDEX idx_faq_entries_published ON public.faq_entries USING btree (published) WHERE (published = true);
 CREATE INDEX idx_faq_entries_sort ON public.faq_entries USING btree (sort_order);
 CREATE INDEX idx_faq_entries_source_submission_id ON public.faq_entries USING btree (source_submission_id);
+CREATE INDEX help_questions_created_idx ON public.help_questions USING btree (created_at DESC);
 CREATE INDEX journal_lists_owner_idx ON public.journal_lists USING btree (owner_id);
 CREATE INDEX journal_updates_entry_idx ON public.journal_updates USING btree (entry_id, created_at);
 CREATE INDEX idx_order_bands_order_id ON public.order_bands USING btree (order_id);
@@ -1530,6 +1543,7 @@ alter table public.circle_prayer_requests enable row level security;
 alter table public.contact_submissions enable row level security;
 alter table public.credit_ledger enable row level security;
 alter table public.faq_entries enable row level security;
+alter table public.help_questions enable row level security;
 alter table public.integrity_alerts enable row level security;
 alter table public.journal_lists enable row level security;
 alter table public.journal_updates enable row level security;
@@ -1743,6 +1757,9 @@ grant delete, insert, references, select, trigger, truncate, update on public.cr
 grant delete, insert, references, select, trigger, truncate, update on public.faq_entries to anon;
 grant delete, insert, references, select, trigger, truncate, update on public.faq_entries to authenticated;
 grant delete, insert, references, select, trigger, truncate, update on public.faq_entries to service_role;
+grant delete, insert, references, select, trigger, truncate, update on public.help_questions to anon;
+grant delete, insert, references, select, trigger, truncate, update on public.help_questions to authenticated;
+grant delete, insert, references, select, trigger, truncate, update on public.help_questions to service_role;
 grant delete, insert, references, select, trigger, truncate, update on public.integrity_alerts to service_role;
 grant delete, insert, references, select, trigger, truncate, update on public.journal_lists to authenticated;
 grant delete, insert, references, select, trigger, truncate, update on public.journal_lists to service_role;
