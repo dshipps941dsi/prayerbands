@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import HandoutBatches from '@/app/admin/_components/HandoutBatches'
 
 const C = {
   pageBg: '#F6F1E4',
@@ -461,6 +462,8 @@ export default function HandoutPage() {
           </div>
         </div>
       </div>
+
+      <div style={{ marginTop: 24 }}><HandoutBatches C={C} /></div>
 
       <style>{`
         @media (min-width: 900px) {

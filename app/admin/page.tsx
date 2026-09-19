@@ -11,6 +11,7 @@ import BatchGenerator from './_components/BatchGenerator'
 import CustomerDetail from './_components/CustomerDetail'
 import ActivityFeed from './_components/ActivityFeed'
 import StockSync from './_components/StockSync'
+import HandoutBatches from './_components/HandoutBatches'
 import ReorderSuggestions from './_components/ReorderSuggestions'
 import DedicationsManager from './_components/DedicationsManager'
 import TeamManager from './_components/TeamManager'
@@ -890,7 +891,7 @@ export default function AdminPage() {
         {/* PRAYERS TAB */}
         {activeTab === 'recent' && <ActivityFeed C={C} show="feed" />}
         {activeTab === 'dedications' && <DedicationsManager C={C} />}
-        {activeTab === 'inventory' && <><ReorderSuggestions C={C} /><StockSync C={C} /><ActivityFeed C={C} show="inventory" /></>}
+        {activeTab === 'inventory' && <><ReorderSuggestions C={C} /><StockSync C={C} /><HandoutBatches C={C} /><ActivityFeed C={C} show="inventory" /></>}
 
         {/* Two ways into the same job — by words or by band — so they sit side
             by side rather than one below the other. */}
