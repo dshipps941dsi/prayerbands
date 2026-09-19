@@ -1123,17 +1123,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             row is the write button, the list picker, and a way to make one. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
           {!showForm && (
-            <button onClick={() => { setEntryList(activeList); setShowForm(true) }} style={{ backgroundColor: GOLD, color: 'var(--pb-text-on-primary, #fff)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>+ Write</button>
-          )}
-          {lists.length > 0 && (
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: GRAY, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              List
-              <select value={activeList ?? ''} onChange={e => setActiveList(e.target.value || null)}
-                style={{ padding: '7px 10px', borderRadius: 8, border: `1px solid ${BORDER}`, background: '#fff', color: DARK, fontSize: 13, fontFamily: 'Georgia, serif', textTransform: 'none', letterSpacing: 0, maxWidth: 220 }}>
-                <option value="">All prayers ({myRequests.length})</option>
-                {lists.map(l => <option key={l.id} value={l.id}>{l.name} ({myRequests.filter(r => r.list_id === l.id).length})</option>)}
-              </select>
-            </label>
+            <button onClick={() => { setEntryList(activeList); setShowForm(true) }} style={{ backgroundColor: GOLD, color: 'var(--pb-text-on-primary, #fff)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>+ Write Prayer</button>
           )}
           {showNewList ? (
             <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
@@ -1144,7 +1134,14 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
               <button onClick={() => { setShowNewList(false); setNewListName('') }} style={{ background: 'none', border: 'none', color: GRAY, fontSize: 12, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: '4px 2px' }}>Cancel</button>
             </span>
           ) : (
-            <button onClick={() => setShowNewList(true)} style={{ padding: '7px 12px', borderRadius: 8, border: `1px solid ${BORDER}`, background: '#fff', color: GRAY, fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>+ List</button>
+            <button onClick={() => setShowNewList(true)} style={{ padding: '8px 14px', borderRadius: 8, border: `1px solid ${GOLD}`, background: '#fff', color: GOLD, fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>+ Create List</button>
+          )}
+          {lists.length > 0 && (
+            <select aria-label="Show one list" value={activeList ?? ''} onChange={e => setActiveList(e.target.value || null)}
+              style={{ padding: '8px 10px', borderRadius: 8, border: `1px solid ${BORDER}`, background: '#fff', color: DARK, fontSize: 13, fontFamily: 'Georgia, serif', maxWidth: 200 }}>
+              <option value="">All entries ({myRequests.length})</option>
+              {lists.map(l => <option key={l.id} value={l.id}>{l.name} ({myRequests.filter(r => r.list_id === l.id).length})</option>)}
+            </select>
           )}
           {activeList && (
             <button onClick={() => deleteList(activeList)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#B4441F', fontSize: 11.5, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: 0 }}>Delete this list</button>
