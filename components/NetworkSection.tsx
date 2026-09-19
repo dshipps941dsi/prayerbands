@@ -1119,17 +1119,12 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       {/* ── My Requests ────────────────────────────────────────────────────── */}
       {showRequests && (
       <div style={{ marginTop: section === 'all' ? 20 : 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <h4 style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: 0 }}>My Journal</h4>
+        {/* The tab already says My Prayer Journal, so no second heading: the
+            row is the write button, the list picker, and a way to make one. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
           {!showForm && (
             <button onClick={() => { setEntryList(activeList); setShowForm(true) }} style={{ backgroundColor: GOLD, color: 'var(--pb-text-on-primary, #fff)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>+ Write</button>
           )}
-        </div>
-
-        {/* Lists: a picker when there are any, and a way to make one. The
-            chips read as more buttons next to Add; a labelled dropdown and a
-            single "+ List" do not. */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
           {lists.length > 0 && (
             <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: GRAY, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
               List
