@@ -50,6 +50,8 @@ const pill = (color: string, filled = false): React.CSSProperties => ({
   cursor: 'pointer', lineHeight: 1, whiteSpace: 'nowrap',
 })
 const ANSWERED = '#4F8A64'
+// Journal actions sit in blue so the page is not all gold.
+const BLUE = '#2F5D9E'
 const kindOf = (r: { kind?: EntryKind }) => ENTRY_KINDS.find(k => k.id === (r.kind ?? 'prayer')) ?? ENTRY_KINDS[0]
 
 // A named bucket a person files their own journal entries into (Family, Health).
@@ -1368,16 +1370,16 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                         <textarea autoFocus value={updateDraft} onChange={e => setUpdateDraft(e.target.value.slice(0, 1000))} rows={2} placeholder={updateAnswering ? 'How was it answered? (optional)' : 'What’s new? — “surgery went well”, “still waiting on the results”'} style={{ width: '100%', padding: '9px 12px', fontSize: 13.5, fontFamily: 'Georgia, serif', color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', resize: 'none', boxSizing: 'border-box', lineHeight: 1.55 }} />
                         <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
                           <button onClick={() => { setUpdateFor(null); setUpdateDraft(''); setUpdateAnswering(false) }} style={{ flex: 1, background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 8, padding: 7, fontSize: 12.5, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
-                          <button onClick={() => submitUpdate(r)} disabled={updateBusy || (!updateAnswering && !updateDraft.trim())} style={{ flex: 2, background: updateAnswering ? ANSWERED : GOLD, border: 'none', borderRadius: 8, padding: 7, fontSize: 12.5, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: 'pointer', opacity: updateBusy || (!updateAnswering && !updateDraft.trim()) ? 0.6 : 1 }}>{updateBusy ? 'Saving…' : updateAnswering ? 'Mark answered ✓' : 'Add update'}</button>
+                          <button onClick={() => submitUpdate(r)} disabled={updateBusy || (!updateAnswering && !updateDraft.trim())} style={{ flex: 2, background: updateAnswering ? ANSWERED : BLUE, border: 'none', borderRadius: 8, padding: 7, fontSize: 12.5, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: 'pointer', opacity: updateBusy || (!updateAnswering && !updateDraft.trim()) ? 0.6 : 1 }}>{updateBusy ? 'Saving…' : updateAnswering ? 'Mark answered ✓' : 'Add update'}</button>
                         </div>
                       </div>
                     ) : !editing && (
                       <>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-                          <button onClick={() => openUpdate(r.id, false)} style={pill(GOLD)}>+ Update</button>
-                          {isPrayer && !r.is_answered && <button onClick={() => openUpdate(r.id, true)} style={pill(GOLD)}>✓ Answered</button>}
+                          <button onClick={() => openUpdate(r.id, false)} style={pill(BLUE)}>+ Update</button>
+                          {isPrayer && !r.is_answered && <button onClick={() => openUpdate(r.id, true)} style={pill(BLUE)}>✓ Answered</button>}
                           {r.allow_comments && (
-                            <button onClick={() => toggleReplies(r.id)} style={pill(GOLD)}>
+                            <button onClick={() => toggleReplies(r.id)} style={pill(BLUE)}>
                               💬 {r.reply_count ?? 0} {(r.reply_count ?? 0) === 1 ? 'reply' : 'replies'}
                             </button>
                           )}
