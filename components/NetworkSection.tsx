@@ -1123,7 +1123,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             row is the write button, the list picker, and a way to make one. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
           {!showForm && (
-            <button onClick={() => { setEntryList(activeList); setShowForm(true) }} style={{ backgroundColor: GOLD, color: 'var(--pb-text-on-primary, #fff)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>+ Add Prayer</button>
+            <button onClick={() => { setEntryList(activeList); setShowForm(true) }} style={{ backgroundColor: GOLD, color: 'var(--pb-text-on-primary, #fff)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}><span aria-hidden="true" style={{ fontSize: 17, lineHeight: 0, marginRight: 5, position: 'relative', top: 1 }}>+</span>Prayer</button>
           )}
           {showNewList ? (
             <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
@@ -1134,12 +1134,12 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
               <button onClick={() => { setShowNewList(false); setNewListName('') }} style={{ background: 'none', border: 'none', color: GRAY, fontSize: 12, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: '4px 2px' }}>Cancel</button>
             </span>
           ) : (
-            <button onClick={() => setShowNewList(true)} style={{ padding: '8px 14px', borderRadius: 8, border: `1px solid ${GOLD}`, background: '#fff', color: GOLD, fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>+ Create List</button>
+            <button onClick={() => setShowNewList(true)} style={{ padding: '8px 14px', borderRadius: 8, border: `1px solid ${GOLD}`, background: '#fff', color: GOLD, fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}><span aria-hidden="true" style={{ fontSize: 17, lineHeight: 0, marginRight: 5, position: 'relative', top: 1 }}>+</span>List</button>
           )}
           {lists.length > 0 && (
             <select aria-label="Show one list" value={activeList ?? ''} onChange={e => setActiveList(e.target.value || null)}
-              style={{ padding: '8px 10px', borderRadius: 8, border: `1px solid ${BORDER}`, background: '#fff', color: DARK, fontSize: 13, fontFamily: 'Georgia, serif', maxWidth: 200 }}>
-              <option value="">All entries ({myRequests.length})</option>
+              style={{ padding: '8px 28px 8px 12px', borderRadius: 8, border: `1px solid ${BORDER}`, background: `#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B7355' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center`, appearance: 'none', WebkitAppearance: 'none', color: DARK, fontSize: 13, fontFamily: 'Georgia, serif', maxWidth: 160, cursor: 'pointer' }}>
+              <option value="">{activeList ? `All entries (${myRequests.length})` : 'Select'}</option>
               {lists.map(l => <option key={l.id} value={l.id}>{l.name} ({myRequests.filter(r => r.list_id === l.id).length})</option>)}
             </select>
           )}
