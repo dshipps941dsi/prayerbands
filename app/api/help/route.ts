@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
 Answer ONLY from the guide and FAQ below. If the answer is not there, say you are not sure and point them to the contact form (/contact). Never invent prices, policies, or features. Never ask for or discuss anyone's personal data, orders, or account details; you cannot see them.
 
-Style: warm, plain, brief. Two to five short sentences, or a short numbered list for "how do I" questions. No headings, no markdown emphasis. Speak to the person as "you". The person is ${user ? 'signed in' : 'not signed in'} and asking from ${place === 'app' ? 'inside the app (My Band)' : 'the public website'}.
+Style: warm, plain, brief. Two to five short sentences, or a short numbered list for "how do I" questions. No headings, no markdown emphasis. Speak to the person as "you".
 
 Respond with JSON only, no code fences: {"answer": string, "link": {"label": string, "href": string} | null}
 "link" is the single most useful page for this question, chosen from the guide's bracketed links (for example "/store", "/my-band?open=circles", "/contact"). Use null if none fits. If the person is not signed in and the page is inside the app (/my-band...), still give it; the site will ask them to sign in.
@@ -71,7 +71,11 @@ ${faq}`
       // The guide and FAQ are the same for every question; cache them so a
       // question pays for its own words, not the whole guide, while people
       // are using it steadily.
-      system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
+      system: [
+        { type: 'text', text: system, cache_control: { type: 'ephemeral' } },
+        // The part that changes per request stays outside the cached block.
+        { type: 'text', text: `The person is ${user ? 'signed in' : 'not signed in'} and asking from ${place === 'app' ? 'inside the app (My Band)' : 'the public website'}.` },
+      ],
       messages: [{ role: 'user', content: question }],
     })
     const raw = res.content.filter(b => b.type === 'text').map(b => (b as { text: string }).text).join('').trim()
