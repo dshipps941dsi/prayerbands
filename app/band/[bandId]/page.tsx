@@ -339,6 +339,9 @@ export default function BandPage() {
   // Tapping "Account" in the bottom bar raises a short menu (Inbox, My Bands,
   // Settings, Account) instead of dropping people at the top of a long tab.
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  // The band menu (band icon beside the greeting): pass this band on, switch
+  // between your bands, star the one the app opens to.
+  const [bandMenuOpen, setBandMenuOpen] = useState(false)
   const menuTouchY = useRef<number | null>(null)
   const bandsRef = useRef<HTMLDivElement | null>(null)
   const msgsRef = useRef<HTMLDivElement | null>(null)
@@ -557,12 +560,12 @@ export default function BandPage() {
   }, [userId])
 
   // Pin (or unpin) this band as the one the installed app opens to.
-  function toggleDefaultBand() {
-    const next = defaultBandId === bandId ? null : bandId
+  function toggleDefaultBand(id: string = bandId) {
+    const next = defaultBandId === id ? null : id
     setDefaultBandId(next) // optimistic
     fetch('/api/set-default-band', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bandId }),
+      body: JSON.stringify({ bandId: id }),
     }).then(r => r.ok ? r.json() : null).then(d => { if (d) setDefaultBandId(d.default_band_id ?? null) }).catch(() => {})
   }
 
@@ -805,6 +808,75 @@ export default function BandPage() {
   // component) so it can render on BOTH the personal-space screen and the
   // entry screen without remounting — a nested component would recreate on
   // every keystroke and drop focus from the inputs.
+  function BandGlyph({ size = 24, color = 'currentColor' }: { size?: number; color?: string }) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <ellipse cx="12" cy="12" rx="9" ry="6.5" />
+        <ellipse cx="12" cy="12" rx="5.5" ry="3.2" />
+        <rect x="10.4" y="3.2" width="3.2" height="2.6" rx="0.6" fill={color} stroke="none" />
+      </svg>
+    )
+  }
+
+  const bandMenu = bandMenuOpen ? (
+    <div onClick={() => setBandMenuOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 250, display: 'flex', alignItems: 'flex-end' }}>
+      <style>{`@keyframes pbRise { from { transform: translateY(100%) } to { transform: none } } @media (prefers-reduced-motion: reduce) { .pb-rise { animation: none !important } }`}</style>
+      <div onClick={e => e.stopPropagation()} className="pb-rise"
+        style={{ background: CREAM, borderRadius: '20px 20px 0 0', padding: '14px 16px calc(28px + env(safe-area-inset-bottom, 0px))', width: '100%', boxSizing: 'border-box', animation: 'pbRise 0.22s ease-out', position: 'relative', maxHeight: '80vh', overflowY: 'auto' }}>
+        <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 14px' }} />
+        <button onClick={() => setBandMenuOpen(false)} aria-label="Close" style={{ position: 'absolute', top: 10, right: 12, width: 34, height: 34, borderRadius: 17, border: 'none', background: 'rgba(44,24,16,0.08)', color: DARK, fontSize: 16, cursor: 'pointer' }}>✕</button>
+        {/* Top option, in its own colour: pass this band on. */}
+        <button onClick={() => {
+          setBandMenuOpen(false)
+          const accountless = !userId && localStorage.getItem(`holder_${bandId}`) === 'true'
+          setTransferStep(accountless ? 'save_prompt' : 'sheet')
+        }} style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: '14px 14px', background: GOLD, color: INK, border: 'none', borderRadius: 12, cursor: 'pointer', textAlign: 'left', boxSizing: 'border-box', marginBottom: 6 }}>
+          <span style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,255,255,0.35)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 20 }}>↗</span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: 'block', fontFamily: serif, fontSize: 16, fontWeight: 700 }}>Transfer this band</span>
+            <span style={{ display: 'block', fontFamily: body, fontSize: 12.5, opacity: 0.8, marginTop: 1 }}>{bandId} · write a note, then hand it over</span>
+          </span>
+          <span style={{ fontSize: 18, opacity: 0.7 }}>›</span>
+        </button>
+        {/* Your bands: tap to open one, star the one the app opens to. */}
+        {userId && myBands.length > 0 && (
+          <div style={{ fontFamily: body, fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: GRAY, margin: '12px 6px 4px' }}>Your bands · {myBands.length}</div>
+        )}
+        {userId && [...myBands.filter(b => !b.giving), ...myBands.filter(b => b.giving)].map((b, i, arr) => {
+          const isThis = b.band_id === bandId
+          const starred = defaultBandId === b.band_id
+          const heading = arr.some(x => x.giving) && b.giving && (i === 0 || !arr[i - 1].giving) ? `To give away · ${arr.filter(x => x.giving).length}` : null
+          return (
+            <React.Fragment key={b.band_id}>
+              {heading && <div style={{ fontFamily: body, fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: GRAY, margin: '12px 6px 4px' }}>{heading}</div>}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid rgba(44,24,16,0.08)' }}>
+                <button onClick={() => { if (isThis) setBandMenuOpen(false); else window.location.href = `/band/${b.band_id}` }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, padding: '11px 6px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                  <span style={{ width: 36, height: 36, borderRadius: 10, background: isThis ? GOLD : 'white', border: `1px solid ${isThis ? GOLD : 'rgba(44,24,16,0.12)'}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <BandGlyph size={20} color={isThis ? INK : GRAY} />
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'block', fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.label || b.band_id}</span>
+                    <span style={{ display: 'block', fontFamily: 'monospace', fontSize: 11.5, color: GRAY, marginTop: 1 }}>{b.band_id}{isThis ? ' · this band' : ''}{b.giving ? <span style={{ fontFamily: body, color: GOLD, fontWeight: 600 }}> · {b.for_name ? `for ${b.for_name}` : 'to give away'}</span> : ''}</span>
+                  </span>
+                </button>
+                <button onClick={() => toggleDefaultBand(b.band_id)}
+                  aria-label={starred ? 'Your favourite: the app opens to this band. Tap to unset' : 'Make this your favourite: the app opens to it'}
+                  title={starred ? 'The app opens to this band' : 'Make this the band the app opens to'}
+                  style={{ width: 40, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill={starred ? GOLD : 'none'} stroke={starred ? GOLD : GRAY} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.9 6.26L21.5 9.2l-4.75 4.64L17.9 21 12 17.6 6.1 21l1.15-7.16L2.5 9.2l6.6-.94z"/></svg>
+                </button>
+              </div>
+            </React.Fragment>
+          )
+        })}
+        {userId && myBands.length > 1 && (
+          <div style={{ fontFamily: body, fontSize: 12, color: GRAY, margin: '10px 6px 0', lineHeight: 1.5 }}>★ marks your favourite: the band the app opens to.</div>
+        )}
+      </div>
+    </div>
+  ) : null
+
   const accountMenu = accountMenuOpen ? (
     <div onClick={() => setAccountMenuOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(44,24,16,0.4)', zIndex: 250 /* above the fixed tab bar (200), which covered the last row */, display: 'flex', alignItems: 'flex-end' }}>
       <style>{`@keyframes pbRise { from { transform: translateY(100%) } to { transform: none } } @media (prefers-reduced-motion: reduce) { .pb-rise { animation: none !important } }`}</style>
@@ -964,27 +1036,7 @@ export default function BandPage() {
               matching a band to an outfit means carrying several — so a single
               -band holder sees no extra chrome. Selecting one opens that band's
               own view rather than routing through the dashboard. */}
-          {myBands.length > 1 && (
-            <select
-              aria-label="Switch band"
-              value={bandId}
-              onChange={e => { if (e.target.value !== bandId) window.location.href = `/band/${e.target.value}` }}
-              style={{ fontFamily: serif, fontSize: 13, fontWeight: 700, color: DARK, background: 'white', border: `1px solid ${GOLD}`, borderRadius: 8, padding: '6px 8px', cursor: 'pointer', maxWidth: 130 }}
-            >
-              {bandOptions()}
-            </select>
-          )}
-          {myBands.length > 1 && (
-            <button onClick={toggleDefaultBand}
-              aria-label={defaultBandId === bandId ? 'This is your default band — tap to unset' : 'Set as your default band'}
-              title={defaultBandId === bandId ? 'The app opens to this band — tap to unset' : 'Make this the band the app opens to'}
-              style={{ display: 'inline-flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill={defaultBandId === bandId ? GOLD : 'none'} stroke={defaultBandId === bandId ? GOLD : GRAY} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.9 6.26L21.5 9.2l-4.75 4.64L17.9 21 12 17.6 6.1 21l1.15-7.16L2.5 9.2l6.6-.94z"/></svg>
-            </button>
-          )}
-          {myBands.length <= 1 && (
-            <span style={{ fontFamily: 'monospace', fontSize: 12, color: GRAY, letterSpacing: '0.06em' }}>{bandId}</span>
-          )}
+          <span style={{ fontFamily: 'monospace', fontSize: 12, color: GRAY, letterSpacing: '0.06em' }}>{bandId}</span>
           {userId ? (
             <button onClick={() => setNotifOpen(true)} aria-label="Notifications" title="Notifications" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
               <Icon name="mail" size={22} color="var(--pb-primary, #C8A96E)" bg="#FAF6EF" />
@@ -1040,10 +1092,11 @@ export default function BandPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 6 }}>
           <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: DARK, minWidth: 0, lineHeight: 1.2 }}>{greeting}{firstName ? `, ${firstName}` : ''}</div>
           {transferStep === 'idle' && !transferComplete && (
-            <button onClick={() => {
-              const accountless = !userId && localStorage.getItem(`holder_${bandId}`) === 'true'
-              setTransferStep(accountless ? 'save_prompt' : 'sheet')
-            }} style={{ display: 'flex', alignItems: 'center', gap: 6, background: GOLD, color: INK, border: 'none', borderRadius: 10, padding: '8px 12px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }} aria-label="Pass this band on" title="Pass this band on">↗ Pass on</button>
+            <button onClick={() => setBandMenuOpen(true)} aria-label="Your bands: pass this one on, switch bands" title="Your bands"
+              style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 0 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 42, height: 42, borderRadius: 21, background: GOLD, color: INK, boxShadow: '0 2px 8px rgba(184,134,11,0.30)' }}><BandGlyph size={24} color={INK} /></span>
+              <span style={{ fontFamily: body, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: GRAY, fontWeight: 700 }}>Bands</span>
+            </button>
           )}
         </div>
         <WalkLine total={walk.total} run={walk.run} onOpenJourney={() => setActiveTab('journey')} />
@@ -1511,7 +1564,7 @@ export default function BandPage() {
           </div>
         )}
 
-        {transferSheet}{chooseSheet}{accountMenu}
+        {transferSheet}{chooseSheet}{accountMenu}{bandMenu}
         <div style={{ height: 100 }} />
         <BottomNav />
 
@@ -1791,7 +1844,7 @@ export default function BandPage() {
           {/* Hand-off from the entry screen: the sheet + "waiting for them to
               tap" state live here too, so a bulk buyer never has to claim first. */}
           {transferStep === 'pending' && <div style={{ marginTop: 20, width: '100%', maxWidth: 420 }}><PendingBanner /></div>}
-          {transferSheet}{chooseSheet}{accountMenu}
+          {transferSheet}{chooseSheet}{accountMenu}{bandMenu}
 
           {/* Pinned footer: always on screen, whatever is scrolled. The main
               button says what the step is; this one says that there is one. */}
