@@ -1123,7 +1123,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             row is the write button, the list picker, and a way to make one. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
           {!showForm && (
-            <button onClick={() => { setEntryList(activeList); setShowForm(true) }} style={{ backgroundColor: GOLD, color: 'var(--pb-text-on-primary, #fff)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>+ Write Prayer</button>
+            <button onClick={() => { setEntryList(activeList); setShowForm(true) }} style={{ backgroundColor: GOLD, color: 'var(--pb-text-on-primary, #fff)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>+ Add Prayer</button>
           )}
           {showNewList ? (
             <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
