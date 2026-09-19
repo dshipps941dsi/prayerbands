@@ -1038,12 +1038,12 @@ export default function BandPage() {
     return (
       <div style={{ margin: '14px 20px 0' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-          <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: DARK, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greeting}{firstName ? `, ${firstName}` : ''}</div>
+          <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: DARK, minWidth: 0, lineHeight: 1.2 }}>{greeting}{firstName ? `, ${firstName}` : ''}</div>
           {transferStep === 'idle' && !transferComplete && (
             <button onClick={() => {
               const accountless = !userId && localStorage.getItem(`holder_${bandId}`) === 'true'
               setTransferStep(accountless ? 'save_prompt' : 'sheet')
-            }} style={{ display: 'flex', alignItems: 'center', gap: 6, background: GOLD, color: INK, border: 'none', borderRadius: 10, padding: '8px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Transfer Band</button>
+            }} style={{ display: 'flex', alignItems: 'center', gap: 6, background: GOLD, color: INK, border: 'none', borderRadius: 10, padding: '8px 12px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }} aria-label="Pass this band on" title="Pass this band on">↗ Pass on</button>
           )}
         </div>
         <WalkLine total={walk.total} run={walk.run} onOpenJourney={() => setActiveTab('journey')} />
