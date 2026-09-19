@@ -18,6 +18,7 @@ function normalizeBandCode(raw: string): string {
 
 interface NetworkRequest {
   id: string
+  title?: string | null
   request_text: string
   is_answered: boolean
   answered_at: string | null
@@ -79,6 +80,7 @@ interface PendingRequest {
 // A request shared with the viewer through the network (audience-filtered by the API).
 interface OthersApiRequest {
   id: string
+  title?: string | null
   request_text: string
   created_at: string
   intercession_count: number
@@ -112,6 +114,7 @@ interface OtherItem {
   allow_comments?: boolean
   i_replied?: boolean
   context: string
+  title?: string | null
   request_text: string
   created_at: string
   intercession_count: number
@@ -199,6 +202,8 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
   const [submitting, setSubmitting] = useState(false)
   const [audience, setAudience] = useState<string>('private')
   const [entryKind, setEntryKind] = useState<EntryKind>('prayer')
+  const [entryTitle, setEntryTitle] = useState('')
+  const [editTitle, setEditTitle] = useState('')
   const [verseRef, setVerseRef] = useState('')
   // In-place edit of an entry, and the "+ Update" / "Mark answered" box under one.
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -426,13 +431,14 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       const res = await fetch('/api/network/prayer-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_text: text.trim(), audience, anonymity, list_id: entryList, allow_comments: allowReplies && audience !== 'private', excluded_user_ids: audience === 'network' ? excluded : [], kind: entryKind, verse_ref: entryKind === 'verse' ? verseRef.trim() : undefined }),
+        body: JSON.stringify({ request_text: text.trim(), audience, anonymity, list_id: entryList, allow_comments: allowReplies && audience !== 'private', excluded_user_ids: audience === 'network' ? excluded : [], kind: entryKind, verse_ref: entryKind === 'verse' ? verseRef.trim() : undefined, title: entryKind === 'verse' ? undefined : entryTitle.trim() }),
       })
       if (res.ok) {
         const d = await res.json()
         setMyRequests(prev => [{ ...d.request, intercession_count: 0, i_prayed: false, updates: [] }, ...prev])
         setText('')
         setVerseRef('')
+        setEntryTitle('')
         setEntryKind('prayer')
         setShowForm(false)
         setAudience('private')
@@ -511,7 +517,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     await fetch(`/api/network/journal-update?id=${id}`, { method: 'DELETE' })
   }
   function startEdit(r: NetworkRequest) {
-    setEditingId(r.id); setEditText(r.request_text); setEditRef(r.verse_ref ?? ''); setUpdateFor(null)
+    setEditingId(r.id); setEditText(r.request_text); setEditRef(r.verse_ref ?? ''); setEditTitle(r.title ?? ''); setUpdateFor(null)
   }
   async function saveEdit(r: NetworkRequest) {
     const t = editText.trim()
@@ -519,10 +525,10 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
     const isVerse = (r.kind ?? 'prayer') === 'verse'
     const res = await fetch('/api/network/prayer-request', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ request_id: r.id, request_text: t, ...(isVerse ? { verse_ref: editRef } : {}) }),
+      body: JSON.stringify({ request_id: r.id, request_text: t, ...(isVerse ? { verse_ref: editRef } : { title: editTitle }) }),
     })
     if (res.ok) {
-      setMyRequests(prev => prev.map(x => x.id === r.id ? { ...x, request_text: t, verse_ref: isVerse ? (editRef.trim() || null) : x.verse_ref } : x))
+      setMyRequests(prev => prev.map(x => x.id === r.id ? { ...x, request_text: t, verse_ref: isVerse ? (editRef.trim() || null) : x.verse_ref, title: isVerse ? x.title : (editTitle.trim() || null) } : x))
       setEditingId(null)
     }
   }
@@ -633,6 +639,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       allow_comments: r.allow_comments,
       i_replied: r.i_replied,
       context: '',
+      title: r.title ?? null,
       request_text: r.request_text,
       created_at: r.created_at,
       intercession_count: r.intercession_count,
@@ -1063,6 +1070,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                 {KIND_LABEL[o.kind]}{o.context ? ` · ${o.context}` : ''}
               </span>
             </div>
+            {o.title && <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, margin: '0 0 4px' }}>{o.title}</div>}
             <p style={{ fontSize: 14, color: DARK, lineHeight: 1.5, margin: '0 0 10px 0', fontStyle: 'italic' }}>&ldquo;{o.request_text}&rdquo;</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               {prayBtn(o.key, o.i_prayed, o.intercession_count, () => prayOther(o))}
@@ -1162,13 +1170,16 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                 )
               })}
             </div>
+            {entryKind !== 'verse' && (
+              <input value={entryTitle} onChange={e => setEntryTitle(e.target.value.slice(0, 120))} placeholder={entryKind === 'prayer' ? 'What is this about? (e.g. Mom’s surgery)' : 'Title (optional)'} style={{ width: '100%', padding: '10px 14px', fontSize: 15, fontFamily: serif, fontWeight: 700, color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
+            )}
             {entryKind === 'verse' && (
               <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
                 <input value={verseRef} onChange={e => setVerseRef(e.target.value.slice(0, 80))} placeholder="Reference (e.g. Psalm 46:1)" style={{ flex: 1, padding: '9px 12px', fontSize: 13.5, fontFamily: serif, fontWeight: 700, color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', boxSizing: 'border-box' }} />
                 <button onClick={() => { const v = getDailyVerse(); setVerseRef(v.ref); setText(v.text) }} title="Fill in today’s verse" style={{ padding: '9px 10px', borderRadius: 8, border: `1px solid ${BORDER}`, background: '#fff', color: '#2E7D8A', fontSize: 12, fontFamily: 'Georgia, serif', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>Today’s verse</button>
               </div>
             )}
-            <textarea value={text} onChange={e => setText(e.target.value)} placeholder={kindOf({ kind: entryKind }).placeholder} rows={entryKind === 'prayer' ? 3 : 4} maxLength={entryKind === 'prayer' ? 400 : 2000} autoFocus style={{ width: '100%', padding: '10px 14px', fontSize: 14, fontFamily: 'Georgia, serif', color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', resize: 'none', boxSizing: 'border-box', lineHeight: 1.6 }} />
+            <textarea value={text} onChange={e => setText(e.target.value)} placeholder={entryKind === 'prayer' ? 'The details — what you are asking God for' : kindOf({ kind: entryKind }).placeholder} rows={entryKind === 'prayer' ? 3 : 4} maxLength={entryKind === 'prayer' ? 400 : 2000} autoFocus style={{ width: '100%', padding: '10px 14px', fontSize: 14, fontFamily: 'Georgia, serif', color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', resize: 'none', boxSizing: 'border-box', lineHeight: 1.6 }} />
 
             {entryKind === 'prayer' && (<>
             <div style={{ fontSize: 11, color: GRAY, margin: '12px 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Who is this for?</div>
@@ -1255,7 +1266,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
             )}
 
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button onClick={() => { setShowForm(false); setText(''); setVerseRef(''); setEntryKind('prayer'); setAudience('private'); setAllowReplies(false); setAnonymity('first_initial') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid var(--pb-border, #D4C5B0)`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => { setShowForm(false); setText(''); setVerseRef(''); setEntryTitle(''); setEntryKind('prayer'); setAudience('private'); setAllowReplies(false); setAnonymity('first_initial') }} style={{ flex: 1, backgroundColor: 'transparent', border: `1px solid var(--pb-border, #D4C5B0)`, borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', color: GRAY, cursor: 'pointer' }}>Cancel</button>
               <button onClick={shareRequest} disabled={!text.trim() || submitting} style={{ flex: 2, backgroundColor: text.trim() ? GOLD : 'var(--pb-border, #D4C5B0)', border: 'none', borderRadius: 8, padding: 9, fontSize: 13, fontFamily: 'Georgia, serif', fontWeight: 600, color: '#fff', cursor: text.trim() ? 'pointer' : 'default' }}>{submitting ? (audience === 'private' ? 'Saving...' : 'Sharing...') : entryKind === 'note' ? 'Save note' : entryKind === 'verse' ? 'Save verse' : audience === 'private' ? 'Add to Journal' : 'Share Request'}</button>
             </div>
           </div>
@@ -1289,8 +1300,15 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                 return (
                   <div key={r.id} style={{ position: 'relative', backgroundColor: '#fff', border: `1px solid ${BORDER}`, borderLeft: `4px solid ${r.is_answered ? ANSWERED : k.color}`, borderRadius: 12, padding: '12px 14px 14px 16px', marginBottom: 10, boxShadow: '0 1px 2px rgba(44,24,16,0.04)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <span style={{ fontSize: 12, color: r.is_answered ? ANSWERED : k.color, fontWeight: 700, fontFamily: serif, letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{k.glyph} {r.is_answered ? 'Answered' : k.label}</span>
-                      <span style={{ fontSize: 12, color: GRAY, whiteSpace: 'nowrap' }}>{clock(r.created_at)}</span>
+                      <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1 }}>{k.glyph}</span>
+                      {(() => {
+                        const headline = r.title || (k.id === 'verse' ? r.verse_ref : null)
+                        return headline
+                          ? <span style={{ fontFamily: serif, fontSize: 15.5, fontWeight: 700, color: DARK, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{headline}</span>
+                          : <span style={{ fontSize: 12, color: k.color, fontWeight: 700, fontFamily: serif, letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{k.label}</span>
+                      })()}
+                      {r.is_answered && <span style={{ fontSize: 10.5, color: ANSWERED, fontWeight: 700, fontFamily: serif, letterSpacing: '0.05em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>✓ Answered</span>}
+                      <span style={{ fontSize: 12, color: GRAY, whiteSpace: 'nowrap', flexShrink: 0 }}>{clock(r.created_at)}</span>
                       {listName && <span style={{ fontSize: 11, color: GRAY, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>· {listName}</span>}
                       {!editing && (
                         <span style={{ marginLeft: 'auto', position: 'relative', flexShrink: 0 }}>
@@ -1311,6 +1329,9 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
 
                     {editing ? (
                       <div>
+                        {k.id !== 'verse' && (
+                          <input value={editTitle} onChange={e => setEditTitle(e.target.value.slice(0, 120))} placeholder="Title" style={{ width: '100%', padding: '8px 12px', fontSize: 15, fontFamily: serif, fontWeight: 700, color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
+                        )}
                         {k.id === 'verse' && (
                           <input value={editRef} onChange={e => setEditRef(e.target.value.slice(0, 80))} placeholder="Reference (e.g. Psalm 46:1)" style={{ width: '100%', padding: '8px 12px', fontSize: 13.5, fontFamily: serif, fontWeight: 700, color: DARK, border: `1px solid ${BORDER}`, borderRadius: 8, backgroundColor: CREAM, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
                         )}
@@ -1322,7 +1343,6 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                       </div>
                     ) : (
                       <>
-                        {k.id === 'verse' && r.verse_ref && <div style={{ fontFamily: serif, fontSize: 13.5, fontWeight: 700, color: DARK, marginBottom: 4 }}>{r.verse_ref}</div>}
                         <p style={{ fontSize: 15.5, color: DARK, lineHeight: 1.6, margin: 0, fontFamily: 'Georgia, serif', fontStyle: k.id === 'verse' ? 'italic' : 'normal', whiteSpace: 'pre-wrap' }}>{k.id === 'verse' ? <>&ldquo;{r.request_text}&rdquo;</> : r.request_text}</p>
                       </>
                     )}

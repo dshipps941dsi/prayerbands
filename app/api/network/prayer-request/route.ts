@@ -23,6 +23,9 @@ export async function POST(req: NextRequest) {
     // and verses are the person's own — they are always private.
     const kind: 'prayer' | 'note' | 'verse' = body.kind === 'note' ? 'note' : body.kind === 'verse' ? 'verse' : 'prayer'
     const verse_ref = kind === 'verse' ? String(body.verse_ref || '').trim().slice(0, 80) || null : null
+    // The headline above the details ("Mom's surgery"). A verse's reference
+    // is its headline, so it carries none.
+    const title = kind === 'verse' ? null : String(body.title || '').trim().slice(0, 120) || null
     if (kind !== 'prayer') body.audience = 'private'
 
     // Accept `audience`; tolerate the old `visibility` field for safety.
@@ -97,12 +100,13 @@ export async function POST(req: NextRequest) {
     const row = { user_id: user.id, request_text: request_text.trim(), visibility: vis, audience, public_name, list_id, excluded_user_ids, allow_comments: body.allow_comments === true && audience !== 'private' }
     let { data: request, error } = await supabase
       .from('prayer_network_requests')
-      .insert({ ...row, kind, verse_ref })
+      .insert({ ...row, kind, verse_ref, title })
       .select()
       .single()
     if (error && (error as any).code === '42703') {
-      // Journal migration not applied yet: save it as a plain entry.
-      ;({ data: request, error } = await supabase.from('prayer_network_requests').insert(row).select().single())
+      // A journal migration has not run yet: try without the title, then as a plain entry.
+      ;({ data: request, error } = await supabase.from('prayer_network_requests').insert({ ...row, kind, verse_ref }).select().single())
+      if (error && (error as any).code === '42703') ({ data: request, error } = await supabase.from('prayer_network_requests').insert(row).select().single())
     }
 
     if (error || !request) {
@@ -141,6 +145,7 @@ export async function PATCH(req: NextRequest) {
       patch.request_text = t.slice(0, 2000)
     }
     if (typeof body.verse_ref === 'string') patch.verse_ref = body.verse_ref.trim().slice(0, 80) || null
+    if (typeof body.title === 'string') patch.title = body.title.trim().slice(0, 120) || null
     if (body.list_id === null) patch.list_id = null
     else if (typeof body.list_id === 'string' && /^[0-9a-fA-F-]{36}$/.test(body.list_id)) {
       const { data: l } = await supabase.from('journal_lists').select('id').eq('id', body.list_id).eq('owner_id', user.id).maybeSingle()

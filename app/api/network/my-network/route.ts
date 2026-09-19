@@ -139,7 +139,7 @@ export async function GET(_req: NextRequest) {
     const { data: theirRequests } = authorIds.length
       ? await admin
           .from('prayer_network_requests')
-          .select('id, user_id, request_text, is_answered, created_at, visibility, audience, allow_comments')
+          .select('*')
           .in('user_id', authorIds)
           .eq('is_answered', false)
           // Honor per-request exclusions — never surface a request to someone the
@@ -148,20 +148,11 @@ export async function GET(_req: NextRequest) {
           .order('created_at', { ascending: false })
       : { data: [] as any[] }
 
-    // eslint-disable-next-line prefer-const
-    let { data: myRequests, error: myErr }: { data: any[] | null; error: any } = await admin
+    const { data: myRequests }: { data: any[] | null } = await admin
       .from('prayer_network_requests')
-      .select('id, user_id, request_text, is_answered, answered_at, created_at, visibility, audience, list_id, allow_comments, kind, verse_ref')
+      .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-    if (myErr && (myErr as any).code === '42703') {
-      // Journal migration not applied yet: read without the new columns.
-      ;({ data: myRequests } = await admin
-        .from('prayer_network_requests')
-        .select('id, user_id, request_text, is_answered, answered_at, created_at, visibility, audience, list_id, allow_comments')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false }))
-    }
 
     // Dated follow-ups under the viewer's own entries.
     const updatesByEntry: Record<string, { id: string; body: string; kind: string; created_at: string }[]> = {}
@@ -209,6 +200,7 @@ export async function GET(_req: NextRequest) {
 
     const decorate = (r: any) => ({
       id: r.id,
+      title: r.title ?? null,
       request_text: r.request_text,
       is_answered: r.is_answered,
       answered_at: r.answered_at ?? null,
