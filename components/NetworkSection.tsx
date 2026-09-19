@@ -1134,7 +1134,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
               <button onClick={() => { setShowNewList(false); setNewListName('') }} style={{ background: 'none', border: 'none', color: GRAY, fontSize: 12, fontFamily: 'Georgia, serif', cursor: 'pointer', padding: '4px 2px' }}>Cancel</button>
             </span>
           ) : (
-            <label style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', padding: '8px 14px', borderRadius: 8, border: `1px solid ${GOLD}`, background: '#fff', color: GOLD, fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>
+            <label style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', padding: '8px 14px', borderRadius: 8, border: 'none', background: GOLD, color: 'var(--pb-text-on-primary, #fff)', fontSize: 11, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer' }}>
               <span aria-hidden="true" style={{ fontSize: 17, lineHeight: 0, marginRight: 5, position: 'relative', top: 1 }}>+</span>List
               <select aria-label="Lists" value="" onChange={e => { const v = e.target.value; if (v === 'new') setShowNewList(true); else if (v) setActiveList(v) }}
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}>
