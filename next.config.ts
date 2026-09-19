@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // The help assistant reads its guide from disk at runtime; make sure the
+  // file travels with the function.
+  outputFileTracingIncludes: { "/api/help": ["./content/help-guide.md"] },
   async redirects() {
     return [
       // One host, always. www served the site as a second origin with its own

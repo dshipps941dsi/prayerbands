@@ -48,12 +48,15 @@ interface FaqEntry {
   sort_order: number;
 }
 
-type Tab = "submissions" | "faq";
+type Tab = "submissions" | "faq" | "help";
+
+interface HelpQuestion { id: string; question: string; answer: string | null; link_href: string | null; place: string | null; user_id: string | null; created_at: string }
 
 export default function AdminContactsPage() {
   const [tab, setTab] = useState<Tab>("submissions");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [faqEntries, setFaqEntries] = useState<FaqEntry[]>([]);
+  const [helpQuestions, setHelpQuestions] = useState<HelpQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [selected, setSelected] = useState<Submission | null>(null);
@@ -93,9 +96,10 @@ export default function AdminContactsPage() {
     setLoading(true);
     const res = await fetch(`/api/admin/contacts?status=${encodeURIComponent(statusFilter)}`);
     if (res.ok) {
-      const { submissions, faqEntries } = await res.json();
+      const { submissions, faqEntries, helpQuestions } = await res.json();
       setSubmissions(submissions || []);
       setFaqEntries(faqEntries || []);
+      setHelpQuestions(helpQuestions || []);
     }
     setLoading(false);
   }
@@ -219,6 +223,10 @@ export default function AdminContactsPage() {
         <button className={`admin-tab ${tab === "faq" ? "active" : ""}`} onClick={() => setTab("faq")}>
           FAQ Manager
           {faqCandidates.length > 0 && <span className="badge badge--amber">{faqCandidates.length} candidates</span>}
+        </button>
+        <button className={`admin-tab ${tab === "help" ? "active" : ""}`} onClick={() => setTab("help")}>
+          Help Questions
+          {helpQuestions.length > 0 && <span className="badge">{helpQuestions.length}</span>}
         </button>
       </div>
 
@@ -440,6 +448,28 @@ export default function AdminContactsPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {tab === "help" && (
+        <div className="faq-manager">
+          <div className="faq-manager-header">
+            <div>
+              <h2>What people asked the help assistant</h2>
+              <p>Last {helpQuestions.length} questions, newest first. Anything asked more than once belongs in the FAQ.</p>
+            </div>
+          </div>
+          {helpQuestions.length === 0 && <p style={{ color: "#5C6573" }}>No questions yet.</p>}
+          {helpQuestions.map((h) => (
+            <div key={h.id} style={{ background: "#FFFDF8", border: "1px solid rgba(10,22,40,0.10)", borderRadius: 10, padding: "14px 16px", marginBottom: 10 }}>
+              <div style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
+                <strong style={{ fontSize: 15, color: "#15223B" }}>{h.question}</strong>
+                <span style={{ fontSize: 12, color: "#5C6573" }}>{new Date(h.created_at).toLocaleString()} · {h.place === "app" ? "in the app" : "website"}{h.user_id ? " · signed in" : ""}</span>
+              </div>
+              <div style={{ fontSize: 14, color: "#4A5260", marginTop: 6, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{h.answer}</div>
+              {h.link_href && <div style={{ fontSize: 12, color: "#9A7A35", marginTop: 4 }}>→ {h.link_href}</div>}
+            </div>
+          ))}
         </div>
       )}
 

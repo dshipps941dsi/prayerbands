@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { HelpBox } from "@/components/HelpAssistant";
 
 const FAQS = [
   {
@@ -157,6 +158,11 @@ export default function FAQPage() {
       </section>
 
       <div className="faq-wrap">
+        <div style={{ background: "#FFFDF8", border: "1px solid rgba(10,22,40,0.10)", borderRadius: 12, padding: "20px 22px", marginBottom: 28, boxShadow: "0 2px 10px rgba(10,22,40,0.05)" }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 24, fontWeight: 700, color: "#15223B", marginBottom: 4 }}>Ask a question</div>
+          <div style={{ fontSize: 14, color: "#5C6573", marginBottom: 14 }}>How something works, or how to do it. Answered from our help guide.</div>
+          <HelpBox place="site" />
+        </div>
         {FAQS.map((f, i) => (
           <div key={i} className="faq-item">
             <button className="faq-q" onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i}>

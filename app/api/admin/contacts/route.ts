@@ -30,12 +30,14 @@ export async function GET(req: NextRequest) {
   const admin = svc()
   const status = req.nextUrl.searchParams.get('status') || 'new'
 
-  const [subRes, faqRes] = await Promise.all([
+  const [subRes, faqRes, helpRes] = await Promise.all([
     admin.from('contact_submissions').select('*').eq('status', status).order('created_at', { ascending: false }).limit(50),
     admin.from('faq_entries').select('*').order('sort_order', { ascending: true }),
+    // What people asked the help assistant: the raw material for new FAQ entries.
+    admin.from('help_questions').select('id, question, answer, link_href, place, user_id, created_at').order('created_at', { ascending: false }).limit(200),
   ])
 
-  return NextResponse.json({ submissions: subRes.data || [], faqEntries: faqRes.data || [] })
+  return NextResponse.json({ submissions: subRes.data || [], faqEntries: faqRes.data || [], helpQuestions: helpRes.data || [] })
 }
 
 export async function POST(req: NextRequest) {
