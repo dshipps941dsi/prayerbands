@@ -88,7 +88,13 @@ export async function GET(req: NextRequest) {
     addNode(`u:${user.id}`, { user_id: user.id, user_name: me?.full_name || 'You' }, 0)
   }
 
-  // 2. Branch outward: the bands each account-holder gave, generation by generation.
+  // 2. Branch outward, generation by generation. The downline lives on
+  // profiles: when someone claims a band, upline_user_id is set to its giver,
+  // once, and stays. That is the stable record. bands.upline_user_id is not —
+  // it moves to the new giver when a band is passed on, which used to drop
+  // the original recipient from the giver's ripple (Matt handed his band to
+  // Emily and vanished from David's). Guests have no profile, so their stop on
+  // a band the giver credited is shown as a leaf.
   const MAX_NODES = 300, MAX_DEPTH = 6
   const expanded = new Set<string>()
   let frontier = Array.from(new Set([
@@ -103,44 +109,53 @@ export async function GET(req: NextRequest) {
     givers.forEach(g => expanded.add(g))
     if (!givers.length) break
 
-    const { data: given } = await admin
-      .from('bands')
-      .select('band_id, upline_user_id')
-      .in('upline_user_id', givers)
-      .not('band_id', 'in', `(${seedBandIds.map(id => `"${id}"`).join(',')})`)
-    if (!given?.length) break
-
-    const bandIds = given.map((b: any) => b.band_id)
-    const { data: regs } = await admin
-      .from('registrations')
-      .select('id, band_id, user_id, user_name, latitude, longitude, city, state, country, registered_at')
-      .in('band_id', bandIds)
-      .order('registered_at', { ascending: false })
+    const [{ data: people }, { data: given }] = await Promise.all([
+      admin.from('profiles').select('id, full_name, upline_user_id, upline_band_id').in('upline_user_id', givers),
+      admin.from('bands').select('band_id, upline_user_id').in('upline_user_id', givers),
+    ])
+    const recipients = ((people ?? []) as any[]).filter(p => p.id !== p.upline_user_id)
+    const givenIds = ((given ?? []) as any[]).map(b => b.band_id as string)
+    const wantBands = Array.from(new Set([...recipients.map(p => p.upline_band_id).filter(Boolean), ...givenIds]))
+    const { data: regs } = wantBands.length
+      ? await admin
+          .from('registrations')
+          .select('id, band_id, user_id, user_name, latitude, longitude, city, state, country, registered_at')
+          .in('band_id', wantBands)
+          .order('registered_at', { ascending: false })
+      : { data: [] as any[] }
+    const regList = (regs ?? []) as any[]
+    // A person's place: their own stop on the band they received, else their
+    // most recent stop anywhere in this set.
+    const stopFor = (p: any) => regList.find(r => r.user_id === p.id && r.band_id === p.upline_band_id) || regList.find(r => r.user_id === p.id) || null
     const latestByBand = new Map<string, any>()
-    for (const r of (regs ?? []) as any[]) if (!latestByBand.has(r.band_id)) latestByBand.set(r.band_id, r)
+    for (const r of regList) if (!latestByBand.has(r.band_id)) latestByBand.set(r.band_id, r)
 
     const next: string[] = []
     let addedThisRound = false
-    for (const b of given as any[]) {
-      const r = latestByBand.get(b.band_id)
-      if (!r) continue // never registered — no recipient/place to show
-      const giverKey = `u:${b.upline_user_id}`
-      if (!nodes.has(giverKey)) continue // giver isn't in the tree (shouldn't happen)
-      // A band registered on the giver's own signed-in phone (a kid's band set
-      // up by a parent, say) has the giver as its "recipient". Keyed by account
-      // that is an edge from a person to themself, and the map's ancestor walk
-      // never terminates on it. Show it as a named leaf under the giver instead.
-      const selfRegistered = !!r.user_id && r.user_id === b.upline_user_id
-      const recipientKey = selfRegistered ? `r:${r.id}` : keyOf(r)
-      if (recipientKey === giverKey) continue
-      // One place in the tree per person: a second gift to someone already
-      // shown would draw a cycle (A→B→A), which is the other way to hang.
-      if (nodes.has(recipientKey)) continue
-      addNode(recipientKey, r, depth)
-      edges.push({ from: giverKey, to: recipientKey, kind: 'gift', depth })
+    // Account holders under these givers.
+    for (const p of recipients) {
+      const giverKey = `u:${p.upline_user_id}`
+      const key = `u:${p.id}`
+      if (!nodes.has(giverKey) || nodes.has(key)) continue
+      const r = stopFor(p)
+      addNode(key, { user_id: p.id, user_name: p.full_name || r?.user_name || 'Someone', latitude: r?.latitude, longitude: r?.longitude, city: r?.city, state: r?.state, country: r?.country }, depth)
+      edges.push({ from: giverKey, to: key, kind: 'gift', depth })
       addedThisRound = true
-      if (!selfRegistered && r.user_id && !expanded.has(r.user_id)) next.push(r.user_id)
+      if (!expanded.has(p.id)) next.push(p.id)
       if (nodes.size >= MAX_NODES) break
+    }
+    // Guests: a band the giver credited whose latest stop has no account.
+    for (const bnd of (given ?? []) as any[]) {
+      if (nodes.size >= MAX_NODES) break
+      if (seedBandIds.includes(bnd.band_id)) continue
+      const r = latestByBand.get(bnd.band_id)
+      if (!r || r.user_id) continue
+      const giverKey = `u:${bnd.upline_user_id}`
+      const key = `r:${r.id}`
+      if (!nodes.has(giverKey) || nodes.has(key)) continue
+      addNode(key, r, depth)
+      edges.push({ from: giverKey, to: key, kind: 'gift', depth })
+      addedThisRound = true
     }
     if (addedThisRound) generations = depth
     frontier = Array.from(new Set(next))
