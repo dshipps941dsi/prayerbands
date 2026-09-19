@@ -1,4 +1,4 @@
--- Prayer Bands: public schema, rendered by public.schema_dump() at 2026-09-18 21:41:26.293629+00
+-- Prayer Bands: public schema, rendered by public.schema_dump() at 2026-09-19 09:37:00.591561+00
 -- Regenerate with `npm run db:schema` after every migration. Do not hand-edit.
 
 -- Applied migrations
@@ -451,7 +451,8 @@ create table public.prayer_network_requests (
   allow_comments boolean default false not null,
   excluded_user_ids uuid[] default '{}'::uuid[] not null,
   kind text default 'prayer'::text not null,
-  verse_ref text
+  verse_ref text,
+  title text
 );
 
 create table public.prayer_request_comments (
@@ -731,6 +732,7 @@ alter table public.prayer_network_intercessions add constraint prayer_network_in
 alter table public.prayer_network_intercessions add constraint prayer_network_intercessions_request_id_user_id_key UNIQUE (request_id, user_id);
 alter table public.prayer_network_requests add constraint prayer_network_requests_kind_check CHECK ((kind = ANY (ARRAY['prayer'::text, 'note'::text, 'verse'::text])));
 alter table public.prayer_network_requests add constraint prayer_network_requests_pkey PRIMARY KEY (id);
+alter table public.prayer_network_requests add constraint prayer_network_requests_title_check CHECK (((title IS NULL) OR (char_length(title) <= 120)));
 alter table public.prayer_network_requests add constraint prayer_network_requests_verse_ref_check CHECK (((verse_ref IS NULL) OR (char_length(verse_ref) <= 80)));
 alter table public.prayer_network_requests add constraint prayer_network_requests_visibility_check CHECK ((visibility = ANY (ARRAY['private'::text, 'public'::text])));
 alter table public.prayer_request_comments add constraint prayer_request_comments_body_check CHECK (((char_length(TRIM(BOTH FROM body)) >= 1) AND (char_length(TRIM(BOTH FROM body)) <= 1000)));
