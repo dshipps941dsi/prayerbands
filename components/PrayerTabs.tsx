@@ -33,7 +33,7 @@ const INFO: Record<Sub, { title: string; body: string }> = {
   },
   circles: {
     title: 'Prayer Circles',
-    body: 'Circles are private prayer groups — a family, small group, or ministry. Create one and invite people with a join code, or join someone else’s with theirs, right here in this tab. Inside a circle, members post requests and tap to pray over each other’s needs — everyone sees the same requests and how many are praying.',
+    body: 'Circles are private prayer groups — a family, small group, team, or ministry. Create one and invite people with its join code or link, or join someone else’s, right here. Everyone reads the same prayer wall: the leader and co-leaders post the topics (requests and updates), members with a band write their prayers under them, and anyone following can tap to say they prayed. New topics, prayers under yours, and new members land in your inbox.',
   },
 }
 
