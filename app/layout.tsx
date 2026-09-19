@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import CookieBanner from "./components/CookieBanner";
 import { HelpBubble } from "@/components/HelpAssistant";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import ClickTracker from "./components/ClickTracker";
@@ -73,7 +72,6 @@ export default function RootLayout({
         <link rel="preload" href="/fonts/cinzel-600-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/inter-400-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         {children}
-        <CookieBanner />
         <HelpBubble />
         <GoogleAnalytics />
         <ClickTracker />
