@@ -1031,9 +1031,21 @@ export default function BandPage() {
     const greeting = walk.returning ? 'Welcome back'
       : hour < 12 ? 'Good morning'
       : hour < 18 ? 'Good afternoon' : 'Good evening'
+    // First name of whoever this page belongs to: the signed-in person, else
+    // the band's latest holder.
+    const fullName = (myProfile?.full_name || (regs.length ? regs[regs.length - 1].user_name : '') || '').trim()
+    const firstName = fullName.split(/\s+/)[0] || ''
     return (
-      <div style={{ margin: '20px 20px 0' }}>
-        <div style={{ textAlign: 'center', fontFamily: serif, fontSize: 18, fontWeight: 700, color: DARK, marginBottom: 2 }}>{greeting}</div>
+      <div style={{ margin: '14px 20px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+          <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: DARK, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{greeting}{firstName ? `, ${firstName}` : ''}</div>
+          {transferStep === 'idle' && !transferComplete && (
+            <button onClick={() => {
+              const accountless = !userId && localStorage.getItem(`holder_${bandId}`) === 'true'
+              setTransferStep(accountless ? 'save_prompt' : 'sheet')
+            }} style={{ display: 'flex', alignItems: 'center', gap: 6, background: GOLD, color: INK, border: 'none', borderRadius: 10, padding: '8px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Transfer Band</button>
+          )}
+        </div>
         <WalkLine total={walk.total} run={walk.run} onOpenJourney={() => setActiveTab('journey')} />
         {/* Topic chips sit above the verse card — pick a feeling, then the
             card below shows a verse for it. Breaks up the Home sections. */}
@@ -1313,17 +1325,6 @@ export default function BandPage() {
                 <a href="/my-band" style={{ display: 'inline-block', background: GOLD, color: INK, padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Follow its journey</a>
               </div>
             )}
-            <div style={{ padding: '14px 20px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(regs.length ? regs[regs.length - 1].user_name : '') || 'My Prayer Band'}</div>
-                {transferStep === 'idle' && !transferComplete && (
-                  <button onClick={() => {
-                    const accountless = !userId && localStorage.getItem(`holder_${bandId}`) === 'true'
-                    setTransferStep(accountless ? 'save_prompt' : 'sheet')
-                  }} style={{ display: 'flex', alignItems: 'center', gap: 6, background: GOLD, color: INK, border: 'none', borderRadius: 10, padding: '8px 14px', fontFamily: serif, fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>↗ Transfer Band</button>
-                )}
-              </div>
-            </div>
             <VerseEngine />
 
             <div style={{ padding: '20px 20px 40px' }}>
