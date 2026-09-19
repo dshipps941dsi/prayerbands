@@ -68,7 +68,10 @@ ${faq}`
     const res = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 500,
-      system,
+      // The guide and FAQ are the same for every question; cache them so a
+      // question pays for its own words, not the whole guide, while people
+      // are using it steadily.
+      system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: question }],
     })
     const raw = res.content.filter(b => b.type === 'text').map(b => (b as { text: string }).text).join('').trim()
