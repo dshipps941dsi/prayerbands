@@ -674,7 +674,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
       onClick={onClick}
       style={{ backgroundColor: praying ? '#FFF8E7' : CREAM, border: `1px solid ${praying ? GOLD : BORDER}`, borderRadius: 20, padding: '5px 12px', fontSize: 12, fontFamily: 'Georgia, serif', color: praying ? GOLD : GRAY, cursor: 'pointer', fontWeight: praying ? 600 : 400 }}
     >
-      🙏 {praying ? 'Praying' : 'Pray'} · {count}
+      🙏 {praying ? 'Praying' : 'Pray'}{count > 0 ? ` · ${count}` : ''}
     </button>
   )
 
@@ -1386,7 +1386,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                         </div>
                         {isPrayer && r.audience && r.audience !== 'private' && (
                           <div style={{ fontSize: 12, color: GRAY, marginTop: 10, fontStyle: 'italic' }}>
-                            Shared with {sharedWith(r.audience)} · {r.intercession_count === 0 ? 'no one has prayed yet' : `${r.intercession_count} ${r.intercession_count === 1 ? 'person has' : 'people have'} prayed`}
+                            Shared with {sharedWith(r.audience)}{r.intercession_count > 0 ? ` · ${r.intercession_count} ${r.intercession_count === 1 ? 'person has' : 'people have'} prayed` : ''}
                           </div>
                         )}
                       </>

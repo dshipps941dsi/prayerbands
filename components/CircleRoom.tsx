@@ -659,7 +659,7 @@ function TopicCard(p: {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <button onClick={p.onPray} style={{ background: t.i_prayed ? INK : 'transparent', border: `1px solid ${t.i_prayed ? INK : BORDER}`, borderRadius: 20, padding: '6px 12px', fontSize: 12, fontFamily: 'Georgia, serif', color: t.i_prayed ? ON_INK : TEXT, cursor: 'pointer', fontWeight: t.i_prayed ? 700 : 500 }}>
-          🙏 {t.i_prayed ? 'Praying' : 'Pray'} · {t.intercession_count}
+          🙏 {t.i_prayed ? 'Praying' : 'Pray'}{t.intercession_count > 0 ? ` · ${t.intercession_count}` : ''}
         </button>
         <button onClick={p.onToggleReplies} style={{ background: p.repliesOpen ? TINT : 'transparent', border: `1px solid ${p.repliesOpen ? PRIMARY : BORDER}`, borderRadius: 20, padding: '6px 12px', fontSize: 12, fontFamily: 'Georgia, serif', color: p.repliesOpen ? ACCENT : MUTED, cursor: 'pointer', fontWeight: 600 }}>
           💬 {n === 0 ? 'Write a prayer' : `${n} ${n === 1 ? 'prayer' : 'prayers'}`}
