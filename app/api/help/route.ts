@@ -79,7 +79,9 @@ FAQ:
 ${faq}`
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
-    const res = await anthropic.messages.create({
+    let res
+    try {
+      res = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 500,
       // The guide and FAQ are the same for every question; cache them so a
@@ -91,7 +93,13 @@ ${faq}`
         { type: 'text', text: `The person is ${user ? 'signed in' : 'not signed in'} and asking from ${place === 'app' ? 'inside the app (My Band)' : 'the public website'}.` },
       ],
       messages: [{ role: 'user', content: question }],
-    })
+      })
+    } catch (err: any) {
+      // Out of credits, rate limited upstream, or the API is down: rest
+      // rather than show an error. The FAQ still answers most questions.
+      console.error('[help] api error:', err?.status, err?.message)
+      return NextResponse.json({ answer: RESTING, link: { label: 'Read the FAQ', href: '/faq' }, capped: true })
+    }
     const raw = res.content.filter(b => b.type === 'text').map(b => (b as { text: string }).text).join('').trim()
 
     let answer = ''
