@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '@/components/SiteFooter'
+import ShareRow from '@/components/ShareRow'
 import { getAllPosts, getPost, renderMarkdown, formatDate } from '@/lib/blog'
 import { blogStyles } from '../styles'
 
@@ -76,7 +77,16 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
       </section>
 
       <article className="pbb-article">
+        {/* Share, at the top for the person who came to send it on, and again
+            after the text for the person who just read it. The Pinterest
+            button carries the post's tall pin image. */}
+        <div style={{ margin: '0 0 28px' }}>
+          <ShareRow compact url={`${SITE}/blog/${post.slug}`} title={post.title} description={post.description} image={`${SITE}/blog/pins/${post.slug}.jpg`} />
+        </div>
         <div className="pbb-prose" dangerouslySetInnerHTML={{ __html: html }} />
+        <div style={{ margin: '32px 0 8px', paddingTop: 22, borderTop: '1px solid rgba(200,169,110,0.34)' }}>
+          <ShareRow url={`${SITE}/blog/${post.slug}`} title={post.title} description={post.description} image={`${SITE}/blog/pins/${post.slug}.jpg`} />
+        </div>
         <Link href="/blog" className="pbb-back">← All posts</Link>
       </article>
 
