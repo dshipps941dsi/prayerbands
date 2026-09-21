@@ -48,6 +48,8 @@ export const metadata: Metadata = {
     icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
+  // Pinterest site claim: puts the Prayer Bands name and logo on every pin that links here.
+  other: { "p:domain_verify": "6d3ba27c3932736188d1272f653f531b" },
   appleWebApp: {
     capable: true,
     title: "Prayer Bands",
