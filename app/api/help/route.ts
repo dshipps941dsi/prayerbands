@@ -11,6 +11,12 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 const MODEL = 'claude-haiku-4-5-20251001'
 
+// A hard monthly ceiling, counted from the question log. At the uncached
+// price a question is under a cent, so 1,200 a month stays inside $10 even
+// if the cache never hits. HELP_MONTHLY_CAP in the environment overrides it.
+const MONTHLY_CAP = Number(process.env.HELP_MONTHLY_CAP || 1200)
+const RESTING = 'The help assistant has answered a lot of questions this month and is resting until the first of next month. The FAQ covers most things, and the contact form reaches a person.'
+
 // Pages the assistant may send someone to. Anything else it suggests is dropped.
 const ALLOWED_LINKS = new Set([
   '/', '/store', '/subscribe', '/how-it-works', '/faq', '/contact', '/signin', '/register',
@@ -41,6 +47,14 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     const svc = createServiceClient()
+
+    // Monthly ceiling. If the log table is missing the count is null and the
+    // cap does not apply, which is the same as before the table existed.
+    const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0)
+    const { count: used } = await svc.from('help_questions').select('id', { count: 'exact', head: true }).gte('created_at', monthStart.toISOString())
+    if (typeof used === 'number' && used >= MONTHLY_CAP) {
+      return NextResponse.json({ answer: RESTING, link: { label: 'Read the FAQ', href: '/faq' }, capped: true })
+    }
 
     const [guide, faqRes] = await Promise.all([
       loadGuide(),
