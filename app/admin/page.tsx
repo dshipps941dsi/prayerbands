@@ -16,6 +16,8 @@ import ReorderSuggestions from './_components/ReorderSuggestions'
 import DedicationsManager from './_components/DedicationsManager'
 import TeamManager from './_components/TeamManager'
 import MessagesManager from './_components/MessagesManager'
+import AdminOrgs from './_components/OrgsAdmin'
+import AdminContactsPage from './_components/ContactsAdmin'
 import { parseOrderItems, orderItemLabel } from '@/lib/fulfillment'
 import ScanTrackingButton from '@/components/ScanTrackingButton'
 
@@ -51,7 +53,7 @@ type View =
   | 'orders' | 'sales' | 'shipments' | 'inventory'
   | 'recent' | 'prayers' | 'flagged' | 'dedications'
   | 'bands' | 'products' | 'pricing' | 'themes' | 'generate'
-  | 'customers' | 'team' | 'messages'
+  | 'customers' | 'team' | 'messages' | 'churches' | 'contacts'
 
 const SECTIONS: { key: string; label: string; views: { id: View; label: string }[] }[] = [
   { key: 'orders', label: 'Orders', views: [
@@ -75,6 +77,8 @@ const SECTIONS: { key: string; label: string; views: { id: View; label: string }
   ] },
   { key: 'people', label: 'People', views: [
     { id: 'customers', label: 'Customers' },
+    { id: 'churches', label: 'Churches' },
+    { id: 'contacts', label: 'Contacts' },
     { id: 'messages', label: 'Messages' },
     { id: 'team', label: 'Team' },
   ] },
@@ -548,8 +552,6 @@ export default function AdminPage() {
           </div>
         </div>
         <div className="pb-admin-nav" style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-          <a href="/admin/orgs" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Churches</a>
-          <a href="/admin/contacts" style={{ color: C.gold, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Contacts</a>
           <a href="/dashboard" style={{ color: C.silver, fontSize: '12px', textDecoration: 'none', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Dashboard</a>
         </div>
       </div>
@@ -1044,6 +1046,8 @@ export default function AdminPage() {
 
         {activeTab === 'team' && <TeamManager C={C} />}
         {activeTab === 'messages' && <MessagesManager C={C} />}
+        {activeTab === 'churches' && <AdminOrgs embedded />}
+        {activeTab === 'contacts' && <AdminContactsPage embedded />}
 
         {/* BAND MANAGEMENT TAB — bands, products, pricing */}
         {/* Catalog views are top-level now: the old nested sub-bar was a
