@@ -335,6 +335,30 @@ export default function BandPage() {
   const [verseShared, setVerseShared] = useState(false)
   const [myProfile, setMyProfile] = useState<{ avatar_icon: string | null; full_name: string | null; avatar_initials: string | null; avatar_font: string | null } | null>(null)
   const [myRole, setMyRole] = useState<string | null>(null)
+  // "Share my ripple": a drawn card with dots by city and counts, no names
+  // but optionally the viewer's own first name. Admin-only while it settles.
+  const [rippleShareName, setRippleShareName] = useState(true)
+  const [rippleShareBusy, setRippleShareBusy] = useState(false)
+  async function shareRipple() {
+    if (rippleShareBusy) return
+    setRippleShareBusy(true)
+    try {
+      const res = await fetch(`/api/ripple-card?name=${rippleShareName ? 1 : 0}`, { cache: 'no-store' })
+      if (!res.ok) return
+      const blob = await res.blob()
+      const file = new File([blob], 'my-prayer-ripple.png', { type: 'image/png' })
+      const nav = navigator as any
+      if (nav.share && nav.canShare && nav.canShare({ files: [file] })) {
+        try { await nav.share({ files: [file], title: 'My prayer ripple', text: `My prayer ripple, from a band you tap. ${TAG_HANDLE}` }) } catch {}
+      } else {
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a'); a.href = url; a.download = 'my-prayer-ripple.png'; document.body.appendChild(a); a.click(); a.remove()
+        setTimeout(() => URL.revokeObjectURL(url), 5000)
+      }
+    } finally {
+      setRippleShareBusy(false)
+    }
+  }
   const [claimingOwnership, setClaimingOwnership] = useState(false)
   const [unread, setUnread] = useState(0)
   const [msgsOpen, setMsgsOpen] = useState(false)  // "My Messages" accordion on the Account tab
@@ -1432,7 +1456,20 @@ export default function BandPage() {
                 sees every band they hold rolled into one map. A guest, who has
                 no account to roll up, sees this band's. */}
             {journeyView === 'band' ? <PrayerChain regs={regs} /> : <ReachMap bandId={bandId} scope={userId ? 'me' : 'band'} />}
-            {journeyView === 'reach' && (
+            {journeyView === 'reach' && myRole === 'admin' && userId && (
+              <div style={{ margin: '14px 20px 0', background: 'white', border: '1px solid rgba(44,24,16,0.1)', borderRadius: 12, padding: '14px 16px' }}>
+                <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, marginBottom: 4 }}>Share my ripple</div>
+                <div style={{ fontFamily: body, fontSize: 12.5, color: GRAY, lineHeight: 1.5, marginBottom: 10 }}>A picture of your ripple with dots by city and the counts. No one else’s name, no exact places.</div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: body, fontSize: 13, color: DARK, marginBottom: 12, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={rippleShareName} onChange={e => setRippleShareName(e.target.checked)} style={{ accentColor: GOLD }} /> Include my first name
+                </label>
+                <button onClick={shareRipple} disabled={rippleShareBusy} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: GOLD, color: INK, border: 'none', borderRadius: 10, padding: '11px 18px', fontFamily: serif, fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: rippleShareBusy ? 0.7 : 1 }}>
+                  {rippleShareBusy ? 'Drawing…' : 'Share my ripple'}
+                </button>
+                <div style={{ fontFamily: body, fontSize: 11.5, color: GRAY, marginTop: 8 }}>Tag {TAG_HANDLE} when you post it.</div>
+              </div>
+            )}
+            {journeyView === 'reach' && myRole !== 'admin' && (
               <div style={{ margin: '14px 20px 0', fontFamily: body, fontSize: 12.5, color: GRAY, textAlign: 'center' }}>Screenshot your ripple and tag {TAG_HANDLE}. We love seeing where the bands go.</div>
             )}
           </div>
