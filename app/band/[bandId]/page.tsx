@@ -7,6 +7,8 @@ import Logo from '@/components/Logo'
 import { escapeHtml } from '@/lib/escape-html'
 import Icon, { type IconName } from '@/components/Icon'
 import AvatarBadge from '@/components/AvatarBadge'
+import SocialRow from '@/components/SocialRow'
+import { TAG_HANDLE } from '@/lib/social'
 import PushToggle from '@/components/PushToggle'
 import { syncAppBadge } from '@/lib/app-badge'
 import NetworkConnectPrompt from '@/components/NetworkConnectPrompt'
@@ -1376,6 +1378,7 @@ export default function BandPage() {
                 <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Band transferred</div>
                 <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20 }}>Your band is now in new hands. The prayer chain continues. ✝︎</div>
                 <a href="/my-band" style={{ display: 'inline-block', background: GOLD, color: INK, padding: '12px 28px', borderRadius: 10, fontFamily: serif, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>Follow its journey</a>
+                <div style={{ fontFamily: body, fontSize: 12.5, opacity: 0.8, marginTop: 14 }}>Posting the moment? Tag {TAG_HANDLE} and we will share it.</div>
               </div>
             )}
             <VerseEngine />
@@ -1429,6 +1432,9 @@ export default function BandPage() {
                 sees every band they hold rolled into one map. A guest, who has
                 no account to roll up, sees this band's. */}
             {journeyView === 'band' ? <PrayerChain regs={regs} /> : <ReachMap bandId={bandId} scope={userId ? 'me' : 'band'} />}
+            {journeyView === 'reach' && (
+              <div style={{ margin: '14px 20px 0', fontFamily: body, fontSize: 12.5, color: GRAY, textAlign: 'center' }}>Screenshot your ripple and tag {TAG_HANDLE}. We love seeing where the bands go.</div>
+            )}
           </div>
         )}
 
@@ -1519,6 +1525,12 @@ export default function BandPage() {
                     <span style={{ marginLeft: 'auto', color: GRAY, fontSize: 13, transform: settingsOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</span>
                   </button>
                   {settingsOpen && <div style={{ paddingBottom: 12 }}><SettingsPanel userId={userId} onProfileChange={() => setProfileTick(t => t + 1)} /></div>}
+                </div>
+                {/* Follow along: the social accounts, kept off Home on purpose. */}
+                <div style={{ background: 'white', borderRadius: 12, padding: '14px 20px', border: '1px solid rgba(44,24,16,0.1)' }}>
+                  <div style={{ fontFamily: serif, fontSize: 15, fontWeight: 700, color: DARK, marginBottom: 4 }}>Follow along</div>
+                  <div style={{ fontFamily: body, fontSize: 12.5, color: GRAY, marginBottom: 10 }}>Stories from the chain, and the verse each day. Tag {TAG_HANDLE} when you post your band.</div>
+                  <SocialRow color={DARK} bg="var(--pb-background, #FAF6EF)" />
                 </div>
                 <button onClick={async () => {
                   const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
