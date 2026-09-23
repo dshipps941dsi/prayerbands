@@ -532,6 +532,10 @@ export default function AdminPage() {
           .pb-admin-grid4 { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
           .pb-admin-tabs { padding: 14px 16px 0 !important; flex-wrap: wrap !important; row-gap: 4px; }
           .pb-admin-content { padding: 18px 16px !important; }
+          .pb-admin-body { grid-template-columns: minmax(0, 1fr) !important; }
+          .pb-admin-side { position: static !important; flex-direction: row !important; flex-wrap: wrap; gap: 4px !important; padding: 12px 16px 0 !important; }
+          .pb-admin-side-title { display: none; }
+          .pb-admin-side button { border-left: none !important; border-radius: 20px !important; padding: 6px 12px !important; }
           .pb-admin-grid2 { grid-template-columns: 1fr !important; }
           .pb-admin-chartgrid { grid-template-columns: 1fr !important; }
           .pb-admin-cols { grid-template-columns: 1fr !important; }
@@ -597,25 +601,30 @@ export default function AdminPage() {
         })}
       </div>
 
-      {/* Views within the active section. Hidden when a section has only one. */}
-      {sectionOf(activeTab).views.length > 1 && (
-        <div style={{ display: 'flex', gap: 4, padding: '12px 32px 0', flexWrap: 'wrap' }}>
-          {sectionOf(activeTab).views.map(v => (
-            <button key={v.id} onClick={() => setActiveTab(v.id)} style={{
-              padding: '6px 14px',
-              background: activeTab === v.id ? C.silverBg : 'transparent',
-              color: activeTab === v.id ? C.heading : C.secondary,
-              border: `1px solid ${activeTab === v.id ? C.borderGold : 'transparent'}`,
-              borderRadius: 20, cursor: 'pointer',
-              fontSize: 12, fontFamily: 'Inter, sans-serif', fontWeight: activeTab === v.id ? 600 : 400,
-              whiteSpace: 'nowrap',
-            }}>{v.label}{v.id === 'flagged' && flaggedPrayers.length > 0 ? ` (${flaggedPrayers.length})` : ''}</button>
-          ))}
-        </div>
-      )}
+      {/* The active section's views down the left, sticky, with the content
+          beside them. A section with one view has no column. */}
+      <div className="pb-admin-body" style={{ display: 'grid', gridTemplateColumns: sectionOf(activeTab).views.length > 1 ? '200px minmax(0, 1fr)' : 'minmax(0, 1fr)', alignItems: 'start' }}>
+        {sectionOf(activeTab).views.length > 1 && (
+          <aside className="pb-admin-side" style={{ position: 'sticky', top: 12, padding: '24px 0 24px 32px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div className="pb-admin-side-title" style={{ fontSize: 10.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.secondary, fontFamily: 'Cinzel, serif', padding: '0 12px 8px' }}>{sectionOf(activeTab).label}</div>
+            {sectionOf(activeTab).views.map(v => {
+              const on = activeTab === v.id
+              return (
+                <button key={v.id} onClick={() => setActiveTab(v.id)} style={{
+                  textAlign: 'left', padding: '9px 12px',
+                  background: on ? C.silverBg : 'transparent',
+                  color: on ? C.heading : C.secondary,
+                  borderLeft: `3px solid ${on ? C.gold : 'transparent'}`, borderTop: 'none', borderRight: 'none', borderBottom: 'none',
+                  borderRadius: '0 8px 8px 0', cursor: 'pointer',
+                  fontSize: 13, fontFamily: 'Inter, sans-serif', fontWeight: on ? 600 : 400,
+                  whiteSpace: 'nowrap',
+                }}>{v.label}{v.id === 'flagged' && flaggedPrayers.length > 0 ? ` (${flaggedPrayers.length})` : ''}</button>
+              )
+            })}
+          </aside>
+        )}
 
-
-      <div className="pb-admin-content" style={{ padding: '24px 32px' }}>
+      <div className="pb-admin-content" style={{ padding: '24px 32px', minWidth: 0 }}>
 
         {/* ORDERS TAB */}
         {activeTab === 'orders' && (
@@ -1345,6 +1354,7 @@ export default function AdminPage() {
           </div>
         )}
 
+      </div>
       </div>
     </div>
   )
