@@ -513,7 +513,7 @@ export default function CircleRoom({ circleId, code, onBack, onLeft }: {
                 </div>
                 {m.role !== 'leader' && confirmRemove !== m.user_id && confirmRole !== m.user_id && (
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                    {isLeader && <Btn small onClick={() => setConfirmRole(m.user_id)}>{m.role === 'co_leader' ? 'Step down' : 'Co-leader'}</Btn>}
+                    {isLeader && <Btn small onClick={() => setConfirmRole(m.user_id)}>{m.role === 'co_leader' ? 'Remove co-leader' : 'Make co-leader'}</Btn>}
                     {(isLeader || (canLead && m.role === 'member')) && <Btn kind="danger" small onClick={() => setConfirmRemove(m.user_id)}>Remove</Btn>}
                   </div>
                 )}
