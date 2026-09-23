@@ -946,7 +946,7 @@ export default function BandPage() {
         <div style={{ width: 36, height: 4, background: 'rgba(44,24,16,0.15)', borderRadius: 2, margin: '0 auto 14px' }} />
         <button onClick={() => setTransferStep('idle')} aria-label="Close" style={{ position: 'absolute', top: 10, right: 12, width: 34, height: 34, borderRadius: 17, border: 'none', background: 'rgba(44,24,16,0.08)', color: DARK, fontSize: 16, cursor: 'pointer' }}>✕</button>
         <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Which band are you passing on?</div>
-        <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14 }}>Check the ID printed inside the band.</div>
+        <div style={{ fontFamily: body, fontSize: 13, color: GRAY, fontStyle: 'italic', marginBottom: 14 }}>Each band’s ID shows at the top of its page when you tap it, and under My Bands.</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '60vh', overflowY: 'auto' }}>
           {[...myBands.filter(b => b.giving), ...myBands.filter(b => !b.giving)].map((b, i, arr) => {
             const isThis = b.band_id === bandId
@@ -1357,7 +1357,7 @@ export default function BandPage() {
           <div style={{ fontSize: 40, marginBottom: 16 }}>✝︎</div>
           <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Band not found</div>
           <div style={{ fontFamily: body, fontSize: 14, color: GRAY, marginBottom: 24 }}>
-            We couldn&apos;t find a band with the ID <strong>{bandId}</strong>. Double-check the ID printed on your wristband.
+            We couldn&apos;t find a band with the ID <strong>{bandId}</strong>. Double-check the ID from your order email, or tap the band again.
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <a href="/store" style={{ display: 'inline-block', background: GOLD, color: INK, textDecoration: 'none', fontFamily: serif, fontSize: 13, fontWeight: 700, padding: '12px 24px', borderRadius: 8 }}>Get a Prayer Band</a>

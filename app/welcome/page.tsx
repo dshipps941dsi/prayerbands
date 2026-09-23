@@ -145,7 +145,7 @@ export default function WelcomePage() {
               </div>
             </div>
             <p style={{ textAlign: "center", fontSize: 13.5, color: INK_SOFT, margin: "16px 0 0", lineHeight: 1.5 }}>
-              Can&rsquo;t tap? Enter the band ID printed in your order email at{" "}
+              Can&rsquo;t tap? Enter the band ID from your order email at{" "}
               <a href="/register" style={{ color: GOLD_DEEP, fontWeight: 600 }}>prayerbands.com/register</a>.
             </p>
 

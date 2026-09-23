@@ -38,7 +38,7 @@ The phone shows a notification. Tap it, and the browser opens. That's the entire
 
 **Android:** Most Android phones from the last several years support it. NFC is usually on by default; if nothing happens, look for NFC under Settings, usually in Connected devices or Connections. The tap point is usually the middle-to-upper back of the phone.
 
-If a phone doesn't have NFC, nothing is lost. Every band has its ID printed on the inside and the site address on the outside, so the page can be reached by typing it in.
+If a phone doesn't have NFC, nothing is lost. Every band has its own ID, which is in the order email and at the top of the band's page, so the page can be reached by typing it in.
 
 ## What opens when you tap
 

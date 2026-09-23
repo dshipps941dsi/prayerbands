@@ -51,7 +51,7 @@ function RegisterInner() {
         <div style={{ fontSize: 11, letterSpacing: '0.14em', color: GOLD_TEXT, fontFamily: "'Cinzel', serif", textTransform: 'uppercase', marginBottom: 8 }}>Register a Band</div>
         <h1 style={{ fontSize: 24, fontWeight: 600, color: NAVY, margin: '0 0 8px', fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Open your band&rsquo;s journey</h1>
         <p style={{ fontSize: 14, color: GRAY, margin: '0 0 22px', lineHeight: 1.6, fontFamily: "'Inter', sans-serif" }}>
-          Enter the ID printed on your band — it looks like <strong style={{ color: BODY }}>PB-XXXXX</strong> — to open it and make it yours.
+          Enter your band’s ID — it looks like <strong style={{ color: BODY }}>PB-XXXXX</strong> and is in your order email — to open it and make it yours.
         </p>
         <input
           value={bandId}

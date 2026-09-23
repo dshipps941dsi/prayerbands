@@ -45,7 +45,7 @@ const FAQS = [
   },
   {
     q: "How do I connect with a Prayer Partner?",
-    a: "Three ways, all from My Band → My Partners. Tap phones: hold your bands to each other’s phones. Scan: show your QR code and let them scan it. Code: read them the code on your band, or type in theirs. Partners you connect with directly are “Direct”; people a band has actually passed between are “Lineage”. Either way you can sort partners into private groups — Youth Group, Baseball Team — that only you can see, and share a prayer with just that group.",
+    a: "Three ways, all from My Band → My Partners. Tap phones: hold your bands to each other’s phones. Scan: show your QR code and let them scan it. Code: read them the code from the top of your band’s page, or type in theirs. Partners you connect with directly are “Direct”; people a band has actually passed between are “Lineage”. Either way you can sort partners into private groups — Youth Group, Baseball Team — that only you can see, and share a prayer with just that group.",
   },
   {
     q: "What is the difference between Prayer Partners and Prayer Circles?",

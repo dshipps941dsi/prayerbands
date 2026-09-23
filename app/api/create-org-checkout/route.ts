@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
             unit_amount: unitAmount,
             product_data: {
               name: `${orgName} Prayer Bands (${prefix}-XXXXX)`,
-              description: `${quantity} laser-engraved NFC bands with ${prefix} prefix`,
+              description: `${quantity} NFC bands with ${prefix} prefix`,
             },
           },
           quantity,

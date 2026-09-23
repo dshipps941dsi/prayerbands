@@ -206,7 +206,7 @@ function StorePageInner() {
 
   // Fallback catalog (used only until db/products.sql is run) so the store never breaks.
   const fallback: Product[] = [
-    { slug: "standard", name: "Standard Band", description: "A wristband laser-engraved with a unique PB-XXXXX ID and NFC chip. Ready to carry a prayer.", category: "band", theme: "default", color: "#C8A96E", icon: "✝︎", tag: "Most Popular", price: (pricing["band_price_single"] ?? 1499) / 100, bandsPerUnit: 1, features: ["Unique PB-XXXXX ID", "NFC chip enabled", "Laser-engraved", "Full journey tracking"], sizes: ["S", "M", "L"], hasSizes: true, multiDiscount: true, images: [], variants: [] },
+    { slug: "standard", name: "Standard Band", description: "A wristband with an NFC chip and its own unique ID. Ready to carry a prayer.", category: "band", theme: "default", color: "#C8A96E", icon: "✝︎", tag: "Most Popular", price: (pricing["band_price_single"] ?? 1499) / 100, bandsPerUnit: 1, features: ["Unique PB-XXXXX ID", "NFC chip enabled", "Laser-engraved", "Full journey tracking"], sizes: ["S", "M", "L"], hasSizes: true, multiDiscount: true, images: [], variants: [] },
     { slug: "custom", name: "Custom Band", description: "Everything in Standard, plus your choice of color, a custom scripture verse, and a personal message engraved.", category: "band", theme: "default", color: "#7BAE8E", icon: "✦", tag: "Personalized", price: (pricing["band_price_custom"] ?? 1000) / 100, bandsPerUnit: 1, features: ["Everything in Standard", "Choose band color", "Custom scripture verse", "Personal message", "Gift-ready packaging"], sizes: ["S", "M", "L"], hasSizes: true, multiDiscount: false, images: [], variants: [] },
     { slug: "pack-50", name: "Starter Pack", description: "Perfect for small groups, house churches, or personal outreach.", category: "pack", theme: "default", color: "#7BAE8E", icon: "✝︎", tag: null, price: (pricing["pack_price_50"] ?? 22500) / 100, bandsPerUnit: 50, features: ["Custom ministry prefix", "Ministry dashboard", "NFC + laser-engraved", "Journey tracking", "Bulk reorder pricing"], sizes: [], hasSizes: false, multiDiscount: false, images: [], variants: [] },
     { slug: "pack-100", name: "Community Pack", description: "Ideal for congregation-wide initiatives and mission trips.", category: "pack", theme: "default", color: "#C8A96E", icon: "✝︎", tag: "Most Popular", price: (pricing["pack_price_100"] ?? 42500) / 100, bandsPerUnit: 100, features: ["Custom ministry prefix", "Ministry dashboard", "NFC + laser-engraved", "Journey tracking", "Bulk reorder pricing"], sizes: [], hasSizes: false, multiDiscount: false, images: [], variants: [] },
@@ -411,7 +411,7 @@ function StorePageInner() {
       <section style={{ padding: "30px 32px 26px", textAlign: "center", background: "radial-gradient(ellipse 70% 80% at 50% 0%, rgba(200,169,110,0.16) 0%, transparent 60%), linear-gradient(180deg, #0A1628 0%, #0E1E38 55%, #0A1628 100%)", borderBottom: "1px solid rgba(200,169,110,0.34)" }}>
         <span className="section-label" style={{ color: "#C8A96E", marginBottom: "6px" }}>The Store</span>
         <h1 className="playfair" style={{ fontSize: "clamp(26px, 4vw, 42px)", fontWeight: 700, lineHeight: 1.1, marginBottom: 8, color: "#F5EDD8" }}>Send a Prayer Into <em style={{ color: "#C8A96E" }}>the World</em></h1>
-        <p className="lato" style={{ fontSize: 14, color: "rgba(245,237,216,0.72)", maxWidth: 440, margin: "0 auto", lineHeight: 1.55, fontWeight: 300 }}>Every band ships NFC-enabled and laser-engraved with a unique ID — one tap opens its digital journey. Fully waterproof, with no battery to ever charge.</p>
+        <p className="lato" style={{ fontSize: 14, color: "rgba(245,237,216,0.72)", maxWidth: 440, margin: "0 auto", lineHeight: 1.55, fontWeight: 300 }}>Every band ships NFC-enabled with its own unique ID — one tap opens its digital journey. Fully waterproof, with no battery to ever charge.</p>
       </section>
 
       <div style={{ maxWidth: 1160, margin: "0 auto", padding: "24px 32px 64px" }}>
@@ -652,7 +652,7 @@ function StorePageInner() {
           </div>
           <div className="lato" style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "#FFFDF8", border: "1px solid rgba(200,169,110,0.34)", borderLeft: "3px solid #C8A96E", borderRadius: 8, padding: "12px 16px", marginBottom: 28, fontSize: 13.5, color: "#2A3344", lineHeight: 1.6, fontWeight: 300 }}>
             <span style={{ fontSize: 15, lineHeight: 1.4 }}>🗓️</span>
-            <span>Please allow <strong style={{ fontWeight: 600, color: "#15223B" }}>4–6 weeks</strong> for bulk and custom orders — every band is laser-engraved and programmed to order.</span>
+            <span>Please allow <strong style={{ fontWeight: 600, color: "#15223B" }}>4–6 weeks</strong> for bulk and custom orders — every band is programmed by hand, and custom bands are engravedmmed to order.</span>
           </div>
           <div className="packs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
             {packProducts.map(pack => {

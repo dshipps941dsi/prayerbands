@@ -8,7 +8,7 @@ import { getDailyVerse } from '@/lib/verses'
 type AvatarSpec = { icon: string | null; initials: string | null; font: string | null }
 
 // Turn whatever someone types into a band code into PB-XXXXX. The code is
-// printed on every band, so a partner can just read it aloud.
+// shown at the top of every band’s page, so a partner can just read it aloud.
 function normalizeBandCode(raw: string): string {
   const c = raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
   if (!c) return ''
@@ -786,7 +786,7 @@ export default function NetworkSection({ userId, section = 'all' }: { userId: st
                 Connect
               </button>
             </div>
-            <p style={{ fontSize: 11, color: GRAY, margin: '8px 2px 0', fontStyle: 'italic' }}>The code is printed on every band. You&rsquo;ll land on their page, then tap &ldquo;Add to Prayer Partners.&rdquo;</p>
+            <p style={{ fontSize: 11, color: GRAY, margin: '8px 2px 0', fontStyle: 'italic' }}>The code is at the top of every band&rsquo;s page. You&rsquo;ll land on their page, then tap &ldquo;Add to Prayer Partners.&rdquo;</p>
           </div>
         )}
 

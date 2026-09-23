@@ -7,7 +7,7 @@ brackets are the only pages the assistant may send people to.
 ## What Prayer Bands is
 
 A Prayer Band is a silicone wristband with a tiny NFC chip and a unique ID
-printed inside (like PB-ABC12). Tap it to the back of a phone and its page
+(like PB-ABC12), shown at the top of its page and in the order email. Tap it to the back of a phone and its page
 opens: you see the prayers people have attached to it and add your own. A band
 is meant to be worn, prayed over, and passed on, so it builds a chain of prayer
 from person to person. There is no battery, no charging, nothing to install,
@@ -44,7 +44,7 @@ and the band does not track location. Waterproof.
 
 - Tap the band with your phone (iPhone: hold the band to the top back of the
   phone; Android: the middle of the back). A notification opens the band's
-  page. If tapping does not work, type the ID printed inside the band at
+  page. If tapping does not work, type the ID from your order email at
   [Register](/register).
 - Say who is wearing it: you, or someone else you are registering it for.
   Write a prayer if you like. That adds a "stop" to the band's journey.
@@ -111,7 +111,7 @@ small group. [Open My Partners](/my-band?open=partners)
 - Connect three ways, from My Partners, "Connect a prayer partner":
   1. Tap phones: hold your bands to each other's phones.
   2. Scan: show your QR code and let them scan it.
-  3. Code: read them the code printed on your band, or type in theirs.
+  3. Code: read them the code from the top of your band's page, or type in theirs.
 - The other person accepts the request from their inbox.
 - Direct partners are people you connected with directly. Lineage partners are
   people a band actually passed between.

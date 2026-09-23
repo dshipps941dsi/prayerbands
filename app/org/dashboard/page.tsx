@@ -512,7 +512,7 @@ function OrgDashboardInner() {
     if (tab === 'Orders') return (
       <div style={{ padding: isMobile ? '16px 14px' : '32px' }}>
         <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, marginBottom: 4, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Order Bands</h1>
-        <p style={{ color: SECONDARY_TEXT, marginBottom: 20, fontSize: 14, fontFamily: 'Inter, sans-serif' }}>All bands ship laser-engraved with NFC chips and your {org?.prefix} prefix.</p>
+        <p style={{ color: SECONDARY_TEXT, marginBottom: 20, fontSize: 14, fontFamily: 'Inter, sans-serif' }}>All bands ship with NFC chips and IDs under your {org?.prefix} prefix.</p>
         <div style={{ background: CARD_BG, border: `1px solid ${NAVY_BORDER}`, borderRadius: 12, padding: isMobile ? '16px 14px' : '28px', marginBottom: 20, maxWidth: isMobile ? '100%' : 520, boxShadow: '0 1px 6px rgba(10,22,40,0.06)' }}>
           <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 16, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>New Band Order</h2>
           <div style={{ marginBottom: 16 }}>
