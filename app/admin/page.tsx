@@ -12,6 +12,7 @@ import CustomerDetail from './_components/CustomerDetail'
 import ActivityFeed from './_components/ActivityFeed'
 import StockSync from './_components/StockSync'
 import HandoutBatches from './_components/HandoutBatches'
+import CirclesAdmin from './_components/CirclesAdmin'
 import ReorderSuggestions from './_components/ReorderSuggestions'
 import DedicationsManager from './_components/DedicationsManager'
 import TeamManager from './_components/TeamManager'
@@ -53,7 +54,7 @@ type View =
   | 'orders' | 'sales' | 'shipments' | 'inventory'
   | 'recent' | 'prayers' | 'flagged' | 'dedications'
   | 'bands' | 'products' | 'pricing' | 'themes' | 'generate'
-  | 'customers' | 'team' | 'messages' | 'churches' | 'contacts'
+  | 'customers' | 'team' | 'messages' | 'churches' | 'contacts' | 'circles'
 
 const SECTIONS: { key: string; label: string; views: { id: View; label: string }[] }[] = [
   { key: 'orders', label: 'Orders', views: [
@@ -64,6 +65,7 @@ const SECTIONS: { key: string; label: string; views: { id: View; label: string }
   ] },
   { key: 'activity', label: 'Activity', views: [
     { id: 'recent', label: 'Recent activity' },
+    { id: 'circles', label: 'Circles' },
     { id: 'prayers', label: 'Prayers' },
     { id: 'flagged', label: 'Flagged' },
     { id: 'dedications', label: 'Dedications' },
@@ -892,6 +894,7 @@ export default function AdminPage() {
 
         {/* PRAYERS TAB */}
         {activeTab === 'recent' && <ActivityFeed C={C} show="feed" />}
+        {activeTab === 'circles' && <CirclesAdmin C={C} />}
         {activeTab === 'dedications' && <DedicationsManager C={C} />}
         {activeTab === 'inventory' && <><ReorderSuggestions C={C} /><StockSync C={C} /><HandoutBatches C={C} /><ActivityFeed C={C} show="inventory" /></>}
 
