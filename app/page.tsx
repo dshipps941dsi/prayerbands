@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
+import { STAT_FLOORS, statValue } from "@/lib/site-stats";
 import Link from "next/link";
 import PrayerPartnersSection from "@/components/PrayerPartnersSection";
 import SiteNav from "@/components/SiteNav";
@@ -318,21 +319,13 @@ export default function HomePage() {
     return () => clearInterval(t);
   }, []);
 
-  // Compact number + aspirational floor: numbers hold at the floor until real
-  // activity surpasses it, then show the live figure.
-  const compact = (n: number) =>
-    n >= 1_000_000 ? (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M"
-    : n >= 1_000 ? (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K"
-    : n.toLocaleString();
-  const statValue = (real: number | undefined, floor: number) =>
-    (typeof real === "number" && real > floor) ? compact(real) : compact(floor) + "+";
-
+  // Floors live in lib/site-stats so the wall shows the same numbers.
   const stats = [
-    { value: statValue(live?.stats?.prayers, 12400), label: "Prayers Lifted" },
-    { value: statValue(live?.stats?.people, 8200), label: "Lives Impacted" },
-    { value: statValue(live?.stats?.countries, 32), label: "Countries" },
-    { value: statValue(live?.stats?.cities, 640), label: "Cities" },
-    { value: statValue(live?.stats?.bands, 5200), label: "Bands Traveled" },
+    { value: statValue(live?.stats?.prayers, STAT_FLOORS.prayers), label: "Prayers Lifted" },
+    { value: statValue(live?.stats?.people, STAT_FLOORS.people), label: "Lives Impacted" },
+    { value: statValue(live?.stats?.countries, STAT_FLOORS.countries), label: "Countries" },
+    { value: statValue(live?.stats?.cities, STAT_FLOORS.cities), label: "Cities" },
+    { value: statValue(live?.stats?.bands, STAT_FLOORS.bands), label: "Bands Traveled" },
   ];
 
   const mapPoints: MapPoint[] = useMemo(() => {

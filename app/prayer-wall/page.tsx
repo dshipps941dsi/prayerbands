@@ -1,6 +1,7 @@
 'use client'
 import { publicName } from '@/lib/public-name'
 import { useEffect, useState, useCallback } from 'react'
+import { STAT_FLOORS, statValue, type LiveStats } from '@/lib/site-stats'
 import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
 import SiteFooter from '@/components/SiteFooter'
@@ -30,6 +31,9 @@ export default function PrayerWallPage() {
   const [filter, setFilter] = useState<Filter>('All')
   const [toast, setToast] = useState('')
   const [totalCount, setTotalCount] = useState(0)
+  // The same live counts and floors the home page uses.
+  const [siteStats, setSiteStats] = useState<LiveStats>({})
+  useEffect(() => { fetch('/api/home-stats').then(r => r.json()).then(d => setSiteStats(d?.stats || {})).catch(() => {}) }, [])
   const [page, setPage] = useState(0)
   const PAGE_SIZE = 12
 
@@ -228,8 +232,8 @@ export default function PrayerWallPage() {
         <div className="stats-row" style={{ display: 'flex', justifyContent: 'center', gap: 48, flexWrap: 'wrap' }}>
           {[
             { value: totalCount.toLocaleString(), label: 'Prayers' },
-            { value: '23', label: 'Countries' },
-            { value: '250', label: 'Bands Active' },
+            { value: statValue(siteStats.countries, STAT_FLOORS.countries), label: 'Countries' },
+            { value: statValue(siteStats.bands, STAT_FLOORS.bands), label: 'Bands Traveled' },
           ].map(s => (
             <div key={s.label} style={{ textAlign: 'center', padding: '16px 24px', background: '#FFFDF8', border: '1px solid rgba(200,169,110,0.34)', borderRadius: 8 }}>
               {/* These boxes are cream, not navy like the band around them, so

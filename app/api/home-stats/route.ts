@@ -34,9 +34,12 @@ export async function GET() {
   ])
   const prayers = (regPrayers || 0) + (circleReq || 0) + (netReq || 0) + (circleInt || 0) + (netInt || 0)
 
+  // Bands out in the world: anything that has left the shelf. Stock on the
+  // shelf is not a band that has travelled.
   const { count: bands } = await supabase
     .from('bands')
     .select('*', { count: 'exact', head: true })
+    .neq('status', 'unregistered')
 
   // Every registration is a person a band has reached ("lives impacted").
   const { count: people } = await supabase
