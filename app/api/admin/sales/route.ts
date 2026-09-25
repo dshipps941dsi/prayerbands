@@ -144,6 +144,7 @@ export async function GET(req: NextRequest) {
     },
     topSellers,
     referrals: { orders: refOrders.length, revenueCents: sum(refOrders) },
+    outside: (() => { const o = periodOrders.filter(x => x.order_metadata?.source === 'outside'); return { orders: o.length, revenueCents: sum(o), bands: bandsOf(o) } })(),
     topReferrers,
     subscriptions: { active: activeSubs, mrrCents: Math.round(mrr * 100) },
     series,

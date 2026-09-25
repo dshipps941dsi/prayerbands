@@ -13,6 +13,7 @@ import ActivityFeed from './_components/ActivityFeed'
 import StockSync from './_components/StockSync'
 import HandoutBatches from './_components/HandoutBatches'
 import CirclesAdmin from './_components/CirclesAdmin'
+import OutsideSale from './_components/OutsideSale'
 import ReorderSuggestions from './_components/ReorderSuggestions'
 import DedicationsManager from './_components/DedicationsManager'
 import TeamManager from './_components/TeamManager'
@@ -629,6 +630,7 @@ export default function AdminPage() {
         {/* ORDERS TAB */}
         {activeTab === 'orders' && (
           <div>
+            <OutsideSale C={C} onRecorded={loadOrders} />
             {/* The station pages live outside /admin but this is where the work
                 starts, so link them from the view the day actually begins in. */}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
@@ -708,6 +710,11 @@ export default function AdminPage() {
                           <div style={{ fontSize: '13px', color: C.goldText }}>{order.customer_email}</div>
                           <div style={{ fontSize: '12px', color: C.secondary, marginTop: '2px' }}>
                             {new Date(order.created_at).toLocaleDateString()} &middot; Order #{order.id}
+                            {order.order_metadata?.source === 'outside' && (
+                              <span title={order.order_metadata?.note || ''} style={{ marginLeft: 8, background: 'rgba(46,125,138,0.12)', color: '#2E7D8A', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', borderRadius: 10, padding: '2px 8px' }}>
+                                Outside sale · {String(order.order_metadata?.method || '').replace('card', 'card in person')}
+                              </span>
+                            )}
                           </div>
                           {order.order_metadata?.backordered && (
                             // Live truth from the real shelf beats the checkout snapshot:
@@ -869,7 +876,7 @@ export default function AdminPage() {
 
                       {/* Refund (admin): whole or partial — for shortfalls, gifts
                           gone wrong, or cancellations. Available even after shipping. */}
-                      {order.status !== 'cancelled' && (
+                      {order.status !== 'cancelled' && order.stripe_session_id && (
                         <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${C.borderSilver}`, display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: '12px', color: C.secondary }}>Refund:</span>
                           <input
@@ -1225,6 +1232,7 @@ export default function AdminPage() {
                     { label: 'Active Subscriptions', value: sales.subscriptions.active },
                     { label: 'Subscription MRR', value: money(sales.subscriptions.mrrCents) },
                     { label: `Referral Revenue · ${sales.referrals.orders} ord`, value: money(sales.referrals.revenueCents) },
+                    ...(sales.outside ? [{ label: `Outside Sales · ${sales.outside.orders} sale${sales.outside.orders === 1 ? '' : 's'}`, value: money(sales.outside.revenueCents) }] : []),
                   ].map(c => (
                     <div key={c.label} style={kpiCard}><div style={kpiValue}>{c.value}</div><div style={kpiLabel}>{c.label}</div></div>
                   ))}
