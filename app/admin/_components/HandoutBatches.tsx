@@ -10,7 +10,7 @@ type Batch = {
   handout_ids: number[]; bands: Band[]
 }
 
-const REASON_LABEL: Record<string, string> = { seed: 'Seeding', donation: 'Donation', gift: 'Gift', sample: 'Sample', damaged: 'Damaged' }
+const REASON_LABEL: Record<string, string> = { sale: 'Sold outside the site', seed: 'Seeding', donation: 'Donation', gift: 'Gift', sample: 'Sample', damaged: 'Damaged' }
 
 // Recent batches scanned out of stock, newest first. A batch that left with no
 // giver on it is flagged; type the person's email and the whole batch is
@@ -22,6 +22,21 @@ export default function HandoutBatches({ C }: { C: C }) {
   const [busyKey, setBusyKey] = useState<string | null>(null)
   const [msgFor, setMsgFor] = useState<Record<string, string>>({})
   const [onlyUncredited, setOnlyUncredited] = useState(false)
+  const [noteFor, setNoteFor] = useState<Record<string, string>>({})
+
+  // Change what a batch was: a scan-out that was really a sale, with what was paid.
+  async function relabel(b: Batch, reason: string) {
+    setBusyKey(b.key); setMsgFor(m => ({ ...m, [b.key]: '' }))
+    const note = (noteFor[b.key] ?? b.note ?? '').trim()
+    const res = await fetch('/api/admin/handout-batches', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ handout_ids: b.handout_ids, reason, note }),
+    })
+    const d = await res.json().catch(() => ({}))
+    setMsgFor(m => ({ ...m, [b.key]: res.ok ? `✅ Marked as ${REASON_LABEL[reason] || reason}.` : '❌ ' + (d.error || 'Could not change that.') }))
+    setBusyKey(null)
+    if (res.ok) load()
+  }
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/admin/handout-batches?days=${days}`)
@@ -105,6 +120,16 @@ export default function HandoutBatches({ C }: { C: C }) {
               ))}
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+              <select value={b.reason} onChange={e => relabel(b, e.target.value)} disabled={busyKey === b.key} title="What this batch was"
+                style={{ padding: '9px 10px', borderRadius: 7, border: `1px solid ${C.borderNavy}`, background: C.pageBg, fontSize: 13 }}>
+                {Object.entries(REASON_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+              {b.reason === 'sale' && (
+                <input value={noteFor[b.key] ?? (b.note || '')} onChange={e => setNoteFor(m => ({ ...m, [b.key]: e.target.value }))} onBlur={() => { if ((noteFor[b.key] ?? '') !== (b.note || '')) relabel(b, 'sale') }}
+                  placeholder="What was paid, e.g. $40 Venmo" style={{ flex: '1 1 160px', padding: '9px 12px', borderRadius: 7, border: `1px solid ${C.borderNavy}`, fontSize: 13, background: C.pageBg }} />
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <input
                 value={emailFor[b.key] || ''}
                 onChange={e => setEmailFor(m => ({ ...m, [b.key]: e.target.value }))}

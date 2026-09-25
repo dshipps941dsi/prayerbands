@@ -79,20 +79,35 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ batches: [...batches.values()] })
 }
 
+const REASONS = new Set(['sale', 'seed', 'donation', 'gift', 'sample', 'damaged'])
+
 // POST /api/admin/handout-batches  { handout_ids: number[], email }
-// Credit the bands in a batch to a giver by email. Works with or without an
-// account: the address is stored and resolves to a user id on sign-up.
+//   Credit the bands in a batch to a giver by email. Works with or without an
+//   account: the address is stored and resolves to a user id on sign-up.
+// POST /api/admin/handout-batches  { handout_ids: number[], reason, note? }
+//   Relabel a batch: a scan-out that was really a sale, and what was paid.
 export async function POST(req: NextRequest) {
   const user = await teamUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))
   const ids = (Array.isArray(body.handout_ids) ? body.handout_ids : []).map((n: any) => Number(n)).filter((n: number) => Number.isInteger(n) && n > 0)
-  const address = String(body.email || '').trim().toLowerCase()
   if (!ids.length) return NextResponse.json({ error: 'No batch selected.' }, { status: 400 })
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return NextResponse.json({ error: `"${address}" does not look like an email address.` }, { status: 400 })
 
   const admin = createServiceClient()
+
+  if (typeof body.reason === 'string') {
+    const reason = body.reason.toLowerCase()
+    if (!REASONS.has(reason)) return NextResponse.json({ error: 'Unknown reason.' }, { status: 400 })
+    const patch: Record<string, unknown> = { reason }
+    if (typeof body.note === 'string') patch.note = body.note.trim().slice(0, 200) || null
+    const { error } = await admin.from('band_handouts').update(patch).in('id', ids).eq('direction', 'out')
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ success: true, reason, count: ids.length })
+  }
+
+  const address = String(body.email || '').trim().toLowerCase()
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return NextResponse.json({ error: `"${address}" does not look like an email address.` }, { status: 400 })
   const { data: rows } = await admin.from('band_handouts').select('id, band_id').in('id', ids).eq('direction', 'out')
   const bandIds = [...new Set((rows ?? []).map((r: any) => r.band_id as string))]
   if (!bandIds.length) return NextResponse.json({ error: 'Those hand-out records were not found.' }, { status: 404 })

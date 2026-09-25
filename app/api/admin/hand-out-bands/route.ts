@@ -13,7 +13,7 @@ async function adminUser() {
 // Bands leave the shelf for reasons other than a sale. Keeping the list closed
 // means the ledger can be grouped and counted later instead of accumulating a
 // dozen spellings of "gave it away".
-export const HANDOUT_REASONS = ['seed', 'donation', 'gift', 'sample', 'damaged'] as const
+export const HANDOUT_REASONS = ['sale', 'seed', 'donation', 'gift', 'sample', 'damaged'] as const
 export type HandoutReason = typeof HANDOUT_REASONS[number]
 
 const normalizeBandId = (raw: unknown) => typeof raw === 'string' ? raw.trim().toUpperCase() : ''

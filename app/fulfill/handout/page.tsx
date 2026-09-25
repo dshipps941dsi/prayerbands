@@ -23,6 +23,7 @@ const C = {
 // TODO(stage 2): swap for a profiles.role check.
 
 const REASONS = [
+  { id: 'sale', label: 'Sold outside the site', hint: 'Paid in person, by Venmo, check, or cash. Put the buyer’s email in the giver field so they get credit.' },
   { id: 'seed', label: 'Seeding', hint: 'Getting bands into circulation to start the network' },
   { id: 'donation', label: 'Donation', hint: 'Given to a church, ministry, or cause' },
   { id: 'gift', label: 'Gift', hint: 'Given to a particular person' },
