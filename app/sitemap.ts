@@ -6,7 +6,10 @@ import { getAllPosts } from '@/lib/blog'
 // or both — and robots.ts keeps crawlers off them.
 const SITE = 'https://prayerbands.com'
 
-export const revalidate = 3600
+// The hourly revalidate was not honoured for this metadata route: the sitemap
+// stayed as built at deploy time and missed posts that went live on their
+// date. Build it on every request instead; it is a handful of file reads.
+export const dynamic = 'force-dynamic'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const pages: MetadataRoute.Sitemap = [
