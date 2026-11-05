@@ -1,5 +1,7 @@
 'use client'
 import { useState, useEffect, type CSSProperties } from 'react'
+import ChurchPricing from './ChurchPricing'
+import { CHURCH_TIERS_KEY } from '@/lib/church-pricing'
 
 // Self-contained pricing editor: site_config amounts (drive Stripe checkout)
 // + subscription plans. Used on the combined Band Management screen.
@@ -22,7 +24,10 @@ export default function PricingManager() {
   async function loadSiteConfig() {
     const res = await fetch('/api/admin/site-config')
     if (!res.ok) return
-    const { rows } = await res.json()
+    const { rows: allRows } = await res.json()
+    // Church quantity pricing is a list of tiers, not a single amount. It has
+    // its own editor (ChurchPricing) below these rows.
+    const rows = allRows ? allRows.filter((r: any) => r.key !== CHURCH_TIERS_KEY) : allRows
     if (rows) {
       setSiteConfig(rows)
       const draft: Record<string, string> = {}
@@ -99,6 +104,8 @@ export default function PricingManager() {
           </div>
         ))}
       </div>
+
+      <ChurchPricing />
 
       </div>
 

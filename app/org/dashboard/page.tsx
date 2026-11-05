@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import Logo from '@/components/Logo'
+import { churchTierFor, churchTierLabel, churchQuickQuantities, formatCents, normalizeChurchTiers, MAX_CHURCH_QTY, type ChurchTier } from '@/lib/church-pricing'
 
 
 // Brand palette
@@ -174,6 +175,23 @@ function OrgDashboardInner() {
   const [expandedBand, setExpandedBand] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [orderQty, setOrderQty] = useState(100)
+  // Church quantity pricing, set in Admin > Pricing. null until it loads; the
+  // order button stays off until then so nobody orders against a guessed price.
+  const [churchTiers, setChurchTiers] = useState<ChurchTier[] | null>(null)
+  const [pricingError, setPricingError] = useState(false)
+  const [orderErr, setOrderErr] = useState('')
+  const [ordering, setOrdering] = useState(false)
+  useEffect(() => {
+    fetch('/api/church-pricing')
+      .then(r => r.ok ? r.json() : Promise.reject(new Error(String(r.status))))
+      .then(d => {
+        const t = normalizeChurchTiers(d?.tiers)
+        if (!t) throw new Error('unreadable tiers')
+        setChurchTiers(t)
+        setOrderQty(q => Math.max(q, t[0].min))
+      })
+      .catch(() => setPricingError(true))
+  }, [])
   const [orgId, setOrgId] = useState<string>('')
   const [isMobile, setIsMobile] = useState(false)
   const [settings, setSettings] = useState({ name: '', location: '', website: '', color: '#1a6b4a' })
@@ -338,8 +356,25 @@ function OrgDashboardInner() {
       setLogoUploading(false)
     }
   }
-  const pricePerBand = orderQty >= 500 ? 3.75 : orderQty >= 250 ? 4.0 : orderQty >= 100 ? 4.2 : 4.75
-  const orderTotal = (orderQty * pricePerBand).toLocaleString('en-US', { minimumFractionDigits: 2 })
+  const orderTier = churchTiers ? churchTierFor(orderQty, churchTiers) : null
+  const orderMinQty = churchTiers ? churchTiers[0].min : 0
+  const orderTotal = ((orderTier ? orderQty * orderTier.cents : 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  // Start a Stripe checkout for the chosen quantity. The server works out the
+  // price from the same tiers; this only sends the quantity.
+  async function placeOrder() {
+    if (!orderTier || ordering) return
+    setOrdering(true); setOrderErr('')
+    try {
+      const res = await fetch('/api/create-org-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quantity: orderQty, orgId: org?.id, orgName: org?.name, prefix: org?.prefix }) })
+      const d = await res.json().catch(() => ({}))
+      if (d.url) { window.location.href = d.url; return }
+      setOrderErr(d.error || 'Could not start checkout. Please try again.')
+    } catch {
+      setOrderErr('Could not reach checkout. Check your connection and try again.')
+    }
+    setOrdering(false)
+  }
 
   const statusColor = (s: string) => {
     if (s === 'registered') return { bg: '#e6f4ee', color: '#1a6b4a' }
@@ -518,26 +553,35 @@ function OrgDashboardInner() {
           <div style={{ marginBottom: 16 }}>
             <label style={labelStyle}>QUANTITY</label>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
-              {[50, 100, 250, 500, 1000].map(qty => (
-                <button key={qty} onClick={() => setOrderQty(qty)} style={{ padding: '8px 14px', borderRadius: 6, border: orderQty === qty ? `2px solid ${GOLD}` : `2px solid ${SILVER_BORDER}`, background: orderQty === qty ? `${GOLD}18` : CARD_BG, color: orderQty === qty ? GOLD_TEXT : BODY_TEXT, fontWeight: orderQty === qty ? 700 : 400, cursor: 'pointer', fontSize: 14, fontFamily: 'Inter, sans-serif' }}>{qty}</button>
+              {churchQuickQuantities(churchTiers ?? []).map(qty => (
+                <button key={qty} onClick={() => { setOrderQty(qty); setOrderErr('') }} style={{ padding: '8px 14px', borderRadius: 6, border: orderQty === qty ? `2px solid ${GOLD}` : `2px solid ${SILVER_BORDER}`, background: orderQty === qty ? `${GOLD}18` : CARD_BG, color: orderQty === qty ? GOLD_TEXT : BODY_TEXT, fontWeight: orderQty === qty ? 700 : 400, cursor: 'pointer', fontSize: 14, fontFamily: 'Inter, sans-serif' }}>{qty.toLocaleString('en-US')}</button>
               ))}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' as const }}>
+              <span style={{ fontSize: 12, color: SECONDARY_TEXT, fontFamily: 'Inter, sans-serif' }}>Or enter any quantity</span>
+              <input type="number" inputMode="numeric" min={orderMinQty || 1} step={1} value={orderQty || ''} aria-label="Number of bands"
+                onChange={e => { const n = Math.floor(Number(e.target.value)); setOrderQty(Number.isFinite(n) && n > 0 ? Math.min(n, MAX_CHURCH_QTY) : 0); setOrderErr('') }}
+                style={{ width: 120, padding: '8px 10px', borderRadius: 6, border: '2px solid ' + SILVER_BORDER, background: CARD_BG, color: BODY_TEXT, fontSize: 14, fontFamily: 'Inter, sans-serif' }} />
             </div>
           </div>
           <div style={{ background: SILVER_BG, borderRadius: 8, padding: '12px 14px', marginBottom: 16, fontSize: 12 }}>
             <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 12, color: GOLD_TEXT, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Volume Pricing</div>
-            {[{ min: 50, max: 99, price: 4.50 }, { min: 100, max: 249, price: 4.20 }, { min: 250, max: 499, price: 4.00 }, { min: 500, max: null, price: 3.75 }].map(tier => {
-              const active = orderQty >= tier.min && (tier.max === null || orderQty <= tier.max)
-              return <div key={tier.min} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', color: active ? GOLD_TEXT : SECONDARY_TEXT, fontWeight: active ? 700 : 400, fontFamily: 'Inter, sans-serif' }}><span>{tier.max ? tier.min + '–' + tier.max + ' bands' : tier.min + '+ bands'}</span><span>${tier.price.toFixed(2)}/band</span></div>
+            {pricingError && <div style={{ color: '#B4441F', fontFamily: 'Inter, sans-serif' }}>Pricing could not be loaded. Refresh the page to try again.</div>}
+            {!pricingError && !churchTiers && <div style={{ color: SECONDARY_TEXT, fontFamily: 'Inter, sans-serif' }}>Loading pricing…</div>}
+            {(churchTiers ?? []).map((tier, i, all) => {
+              const active = orderTier?.min === tier.min
+              return <div key={tier.min} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', color: active ? GOLD_TEXT : SECONDARY_TEXT, fontWeight: active ? 700 : 400, fontFamily: 'Inter, sans-serif' }}><span>{churchTierLabel(all, i)}</span><span>{formatCents(tier.cents)}/band</span></div>
             })}
           </div>
           <div style={{ borderTop: `1px solid ${SILVER_BORDER}`, paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 13, color: SECONDARY_TEXT, fontFamily: 'Inter, sans-serif' }}>{orderQty} × ${pricePerBand}/band</div>
+              <div style={{ fontSize: 13, color: SECONDARY_TEXT, fontFamily: 'Inter, sans-serif' }}>{orderTier ? orderQty.toLocaleString('en-US') + ' × ' + formatCents(orderTier.cents) + '/band' : orderMinQty && orderQty < orderMinQty ? 'The minimum order is ' + orderMinQty.toLocaleString('en-US') + (orderMinQty === 1 ? ' band' : ' bands') : '\u00a0'}</div>
               <div style={{ fontSize: 24, fontWeight: 700, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>${orderTotal}</div>
             </div>
-            <button onClick={async () => { const res = await fetch('/api/create-org-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quantity: orderQty, orgId: org?.id, orgName: org?.name, prefix: org?.prefix }) }); const { url } = await res.json(); if (url) window.location.href = url }} style={{ background: GOLD, color: NAVY, border: 'none', borderRadius: 8, padding: '12px 20px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Order →</button>
+            <button onClick={placeOrder} disabled={!orderTier || ordering} style={{ background: GOLD, color: NAVY, border: 'none', borderRadius: 8, padding: '12px 20px', fontSize: 12, fontWeight: 700, cursor: orderTier && !ordering ? 'pointer' : 'default', opacity: orderTier && !ordering ? 1 : 0.55, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{ordering ? 'Opening checkout…' : 'Order →'}</button>
           </div>
-          <div style={{ marginTop: 10, fontSize: 11, color: SECONDARY_TEXT, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>Engraved with {org?.prefix}-XXXXX · NFC chip included · Ships in 2–3 weeks</div>
+          {orderErr && <div style={{ marginTop: 10, fontSize: 13, color: '#B4441F', fontFamily: 'Inter, sans-serif' }}>{orderErr}</div>}
+          <div style={{ marginTop: 10, fontSize: 11, color: SECONDARY_TEXT, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>IDs under your {org?.prefix} prefix · NFC chip included · Ships in 2–3 weeks</div>
         </div>
         <div style={{ background: CARD_BG, border: `1px solid ${NAVY_BORDER}`, borderRadius: 10, overflow: 'hidden', maxWidth: isMobile ? '100%' : 520, boxShadow: '0 1px 6px rgba(10,22,40,0.06)' }}>
           <div style={{ padding: '14px 16px', borderBottom: `1px solid ${SILVER_BORDER}`, fontWeight: 700, fontSize: 15, color: NAVY_HEADING, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>Order History</div>
